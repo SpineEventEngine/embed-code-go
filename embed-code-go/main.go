@@ -18,5 +18,5 @@
 
 package main
 
-// This is the dummy entry point
+// This is the dummy entry point.
 func main() {}
