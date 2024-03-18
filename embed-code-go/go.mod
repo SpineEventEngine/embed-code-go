@@ -18,4 +18,4 @@
 
 module embed-code/embed-code-go
 
-go 1.22.0
+go 1.22.1
