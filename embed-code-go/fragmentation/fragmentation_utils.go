@@ -19,6 +19,7 @@
 package fragmentation
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
@@ -38,4 +39,31 @@ func shouldFragmentize(file string) bool {
 
 func isValidEncoding(file string) bool {
 	return true
+}
+
+func isFileExists(filePath string) (bool, error) {
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return err == nil, err
+}
+
+func readLines(filePath string) []string {
+	file, _ := os.Open(filePath)
+	lines := []string{}
+	defer file.Close()
+
+	r := bufio.NewReader(file)
+
+	for {
+		line, _, err := r.ReadLine()
+		if len(line) > 0 {
+			lines = append(lines, string(line))
+		}
+		if err != nil {
+			break
+		}
+	}
+	return lines
 }
