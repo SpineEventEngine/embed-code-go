@@ -74,7 +74,7 @@ func lookup(line string, prefix string) []string {
 	if strings.Contains(line, prefix) {
 		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1 // 1 for trailing space after the prefix
 		unquotedFragmentNames := []string{}
-		for _, fragmentName := range strings.Split(line[fragmentsStart:len(line)-1], ",") {
+		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {
 			quotedFragmentName := strings.Trim(fragmentName, "\n\t ")
 			unquotedFragmentName := unquoteNameAndClean(quotedFragmentName)
 			unquotedFragmentNames = append(unquotedFragmentNames, unquotedFragmentName)
