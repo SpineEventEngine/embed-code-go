@@ -39,8 +39,10 @@
 package fragmentation
 
 import (
+	"bufio"
 	"embed-code/embed-code-go/configuration"
 	"fmt"
+	"os"
 	"path/filepath"
 )
 
@@ -57,12 +59,13 @@ type Fragmentation struct {
 
 // TODO: handle the errors
 func NewFragmentation(
-	config configuration.Configuration,
-	sourcesRootRelative string,
 	codeFileRelative string,
+	config configuration.Configuration,
 ) Fragmentation {
 
 	fragmentation := Fragmentation{}
+
+	sourcesRootRelative := config.CodeRoot
 
 	absoluteSourcesRoot, err := filepath.Abs(sourcesRootRelative)
 	fragmentation.SourcesRoot = absoluteSourcesRoot
@@ -81,6 +84,100 @@ func NewFragmentation(
 	return fragmentation
 }
 
-// TODO: Implement
 // @return (content, fragments) a refined content of the file to be cut into fragments, and the Fragments
-func (fragmentation Fragmentation) fragmentize([]string, []Fragmentation) {}
+func (fragmentation Fragmentation) fragmentize() ([]string, map[string]Fragment) {
+	fragmentBuilders := make(map[string]FragmentBuilder)
+	var contentToRender []string
+
+	file, err := os.Open(fragmentation.CodeFile)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		contentToRender, fragmentBuilders = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
+	}
+
+	fragments := make(map[string]Fragment)
+	for k, v := range fragmentBuilders {
+		fragments[k] = v.Build()
+	}
+	fragments[DefaultFragment] = CreateDefaultFragment()
+
+	return contentToRender, fragments
+
+}
+
+func (fragmentation Fragmentation) parseLine(line string, contentToRender []string, fragmentBuilders map[string]FragmentBuilder) ([]string, map[string]FragmentBuilder) {
+	cursor := len(contentToRender)
+
+	fragmentStarts := getFragmentStarts(line)
+	fragmentEnds := getFragmentEnds(line)
+
+	if len(fragmentStarts) > 0 {
+		for _, fragmentName := range fragmentStarts {
+			builder := FragmentBuilder{FileName: fragmentation.CodeFile, Name: fragmentName}
+			fragment, exists := fragmentBuilders[fragmentName]
+			if !exists {
+				fragmentBuilders[fragmentName] = builder
+				fragment = builder
+			}
+			fragment.AddStartPosition(cursor)
+		}
+	} else if len(fragmentEnds) > 0 {
+		for _, fragmentName := range fragmentEnds {
+			if fragment, exists := fragmentBuilders[fragmentName]; exists {
+				fragment.AddEndPosition(cursor - 1)
+			} else {
+				panic(fmt.Sprintf("Cannot end the fragment `%s` as it wasn't started.", fragmentName))
+			}
+		}
+	} else {
+		contentToRender = append(contentToRender, line)
+	}
+	return contentToRender, fragmentBuilders
+}
+
+func (fragmentation Fragmentation) targetDirectory() string {
+	fragmentsDir := fragmentation.Configuration.FragmentsDir
+	codeRoot := filepath.Clean(fragmentation.Configuration.CodeRoot)
+	relativeFile, err := filepath.Rel(codeRoot, fragmentation.CodeFile)
+	if err != nil {
+		panic(fmt.Sprintf("Error calculating relative path: %v", err))
+	}
+	subTree := filepath.Dir(relativeFile)
+	return filepath.Join(fragmentsDir, subTree)
+}
+
+// WriteFragments serializes fragments to the output directory.
+//
+// Keeps the original directory structure relative to the sourcesRoot. That is,
+// `SRC/src/main` becomes `OUT/src/main`.
+func (fragmentation Fragmentation) WriteFragments() {
+	allLines, fragments := fragmentation.fragmentize()
+
+	ensureDirExists(fragmentation.targetDirectory())
+
+	for _, fragment := range fragments {
+		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name, fragmentation.Configuration)
+		fragment.WriteTo(fragmentFile, allLines, fragmentation.Configuration)
+	}
+}
+
+func WriteFragmentFiles(configuration configuration.Configuration) {
+	includes := configuration.CodeIncludes
+	codeRoot := configuration.CodeRoot
+	for _, rule := range includes {
+		pattern := fmt.Sprintf("%s/%s", codeRoot, rule)
+		codeFiles, _ := filepath.Glob(pattern)
+		for _, codeFile := range codeFiles {
+			if shouldFragmentize(codeFile) {
+				fragmentation := NewFragmentation(codeFile, configuration)
+				fragmentation.WriteFragments()
+			}
+		}
+	}
+}
