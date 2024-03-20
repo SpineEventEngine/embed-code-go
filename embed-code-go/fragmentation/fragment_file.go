@@ -23,7 +23,7 @@ type FragmentFile struct {
 //
 // @param [string] code_file an absolute path to a code file
 // @param [string] fragment the fragment
-func (fragmentFile FragmentFile) FromAbsoluteFile(
+func NewFragmentFileFromAbsolute(
 	codeFile string,
 	fragmentName string,
 	configuration configuration.Configuration,
