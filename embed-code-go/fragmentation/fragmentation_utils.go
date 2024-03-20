@@ -22,9 +22,13 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 )
 
 // TODO: make checking for valid encoding
+// TODO: handle the errors
 func shouldFragmentize(file string) bool {
 	info, err := os.Stat(file)
 	if err != nil {
@@ -41,12 +45,52 @@ func isValidEncoding(file string) bool {
 	return true
 }
 
+// TODO: handle the errors
+func ensureDirExists(dirPath string) {
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		err := os.Mkdir(dirPath, os.ModeDir)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
 func isFileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		return false, nil
 	}
 	return err == nil, err
+}
+
+func unquoteNameAndClean(name string) string {
+	r, _ := regexp.Compile("\"(.*)\"")
+	nameQuoted := r.FindString(name)
+	nameCleaned, _ := strconv.Unquote(nameQuoted)
+	return nameCleaned
+}
+
+func lookup(line string, prefix string) []string {
+	if strings.Contains(line, prefix) {
+		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1 // 1 for trailing space after the prefix
+		unquotedFragmentNames := []string{}
+		for _, fragmentName := range strings.Split(line[fragmentsStart:len(line)-1], ",") {
+			quotedFragmentName := strings.Trim(fragmentName, "\n\t ")
+			unquotedFragmentName := unquoteNameAndClean(quotedFragmentName)
+			unquotedFragmentNames = append(unquotedFragmentNames, unquotedFragmentName)
+		}
+		return unquotedFragmentNames
+	} else {
+		return []string{}
+	}
+}
+
+func getFragmentStarts(line string) []string {
+	return lookup(line, FragmentStart)
+}
+
+func getFragmentEnds(line string) []string {
+	return lookup(line, FragmentEnd)
 }
 
 func readLines(filePath string) []string {
