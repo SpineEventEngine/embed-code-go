@@ -10,6 +10,7 @@ import (
 )
 
 func TestFragmentizeFile(t *testing.T) {
+	// TODO: remove os.Chdir, it's just for vscode debugging
 	os.Chdir(os.Getenv("WORKSPACE_DIR"))
 	var config = configuration.NewConfiguration()
 	config.FragmentsDir = "./test/.fragments"
