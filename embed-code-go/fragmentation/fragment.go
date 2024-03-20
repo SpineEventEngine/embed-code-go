@@ -16,7 +16,7 @@ type Fragment struct {
 }
 
 // Initializers
-func CreateDefault() Fragment {
+func CreateDefaultFragment() Fragment {
 	return Fragment{
 		Name:       DefaultFragment,
 		Partitions: []Partition{},
