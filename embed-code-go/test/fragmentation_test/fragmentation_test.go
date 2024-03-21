@@ -9,13 +9,18 @@ import (
 	"testing"
 )
 
-func TestFragmentizeFile(t *testing.T) {
-	// TODO: remove os.Chdir, it's just for vscode debugging
-	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+func buildTestConfig() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.FragmentsDir = "./test/.fragments"
 	config.DocumentationRoot = "./test/resources/docs"
 	config.CodeRoot = "./test/resources/code"
+	return config
+}
+
+func TestFragmentizeFile(t *testing.T) {
+	// TODO: remove os.Chdir, it's just for vscode debugging
+	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+	var config = buildTestConfig()
 	fileName := "Hello.java"
 	path := fmt.Sprintf("%s/org/example/%s", config.CodeRoot, fileName)
 	fragmentation := fragmentation.NewFragmentation(path, config)
