@@ -142,7 +142,10 @@ func (fragmentation Fragmentation) parseLine(line string, contentToRender []stri
 
 func (fragmentation Fragmentation) targetDirectory() string {
 	fragmentsDir := fragmentation.Configuration.FragmentsDir
-	codeRoot := filepath.Clean(fragmentation.Configuration.CodeRoot)
+	codeRoot, err := filepath.Abs(fragmentation.Configuration.CodeRoot)
+	if err != nil {
+		panic(fmt.Sprintf("Error calculating absolute path: %v", err))
+	}
 	relativeFile, err := filepath.Rel(codeRoot, fragmentation.CodeFile)
 	if err != nil {
 		panic(fmt.Sprintf("Error calculating relative path: %v", err))
