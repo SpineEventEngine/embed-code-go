@@ -55,7 +55,7 @@ func (fragmentFile FragmentFile) absolutePath() string {
 	if fragmentFile.FragmentName == DefaultFragment {
 		return filepath.Join(fragmentsAbsDir, fragmentFile.CodeFile)
 	} else {
-		baseName := strings.TrimSuffix(fragmentFile.CodeFile, filepath.Ext(fragmentFile.CodeFile))
+		baseName := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
 		withoutExtension := filepath.Join(filepath.Dir(fragmentFile.CodeFile), baseName)
 		filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.getFragmentHash())
 
