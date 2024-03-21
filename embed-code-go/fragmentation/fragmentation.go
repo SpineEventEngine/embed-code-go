@@ -85,7 +85,7 @@ func NewFragmentation(
 
 // @return (content, fragments) a refined content of the file to be cut into fragments, and the Fragments
 func (fragmentation Fragmentation) fragmentize() ([]string, map[string]Fragment) {
-	fragmentBuilders := make(map[string]FragmentBuilder)
+	fragmentBuilders := make(map[string]*FragmentBuilder)
 	var contentToRender []string
 
 	file, err := os.Open(fragmentation.CodeFile)
@@ -110,7 +110,7 @@ func (fragmentation Fragmentation) fragmentize() ([]string, map[string]Fragment)
 
 }
 
-func (fragmentation Fragmentation) parseLine(line string, contentToRender []string, fragmentBuilders map[string]FragmentBuilder) ([]string, map[string]FragmentBuilder) {
+func (fragmentation Fragmentation) parseLine(line string, contentToRender []string, fragmentBuilders map[string]*FragmentBuilder) ([]string, map[string]*FragmentBuilder) {
 	cursor := len(contentToRender)
 
 	fragmentStarts := getFragmentStarts(line)
@@ -118,11 +118,11 @@ func (fragmentation Fragmentation) parseLine(line string, contentToRender []stri
 
 	if len(fragmentStarts) > 0 {
 		for _, fragmentName := range fragmentStarts {
-			builder := FragmentBuilder{FileName: fragmentation.CodeFile, Name: fragmentName}
 			fragment, exists := fragmentBuilders[fragmentName]
 			if !exists {
-				fragmentBuilders[fragmentName] = builder
-				fragment = builder
+				builder := FragmentBuilder{FileName: fragmentation.CodeFile, Name: fragmentName}
+				fragmentBuilders[fragmentName] = &builder
+				fragment = fragmentBuilders[fragmentName]
 			}
 			fragment.AddStartPosition(cursor)
 		}
