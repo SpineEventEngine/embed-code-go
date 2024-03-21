@@ -17,8 +17,7 @@ type FragmentFile struct {
 }
 
 // Iniitalizers
-//
-// TODO: handle the errors
+
 // Composes a FragmentFile for the given fragment in the given code file.
 //
 // @param [string] code_file an absolute path to a code file
@@ -47,13 +46,12 @@ func NewFragmentFileFromAbsolute(
 
 // Private methods
 
-// TODO: Handle the errors
 func (fragmentFile FragmentFile) absolutePath() string {
 
 	fileExtension := filepath.Ext(fragmentFile.CodeFile)
 	fragmentsAbsDir, err := filepath.Abs(fragmentFile.Configuration.FragmentsDir)
 	if err != nil {
-		fmt.Println("Error:", err)
+		panic(err)
 	}
 
 	if fragmentFile.FragmentName == DefaultFragment {
@@ -81,7 +79,6 @@ func (fragmentFile FragmentFile) Write(text string) {
 	os.WriteFile(filePath, byteStr, 0777)
 }
 
-// TODO: Handle the errors
 func (fragmentFile FragmentFile) Content() []string {
 	path := fragmentFile.absolutePath()
 	isPathFileExits, err := isFileExists(path)
