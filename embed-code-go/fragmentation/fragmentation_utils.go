@@ -50,7 +50,7 @@ func ensureDirExists(dirPath string) {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err := os.Mkdir(dirPath, os.ModeDir)
 		if err != nil {
-			fmt.Println(err)
+			panic(err)
 		}
 	}
 }
