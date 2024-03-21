@@ -52,3 +52,16 @@ func TestFragmentizeFile(t *testing.T) {
 		t.Errorf("Default fragment '%s' does not exist", fileName)
 	}
 }
+
+func TestFailNotOpenFragment(t *testing.T) {
+	// TODO: remove os.Chdir, it's just for vscode debugging
+	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+
+	var configuration = buildTestConfig()
+	path := fmt.Sprintf("%s/org/example/Unopen.java", configuration.CodeRoot)
+	fragmentation := fragmentation.NewFragmentation(path, configuration)
+	err := fragmentation.WriteFragments()
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+}
