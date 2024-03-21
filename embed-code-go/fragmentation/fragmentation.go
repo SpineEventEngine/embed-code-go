@@ -84,7 +84,7 @@ func NewFragmentation(
 }
 
 // @return (content, fragments) a refined content of the file to be cut into fragments, and the Fragments
-func (fragmentation Fragmentation) fragmentize() ([]string, map[string]Fragment) {
+func (fragmentation Fragmentation) fragmentize() ([]string, map[string]Fragment, error) {
 	fragmentBuilders := make(map[string]*FragmentBuilder)
 	var contentToRender []string
 
@@ -97,7 +97,10 @@ func (fragmentation Fragmentation) fragmentize() ([]string, map[string]Fragment)
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text() + "\n"
-		contentToRender, fragmentBuilders = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
+		contentToRender, fragmentBuilders, err = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	fragments := make(map[string]Fragment)
@@ -106,11 +109,11 @@ func (fragmentation Fragmentation) fragmentize() ([]string, map[string]Fragment)
 	}
 	fragments[DefaultFragment] = CreateDefaultFragment()
 
-	return contentToRender, fragments
+	return contentToRender, fragments, nil
 
 }
 
-func (fragmentation Fragmentation) parseLine(line string, contentToRender []string, fragmentBuilders map[string]*FragmentBuilder) ([]string, map[string]*FragmentBuilder) {
+func (fragmentation Fragmentation) parseLine(line string, contentToRender []string, fragmentBuilders map[string]*FragmentBuilder) ([]string, map[string]*FragmentBuilder, error) {
 	cursor := len(contentToRender)
 
 	fragmentStarts := getFragmentStarts(line)
@@ -131,13 +134,13 @@ func (fragmentation Fragmentation) parseLine(line string, contentToRender []stri
 			if fragment, exists := fragmentBuilders[fragmentName]; exists {
 				fragment.AddEndPosition(cursor - 1)
 			} else {
-				panic(fmt.Sprintf("Cannot end the fragment `%s` as it wasn't started.", fragmentName))
+				return nil, nil, fmt.Errorf("Cannot end the fragment `%s` as it wasn't started.", fragmentName)
 			}
 		}
 	} else {
 		contentToRender = append(contentToRender, line)
 	}
-	return contentToRender, fragmentBuilders
+	return contentToRender, fragmentBuilders, nil
 }
 
 func (fragmentation Fragmentation) targetDirectory() string {
@@ -158,8 +161,11 @@ func (fragmentation Fragmentation) targetDirectory() string {
 //
 // Keeps the original directory structure relative to the sourcesRoot. That is,
 // `SRC/src/main` becomes `OUT/src/main`.
-func (fragmentation Fragmentation) WriteFragments() {
-	allLines, fragments := fragmentation.fragmentize()
+func (fragmentation Fragmentation) WriteFragments() error {
+	allLines, fragments, err := fragmentation.fragmentize()
+	if err != nil {
+		return err
+	}
 
 	ensureDirExists(fragmentation.targetDirectory())
 
@@ -167,9 +173,10 @@ func (fragmentation Fragmentation) WriteFragments() {
 		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name, fragmentation.Configuration)
 		fragment.WriteTo(fragmentFile, allLines, fragmentation.Configuration)
 	}
+	return nil
 }
 
-func WriteFragmentFiles(configuration configuration.Configuration) {
+func WriteFragmentFiles(configuration configuration.Configuration) error {
 	includes := configuration.CodeIncludes
 	codeRoot := configuration.CodeRoot
 	for _, rule := range includes {
@@ -178,8 +185,12 @@ func WriteFragmentFiles(configuration configuration.Configuration) {
 		for _, codeFile := range codeFiles {
 			if shouldFragmentize(codeFile) {
 				fragmentation := NewFragmentation(codeFile, configuration)
-				fragmentation.WriteFragments()
+				err := fragmentation.WriteFragments()
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
+	return nil
 }
