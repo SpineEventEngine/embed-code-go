@@ -29,9 +29,13 @@ func NewFragmentFileFromAbsolute(
 	configuration configuration.Configuration,
 ) FragmentFile {
 
-	relativeCodeFile, err := filepath.Rel(configuration.CodeRoot, codeFile)
+	absoluteCodeRoot, err := filepath.Abs(configuration.CodeRoot)
 	if err != nil {
-		fmt.Println("Error:", err)
+		panic(err)
+	}
+	relativeCodeFile, err := filepath.Rel(absoluteCodeRoot, codeFile)
+	if err != nil {
+		panic(err)
 	}
 
 	return FragmentFile{
@@ -55,10 +59,8 @@ func (fragmentFile FragmentFile) absolutePath() string {
 	if fragmentFile.FragmentName == DefaultFragment {
 		return filepath.Join(fragmentsAbsDir, fragmentFile.CodeFile)
 	} else {
-		baseName := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
-		withoutExtension := filepath.Join(filepath.Dir(fragmentFile.CodeFile), baseName)
+		withoutExtension := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
 		filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.getFragmentHash())
-
 		return filepath.Join(fragmentsAbsDir, filename+fileExtension)
 	}
 }
@@ -75,7 +77,8 @@ func (fragmentFile FragmentFile) getFragmentHash() string {
 
 func (fragmentFile FragmentFile) Write(text string) {
 	byteStr := []byte(text)
-	os.WriteFile(fragmentFile.absolutePath(), byteStr, 0777)
+	filePath := fragmentFile.absolutePath()
+	os.WriteFile(filePath, byteStr, 0777)
 }
 
 // TODO: Handle the errors
@@ -85,9 +88,8 @@ func (fragmentFile FragmentFile) Content() []string {
 	if isPathFileExits {
 		return readLines(path)
 	} else {
-		fmt.Println("Error:", err)
+		panic(err)
 	}
-	return []string{}
 }
 
 func (fragmentFile FragmentFile) String() string {
