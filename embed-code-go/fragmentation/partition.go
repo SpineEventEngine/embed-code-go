@@ -10,5 +10,5 @@ type Partition struct {
 }
 
 func (partition Partition) Select(lines []string) []string {
-	return lines[partition.StartPosition:partition.EndPosition]
+	return lines[partition.StartPosition : partition.EndPosition+1]
 }
