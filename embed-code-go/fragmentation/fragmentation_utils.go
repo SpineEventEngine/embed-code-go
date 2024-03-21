@@ -48,7 +48,7 @@ func isValidEncoding(file string) bool {
 // TODO: handle the errors
 func ensureDirExists(dirPath string) {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		err := os.Mkdir(dirPath, os.ModeDir)
+		err := os.MkdirAll(dirPath, os.ModeDir)
 		if err != nil {
 			panic(err)
 		}
