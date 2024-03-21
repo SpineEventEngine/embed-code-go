@@ -4,6 +4,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/indent"
 	"math"
+	"strings"
 )
 
 const (
@@ -25,6 +26,11 @@ func CreateDefaultFragment() Fragment {
 
 // Public methods
 func (fragment Fragment) Text(allLines []string, configuration configuration.Configuration) string {
+
+	if fragment.isDefault() {
+		return strings.Join(allLines, "")
+	}
+
 	commonIndentetaion := math.MaxInt32
 	partitionLines := [][]string{}
 
@@ -56,4 +62,10 @@ func (fragment Fragment) WriteTo(file FragmentFile,
 ) {
 	text := fragment.Text(allLines, configuration)
 	file.Write(text)
+}
+
+// Private methods
+
+func (fragment Fragment) isDefault() bool {
+	return fragment.Name == DefaultFragment
 }
