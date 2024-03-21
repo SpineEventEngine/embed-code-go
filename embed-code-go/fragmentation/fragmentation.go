@@ -57,7 +57,6 @@ type Fragmentation struct {
 	CodeFile      string
 }
 
-// TODO: handle the errors
 func NewFragmentation(
 	codeFileRelative string,
 	config configuration.Configuration,
@@ -70,13 +69,13 @@ func NewFragmentation(
 	absoluteSourcesRoot, err := filepath.Abs(sourcesRootRelative)
 	fragmentation.SourcesRoot = absoluteSourcesRoot
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	absoluteCodeFile, err := filepath.Abs(codeFileRelative)
 	fragmentation.CodeFile = absoluteCodeFile
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	fragmentation.Configuration = config

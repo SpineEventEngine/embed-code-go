@@ -28,11 +28,10 @@ import (
 )
 
 // TODO: make checking for valid encoding
-// TODO: handle the errors
 func shouldFragmentize(file string) bool {
 	info, err := os.Stat(file)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	isFile := !info.IsDir()
@@ -45,7 +44,6 @@ func isValidEncoding(file string) bool {
 	return true
 }
 
-// TODO: handle the errors
 func ensureDirExists(dirPath string) {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err := os.MkdirAll(dirPath, os.ModeDir)
