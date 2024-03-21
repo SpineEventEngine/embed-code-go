@@ -20,7 +20,6 @@ package fragmentation
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"regexp"
 	"strconv"
