@@ -126,3 +126,16 @@ func TestFragmentizeEmptyFile(t *testing.T) {
 		t.Errorf("Expected empty string, got '%s'", string(fragmentContent))
 	}
 }
+
+func TestIgnoreBinary(t *testing.T) {
+	// TODO: remove os.Chdir, it's just for vscode debugging
+	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+
+	configuration := buildTestConfig()
+	configuration.CodeIncludes = []string{"**.jar"}
+
+	fragmentation.WriteFragmentFiles(configuration)
+	if _, err := os.Stat(configuration.FragmentsDir); !os.IsNotExist(err) {
+		t.Errorf("Expected file does not exist, got %v", err)
+	}
+}
