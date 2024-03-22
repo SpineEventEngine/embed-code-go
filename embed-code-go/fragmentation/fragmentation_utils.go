@@ -24,9 +24,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
-// TODO: make checking for valid encoding
 func shouldFragmentize(file string) bool {
 	info, err := os.Stat(file)
 	if err != nil {
@@ -39,8 +39,47 @@ func shouldFragmentize(file string) bool {
 	return isFile && isValidEncoding
 }
 
+func IsFileUTF8Encoded(filename string) (bool, error) {
+	// Read the entire file into memory
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if the content contains valid UTF-8 characters
+	isUTF8 := utf8.Valid(content)
+
+	return isUTF8, nil
+}
+
+// If all the characters fall within the ASCII range (0 to 127), it’s likely an ASCII-encoded file.
+func IsFileASCIIEncoded(filename string) (bool, error) {
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		return false, err
+	}
+
+	for _, char := range content {
+		if char > 127 {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
 func isValidEncoding(file string) bool {
-	return true
+	isUTF8Encoded, err := IsFileUTF8Encoded(file)
+	if err != nil {
+		panic(err)
+	}
+
+	isASCIIEncoded, err := IsFileASCIIEncoded(file)
+	if err != nil {
+		panic(err)
+	}
+
+	return isUTF8Encoded || isASCIIEncoded
 }
 
 func ensureDirExists(dirPath string) {
