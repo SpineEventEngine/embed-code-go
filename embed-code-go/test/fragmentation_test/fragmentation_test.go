@@ -33,7 +33,18 @@ func readLines(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
+func cleanup() {
+	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+	var config = buildTestConfig()
+	err := os.RemoveAll(config.FragmentsDir)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func TestFragmentizeFile(t *testing.T) {
+	defer cleanup()
+
 	// TODO: remove os.Chdir, it's just for vscode debugging
 	os.Chdir(os.Getenv("WORKSPACE_DIR"))
 	var config = buildTestConfig()
@@ -70,6 +81,8 @@ func TestFragmentizeFile(t *testing.T) {
 }
 
 func TestFailNotOpenFragment(t *testing.T) {
+	defer cleanup()
+
 	// TODO: remove os.Chdir, it's just for vscode debugging
 	os.Chdir(os.Getenv("WORKSPACE_DIR"))
 
@@ -83,6 +96,8 @@ func TestFailNotOpenFragment(t *testing.T) {
 }
 
 func TestFragmentWithoutEnd(t *testing.T) {
+	defer cleanup()
+
 	// TODO: remove os.Chdir, it's just for vscode debugging
 	os.Chdir(os.Getenv("WORKSPACE_DIR"))
 
@@ -122,6 +137,8 @@ func TestFragmentWithoutEnd(t *testing.T) {
 }
 
 func TestFragmentizeEmptyFile(t *testing.T) {
+	defer cleanup()
+
 	// TODO: remove os.Chdir, it's just for vscode debugging
 	os.Chdir(os.Getenv("WORKSPACE_DIR"))
 
@@ -144,6 +161,8 @@ func TestFragmentizeEmptyFile(t *testing.T) {
 }
 
 func TestIgnoreBinary(t *testing.T) {
+	defer cleanup()
+
 	// TODO: remove os.Chdir, it's just for vscode debugging
 	os.Chdir(os.Getenv("WORKSPACE_DIR"))
 
@@ -157,6 +176,8 @@ func TestIgnoreBinary(t *testing.T) {
 }
 
 func TestManyPartitions(t *testing.T) {
+	defer cleanup()
+
 	// TODO: remove os.Chdir, it's just for vscode debugging
 	os.Chdir(os.Getenv("WORKSPACE_DIR"))
 
