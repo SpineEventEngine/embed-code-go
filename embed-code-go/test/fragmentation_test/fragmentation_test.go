@@ -104,3 +104,25 @@ func TestFragmentWithoutEnd(t *testing.T) {
 		t.Errorf("Fragment content does not match pattern: %s", fragmentContentStr)
 	}
 }
+
+func TestFragmentizeEmptyFile(t *testing.T) {
+	// TODO: remove os.Chdir, it's just for vscode debugging
+	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+
+	configuration := buildTestConfig()
+	fileName := "Empty.java"
+	path := fmt.Sprintf("%s/org/example/%s", configuration.CodeRoot, fileName)
+	fragmentation := fragmentation.NewFragmentation(path, configuration)
+	fragmentation.WriteFragments()
+
+	fragmentDir := fmt.Sprintf("%s/org/example", configuration.FragmentsDir)
+	fragmentFiles, _ := os.ReadDir(fragmentDir)
+	if len(fragmentFiles) != 1 {
+		t.Errorf("Expected 1, got %d", len(fragmentFiles))
+	}
+
+	fragmentContent, _ := os.ReadFile(fmt.Sprintf("%s/%s", fragmentDir, fragmentFiles[0].Name()))
+	if string(fragmentContent) != "" {
+		t.Errorf("Expected empty string, got '%s'", string(fragmentContent))
+	}
+}
