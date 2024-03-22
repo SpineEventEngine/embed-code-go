@@ -1,6 +1,7 @@
 package fragmentation_test
 
 import (
+	"bufio"
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/fragmentation"
 	"fmt"
@@ -15,6 +16,21 @@ func buildTestConfig() configuration.Configuration {
 	config.DocumentationRoot = "./test/resources/docs"
 	config.CodeRoot = "./test/resources/code"
 	return config
+}
+
+func readLines(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
 }
 
 func TestFragmentizeFile(t *testing.T) {
@@ -137,5 +153,60 @@ func TestIgnoreBinary(t *testing.T) {
 	fragmentation.WriteFragmentFiles(configuration)
 	if _, err := os.Stat(configuration.FragmentsDir); !os.IsNotExist(err) {
 		t.Errorf("Expected file does not exist, got %v", err)
+	}
+}
+
+func TestManyPartitions(t *testing.T) {
+	// TODO: remove os.Chdir, it's just for vscode debugging
+	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+
+	configuration := buildTestConfig()
+
+	fileName := "Complex.java"
+	path := fmt.Sprintf("%s/org/example/%s", configuration.CodeRoot, fileName)
+	fragmentation := fragmentation.NewFragmentation(path, configuration)
+	fragmentation.WriteFragments()
+
+	fragmentDir := fmt.Sprintf("%s/org/example", configuration.FragmentsDir)
+	fragmentFiles, _ := os.ReadDir(fragmentDir)
+	if len(fragmentFiles) != 2 {
+		t.Errorf("Expected 2, got %d", len(fragmentFiles))
+	}
+
+	var fragmentFileName string
+	for _, file := range fragmentFiles {
+		if file.Name() != fileName {
+			fragmentFileName = file.Name()
+			break
+		}
+	}
+
+	fragmentLines, _ := readLines(fmt.Sprintf("%s/%s", fragmentDir, fragmentFileName))
+	if fragmentLines[0] != "public class Main {" {
+		t.Errorf("Expected 'public class Main {', got '%s'", fragmentLines[0])
+	}
+	if fragmentLines[1] != configuration.Separator {
+		t.Errorf("Expected '%s', got '%s'", configuration.Separator, fragmentLines[1])
+	}
+	if matched, _ := regexp.MatchString(`\s{4}public.*`, fragmentLines[2]); !matched {
+		t.Errorf("Line does not match pattern: %s", fragmentLines[2])
+	}
+	if fragmentLines[3] != configuration.Separator {
+		t.Errorf("Expected '%s', got '%s'", configuration.Separator, fragmentLines[3])
+	}
+	if matched, _ := regexp.MatchString(`\s{8}System.*`, fragmentLines[4]); !matched {
+		t.Errorf("Line does not match pattern: %s", fragmentLines[4])
+	}
+	if fragmentLines[5] != "" {
+		t.Errorf("Expected empty string, got '%s'", fragmentLines[5])
+	}
+	if fragmentLines[6] != "    }" {
+		t.Errorf("Expected '    }', got '%s'", fragmentLines[6])
+	}
+	if fragmentLines[7] != configuration.Separator {
+		t.Errorf("Expected '%s', got '%s'", configuration.Separator, fragmentLines[7])
+	}
+	if fragmentLines[8] != "}" {
+		t.Errorf("Expected '}', got '%s'", fragmentLines[8])
 	}
 }
