@@ -10,5 +10,12 @@ type Partition struct {
 }
 
 func (partition Partition) Select(lines []string) []string {
-	return lines[partition.StartPosition : partition.EndPosition+1]
+	if partition.EndPosition != 0 {
+		return lines[partition.StartPosition : partition.EndPosition+1]
+	} else {
+		// This part is for emulating the behaviour of the original embed code.
+		// In Ruby, with unsetted EndPosition, it used to return all the lines from the StartPosition.
+		return lines[partition.StartPosition:]
+	}
+
 }
