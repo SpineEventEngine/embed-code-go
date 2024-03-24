@@ -6,9 +6,44 @@ import (
 	"embed-code/embed-code-go/fragmentation"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 )
+
+type FragmentationTestsPreparator struct {
+	rootDir  string
+	testsDir string
+}
+
+func newFragmentationTestsPreparator() FragmentationTestsPreparator {
+	rootDir, err := filepath.Abs("../../")
+	if err != nil {
+		panic(err)
+	}
+	testsDir, err := filepath.Abs(".")
+	if err != nil {
+		panic(err)
+	}
+	return FragmentationTestsPreparator{
+		rootDir:  rootDir,
+		testsDir: testsDir,
+	}
+}
+
+func (testPreparator FragmentationTestsPreparator) setup() {
+	os.Chdir(testPreparator.rootDir)
+}
+
+func (testPreparator FragmentationTestsPreparator) cleanup() {
+	os.Chdir(testPreparator.rootDir)
+	var config = buildTestConfig()
+	err := os.RemoveAll(config.FragmentsDir)
+	if err != nil {
+		panic(err)
+	}
+	os.Chdir(testPreparator.testsDir)
+}
 
 func buildTestConfig() configuration.Configuration {
 	var config = configuration.NewConfiguration()
@@ -33,20 +68,11 @@ func readLines(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-func cleanup() {
-	os.Chdir(os.Getenv("WORKSPACE_DIR"))
-	var config = buildTestConfig()
-	err := os.RemoveAll(config.FragmentsDir)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func TestFragmentizeFile(t *testing.T) {
-	defer cleanup()
+	testPreparator := newFragmentationTestsPreparator()
+	testPreparator.setup()
+	defer testPreparator.cleanup()
 
-	// TODO: remove os.Chdir, it's just for vscode debugging
-	os.Chdir(os.Getenv("WORKSPACE_DIR"))
 	var config = buildTestConfig()
 	fileName := "Hello.java"
 	path := fmt.Sprintf("%s/org/example/%s", config.CodeRoot, fileName)
@@ -81,10 +107,9 @@ func TestFragmentizeFile(t *testing.T) {
 }
 
 func TestFailNotOpenFragment(t *testing.T) {
-	defer cleanup()
-
-	// TODO: remove os.Chdir, it's just for vscode debugging
-	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+	testPreparator := newFragmentationTestsPreparator()
+	testPreparator.setup()
+	defer testPreparator.cleanup()
 
 	var configuration = buildTestConfig()
 	path := fmt.Sprintf("%s/org/example/Unopen.java", configuration.CodeRoot)
@@ -96,10 +121,9 @@ func TestFailNotOpenFragment(t *testing.T) {
 }
 
 func TestFragmentWithoutEnd(t *testing.T) {
-	defer cleanup()
-
-	// TODO: remove os.Chdir, it's just for vscode debugging
-	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+	testPreparator := newFragmentationTestsPreparator()
+	testPreparator.setup()
+	defer testPreparator.cleanup()
 
 	configuration := buildTestConfig()
 	fileName := "Unclosed.java"
@@ -137,10 +161,9 @@ func TestFragmentWithoutEnd(t *testing.T) {
 }
 
 func TestFragmentizeEmptyFile(t *testing.T) {
-	defer cleanup()
-
-	// TODO: remove os.Chdir, it's just for vscode debugging
-	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+	testPreparator := newFragmentationTestsPreparator()
+	testPreparator.setup()
+	defer testPreparator.cleanup()
 
 	configuration := buildTestConfig()
 	fileName := "Empty.java"
@@ -161,10 +184,9 @@ func TestFragmentizeEmptyFile(t *testing.T) {
 }
 
 func TestIgnoreBinary(t *testing.T) {
-	defer cleanup()
-
-	// TODO: remove os.Chdir, it's just for vscode debugging
-	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+	testPreparator := newFragmentationTestsPreparator()
+	testPreparator.setup()
+	defer testPreparator.cleanup()
 
 	configuration := buildTestConfig()
 	configuration.CodeIncludes = []string{"**.jar"}
@@ -176,10 +198,9 @@ func TestIgnoreBinary(t *testing.T) {
 }
 
 func TestManyPartitions(t *testing.T) {
-	defer cleanup()
-
-	// TODO: remove os.Chdir, it's just for vscode debugging
-	os.Chdir(os.Getenv("WORKSPACE_DIR"))
+	testPreparator := newFragmentationTestsPreparator()
+	testPreparator.setup()
+	defer testPreparator.cleanup()
 
 	configuration := buildTestConfig()
 
