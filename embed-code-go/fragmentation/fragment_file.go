@@ -1,3 +1,21 @@
+// Copyright 2024, TeamDev. All rights reserved.
+//
+// Redistribution and use in source and/or binary forms, with or without
+// modification, must retain the above copyright notice and the following
+// disclaimer.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 package fragmentation
 
 import (
@@ -10,6 +28,12 @@ import (
 	"strings"
 )
 
+// A file storing a single fragment from the file.
+//
+// The physical file on the disk may not exists.
+// [string] CodeFile a relative path to a code file
+// [string] FragmentName a name of the fragment in the code file
+// [Configuration] Configuration the embedding configuration
 type FragmentFile struct {
 	CodeFile      string
 	FragmentName  string
@@ -46,6 +70,7 @@ func NewFragmentFileFromAbsolute(
 
 // Private methods
 
+// Obtains the absolute path to this fragment file
 func (fragmentFile FragmentFile) absolutePath() string {
 
 	fileExtension := filepath.Ext(fragmentFile.CodeFile)
@@ -73,12 +98,16 @@ func (fragmentFile FragmentFile) getFragmentHash() string {
 
 // Public methods
 
+// Writes contents to the file.
+// Overwrites the file if it exists.
 func (fragmentFile FragmentFile) Write(text string) {
 	byteStr := []byte(text)
 	filePath := fragmentFile.absolutePath()
 	os.WriteFile(filePath, byteStr, 0777)
 }
 
+// Reads content of the file.
+// @return contents of the file or nil if it doesn't exist
 func (fragmentFile FragmentFile) Content() []string {
 	path := fragmentFile.absolutePath()
 	isPathFileExits, err := isFileExists(path)

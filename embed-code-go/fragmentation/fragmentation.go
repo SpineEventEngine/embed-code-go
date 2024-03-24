@@ -51,6 +51,8 @@ const (
 	FragmentEnd   = "#enddocfragment"
 )
 
+// [string] SourcesRoot a full path of the root directory of the source code to be embedded
+// [string] CodeFile a full path of a file to fragment
 type Fragmentation struct {
 	Configuration configuration.Configuration
 	SourcesRoot   string
@@ -83,6 +85,7 @@ func NewFragmentation(
 	return fragmentation
 }
 
+// Splits the file into fragments.
 // @return (content, fragments) a refined content of the file to be cut into fragments, and the Fragments
 func (fragmentation Fragmentation) fragmentize() ([]string, map[string]Fragment, error) {
 	fragmentBuilders := make(map[string]*FragmentBuilder)
