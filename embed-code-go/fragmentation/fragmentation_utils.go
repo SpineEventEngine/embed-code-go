@@ -27,14 +27,14 @@ import (
 	"unicode/utf8"
 )
 
-func shouldFragmentize(file string) bool {
+func ShouldFragmentize(file string) bool {
 	info, err := os.Stat(file)
 	if err != nil {
 		panic(err)
 	}
 
 	isFile := !info.IsDir()
-	isValidEncoding := isValidEncoding(file)
+	isValidEncoding := IsValidEncoding(file)
 
 	return isFile && isValidEncoding
 }
@@ -68,7 +68,7 @@ func IsFileASCIIEncoded(filename string) (bool, error) {
 	return true, nil
 }
 
-func isValidEncoding(file string) bool {
+func IsValidEncoding(file string) bool {
 	isUTF8Encoded, err := IsFileUTF8Encoded(file)
 	if err != nil {
 		panic(err)
@@ -82,7 +82,7 @@ func isValidEncoding(file string) bool {
 	return isUTF8Encoded || isASCIIEncoded
 }
 
-func ensureDirExists(dirPath string) {
+func EnsureDirExists(dirPath string) {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err := os.MkdirAll(dirPath, os.ModeDir)
 		if err != nil {
@@ -91,7 +91,7 @@ func ensureDirExists(dirPath string) {
 	}
 }
 
-func isFileExists(filePath string) (bool, error) {
+func IsFileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		return false, nil
@@ -99,20 +99,20 @@ func isFileExists(filePath string) (bool, error) {
 	return err == nil, err
 }
 
-func unquoteNameAndClean(name string) string {
+func UnquoteNameAndClean(name string) string {
 	r, _ := regexp.Compile("\"(.*)\"")
 	nameQuoted := r.FindString(name)
 	nameCleaned, _ := strconv.Unquote(nameQuoted)
 	return nameCleaned
 }
 
-func lookup(line string, prefix string) []string {
+func Lookup(line string, prefix string) []string {
 	if strings.Contains(line, prefix) {
 		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1 // 1 for trailing space after the prefix
 		unquotedFragmentNames := []string{}
 		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {
 			quotedFragmentName := strings.Trim(fragmentName, "\n\t ")
-			unquotedFragmentName := unquoteNameAndClean(quotedFragmentName)
+			unquotedFragmentName := UnquoteNameAndClean(quotedFragmentName)
 			unquotedFragmentNames = append(unquotedFragmentNames, unquotedFragmentName)
 		}
 		return unquotedFragmentNames
@@ -121,16 +121,20 @@ func lookup(line string, prefix string) []string {
 	}
 }
 
-func getFragmentStarts(line string) []string {
-	return lookup(line, FragmentStart)
+func GetFragmentStarts(line string) []string {
+	return Lookup(line, FragmentStart)
 }
 
-func getFragmentEnds(line string) []string {
-	return lookup(line, FragmentEnd)
+func GetFragmentEnds(line string) []string {
+	return Lookup(line, FragmentEnd)
 }
 
-func readLines(filePath string) []string {
-	file, _ := os.Open(filePath)
+func ReadLines(filePath string) []string {
+	file, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+
 	lines := []string{}
 	defer file.Close()
 
@@ -138,9 +142,7 @@ func readLines(filePath string) []string {
 
 	for {
 		line, _, err := r.ReadLine()
-		if len(line) > 0 {
-			lines = append(lines, string(line))
-		}
+		lines = append(lines, string(line))
 		if err != nil {
 			break
 		}

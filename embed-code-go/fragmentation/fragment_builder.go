@@ -27,7 +27,9 @@ type FragmentBuilder struct {
 	Name       string
 }
 
+//
 // Public methods
+//
 
 // Adds a new partition with the given start position.
 //

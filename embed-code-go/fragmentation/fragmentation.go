@@ -59,6 +59,10 @@ type Fragmentation struct {
 	CodeFile      string
 }
 
+//
+// Initializers
+//
+
 func NewFragmentation(
 	codeFileRelative string,
 	config configuration.Configuration,
@@ -85,42 +89,15 @@ func NewFragmentation(
 	return fragmentation
 }
 
-// Splits the file into fragments.
-// @return (content, fragments) a refined content of the file to be cut into fragments, and the Fragments
-func (fragmentation Fragmentation) fragmentize() ([]string, map[string]Fragment, error) {
-	fragmentBuilders := make(map[string]*FragmentBuilder)
-	var contentToRender []string
-
-	file, err := os.Open(fragmentation.CodeFile)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text() + "\n"
-		contentToRender, fragmentBuilders, err = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	fragments := make(map[string]Fragment)
-	for k, v := range fragmentBuilders {
-		fragments[k] = v.Build()
-	}
-	fragments[DefaultFragment] = CreateDefaultFragment()
-
-	return contentToRender, fragments, nil
-
-}
+//
+// Private methods
+//
 
 func (fragmentation Fragmentation) parseLine(line string, contentToRender []string, fragmentBuilders map[string]*FragmentBuilder) ([]string, map[string]*FragmentBuilder, error) {
 	cursor := len(contentToRender)
 
-	fragmentStarts := getFragmentStarts(line)
-	fragmentEnds := getFragmentEnds(line)
+	fragmentStarts := GetFragmentStarts(line)
+	fragmentEnds := GetFragmentEnds(line)
 
 	if len(fragmentStarts) > 0 {
 		for _, fragmentName := range fragmentStarts {
@@ -160,17 +137,52 @@ func (fragmentation Fragmentation) targetDirectory() string {
 	return filepath.Join(fragmentsDir, subTree)
 }
 
+//
+// Public methods
+//
+
+// Splits the file into fragments.
+// @return (content, fragments) a refined content of the file to be cut into fragments, and the Fragments
+func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment, error) {
+	fragmentBuilders := make(map[string]*FragmentBuilder)
+	var contentToRender []string
+
+	file, err := os.Open(fragmentation.CodeFile)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text() + "\n"
+		contentToRender, fragmentBuilders, err = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	fragments := make(map[string]Fragment)
+	for k, v := range fragmentBuilders {
+		fragments[k] = v.Build()
+	}
+	fragments[DefaultFragment] = CreateDefaultFragment()
+
+	return contentToRender, fragments, nil
+
+}
+
 // WriteFragments serializes fragments to the output directory.
 //
 // Keeps the original directory structure relative to the sourcesRoot. That is,
 // `SRC/src/main` becomes `OUT/src/main`.
 func (fragmentation Fragmentation) WriteFragments() error {
-	allLines, fragments, err := fragmentation.fragmentize()
+	allLines, fragments, err := fragmentation.Fragmentize()
 	if err != nil {
 		return err
 	}
 
-	ensureDirExists(fragmentation.targetDirectory())
+	EnsureDirExists(fragmentation.targetDirectory())
 
 	for _, fragment := range fragments {
 		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name, fragmentation.Configuration)
@@ -186,7 +198,7 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 		pattern := fmt.Sprintf("%s/%s", codeRoot, rule)
 		codeFiles, _ := filepath.Glob(pattern)
 		for _, codeFile := range codeFiles {
-			if shouldFragmentize(codeFile) {
+			if ShouldFragmentize(codeFile) {
 				fragmentation := NewFragmentation(codeFile, configuration)
 				err := fragmentation.WriteFragments()
 				if err != nil {

@@ -68,7 +68,9 @@ func NewFragmentFileFromAbsolute(
 	}
 }
 
+//
 // Private methods
+//
 
 // Obtains the absolute path to this fragment file
 func (fragmentFile FragmentFile) absolutePath() string {
@@ -96,7 +98,9 @@ func (fragmentFile FragmentFile) getFragmentHash() string {
 	return sha1_hash
 }
 
+//
 // Public methods
+//
 
 // Writes contents to the file.
 // Overwrites the file if it exists.
@@ -110,9 +114,9 @@ func (fragmentFile FragmentFile) Write(text string) {
 // @return contents of the file or nil if it doesn't exist
 func (fragmentFile FragmentFile) Content() []string {
 	path := fragmentFile.absolutePath()
-	isPathFileExits, err := isFileExists(path)
+	isPathFileExits, err := IsFileExists(path)
 	if isPathFileExits {
-		return readLines(path)
+		return ReadLines(path)
 	} else {
 		panic(err)
 	}

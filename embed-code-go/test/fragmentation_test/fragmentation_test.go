@@ -19,7 +19,6 @@
 package fragmentation_test
 
 import (
-	"bufio"
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/fragmentation"
 	"fmt"
@@ -69,21 +68,6 @@ func buildTestConfig() configuration.Configuration {
 	config.DocumentationRoot = "./test/resources/docs"
 	config.CodeRoot = "./test/resources/code"
 	return config
-}
-
-func readLines(path string) ([]string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines, scanner.Err()
 }
 
 func TestFragmentizeFile(t *testing.T) {
@@ -224,8 +208,8 @@ func TestManyPartitions(t *testing.T) {
 
 	fileName := "Complex.java"
 	path := fmt.Sprintf("%s/org/example/%s", configuration.CodeRoot, fileName)
-	fragmentation := fragmentation.NewFragmentation(path, configuration)
-	fragmentation.WriteFragments()
+	frag := fragmentation.NewFragmentation(path, configuration)
+	frag.WriteFragments()
 
 	fragmentDir := fmt.Sprintf("%s/org/example", configuration.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
@@ -241,7 +225,8 @@ func TestManyPartitions(t *testing.T) {
 		}
 	}
 
-	fragmentLines, _ := readLines(fmt.Sprintf("%s/%s", fragmentDir, fragmentFileName))
+	fragmentLines := fragmentation.ReadLines(fmt.Sprintf("%s/%s", fragmentDir, fragmentFileName))
+
 	if fragmentLines[0] != "public class Main {" {
 		t.Errorf("Expected 'public class Main {', got '%s'", fragmentLines[0])
 	}

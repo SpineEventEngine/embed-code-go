@@ -43,8 +43,11 @@ func CreateDefaultFragment() Fragment {
 	}
 }
 
-// Public methods
-func (fragment Fragment) Text(allLines []string, configuration configuration.Configuration) string {
+//
+// Private methods
+//
+
+func (fragment Fragment) text(allLines []string, configuration configuration.Configuration) string {
 
 	if fragment.isDefault() {
 		return strings.Join(allLines, "")
@@ -75,16 +78,18 @@ func (fragment Fragment) Text(allLines []string, configuration configuration.Con
 	return text
 }
 
+func (fragment Fragment) isDefault() bool {
+	return fragment.Name == DefaultFragment
+}
+
+//
+// Public methods
+//
+
 func (fragment Fragment) WriteTo(file FragmentFile,
 	allLines []string,
 	configuration configuration.Configuration,
 ) {
-	text := fragment.Text(allLines, configuration)
+	text := fragment.text(allLines, configuration)
 	file.Write(text)
-}
-
-// Private methods
-
-func (fragment Fragment) isDefault() bool {
-	return fragment.Name == DefaultFragment
 }

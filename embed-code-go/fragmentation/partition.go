@@ -27,6 +27,10 @@ type Partition struct {
 	EndPosition   *int
 }
 
+//
+// Public methods
+//
+
 func (partition Partition) Select(lines []string) []string {
 	if partition.EndPosition == nil {
 		// This part is for emulating the behaviour of the original embed code.
