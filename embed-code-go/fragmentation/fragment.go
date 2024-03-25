@@ -47,6 +47,22 @@ func CreateDefaultFragment() Fragment {
 }
 
 //
+// Public methods
+//
+
+// WriteTo takes the given allLines,
+// unites them into a text
+// and writes it into the given file.
+func (fragment Fragment) WriteTo(
+	file FragmentFile,
+	allLines []string,
+	configuration configuration.Configuration,
+) {
+	text := fragment.text(allLines, configuration)
+	file.Write(text)
+}
+
+//
 // Private methods
 //
 
@@ -83,20 +99,4 @@ func (fragment Fragment) text(allLines []string, configuration configuration.Con
 
 func (fragment Fragment) isDefault() bool {
 	return fragment.Name == DefaultFragment
-}
-
-//
-// Public methods
-//
-
-// WriteTo takes the given allLines,
-// unites them into a text
-// and writes it into the given file.
-func (fragment Fragment) WriteTo(
-	file FragmentFile,
-	allLines []string,
-	configuration configuration.Configuration,
-) {
-	text := fragment.text(allLines, configuration)
-	file.Write(text)
 }

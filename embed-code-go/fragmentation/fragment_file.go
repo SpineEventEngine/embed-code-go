@@ -69,6 +69,35 @@ func NewFragmentFileFromAbsolute(
 }
 
 //
+// Public methods
+//
+
+// Writes text to the file.
+// Overwrites the file if it exists.
+func (fragmentFile FragmentFile) Write(text string) {
+	byteStr := []byte(text)
+	filePath := fragmentFile.absolutePath()
+	os.WriteFile(filePath, byteStr, 0777)
+}
+
+// Reads content of the file.
+//
+// Return contents of the file as a list of strings or raises an error if it doesn't exists.
+func (fragmentFile FragmentFile) Content() []string {
+	path := fragmentFile.absolutePath()
+	isPathFileExits, err := IsFileExists(path)
+	if isPathFileExits {
+		return ReadLines(path)
+	} else {
+		panic(err)
+	}
+}
+
+func (fragmentFile FragmentFile) String() string {
+	return fragmentFile.absolutePath()
+}
+
+//
 // Private methods
 //
 
@@ -96,33 +125,4 @@ func (fragmentFile FragmentFile) getFragmentHash() string {
 	hash.Write([]byte(fragmentFile.FragmentName))
 	sha1_hash := hex.EncodeToString(hash.Sum(nil))[:8]
 	return sha1_hash
-}
-
-//
-// Public methods
-//
-
-// Writes text to the file.
-// Overwrites the file if it exists.
-func (fragmentFile FragmentFile) Write(text string) {
-	byteStr := []byte(text)
-	filePath := fragmentFile.absolutePath()
-	os.WriteFile(filePath, byteStr, 0777)
-}
-
-// Reads content of the file.
-//
-// Return contents of the file as a list of strings or raises an error if it doesn't exists.
-func (fragmentFile FragmentFile) Content() []string {
-	path := fragmentFile.absolutePath()
-	isPathFileExits, err := IsFileExists(path)
-	if isPathFileExits {
-		return ReadLines(path)
-	} else {
-		panic(err)
-	}
-}
-
-func (fragmentFile FragmentFile) String() string {
-	return fragmentFile.absolutePath()
 }

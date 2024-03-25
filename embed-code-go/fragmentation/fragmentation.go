@@ -93,54 +93,6 @@ func NewFragmentation(
 }
 
 //
-// Private methods
-//
-
-func (fragmentation Fragmentation) parseLine(line string, contentToRender []string, fragmentBuilders map[string]*FragmentBuilder) ([]string, map[string]*FragmentBuilder, error) {
-	cursor := len(contentToRender)
-
-	fragmentStarts := GetFragmentStarts(line)
-	fragmentEnds := GetFragmentEnds(line)
-
-	if len(fragmentStarts) > 0 {
-		for _, fragmentName := range fragmentStarts {
-			fragment, exists := fragmentBuilders[fragmentName]
-			if !exists {
-				builder := FragmentBuilder{FileName: fragmentation.CodeFile, Name: fragmentName}
-				fragmentBuilders[fragmentName] = &builder
-				fragment = fragmentBuilders[fragmentName]
-			}
-			fragment.AddStartPosition(cursor)
-		}
-	} else if len(fragmentEnds) > 0 {
-		for _, fragmentName := range fragmentEnds {
-			if fragment, exists := fragmentBuilders[fragmentName]; exists {
-				fragment.AddEndPosition(cursor - 1)
-			} else {
-				return nil, nil, fmt.Errorf("cannot end the fragment `%s` as it wasn't started", fragmentName)
-			}
-		}
-	} else {
-		contentToRender = append(contentToRender, line)
-	}
-	return contentToRender, fragmentBuilders, nil
-}
-
-func (fragmentation Fragmentation) targetDirectory() string {
-	fragmentsDir := fragmentation.Configuration.FragmentsDir
-	codeRoot, err := filepath.Abs(fragmentation.Configuration.CodeRoot)
-	if err != nil {
-		panic(fmt.Sprintf("error calculating absolute path: %v", err))
-	}
-	relativeFile, err := filepath.Rel(codeRoot, fragmentation.CodeFile)
-	if err != nil {
-		panic(fmt.Sprintf("error calculating relative path: %v", err))
-	}
-	subTree := filepath.Dir(relativeFile)
-	return filepath.Join(fragmentsDir, subTree)
-}
-
-//
 // Public methods
 //
 
@@ -218,4 +170,52 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 		}
 	}
 	return nil
+}
+
+//
+// Private methods
+//
+
+func (fragmentation Fragmentation) parseLine(line string, contentToRender []string, fragmentBuilders map[string]*FragmentBuilder) ([]string, map[string]*FragmentBuilder, error) {
+	cursor := len(contentToRender)
+
+	fragmentStarts := GetFragmentStarts(line)
+	fragmentEnds := GetFragmentEnds(line)
+
+	if len(fragmentStarts) > 0 {
+		for _, fragmentName := range fragmentStarts {
+			fragment, exists := fragmentBuilders[fragmentName]
+			if !exists {
+				builder := FragmentBuilder{FileName: fragmentation.CodeFile, Name: fragmentName}
+				fragmentBuilders[fragmentName] = &builder
+				fragment = fragmentBuilders[fragmentName]
+			}
+			fragment.AddStartPosition(cursor)
+		}
+	} else if len(fragmentEnds) > 0 {
+		for _, fragmentName := range fragmentEnds {
+			if fragment, exists := fragmentBuilders[fragmentName]; exists {
+				fragment.AddEndPosition(cursor - 1)
+			} else {
+				return nil, nil, fmt.Errorf("cannot end the fragment `%s` as it wasn't started", fragmentName)
+			}
+		}
+	} else {
+		contentToRender = append(contentToRender, line)
+	}
+	return contentToRender, fragmentBuilders, nil
+}
+
+func (fragmentation Fragmentation) targetDirectory() string {
+	fragmentsDir := fragmentation.Configuration.FragmentsDir
+	codeRoot, err := filepath.Abs(fragmentation.Configuration.CodeRoot)
+	if err != nil {
+		panic(fmt.Sprintf("error calculating absolute path: %v", err))
+	}
+	relativeFile, err := filepath.Rel(codeRoot, fragmentation.CodeFile)
+	if err != nil {
+		panic(fmt.Sprintf("error calculating relative path: %v", err))
+	}
+	subTree := filepath.Dir(relativeFile)
+	return filepath.Join(fragmentsDir, subTree)
 }
