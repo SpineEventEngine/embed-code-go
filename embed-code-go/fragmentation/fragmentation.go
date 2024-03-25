@@ -19,7 +19,6 @@
 // Splits the given file into fragments.
 //
 // The fragments are named parts of the file that are surrounded by "fragment brackets":
-// ```
 //
 //	class HelloWorld {
 //	    // #docfragment main_method
@@ -30,8 +29,6 @@
 //	    }
 //	    // #enddocfragment main_method
 //	}
-//
-// ```
 //
 // Fragments with the same name may appear multiple times in the same document.
 //
@@ -51,8 +48,9 @@ const (
 	FragmentEnd   = "#enddocfragment"
 )
 
-// [string] SourcesRoot a full path of the root directory of the source code to be embedded
-// [string] CodeFile a full path of a file to fragment
+// Splits the given file into fragments and writes them into corresponding output files
+// SourcesRoot a full path of the root directory of the source code to be embedded
+// CodeFile a full path of a file to fragment
 type Fragmentation struct {
 	Configuration configuration.Configuration
 	SourcesRoot   string
@@ -63,6 +61,8 @@ type Fragmentation struct {
 // Initializers
 //
 
+// Builds Fragmentation from the given codeFileRelative and config
+// codeFileRelative is a relative path to a code file to fragment
 func NewFragmentation(
 	codeFileRelative string,
 	config configuration.Configuration,
@@ -142,7 +142,8 @@ func (fragmentation Fragmentation) targetDirectory() string {
 //
 
 // Splits the file into fragments.
-// @return (content, fragments) a refined content of the file to be cut into fragments, and the Fragments
+//
+// Returns a refined content of the file to be cut into fragments, and the Fragments
 func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment, error) {
 	fragmentBuilders := make(map[string]*FragmentBuilder)
 	var contentToRender []string
@@ -172,10 +173,14 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 
 }
 
-// WriteFragments serializes fragments to the output directory.
 //
-// Keeps the original directory structure relative to the sourcesRoot. That is,
-// `SRC/src/main` becomes `OUT/src/main`.
+// Static functions
+//
+
+// Serializes fragments to the output directory.
+//
+// Keeps the original directory structure relative to the sources root dir.
+// That is, `SRC/src/main` becomes `OUT/src/main`.
 func (fragmentation Fragmentation) WriteFragments() error {
 	allLines, fragments, err := fragmentation.Fragmentize()
 	if err != nil {
@@ -191,6 +196,8 @@ func (fragmentation Fragmentation) WriteFragments() error {
 	return nil
 }
 
+// Searches for code files with patterns defined in configuration
+// and fragmentizes them with creating fragmented files as a result
 func WriteFragmentFiles(configuration configuration.Configuration) error {
 	includes := configuration.CodeIncludes
 	codeRoot := configuration.CodeRoot
