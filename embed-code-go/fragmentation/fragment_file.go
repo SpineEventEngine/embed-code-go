@@ -29,23 +29,23 @@ import (
 )
 
 // A file storing a single fragment from the file.
-//
-// The physical file on the disk may not exists.
-// [string] CodeFile a relative path to a code file
-// [string] FragmentName a name of the fragment in the code file
-// [Configuration] Configuration the embedding configuration
 type FragmentFile struct {
-	CodeFile      string
-	FragmentName  string
-	Configuration configuration.Configuration
+	CodeFile      string                      // a relative path to a code file
+	FragmentName  string                      // a name of the fragment in the code file
+	Configuration configuration.Configuration // a configuration for embedding
 }
 
 // Iniitalizers
 
 // Composes a FragmentFile for the given fragment in the given code file.
 //
-// @param [string] code_file an absolute path to a code file
-// @param [string] fragment the fragment
+// codeFile is an absolute path to a code file.
+//
+// fragmentName is a name of the fragment in the code file
+//
+// configuration is a configuration for embedding
+//
+// Returns composed fragment
 func NewFragmentFileFromAbsolute(
 	codeFile string,
 	fragmentName string,
@@ -90,7 +90,7 @@ func (fragmentFile FragmentFile) absolutePath() string {
 	}
 }
 
-// TODO: Investigate why does it use the hash of fragment name instead of the hash of fragment content
+// TODO:2024-03-25:vladyslav.bakanov: Investigate why does it use the hash of fragment name instead of the hash of fragment content
 func (fragmentFile FragmentFile) getFragmentHash() string {
 	hash := sha1.New()
 	hash.Write([]byte(fragmentFile.FragmentName))
@@ -102,7 +102,7 @@ func (fragmentFile FragmentFile) getFragmentHash() string {
 // Public methods
 //
 
-// Writes contents to the file.
+// Writes text to the file.
 // Overwrites the file if it exists.
 func (fragmentFile FragmentFile) Write(text string) {
 	byteStr := []byte(text)
@@ -111,7 +111,8 @@ func (fragmentFile FragmentFile) Write(text string) {
 }
 
 // Reads content of the file.
-// @return contents of the file or nil if it doesn't exist
+//
+// Return contents of the file as a list of strings or raises an error if it doesn't exists
 func (fragmentFile FragmentFile) Content() []string {
 	path := fragmentFile.absolutePath()
 	isPathFileExits, err := IsFileExists(path)
