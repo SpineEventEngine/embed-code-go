@@ -114,7 +114,7 @@ func (fragmentation Fragmentation) parseLine(line string, contentToRender []stri
 			if fragment, exists := fragmentBuilders[fragmentName]; exists {
 				fragment.AddEndPosition(cursor - 1)
 			} else {
-				return nil, nil, fmt.Errorf("Cannot end the fragment `%s` as it wasn't started.", fragmentName)
+				return nil, nil, fmt.Errorf("cannot end the fragment `%s` as it wasn't started", fragmentName)
 			}
 		}
 	} else {
@@ -127,11 +127,11 @@ func (fragmentation Fragmentation) targetDirectory() string {
 	fragmentsDir := fragmentation.Configuration.FragmentsDir
 	codeRoot, err := filepath.Abs(fragmentation.Configuration.CodeRoot)
 	if err != nil {
-		panic(fmt.Sprintf("Error calculating absolute path: %v", err))
+		panic(fmt.Sprintf("error calculating absolute path: %v", err))
 	}
 	relativeFile, err := filepath.Rel(codeRoot, fragmentation.CodeFile)
 	if err != nil {
-		panic(fmt.Sprintf("Error calculating relative path: %v", err))
+		panic(fmt.Sprintf("error calculating relative path: %v", err))
 	}
 	subTree := filepath.Dir(relativeFile)
 	return filepath.Join(fragmentsDir, subTree)
