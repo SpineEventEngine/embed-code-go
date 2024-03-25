@@ -22,20 +22,23 @@ import "fmt"
 
 // A single fragment builder.
 type FragmentBuilder struct {
-	FileName   string
+	// A name of a file to fragment
+	FileName string
+
+	// A list of partitions of a file to fragment
 	Partitions []Partition
-	Name       string
+
+	// A name of a Fragment
+	Name string
 }
 
 //
 // Public methods
 //
 
-// Adds a new partition with the given start position.
-//
-// Don't forget to call `add_end_position` when the end of the fragment is reached.
-//
-// @param [Integer] start_position a starting position of the fragment
+// AddStartPosition adds a new partition with the given start position.
+// Don't forget to call AddEndPosition when the end of the fragment is reached.
+// startPosition is a starting position of the fragment.
 func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 
 	if len(fragmentBuilder.Partitions) > 0 {
@@ -49,11 +52,9 @@ func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 	fragmentBuilder.Partitions = append(fragmentBuilder.Partitions, partition)
 }
 
-// Completes previously created fragment partition with its end position.
-//
-// Should be called after `add_start_position`.
-//
-// @param [Integer] end_position an end position position of the fragment
+// AddEndPosition completes previously created fragment partition with its end position.
+// It should be called after AddStartPosition.
+// endPosition is an end position position of the fragment.
 func (fragmentBuilder *FragmentBuilder) AddEndPosition(endPosition int) {
 	if len(fragmentBuilder.Partitions) == 0 {
 		panic("error: the list of partitions is empty")
@@ -68,6 +69,7 @@ func (fragmentBuilder *FragmentBuilder) AddEndPosition(endPosition int) {
 	lastAddedPartition.EndPosition = &endPosition
 }
 
+// Creates and returns new Fragment with the previously added and filled Partitions
 func (fragmentBuilder FragmentBuilder) Build() Fragment {
 	return Fragment{
 		Name:       fragmentBuilder.Name,
