@@ -189,7 +189,10 @@ func ShouldFragmentize(fileName string) bool {
 // Private methods
 //
 
-func (fragmentation Fragmentation) parseLine(line string, contentToRender []string, fragmentBuilders map[string]*FragmentBuilder) ([]string, map[string]*FragmentBuilder, error) {
+func (fragmentation Fragmentation) parseLine(
+	line string, contentToRender []string,
+	fragmentBuilders map[string]*FragmentBuilder,
+) ([]string, map[string]*FragmentBuilder, error) {
 	cursor := len(contentToRender)
 
 	fragmentStarts := GetFragmentStarts(line)
