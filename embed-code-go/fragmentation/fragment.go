@@ -29,7 +29,7 @@ const (
 	DefaultFragment = "_default"
 )
 
-// A single fragment in a file
+// A single fragment in a file.
 type Fragment struct {
 	Name       string      // A name of a Fragment
 	Partitions []Partition // A list of partitions found for a Fragment

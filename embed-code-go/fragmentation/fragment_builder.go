@@ -22,13 +22,13 @@ import "fmt"
 
 // A single fragment builder.
 type FragmentBuilder struct {
-	// A name of a file to fragment
+	// A name of a file to fragment.
 	FileName string
 
-	// A list of partitions of a file to fragment
+	// A list of partitions of a file to fragment.
 	Partitions []Partition
 
-	// A name of a Fragment
+	// A name of a Fragment.
 	Name string
 }
 
@@ -38,6 +38,7 @@ type FragmentBuilder struct {
 
 // AddStartPosition adds a new partition with the given start position.
 // Don't forget to call AddEndPosition when the end of the fragment is reached.
+//
 // startPosition is a starting position of the fragment.
 func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 
@@ -54,6 +55,7 @@ func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 
 // AddEndPosition completes previously created fragment partition with its end position.
 // It should be called after AddStartPosition.
+//
 // endPosition is an end position position of the fragment.
 func (fragmentBuilder *FragmentBuilder) AddEndPosition(endPosition int) {
 	if len(fragmentBuilder.Partitions) == 0 {
@@ -69,7 +71,7 @@ func (fragmentBuilder *FragmentBuilder) AddEndPosition(endPosition int) {
 	lastAddedPartition.EndPosition = &endPosition
 }
 
-// Creates and returns new Fragment with the previously added and filled Partitions
+// Creates and returns new Fragment with the previously added and filled Partitions.
 func (fragmentBuilder FragmentBuilder) Build() Fragment {
 	return Fragment{
 		Name:       fragmentBuilder.Name,

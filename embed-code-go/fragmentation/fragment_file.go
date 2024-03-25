@@ -41,11 +41,11 @@ type FragmentFile struct {
 //
 // codeFile is an absolute path to a code file.
 //
-// fragmentName is a name of the fragment in the code file
+// fragmentName is a name of the fragment in the code file.
 //
-// configuration is a configuration for embedding
+// configuration is a configuration for embedding.
 //
-// Returns composed fragment
+// Returns composed fragment.
 func NewFragmentFileFromAbsolute(
 	codeFile string,
 	fragmentName string,
@@ -72,7 +72,7 @@ func NewFragmentFileFromAbsolute(
 // Private methods
 //
 
-// Obtains the absolute path to this fragment file
+// Obtains the absolute path to this fragment file.
 func (fragmentFile FragmentFile) absolutePath() string {
 
 	fileExtension := filepath.Ext(fragmentFile.CodeFile)
@@ -90,7 +90,7 @@ func (fragmentFile FragmentFile) absolutePath() string {
 	}
 }
 
-// TODO:2024-03-25:vladyslav.bakanov: Investigate why does it use the hash of fragment name instead of the hash of fragment content
+// TODO:2024-03-25:vladyslav.bakanov: Investigate why does it use the hash of fragment name instead of the hash of fragment content.
 func (fragmentFile FragmentFile) getFragmentHash() string {
 	hash := sha1.New()
 	hash.Write([]byte(fragmentFile.FragmentName))
@@ -112,7 +112,7 @@ func (fragmentFile FragmentFile) Write(text string) {
 
 // Reads content of the file.
 //
-// Return contents of the file as a list of strings or raises an error if it doesn't exists
+// Return contents of the file as a list of strings or raises an error if it doesn't exists.
 func (fragmentFile FragmentFile) Content() []string {
 	path := fragmentFile.absolutePath()
 	isPathFileExits, err := IsFileExists(path)

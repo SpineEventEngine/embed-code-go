@@ -48,9 +48,11 @@ const (
 	FragmentEnd   = "#enddocfragment"
 )
 
-// Splits the given file into fragments and writes them into corresponding output files
-// SourcesRoot a full path of the root directory of the source code to be embedded
-// CodeFile a full path of a file to fragment
+// Splits the given file into fragments and writes them into corresponding output files.
+//
+// SourcesRoot a full path of the root directory of the source code to be embedded.
+//
+// CodeFile a full path of a file to fragment.
 type Fragmentation struct {
 	Configuration configuration.Configuration
 	SourcesRoot   string
@@ -61,8 +63,9 @@ type Fragmentation struct {
 // Initializers
 //
 
-// Builds Fragmentation from the given codeFileRelative and config
-// codeFileRelative is a relative path to a code file to fragment
+// Builds Fragmentation from the given codeFileRelative and config.
+//
+// codeFileRelative is a relative path to a code file to fragment.
 func NewFragmentation(
 	codeFileRelative string,
 	config configuration.Configuration,
@@ -143,7 +146,7 @@ func (fragmentation Fragmentation) targetDirectory() string {
 
 // Splits the file into fragments.
 //
-// Returns a refined content of the file to be cut into fragments, and the Fragments
+// Returns a refined content of the file to be cut into fragments, and the Fragments.
 func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment, error) {
 	fragmentBuilders := make(map[string]*FragmentBuilder)
 	var contentToRender []string
@@ -173,10 +176,6 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 
 }
 
-//
-// Static functions
-//
-
 // Serializes fragments to the output directory.
 //
 // Keeps the original directory structure relative to the sources root dir.
@@ -196,8 +195,12 @@ func (fragmentation Fragmentation) WriteFragments() error {
 	return nil
 }
 
+//
+// Static functions
+//
+
 // Searches for code files with patterns defined in configuration
-// and fragmentizes them with creating fragmented files as a result
+// and fragmentizes them with creating fragmented files as a result.
 func WriteFragmentFiles(configuration configuration.Configuration) error {
 	includes := configuration.CodeIncludes
 	codeRoot := configuration.CodeRoot
