@@ -39,6 +39,7 @@ type Fragment struct {
 // Initializers
 //
 
+// Returns default Fragment
 func CreateDefaultFragment() Fragment {
 	return Fragment{
 		Name:       DefaultFragment,
