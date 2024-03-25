@@ -31,11 +31,14 @@ const (
 
 // A single fragment in a file
 type Fragment struct {
-	Name       string
-	Partitions []Partition
+	Name       string      // A name of a Fragment
+	Partitions []Partition // A list of partitions found for a Fragment
 }
 
+//
 // Initializers
+//
+
 func CreateDefaultFragment() Fragment {
 	return Fragment{
 		Name:       DefaultFragment,
@@ -86,7 +89,11 @@ func (fragment Fragment) isDefault() bool {
 // Public methods
 //
 
-func (fragment Fragment) WriteTo(file FragmentFile,
+// WriteTo takes the given allLines,
+// unites them into a text
+// and writes it into the given file.
+func (fragment Fragment) WriteTo(
+	file FragmentFile,
 	allLines []string,
 	configuration configuration.Configuration,
 ) {
