@@ -19,86 +19,12 @@
 package fragmentation
 
 import (
-	"bufio"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
-func ShouldFragmentize(file string) bool {
-	info, err := os.Stat(file)
-	if err != nil {
-		panic(err)
-	}
-
-	isFile := !info.IsDir()
-	isValidEncoding := IsValidEncoding(file)
-
-	return isFile && isValidEncoding
-}
-
-func IsFileUTF8Encoded(filename string) (bool, error) {
-	// Read the entire file into memory
-	content, err := os.ReadFile(filename)
-	if err != nil {
-		return false, err
-	}
-
-	// Check if the content contains valid UTF-8 characters
-	isUTF8 := utf8.Valid(content)
-
-	return isUTF8, nil
-}
-
-// If all the characters fall within the ASCII range (0 to 127), it’s likely an ASCII-encoded file.
-func IsFileASCIIEncoded(filename string) (bool, error) {
-	content, err := os.ReadFile(filename)
-	if err != nil {
-		return false, err
-	}
-
-	for _, char := range content {
-		if char > 127 {
-			return false, nil
-		}
-	}
-
-	return true, nil
-}
-
-func IsValidEncoding(file string) bool {
-	isUTF8Encoded, err := IsFileUTF8Encoded(file)
-	if err != nil {
-		panic(err)
-	}
-
-	isASCIIEncoded, err := IsFileASCIIEncoded(file)
-	if err != nil {
-		panic(err)
-	}
-
-	return isUTF8Encoded || isASCIIEncoded
-}
-
-func EnsureDirExists(dirPath string) {
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		err := os.MkdirAll(dirPath, os.ModeDir)
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
-func IsFileExists(filePath string) (bool, error) {
-	_, err := os.Stat(filePath)
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return err == nil, err
-}
-
+// Returns the clean name from the given quoted name.
 func UnquoteNameAndClean(name string) string {
 	r, _ := regexp.Compile("\"(.*)\"")
 	nameQuoted := r.FindString(name)
@@ -106,6 +32,13 @@ func UnquoteNameAndClean(name string) string {
 	return nameCleaned
 }
 
+// Look up for fragments' names from the given line.
+//
+// line is a line to search in.
+//
+// prefix is a user-defined indicator of a fragment, e.g. "#docfragment".
+//
+// Returns the list of the names found.
 func Lookup(line string, prefix string) []string {
 	if strings.Contains(line, prefix) {
 		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1 // 1 for trailing space after the prefix
@@ -121,31 +54,20 @@ func Lookup(line string, prefix string) []string {
 	}
 }
 
+// Finds all the names for the fragment's openings using the opening prefix.
+//
+// line is a line to search in.
+//
+// Returns the list of the names found.
 func GetFragmentStarts(line string) []string {
 	return Lookup(line, FragmentStart)
 }
 
+// Finds all the names for the fragment's endings using the ending prefix.
+//
+// line is a line to search in.
+//
+// Returns the list of the names found.
 func GetFragmentEnds(line string) []string {
 	return Lookup(line, FragmentEnd)
-}
-
-func ReadLines(filePath string) []string {
-	file, err := os.Open(filePath)
-	if err != nil {
-		panic(err)
-	}
-
-	lines := []string{}
-	defer file.Close()
-
-	r := bufio.NewReader(file)
-
-	for {
-		line, _, err := r.ReadLine()
-		lines = append(lines, string(line))
-		if err != nil {
-			break
-		}
-	}
-	return lines
 }

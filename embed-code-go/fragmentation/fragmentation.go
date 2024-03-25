@@ -172,6 +172,19 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 	return nil
 }
 
+// Reports whether the file stored at the filePath is exists, is file and is textual-encoded.
+func ShouldFragmentize(fileName string) bool {
+	info, err := os.Stat(fileName)
+	if err != nil {
+		panic(err)
+	}
+
+	isFile := !info.IsDir()
+	isValidEncoding := IsEncodedAsText(fileName)
+
+	return isFile && isValidEncoding
+}
+
 //
 // Private methods
 //
