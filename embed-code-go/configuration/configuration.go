@@ -64,11 +64,10 @@ type Configuration struct {
 
 // Builds the default config.
 func NewConfiguration() Configuration {
-	config := Configuration{}
-	config.CodeIncludes = DefaultInclude
-	config.DocIncludes = DefaultDocIncludes
-	config.FragmentsDir = DefaultFragmentsDir
-	config.Separator = DefaultSeparator
-
-	return config
+	return Configuration{
+		CodeIncludes: DefaultInclude,
+		DocIncludes:  DefaultDocIncludes,
+		FragmentsDir: DefaultFragmentsDir,
+		Separator:    DefaultSeparator,
+	}
 }
