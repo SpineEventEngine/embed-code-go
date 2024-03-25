@@ -56,10 +56,10 @@ func CreateDefaultFragment() Fragment {
 // and writes it into the given file.
 func (fragment Fragment) WriteTo(
 	file FragmentFile,
-	allLines []string,
+	lines []string,
 	configuration configuration.Configuration,
 ) {
-	text := fragment.text(allLines, configuration)
+	text := fragment.text(lines, configuration)
 	file.Write(text)
 }
 
@@ -73,15 +73,15 @@ func (fragment Fragment) text(allLines []string, configuration configuration.Con
 		return strings.Join(allLines, "")
 	}
 
-	commonIndentetaion := math.MaxInt32
+	commonIndentation := math.MaxInt32
 	partitionLines := [][]string{}
 
 	for _, part := range fragment.Partitions {
 		partitionText := part.Select(allLines)
 		partitionLines = append(partitionLines, partitionText)
-		indentetaion := indent.MaxCommonIndentation(partitionText)
-		if indentetaion < commonIndentetaion {
-			commonIndentetaion = indentetaion
+		indentation := indent.MaxCommonIndentation(partitionText)
+		if indentation < commonIndentation {
+			commonIndentation = indentation
 		}
 	}
 
@@ -90,7 +90,7 @@ func (fragment Fragment) text(allLines []string, configuration configuration.Con
 		if index != 0 {
 			text += configuration.Separator + "\n"
 		}
-		cutIndentLines := indent.CutIndent(line, commonIndentetaion)
+		cutIndentLines := indent.CutIndent(line, commonIndentation)
 		for _, cutIndentLine := range cutIndentLines {
 			text += cutIndentLine
 		}
