@@ -21,7 +21,11 @@ package fragmentation
 // A code fragment partition.
 //
 // A fragment may consist of a few partitions, collected from different points in the code file. In
-// the resulting doc file, the partitions are joined by the +Configuration::separator+.
+// the resulting doc file, the partitions are joined by the Configuration.Separator.
+//
+// StartPosition is an index from which the scope of partition exists.
+//
+// EndPosition is an index on which the scope of partition ends.
 type Partition struct {
 	StartPosition *int
 	EndPosition   *int
@@ -31,6 +35,8 @@ type Partition struct {
 // Public methods
 //
 
+// Returns the partition-related lines from the given lines
+// If EndPosition is nil, returns all the lines started from StartPosition
 func (partition Partition) Select(lines []string) []string {
 	if partition.EndPosition == nil {
 		// This part is for emulating the behaviour of the original embed code.
