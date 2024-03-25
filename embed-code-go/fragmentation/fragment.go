@@ -50,7 +50,7 @@ func CreateDefaultFragment() Fragment {
 // Public methods
 //
 
-// WriteTo takes the given allLines,
+// Takes the given allLines,
 // unites them into a text
 // and writes it into the given file.
 func (fragment Fragment) WriteTo(
