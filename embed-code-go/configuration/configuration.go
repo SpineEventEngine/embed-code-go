@@ -27,11 +27,12 @@ const (
 var DefaultInclude = []string{"**/*"}
 var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 
+// A storage for the all embed-code settings.
 type Configuration struct {
-	// A root directory of the source code to be embedded
+	// A root directory of the source code to be embedded.
 	CodeRoot string
 
-	// A root directory of the documentation files
+	// A root directory of the documentation files.
 	DocumentationRoot string
 
 	// A list of patterns filtering the code files to be considered.
@@ -57,10 +58,11 @@ type Configuration struct {
 
 	// A string that's inserted between multiple partitions of a single fragment.
 	//
-	// The default value is: "..." (three dots)
+	// The default value is: "..." (three dots).
 	Separator string
 }
 
+// Builds the default config.
 func NewConfiguration() Configuration {
 	config := Configuration{}
 	config.CodeIncludes = DefaultInclude
