@@ -21,7 +21,7 @@ package configuration
 
 const (
 	DefaultSeparator    = "..."
-	DefaultFragmentsDir = ".fragments"
+	DefaultFragmentsDir = "./build/fragments"
 )
 
 var DefaultInclude = []string{"**/*"}
