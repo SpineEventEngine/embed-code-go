@@ -42,7 +42,7 @@ func IsFileExists(filePath string) (bool, error) {
 	return err == nil, err
 }
 
-// Reads and return all lines from the file at the given filePath.
+// Reads and returns all lines from the file at the given filePath.
 func ReadLines(filePath string) []string {
 	file, err := os.Open(filePath)
 	if err != nil {
