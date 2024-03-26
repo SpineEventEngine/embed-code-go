@@ -119,7 +119,6 @@ func (fragmentFile FragmentFile) absolutePath() string {
 	}
 }
 
-// TODO:2024-03-25:vladyslav.bakanov: Investigate why does it use the hash of fragment name instead of the hash of fragment content.
 func (fragmentFile FragmentFile) getFragmentHash() string {
 	hash := sha1.New()
 	hash.Write([]byte(fragmentFile.FragmentName))
