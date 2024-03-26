@@ -119,6 +119,9 @@ func (fragmentFile FragmentFile) absolutePath() string {
 	}
 }
 
+// Creates and returns a hash string for FragmentFile.
+// Since fragments which have the same name unite into one
+// fragment with multiple partitions, the name of a fragment is unique.
 func (fragmentFile FragmentFile) getFragmentHash() string {
 	hash := sha1.New()
 	hash.Write([]byte(fragmentFile.FragmentName))
