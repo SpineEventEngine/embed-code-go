@@ -64,7 +64,7 @@ func (testPreparator FragmentationTestsPreparator) cleanup() {
 
 func buildTestConfig() configuration.Configuration {
 	var config = configuration.NewConfiguration()
-	config.FragmentsDir = "./build/fragments"
+	config.FragmentsDir, _ = filepath.Abs("./build/fragments")
 	config.DocumentationRoot = "./test/resources/docs"
 	config.CodeRoot = "./test/resources/code"
 	return config
