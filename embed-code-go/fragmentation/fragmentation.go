@@ -138,7 +138,6 @@ func (fragmentation Fragmentation) WriteFragments() error {
 		return err
 	}
 
-	fmt.Println(fragmentation.targetDirectory())
 	EnsureDirExists(fragmentation.targetDirectory())
 
 	for _, fragment := range fragments {
