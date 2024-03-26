@@ -189,6 +189,12 @@ func ShouldFragmentize(fileName string) bool {
 // Private methods
 //
 
+// This function parses a single line of input and performs the following actions:
+//   - Identifies fragment start and end markers within the line;
+//   - Updates the fragment builders based on the markers;
+//   - Appends non-fragment lines to the contentToRender.
+//
+// Returns updated contentToRender, fragmentBuilders and error if there's any.
 func (fragmentation Fragmentation) parseLine(
 	line string, contentToRender []string,
 	fragmentBuilders map[string]*FragmentBuilder,
@@ -222,6 +228,8 @@ func (fragmentation Fragmentation) parseLine(
 	return contentToRender, fragmentBuilders, nil
 }
 
+// This function calculates the target directory path based on the
+// Configuration.FragmentsDir and the parent dir of Fragmentation.CodeFile
 func (fragmentation Fragmentation) targetDirectory() string {
 	fragmentsDir := fragmentation.Configuration.FragmentsDir
 	codeRoot, err := filepath.Abs(fragmentation.Configuration.CodeRoot)
