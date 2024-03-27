@@ -29,7 +29,7 @@ const (
 	FragmentEnd   = "#enddocfragment"
 )
 
-// Returns the clean name from the given quoted name.
+// Returns the clean name from given quoted name.
 func UnquoteNameAndClean(name string) string {
 	r, _ := regexp.Compile("\"(.*)\"")
 	nameQuoted := r.FindString(name)
@@ -37,7 +37,7 @@ func UnquoteNameAndClean(name string) string {
 	return nameCleaned
 }
 
-// Look up for fragments' names from the given line.
+// Looks up for fragments' names from given line.
 //
 // line — a line to search in.
 //

@@ -31,7 +31,7 @@ func IsFileUTF8Encoded(filePath string) (bool, error) {
 		return false, err
 	}
 
-	// Check if the content contains valid UTF-8 characters.
+	// Check if content contains valid UTF-8 characters.
 	isUTF8 := utf8.Valid(content)
 
 	return isUTF8, nil

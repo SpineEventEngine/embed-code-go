@@ -58,7 +58,7 @@ type Fragmentation struct {
 // Initializers
 //
 
-// Builds Fragmentation from the given codeFileRelative and config.
+// Builds Fragmentation from given codeFileRelative and config.
 //
 // codeFileRelative — a relative path to a code file to fragment.
 func NewFragmentation(
@@ -167,15 +167,15 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 	return nil
 }
 
-// Reports whether the file stored at the filePath exists, is file and is textual-encoded.
-func ShouldFragmentize(fileName string) bool {
-	info, err := os.Stat(fileName)
+// Reports whether the file stored at filePath exists, is file and is textual-encoded.
+func ShouldFragmentize(filePath string) bool {
+	info, err := os.Stat(filePath)
 	if err != nil {
 		panic(err)
 	}
 
 	isFile := !info.IsDir()
-	isValidEncoding := IsEncodedAsText(fileName)
+	isValidEncoding := IsEncodedAsText(filePath)
 
 	return isFile && isValidEncoding
 }
@@ -185,9 +185,9 @@ func ShouldFragmentize(fileName string) bool {
 //
 
 // This function parses a single line of input and performs the following actions:
-//   - identifies fragment start and end markers within the line;
-//   - updates the fragment builders based on the markers;
-//   - appends non-fragment lines to the contentToRender.
+//   - identifies fragment start and end markers within given line;
+//   - updates fragmentBuilders based on the markers;
+//   - appends non-fragment lines to contentToRender.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
 func (fragmentation Fragmentation) parseLine(
@@ -224,7 +224,7 @@ func (fragmentation Fragmentation) parseLine(
 }
 
 // This function calculates the target directory path based on the
-// Configuration.FragmentsDir and the parent dir of Fragmentation.CodeFile
+// Configuration.FragmentsDir and the parent dir of Fragmentation.CodeFile.
 func (fragmentation Fragmentation) targetDirectory() string {
 	fragmentsDir := fragmentation.Configuration.FragmentsDir
 	codeRoot, err := filepath.Abs(fragmentation.Configuration.CodeRoot)

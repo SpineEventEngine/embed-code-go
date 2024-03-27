@@ -31,8 +31,8 @@ const (
 
 // A single fragment in a file.
 type Fragment struct {
-	Name       string      // A name of a Fragment
-	Partitions []Partition // A list of partitions found for a Fragment
+	Name       string      // A name of a Fragment.
+	Partitions []Partition // A list of partitions found for a Fragment.
 }
 
 //
@@ -51,9 +51,9 @@ func CreateDefaultFragment() Fragment {
 // Public methods
 //
 
-// Takes the given allLines,
+// Takes given allLines,
 // unites them into a text
-// and writes it into the given file.
+// and writes it into given file.
 func (fragment Fragment) WriteTo(
 	file FragmentFile,
 	lines []string,
@@ -67,7 +67,7 @@ func (fragment Fragment) WriteTo(
 // Static functions
 //
 
-// Builds and returns a list which contains corresponding lines for every parition.
+// Builds and returns a list which contains corresponding lines for every partition.
 //
 // allLines — a list with every line of the file.
 //

@@ -23,7 +23,7 @@ import (
 	"os"
 )
 
-// Creates dir at the given dirPath if it doesn't exist.
+// Creates dir at given dirPath if it doesn't exist.
 func EnsureDirExists(dirPath string) {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err := os.MkdirAll(dirPath, 0777)
@@ -33,7 +33,7 @@ func EnsureDirExists(dirPath string) {
 	}
 }
 
-// Reports whether file exists at the given filePath.
+// Reports whether file exists at given filePath.
 func IsFileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
@@ -42,7 +42,7 @@ func IsFileExists(filePath string) (bool, error) {
 	return err == nil, err
 }
 
-// Reads and returns all lines from the file at the given filePath.
+// Reads and returns all lines from the file at given filePath.
 func ReadLines(filePath string) []string {
 	file, err := os.Open(filePath)
 	if err != nil {

@@ -37,7 +37,7 @@ type Partition struct {
 // Public methods
 //
 
-// Returns the partition-related lines from the given lines.
+// Returns the partition-related lines from given lines.
 // If EndPosition is nil, returns all the lines started from StartPosition.
 func (partition Partition) Select(lines []string) []string {
 	if partition.EndPosition == nil {

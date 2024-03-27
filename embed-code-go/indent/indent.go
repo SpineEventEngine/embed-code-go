@@ -23,14 +23,14 @@ import (
 	"strings"
 )
 
-// Finds the maximal common indentation of the given lines.
+// Finds the maximal common indentation of given lines.
 //
-// If all the given lines are empty, contain only whitespace, or there are no lines at all,
+// If all given lines are empty, contain only whitespace, or there are no lines at all,
 // returns zero.
 //
 // lines — a list of lines which may or may not have leading whitespaces.
 //
-// Returns the number of leading whitespaces in all the lines except for the empty ones.
+// Returns the number of leading whitespaces in all lines except for the empty ones.
 func MaxCommonIndentation(lines []string) int {
 	indent := math.MaxInt32
 	for _, line := range lines {
@@ -50,7 +50,7 @@ func MaxCommonIndentation(lines []string) int {
 	}
 }
 
-// Reduces indentation to the given target amount.
+// Reduces indentation to given redundantSpaces amount.
 //
 // lines — a list of strings representing the lines to process.
 //
