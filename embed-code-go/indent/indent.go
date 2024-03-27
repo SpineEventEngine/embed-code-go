@@ -28,8 +28,9 @@ import (
 // If all the given lines are empty, contain only whitespace, or there are no lines at all,
 // returns zero.
 //
-// @param lines an array of lines which may or may not have leading whitespaces
-// @return the number of leading whitespaces in all the lines except for the empty ones
+// lines is a list of lines which may or may not have leading whitespaces.
+//
+// Returns the number of leading whitespaces in all the lines except for the empty ones.
 func MaxCommonIndentation(lines []string) int {
 	indent := math.MaxInt32
 	for _, line := range lines {
@@ -50,12 +51,18 @@ func MaxCommonIndentation(lines []string) int {
 }
 
 // Reduces indentation to the given target amount.
-func CutIndent(lines []string, redundant_spaces int) []string {
+//
+// lines is a list of strings representing the lines to process.
+//
+// redundantSpaces is the number of leading spaces to remove from each line.
+//
+// Returns processed lines.
+func CutIndent(lines []string, redundantSpaces int) []string {
 	linesChanged := make([]string, len(lines))
 	copy(linesChanged, lines)
 	for i, line := range linesChanged {
 		if len(line) > 0 {
-			linesChanged[i] = line[redundant_spaces:]
+			linesChanged[i] = line[redundantSpaces:]
 		}
 	}
 	return linesChanged
