@@ -114,15 +114,15 @@ func (fragmentFile FragmentFile) absolutePath() string {
 		return filepath.Join(fragmentsAbsDir, fragmentFile.CodeFile)
 	} else {
 		withoutExtension := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
-		filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.getFragmentHash())
+		filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.calculateFragmentHash())
 		return filepath.Join(fragmentsAbsDir, filename+fileExtension)
 	}
 }
 
-// Creates and returns a hash string for FragmentFile.
+// Calculates and returns a hash string for FragmentFile.
 // Since fragments which have the same name unite into one
 // fragment with multiple partitions, the name of a fragment is unique.
-func (fragmentFile FragmentFile) getFragmentHash() string {
+func (fragmentFile FragmentFile) calculateFragmentHash() string {
 	hash := sha1.New()
 	hash.Write([]byte(fragmentFile.FragmentName))
 	sha1_hash := hex.EncodeToString(hash.Sum(nil))[:8]
