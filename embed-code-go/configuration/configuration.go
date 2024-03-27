@@ -27,7 +27,10 @@ const (
 var DefaultInclude = []string{"**/*"}
 var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 
-// A storage for the all embed-code settings.
+// The configuration for all the settings for the plugin to work.
+// It is used to get data for scanning for and doc files, to receive fragments' dir and separator for partitions.
+// The example of creating the Configuration with default values:
+//     var config = configuration.NewConfiguration()
 type Configuration struct {
 	// A root directory of the source code to be embedded.
 	CodeRoot string
@@ -35,25 +38,30 @@ type Configuration struct {
 	// A root directory of the documentation files.
 	DocumentationRoot string
 
-	// A list of patterns filtering the code files to be considered.
+	// A list of patterns for filtering the code files to be considered.
 	//
 	// Directories are never matched by these patterns.
 	//
-	// For example, ["**/*.java", "**/*.gradle"]. The default value is "**/*".
+	// For example, ["**/*.java", "**/*.gradle"].
+	//
+	// The default value is "**/*".
 	CodeIncludes []string
 
-	// A list of patterns filtering files in which we should look for embedding instructions.
+	// A list of patterns for filtering files in which we should look for embedding instructions.
 	//
 	// The patterns are resolved relatively to the `documentation_root`.
 	//
 	// Directories are never matched by these patterns.
 	//
-	// For example, ["docs/**/*.md", "guides/*.html"]. The default value is
-	// ["**/*.md", "**/*.html"].
+	// For example, ["docs/**/*.md", "guides/*.html"].
+	//
+	// The default value is ["**/*.md", "**/*.html"].
 	DocIncludes []string
 
-	// A directory for the fragmentized code is stored. A temporary directory that should not be
-	// tracked VCS.
+	// A directory where fragmentized code is stored. A temporary directory that should not be
+	// tracked in VCS.
+	//
+	// The default value is: "./build/fragments".
 	FragmentsDir string
 
 	// A string that's inserted between multiple partitions of a single fragment.
