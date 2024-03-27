@@ -43,11 +43,6 @@ import (
 	"path/filepath"
 )
 
-const (
-	FragmentStart = "#docfragment"
-	FragmentEnd   = "#enddocfragment"
-)
-
 // Splits the given file into fragments and writes them into corresponding output files.
 //
 // SourcesRoot a full path of the root directory of the source code to be embedded.

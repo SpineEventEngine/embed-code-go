@@ -24,6 +24,11 @@ import (
 	"strings"
 )
 
+const (
+	FragmentStart = "#docfragment"
+	FragmentEnd   = "#enddocfragment"
+)
+
 // Returns the clean name from the given quoted name.
 func UnquoteNameAndClean(name string) string {
 	r, _ := regexp.Compile("\"(.*)\"")
