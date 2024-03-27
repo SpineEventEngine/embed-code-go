@@ -190,9 +190,9 @@ func ShouldFragmentize(fileName string) bool {
 //
 
 // This function parses a single line of input and performs the following actions:
-//   - Identifies fragment start and end markers within the line;
-//   - Updates the fragment builders based on the markers;
-//   - Appends non-fragment lines to the contentToRender.
+//   - identifies fragment start and end markers within the line;
+//   - updates the fragment builders based on the markers;
+//   - appends non-fragment lines to the contentToRender.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
 func (fragmentation Fragmentation) parseLine(
