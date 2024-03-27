@@ -29,8 +29,34 @@ const (
 	FragmentEnd   = "#enddocfragment"
 )
 
+//
+// Public functions
+//
+
+// Finds all the names for the fragment's openings using the opening prefix.
+//
+// line — a line to search in.
+//
+// Returns the list of the names found.
+func GetFragmentStarts(line string) []string {
+	return lookup(line, FragmentStart)
+}
+
+// Finds all the names for the fragment's endings using the ending prefix.
+//
+// line — a line to search in.
+//
+// Returns the list of the names found.
+func GetFragmentEnds(line string) []string {
+	return lookup(line, FragmentEnd)
+}
+
+//
+// Private functions
+//
+
 // Returns the clean name from given quoted name.
-func UnquoteNameAndClean(name string) string {
+func unquoteNameAndClean(name string) string {
 	r, _ := regexp.Compile("\"(.*)\"")
 	nameQuoted := r.FindString(name)
 	nameCleaned, _ := strconv.Unquote(nameQuoted)
@@ -44,35 +70,17 @@ func UnquoteNameAndClean(name string) string {
 // prefix — a user-defined indicator of a fragment, e.g. "#docfragment".
 //
 // Returns the list of the names found.
-func Lookup(line string, prefix string) []string {
+func lookup(line string, prefix string) []string {
 	if strings.Contains(line, prefix) {
 		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1 // 1 for trailing space after the prefix
 		unquotedFragmentNames := []string{}
 		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {
 			quotedFragmentName := strings.Trim(fragmentName, "\n\t ")
-			unquotedFragmentName := UnquoteNameAndClean(quotedFragmentName)
+			unquotedFragmentName := unquoteNameAndClean(quotedFragmentName)
 			unquotedFragmentNames = append(unquotedFragmentNames, unquotedFragmentName)
 		}
 		return unquotedFragmentNames
 	} else {
 		return []string{}
 	}
-}
-
-// Finds all the names for the fragment's openings using the opening prefix.
-//
-// line — a line to search in.
-//
-// Returns the list of the names found.
-func GetFragmentStarts(line string) []string {
-	return Lookup(line, FragmentStart)
-}
-
-// Finds all the names for the fragment's endings using the ending prefix.
-//
-// line — a line to search in.
-//
-// Returns the list of the names found.
-func GetFragmentEnds(line string) []string {
-	return Lookup(line, FragmentEnd)
 }
