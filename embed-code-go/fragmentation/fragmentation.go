@@ -146,6 +146,8 @@ func (fragmentation Fragmentation) WriteFragments() error {
 // Static functions
 //
 
+// Writes fragments into a corresponding files.
+//
 // Searches for code files with patterns defined in configuration
 // and fragmentizes them with creating fragmented files as a result.
 func WriteFragmentFiles(configuration configuration.Configuration) error {
