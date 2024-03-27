@@ -34,9 +34,9 @@ func UnquoteNameAndClean(name string) string {
 
 // Look up for fragments' names from the given line.
 //
-// line is a line to search in.
+// line — a line to search in.
 //
-// prefix is a user-defined indicator of a fragment, e.g. "#docfragment".
+// prefix — a user-defined indicator of a fragment, e.g. "#docfragment".
 //
 // Returns the list of the names found.
 func Lookup(line string, prefix string) []string {
@@ -56,7 +56,7 @@ func Lookup(line string, prefix string) []string {
 
 // Finds all the names for the fragment's openings using the opening prefix.
 //
-// line is a line to search in.
+// line — a line to search in.
 //
 // Returns the list of the names found.
 func GetFragmentStarts(line string) []string {
@@ -65,7 +65,7 @@ func GetFragmentStarts(line string) []string {
 
 // Finds all the names for the fragment's endings using the ending prefix.
 //
-// line is a line to search in.
+// line — a line to search in.
 //
 // Returns the list of the names found.
 func GetFragmentEnds(line string) []string {

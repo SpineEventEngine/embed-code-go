@@ -28,7 +28,7 @@ import (
 // If all the given lines are empty, contain only whitespace, or there are no lines at all,
 // returns zero.
 //
-// lines is a list of lines which may or may not have leading whitespaces.
+// lines — a list of lines which may or may not have leading whitespaces.
 //
 // Returns the number of leading whitespaces in all the lines except for the empty ones.
 func MaxCommonIndentation(lines []string) int {
@@ -52,9 +52,9 @@ func MaxCommonIndentation(lines []string) int {
 
 // Reduces indentation to the given target amount.
 //
-// lines is a list of strings representing the lines to process.
+// lines — a list of strings representing the lines to process.
 //
-// redundantSpaces is the number of leading spaces to remove from each line.
+// redundantSpaces — the number of leading spaces to remove from each line.
 //
 // Returns processed lines.
 func CutIndent(lines []string, redundantSpaces int) []string {

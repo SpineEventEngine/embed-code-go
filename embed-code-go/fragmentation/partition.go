@@ -25,9 +25,9 @@ package fragmentation
 // StartPosition and EndPosition are both pointers, because it's the way to make them nil-able.
 // Otherwise, the default value for them is 0, which is wrong, because 0 is in the scope of possible values for them.
 //
-// StartPosition is an index from which the scope of partition exists.
+// StartPosition — an index from which the scope of partition exists.
 //
-// EndPosition is an index on which the scope of partition ends.
+// EndPosition — an index on which the scope of partition ends.
 type Partition struct {
 	StartPosition *int
 	EndPosition   *int

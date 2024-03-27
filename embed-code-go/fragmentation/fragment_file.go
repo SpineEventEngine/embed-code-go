@@ -39,11 +39,11 @@ type FragmentFile struct {
 
 // Composes a FragmentFile for the given fragment in the given code file.
 //
-// codeFile is an absolute path to a code file.
+// codeFile — an absolute path to a code file.
 //
-// fragmentName is a name of the fragment in the code file.
+// fragmentName — a name of the fragment in the code file.
 //
-// configuration is a configuration for embedding.
+// configuration — configuration for embedding.
 //
 // Returns composed fragment.
 func NewFragmentFileFromAbsolute(

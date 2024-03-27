@@ -69,9 +69,9 @@ func (fragment Fragment) WriteTo(
 
 // Builds and returns a list which contains corresponding lines for every parition.
 //
-// allLines is a list with every line of the file.
+// allLines — a list with every line of the file.
 //
-// partitions is a list with partitions to select lines from.
+// partitions — a list with partitions to select lines from.
 func getPartitionLines(allLines []string, partitions []Partition) [][]string {
 	partitionLines := [][]string{}
 	for _, part := range partitions {
@@ -84,7 +84,7 @@ func getPartitionLines(allLines []string, partitions []Partition) [][]string {
 // Calculates and returns maximum indentation on which it is possible to trim the lines
 // without any harm.
 //
-// partitionLines is a list which contains corresponding lines for every parition.
+// partitionLines — a list which contains corresponding lines for every parition.
 func calculateCommonIndentation(partitionLines [][]string) int {
 	commonIndentation := math.MaxInt32
 	for _, partitionText := range partitionLines {
@@ -103,7 +103,7 @@ func calculateCommonIndentation(partitionLines [][]string) int {
 // Obtains the text for the fragment. The each partition of the fragment is separated with
 // the Configuration.Separator.
 //
-// allLines is a list with every line of the file.
+// allLines — a list with every line of the file.
 func (fragment Fragment) text(allLines []string, configuration configuration.Configuration) string {
 
 	if fragment.isDefault() {

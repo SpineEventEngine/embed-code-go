@@ -65,7 +65,7 @@ type Fragmentation struct {
 
 // Builds Fragmentation from the given codeFileRelative and config.
 //
-// codeFileRelative is a relative path to a code file to fragment.
+// codeFileRelative — a relative path to a code file to fragment.
 func NewFragmentation(
 	codeFileRelative string,
 	config configuration.Configuration,

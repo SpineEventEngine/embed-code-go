@@ -39,7 +39,7 @@ type FragmentBuilder struct {
 // Adds a new partition with the given start position.
 // Don't forget to call AddEndPosition when the end of the fragment is reached.
 //
-// startPosition is a starting position of the fragment.
+// startPosition — starting position of the fragment.
 func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 
 	if len(fragmentBuilder.Partitions) > 0 {
@@ -56,7 +56,7 @@ func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 // Completes previously created fragment partition with its end position.
 // It should be called after AddStartPosition.
 //
-// endPosition is an end position position of the fragment.
+// endPosition — end position position of the fragment.
 func (fragmentBuilder *FragmentBuilder) AddEndPosition(endPosition int) {
 	if len(fragmentBuilder.Partitions) == 0 {
 		panic("error: the list of partitions is empty")
