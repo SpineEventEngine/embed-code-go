@@ -24,6 +24,7 @@ import (
 )
 
 // Creates dir at given dirPath if it doesn't exist.
+// Does nothing if exists.
 func EnsureDirExists(dirPath string) {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err := os.MkdirAll(dirPath, 0777)
