@@ -198,6 +198,13 @@ func ShouldFragmentize(filePath string) bool {
 //   - updates fragmentBuilders based on the markers;
 //   - appends non-fragment lines to contentToRender.
 //
+// line — a string to parse.
+//
+// contentToRender — a list of strings which meant to be rendered. It does filling up here.
+//
+// fragmentBuilders — a list of FragmentBuilder. This list does filling up here and gets start/end
+// positions of it's items updated.
+//
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
 func (fragmentation Fragmentation) parseLine(
 	line string, contentToRender []string,
