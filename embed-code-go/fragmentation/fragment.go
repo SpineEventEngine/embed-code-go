@@ -51,7 +51,13 @@ func CreateDefaultFragment() Fragment {
 // Public methods
 //
 
-// Takes given allLines, unites them into a text and writes it into given file.
+// Takes given lines, unites them into a text and writes it into given file.
+//
+// file — a FragmentFile to write the lines to.
+//
+// lines — a list of strings to write.
+//
+// configuration — a Configuration with all embed-code settings.
 //
 // Creates the file if not exists and overwrites if exists.
 func (fragment Fragment) WriteTo(
