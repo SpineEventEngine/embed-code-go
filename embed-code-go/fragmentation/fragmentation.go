@@ -45,9 +45,9 @@ import (
 
 // Splits the given file into fragments and writes them into corresponding output files.
 //
-// SourcesRoot a full path of the root directory of the source code to be embedded.
+// SourcesRoot — a full path of the root directory of the source code to be embedded.
 //
-// CodeFile a full path of a file to fragment.
+// CodeFile — a full path of a file to fragment.
 type Fragmentation struct {
 	Configuration configuration.Configuration
 	SourcesRoot   string
