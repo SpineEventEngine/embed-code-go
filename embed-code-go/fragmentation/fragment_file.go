@@ -82,7 +82,7 @@ func (fragmentFile FragmentFile) Write(text string) {
 
 // Reads content of the file.
 //
-// Return contents of the file as a list of strings, or raises an error if it doesn't exists.
+// Returns contents of the file as a list of strings, or raises an error if it doesn't exists.
 func (fragmentFile FragmentFile) Content() []string {
 	path := fragmentFile.absolutePath()
 	isPathFileExits, err := IsFileExists(path)
