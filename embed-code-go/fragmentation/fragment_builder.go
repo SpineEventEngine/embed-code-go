@@ -22,8 +22,8 @@ import "fmt"
 
 // A single fragment builder.
 type FragmentBuilder struct {
-	// A name of a file to fragment.
-	FileName string
+	// A path to a file to fragment.
+	CodeFilePath string
 
 	// A list of partitions of a file to fragment.
 	Partitions []Partition
@@ -67,7 +67,7 @@ func (fragmentBuilder *FragmentBuilder) AddEndPosition(endPosition int) {
 	lastAddedPartition := &fragmentBuilder.Partitions[len(fragmentBuilder.Partitions)-1]
 	if lastAddedPartition.EndPosition != nil {
 		panic(fmt.Sprintf("unexpected #enddocfragment statement at %s:%d",
-			fragmentBuilder.FileName,
+			fragmentBuilder.CodeFilePath,
 			*lastAddedPartition.EndPosition),
 		)
 	}

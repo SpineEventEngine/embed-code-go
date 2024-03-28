@@ -219,7 +219,7 @@ func (fragmentation Fragmentation) parseLine(
 		for _, fragmentName := range fragmentStarts {
 			fragment, exists := fragmentBuilders[fragmentName]
 			if !exists {
-				builder := FragmentBuilder{FileName: fragmentation.CodeFile, Name: fragmentName}
+				builder := FragmentBuilder{CodeFilePath: fragmentation.CodeFile, Name: fragmentName}
 				fragmentBuilders[fragmentName] = &builder
 				fragment = fragmentBuilders[fragmentName]
 			}
