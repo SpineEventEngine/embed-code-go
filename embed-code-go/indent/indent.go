@@ -35,7 +35,7 @@ func MaxCommonIndentation(lines []string) int {
 	indent := math.MaxInt32
 	for _, line := range lines {
 		if strings.TrimSpace(line) != "" {
-			trimmedLine := strings.TrimLeft(line, "\n\t ") // Check if it changes a line in-place
+			trimmedLine := strings.TrimLeft(line, "\n\t ") // Check if it changes a line in-place.
 			lineIndent := len(line) - len(trimmedLine)
 			if lineIndent < indent {
 				indent = lineIndent
