@@ -38,7 +38,7 @@ const (
 // line — a line to search in.
 //
 // Returns the list of the names found.
-func GetFragmentStarts(line string) []string {
+func FindFragmentOpenings(line string) []string {
 	return lookup(line, FragmentStart)
 }
 
@@ -47,7 +47,7 @@ func GetFragmentStarts(line string) []string {
 // line — a line to search in.
 //
 // Returns the list of the names found.
-func GetFragmentEnds(line string) []string {
+func FindFragmentEndings(line string) []string {
 	return lookup(line, FragmentEnd)
 }
 

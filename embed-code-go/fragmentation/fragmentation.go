@@ -198,8 +198,8 @@ func (fragmentation Fragmentation) parseLine(
 ) ([]string, map[string]*FragmentBuilder, error) {
 	cursor := len(contentToRender)
 
-	fragmentStarts := GetFragmentStarts(line)
-	fragmentEnds := GetFragmentEnds(line)
+	fragmentStarts := FindFragmentOpenings(line)
+	fragmentEnds := FindFragmentEndings(line)
 
 	if len(fragmentStarts) > 0 {
 		for _, fragmentName := range fragmentStarts {
