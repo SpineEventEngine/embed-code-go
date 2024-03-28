@@ -56,6 +56,7 @@ func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 }
 
 // Completes previously created fragment partition with its endPosition.
+//
 // It should be called after AddStartPosition.
 //
 // endPosition — end position of the fragment.

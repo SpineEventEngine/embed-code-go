@@ -73,6 +73,7 @@ func NewFragmentFileFromAbsolute(
 //
 
 // Writes text to the file.
+//
 // Creates the file if not exists and overwrites if exists.
 func (fragmentFile FragmentFile) Write(text string) {
 	byteStr := []byte(text)
@@ -121,6 +122,7 @@ func (fragmentFile FragmentFile) absolutePath() string {
 }
 
 // Calculates and returns a hash string for FragmentFile.
+//
 // Since fragments which have the same name unite into one
 // fragment with multiple partitions, the name of a fragment is unique.
 func (fragmentFile FragmentFile) calculateFragmentHash() string {

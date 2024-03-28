@@ -100,8 +100,9 @@ func calculateCommonIndentation(partitionLines [][]string) int {
 // Private methods
 //
 
-// Obtains the text for the fragment. The each partition of the fragment is separated with
-// the Configuration.Separator.
+// Obtains the text for the fragment.
+//
+// The each partition of the fragment is separated with the Configuration.Separator.
 //
 // allLines — a list with every line of the file.
 func (fragment Fragment) text(allLines []string, configuration configuration.Configuration) string {
