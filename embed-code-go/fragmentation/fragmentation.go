@@ -117,7 +117,7 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 	for k, v := range fragmentBuilders {
 		fragments[k] = v.Build()
 	}
-	fragments[DefaultFragment] = CreateDefaultFragment()
+	fragments[DefaultFragmentName] = CreateDefaultFragment()
 
 	return contentToRender, fragments, nil
 

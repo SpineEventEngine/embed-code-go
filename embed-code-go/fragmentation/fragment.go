@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	DefaultFragment = "_default"
+	DefaultFragmentName = "_default"
 )
 
 // A single fragment in a file.
@@ -39,10 +39,10 @@ type Fragment struct {
 // Initializers
 //
 
-// Returns default Fragment.
+// Creates and returns Fragment with DefaultFragmentName.
 func CreateDefaultFragment() Fragment {
 	return Fragment{
-		Name:       DefaultFragment,
+		Name:       DefaultFragmentName,
 		Partitions: []Partition{},
 	}
 }
@@ -128,5 +128,5 @@ func (fragment Fragment) text(allLines []string, configuration configuration.Con
 }
 
 func (fragment Fragment) isDefault() bool {
-	return fragment.Name == DefaultFragment
+	return fragment.Name == DefaultFragmentName
 }

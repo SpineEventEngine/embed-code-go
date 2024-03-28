@@ -112,7 +112,7 @@ func (fragmentFile FragmentFile) absolutePath() string {
 		panic(err)
 	}
 
-	if fragmentFile.FragmentName == DefaultFragment {
+	if fragmentFile.FragmentName == DefaultFragmentName {
 		return filepath.Join(fragmentsAbsDir, fragmentFile.CodeFile)
 	} else {
 		withoutExtension := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
