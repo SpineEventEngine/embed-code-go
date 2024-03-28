@@ -28,9 +28,13 @@ var DefaultInclude = []string{"**/*"}
 var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 
 // The configuration for all the settings for the plugin to work.
+//
 // It is used to get data for scanning for and doc files, to receive fragments' dir and separator for partitions.
 // The example of creating the Configuration with default values:
 //     var config = configuration.NewConfiguration()
+// If there's need to modify the default configuration,
+// it can be done with just setting values to corresponding fields:
+//     config.FragmentsDir = "foo/bar"
 type Configuration struct {
 	// A root directory of the source code to be embedded.
 	CodeRoot string
