@@ -69,6 +69,15 @@ func buildTestConfig() configuration.Configuration {
 	return config
 }
 
+func buildTestFragmentation(
+	testFileName string,
+	config configuration.Configuration,
+) fragmentation.Fragmentation {
+	testFilePath := fmt.Sprintf("%s/org/example/%s", config.CodeRoot, testFileName)
+	fragmentation := fragmentation.NewFragmentation(testFilePath, config)
+	return fragmentation
+}
+
 func TestFragmentizeFile(t *testing.T) {
 	testPreparator := newFragmentationTestsPreparator()
 	testPreparator.setup()
@@ -76,9 +85,8 @@ func TestFragmentizeFile(t *testing.T) {
 
 	var config = buildTestConfig()
 	fileName := "Hello.java"
-	path := fmt.Sprintf("%s/org/example/%s", config.CodeRoot, fileName)
-	fragmentation := fragmentation.NewFragmentation(path, config)
-	fragmentation.WriteFragments()
+	frag := buildTestFragmentation(fileName, config)
+	frag.WriteFragments()
 
 	fragmentChildren, _ := os.ReadDir(config.FragmentsDir)
 	if len(fragmentChildren) != 1 {
@@ -112,10 +120,10 @@ func TestFailNotOpenFragment(t *testing.T) {
 	testPreparator.setup()
 	defer testPreparator.cleanup()
 
-	var configuration = buildTestConfig()
-	path := fmt.Sprintf("%s/org/example/Unopen.java", configuration.CodeRoot)
-	fragmentation := fragmentation.NewFragmentation(path, configuration)
-	err := fragmentation.WriteFragments()
+	var config = buildTestConfig()
+	fileName := "Unopen.java"
+	frag := buildTestFragmentation(fileName, config)
+	err := frag.WriteFragments()
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}
@@ -126,16 +134,15 @@ func TestFragmentWithoutEnd(t *testing.T) {
 	testPreparator.setup()
 	defer testPreparator.cleanup()
 
-	configuration := buildTestConfig()
+	config := buildTestConfig()
 	fileName := "Unclosed.java"
-	path := fmt.Sprintf("%s/org/example/%s", configuration.CodeRoot, fileName)
-	fragmentation := fragmentation.NewFragmentation(path, configuration)
-	err := fragmentation.WriteFragments()
+	frag := buildTestFragmentation(fileName, config)
+	err := frag.WriteFragments()
 	if err != nil {
 		t.Errorf("Writing fragments went wrong: %d", err)
 	}
 
-	fragmentDir := fmt.Sprintf("%s/org/example", configuration.FragmentsDir)
+	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
 	if len(fragmentFiles) != 2 {
 		t.Errorf("Expected 2, got %d", len(fragmentFiles))
@@ -166,13 +173,12 @@ func TestFragmentizeEmptyFile(t *testing.T) {
 	testPreparator.setup()
 	defer testPreparator.cleanup()
 
-	configuration := buildTestConfig()
+	config := buildTestConfig()
 	fileName := "Empty.java"
-	path := fmt.Sprintf("%s/org/example/%s", configuration.CodeRoot, fileName)
-	fragmentation := fragmentation.NewFragmentation(path, configuration)
-	fragmentation.WriteFragments()
+	frag := buildTestFragmentation(fileName, config)
+	frag.WriteFragments()
 
-	fragmentDir := fmt.Sprintf("%s/org/example", configuration.FragmentsDir)
+	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
 	if len(fragmentFiles) != 1 {
 		t.Errorf("Expected 1, got %d", len(fragmentFiles))
@@ -203,14 +209,13 @@ func TestManyPartitions(t *testing.T) {
 	testPreparator.setup()
 	defer testPreparator.cleanup()
 
-	configuration := buildTestConfig()
+	config := buildTestConfig()
 
 	fileName := "Complex.java"
-	path := fmt.Sprintf("%s/org/example/%s", configuration.CodeRoot, fileName)
-	frag := fragmentation.NewFragmentation(path, configuration)
+	frag := buildTestFragmentation(fileName, config)
 	frag.WriteFragments()
 
-	fragmentDir := fmt.Sprintf("%s/org/example", configuration.FragmentsDir)
+	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
 	if len(fragmentFiles) != 2 {
 		t.Errorf("Expected 2, got %d", len(fragmentFiles))
@@ -229,14 +234,14 @@ func TestManyPartitions(t *testing.T) {
 	if fragmentLines[0] != "public class Main {" {
 		t.Errorf("Expected 'public class Main {', got '%s'", fragmentLines[0])
 	}
-	if fragmentLines[1] != configuration.Separator {
-		t.Errorf("Expected '%s', got '%s'", configuration.Separator, fragmentLines[1])
+	if fragmentLines[1] != config.Separator {
+		t.Errorf("Expected '%s', got '%s'", config.Separator, fragmentLines[1])
 	}
 	if matched, _ := regexp.MatchString(`\s{4}public.*`, fragmentLines[2]); !matched {
 		t.Errorf("Line does not match pattern: %s", fragmentLines[2])
 	}
-	if fragmentLines[3] != configuration.Separator {
-		t.Errorf("Expected '%s', got '%s'", configuration.Separator, fragmentLines[3])
+	if fragmentLines[3] != config.Separator {
+		t.Errorf("Expected '%s', got '%s'", config.Separator, fragmentLines[3])
 	}
 	if matched, _ := regexp.MatchString(`\s{8}System.*`, fragmentLines[4]); !matched {
 		t.Errorf("Line does not match pattern: %s", fragmentLines[4])
@@ -247,8 +252,8 @@ func TestManyPartitions(t *testing.T) {
 	if fragmentLines[6] != "    }" {
 		t.Errorf("Expected '    }', got '%s'", fragmentLines[6])
 	}
-	if fragmentLines[7] != configuration.Separator {
-		t.Errorf("Expected '%s', got '%s'", configuration.Separator, fragmentLines[7])
+	if fragmentLines[7] != config.Separator {
+		t.Errorf("Expected '%s', got '%s'", config.Separator, fragmentLines[7])
 	}
 	if fragmentLines[8] != "}" {
 		t.Errorf("Expected '}', got '%s'", fragmentLines[8])
