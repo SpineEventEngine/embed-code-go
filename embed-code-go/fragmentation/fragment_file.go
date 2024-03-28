@@ -93,6 +93,7 @@ func (fragmentFile FragmentFile) Content() []string {
 	}
 }
 
+// Returns string representation of FragmentFile.
 func (fragmentFile FragmentFile) String() string {
 	return fragmentFile.absolutePath()
 }
