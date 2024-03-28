@@ -146,10 +146,14 @@ func (fragmentation Fragmentation) WriteFragments() error {
 // Static functions
 //
 
-// Writes fragments into a corresponding files.
+// Writes each fragment into a corresponding file.
 //
 // Searches for code files with patterns defined in configuration
 // and fragmentizes them with creating fragmented files as a result.
+//
+// All fragments are placed inside Configuration.FragmentsDir with
+// keeping the original directory structure relative to the sources root dir.
+// That is, `SRC/src/main` becomes `OUT/src/main`.
 func WriteFragmentFiles(configuration configuration.Configuration) error {
 	includes := configuration.CodeIncludes
 	codeRoot := configuration.CodeRoot
