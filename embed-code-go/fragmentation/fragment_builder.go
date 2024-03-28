@@ -37,7 +37,9 @@ type FragmentBuilder struct {
 //
 
 // Adds a new partition with given startPosition.
-// Don't forget to call AddEndPosition when the end of the fragment is reached.
+//
+// AddEndPosition is need to be called when the end of the fragment is reached,
+// or else it will be considered that the end of partition is in the end of the file.
 //
 // startPosition — starting position of the fragment.
 func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
