@@ -193,7 +193,7 @@ func ShouldFragmentize(filePath string) bool {
 // Private methods
 //
 
-// This function parses a single line of input and performs the following actions:
+// Parses a single line of input and performs the following actions:
 //   - identifies fragment start and end markers within given line;
 //   - updates fragmentBuilders based on the markers;
 //   - appends non-fragment lines to contentToRender.
