@@ -73,7 +73,7 @@ func NewFragmentFileFromAbsolute(
 //
 
 // Writes text to the file.
-// Overwrites the file if it exists.
+// Creates the file if not exists and overwrites if exists.
 func (fragmentFile FragmentFile) Write(text string) {
 	byteStr := []byte(text)
 	filePath := fragmentFile.absolutePath()

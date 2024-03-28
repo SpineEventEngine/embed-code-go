@@ -51,9 +51,9 @@ func CreateDefaultFragment() Fragment {
 // Public methods
 //
 
-// Takes given allLines,
-// unites them into a text
-// and writes it into given file.
+// Takes given allLines, unites them into a text and writes it into given file.
+//
+// Creates the file if not exists and overwrites if exists.
 func (fragment Fragment) WriteTo(
 	file FragmentFile,
 	lines []string,
