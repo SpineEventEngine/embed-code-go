@@ -41,8 +41,6 @@ type Partition struct {
 // If EndPosition is nil, returns all the lines started from StartPosition.
 func (partition Partition) Select(lines []string) []string {
 	if partition.EndPosition == nil {
-		// This part is for emulating the behaviour of the original embed code.
-		// In Ruby, with unsetted EndPosition, it used to return all the lines from the StartPosition.
 		return lines[*partition.StartPosition:]
 	} else {
 		return lines[*partition.StartPosition : *partition.EndPosition+1]
