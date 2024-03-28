@@ -232,7 +232,7 @@ func (fragmentation Fragmentation) parseLine(
 	return contentToRender, fragmentBuilders, nil
 }
 
-// This function calculates the target directory path based on the
+// Calculates the target directory path based on the
 // Configuration.FragmentsDir and the parent dir of Fragmentation.CodeFile.
 func (fragmentation Fragmentation) targetDirectory() string {
 	fragmentsDir := fragmentation.Configuration.FragmentsDir
