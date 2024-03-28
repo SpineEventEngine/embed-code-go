@@ -81,7 +81,7 @@ func calculatePartitionLines(allLines []string, partitions []Partition) [][]stri
 	return partitionLines
 }
 
-// Calculates and returns maximum indentation on which it is possible to trim the lines
+// Calculates and returns common indentation on which it is possible to trim the lines
 // without any harm.
 //
 // partitionLines — a list which contains corresponding lines for every parition.
