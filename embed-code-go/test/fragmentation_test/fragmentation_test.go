@@ -259,3 +259,43 @@ func TestManyPartitions(t *testing.T) {
 		t.Errorf("Expected '}', got '%s'", fragmentLines[8])
 	}
 }
+
+func TestFindFragmentOpenings(t *testing.T) {
+	testString := "// #docfragment \"main\",\"sub-main\"\n"
+	foundedOpenings := fragmentation.FindFragmentOpenings(testString)
+
+	if len(foundedOpenings) == 0 {
+		t.Errorf("No openings were found.")
+	}
+
+	if len(foundedOpenings) != 2 {
+		t.Errorf("The amount of founded openings is different from the amount of given ones.")
+	}
+
+	if foundedOpenings[0] != "main" {
+		t.Errorf("Expected 'main', got '%s'", foundedOpenings[0])
+	}
+	if foundedOpenings[1] != "sub-main" {
+		t.Errorf("Expected 'sub-main', got '%s'", foundedOpenings[1])
+	}
+}
+
+func TestFindFragmentOpenings(t *testing.T) {
+	testString := "// #enddocfragment \"main\",\"sub-main\"\n"
+	foundedEndings := fragmentation.FindFragmentEndings(testString)
+
+	if len(foundedEndings) == 0 {
+		t.Errorf("No endings were found.")
+	}
+
+	if len(foundedEndings) != 2 {
+		t.Errorf("The amount of founded endings is different from the amount of given ones.")
+	}
+
+	if foundedEndings[0] != "main" {
+		t.Errorf("Expected 'main', got '%s'", foundedEndings[0])
+	}
+	if foundedEndings[1] != "sub-main" {
+		t.Errorf("Expected 'sub-main', got '%s'", foundedEndings[1])
+	}
+}
