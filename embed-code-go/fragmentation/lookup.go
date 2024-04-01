@@ -35,6 +35,9 @@ const (
 
 // Finds all the names for the fragment's openings using the opening prefix.
 //
+// For example, FindFragmentOpenings("// #docfragment \"main\",\"sub-main\"\n")
+// returns ["main", "sub-main"]
+//
 // line — a line to search in.
 //
 // Returns the list of the names found.
@@ -43,6 +46,9 @@ func FindFragmentOpenings(line string) []string {
 }
 
 // Finds all the names for the fragment's endings using the ending prefix.
+//
+// For example, FindFragmentEndings("// #enddocfragment \"main\",\"sub-main\"\n")
+// returns ["main", "sub-main"]
 //
 // line — a line to search in.
 //
