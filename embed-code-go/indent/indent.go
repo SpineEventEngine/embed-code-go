@@ -30,7 +30,7 @@ import (
 //
 // lines — a list of lines which may or may not have leading whitespaces.
 //
-// Returns the number of leading whitespaces in all lines except for the empty ones.
+// Returns the maximum number of leading whitespaces among all lines except for the empty ones.
 func MaxCommonIndentation(lines []string) int {
 	indent := math.MaxInt32
 	for _, line := range lines {
