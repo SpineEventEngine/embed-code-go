@@ -71,6 +71,9 @@ func unquoteName(quotedName string) string {
 
 // Looks up for fragments' names from given line.
 //
+// For example, lookup("// #enddocfragment \"main\",\"sub-main\"\n", "#enddocfragment")
+// returns ["main", "sub-main"]
+//
 // line — a line to search in.
 //
 // prefix — a user-defined indicator of a fragment, e.g. "#docfragment".
