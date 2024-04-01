@@ -280,7 +280,7 @@ func TestFindFragmentOpenings(t *testing.T) {
 	}
 }
 
-func TestFindFragmentOpenings(t *testing.T) {
+func TestFindFragmentEndings(t *testing.T) {
 	testString := "// #enddocfragment \"main\",\"sub-main\"\n"
 	foundedEndings := fragmentation.FindFragmentEndings(testString)
 
