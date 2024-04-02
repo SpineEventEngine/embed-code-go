@@ -159,7 +159,7 @@ func (fragmentation Fragmentation) WriteFragments() error {
 // keeping the original directory structure relative to the sources root dir.
 // That is, `SRC/src/main` becomes `OUT/src/main`.
 //
-// Configuration — a configuration for embedding.
+// configuration — a configuration for embedding.
 func WriteFragmentFiles(configuration configuration.Configuration) error {
 	includes := configuration.CodeIncludes
 	codeRoot := configuration.CodeRoot
