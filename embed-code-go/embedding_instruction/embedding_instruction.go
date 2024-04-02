@@ -7,7 +7,21 @@ import (
 	"fmt"
 )
 
-// EmbeddingInstruction represents the code fragment to embed into a Markdown file.
+// Specifies the code fragment to embed into a Markdown file, and the embedding parameters.
+//
+// Takes form of an XML processing instruction <embed-code file="..." fragment="..."/>.
+//
+// CodeFile — a path to a code file to embed. The path is relative to
+// Configuration.CodeRoot dir.
+//
+// Fragment — name of the particular fragment in the code. If Fragment is empty,
+// the whole file is embedded.
+//
+// StartPattern — an optional glob-like pattern. If specified, lines before the matching one are excluded.
+//
+// EndPattern — an optional glob-like pattern. If specified, lines after the matching one are excluded.
+//
+// Configuration — a Configuration with all embed-code settings.
 type EmbeddingInstruction struct {
 	CodeFile      string
 	Fragment      string
@@ -20,8 +34,17 @@ type EmbeddingInstruction struct {
 // Initializers
 //
 
-// NewEmbeddingInstruction creates a new EmbeddingInstruction.
-func NewEmbeddingInstruction(values map[string]string, configuration configuration.Configuration) EmbeddingInstruction {
+// Creates a new EmbeddingInstruction based on the provided values and configuration.
+//
+// values — a map with string-typed both keys and values. Possible keys are:
+//   - file — a mandatory relative path to the file with the code;
+//   - fragment — an optional name of the particular fragment in the code. If no fragment is specified,
+//     the whole file is embedded;
+//   - start — an optional glob-like pattern. If specified, lines before the matching one are excluded;
+//   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
+//
+// config — a Configuration with all embed-code settings.
+func NewEmbeddingInstruction(values map[string]string, config configuration.Configuration) EmbeddingInstruction {
 	codeFile := values["file"]
 	fragment := values["fragment"]
 	startValue := values["start"]
@@ -47,21 +70,33 @@ func NewEmbeddingInstruction(values map[string]string, configuration configurati
 		Fragment:      fragment,
 		StartPattern:  start,
 		EndPattern:    end,
-		Configuration: configuration,
+		Configuration: config,
 	}
 }
 
-// FromXML reads the instruction from the '<embed-code>' XML tag.
-func FromXML(line string, configuration configuration.Configuration) EmbeddingInstruction {
+// Reads the instruction from the '<embed-code>' XML tag and creates new EmbeddingInstruction.
+//
+// line — a line which contains '<embed-code>' XML tag.
+// For example: '<embed-code file="org/example/Hello.java" fragment="Hello class"/>'.
+// The line can also contain closing tag: '<embed-code file=\"org/example/Hello.java\" fragment=\"Hello class\"></embed-code>'.
+// The following parameters are currently supported:
+//   - file — a mandatory relative path to the file with the code;
+//   - fragment — an optional name of the particular fragment in the code. If no fragment is specified,
+//     the whole file is embedded;
+//   - start — an optional glob-like pattern. If specified, lines before the matching one are excluded;
+//   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
+//
+// config — a Configuration with all embed-code settings.
+func FromXML(line string, config configuration.Configuration) EmbeddingInstruction {
 	fields := ParseXmlLine(line)
-	return NewEmbeddingInstruction(fields, configuration)
+	return NewEmbeddingInstruction(fields, config)
 }
 
 //
 // Public methods
 //
 
-// Content reads the specified fragment from the code.
+// Reads and returns the specified fragment from the code.
 func (e EmbeddingInstruction) Content() []string {
 	fragmentName := e.Fragment
 	if fragmentName == "" {
@@ -78,7 +113,8 @@ func (e EmbeddingInstruction) Content() []string {
 	return file.Content()
 }
 
-func (e *EmbeddingInstruction) String() string {
+// Returns string representation of EmbeddingInstruction.
+func (e EmbeddingInstruction) String() string {
 	return fmt.Sprintf("EmbeddingInstruction[file=`%s`, fragment=`%s`, start=`%s`, end=`%s`]",
 		e.CodeFile, e.Fragment, e.StartPattern, e.EndPattern)
 }
@@ -87,6 +123,9 @@ func (e *EmbeddingInstruction) String() string {
 // Private methods
 //
 
+// Filters and returns a subset of input lines based on start and end patterns.
+//
+// lines — a list of strings representing the input lines.
 func (e EmbeddingInstruction) matchingLines(lines []string) []string {
 	startPosition := 0
 	if e.StartPattern != nil {
@@ -101,6 +140,13 @@ func (e EmbeddingInstruction) matchingLines(lines []string) []string {
 	return indent.CutIndent(requiredLines, indentation)
 }
 
+// Returns the index of a line that matches given pattern.
+//
+// pattern — a pattern to search in lines for.
+//
+// lines — a list of lines to search in.
+//
+// startFrom — an index from which to start searching.
 func (e EmbeddingInstruction) matchGlob(pattern *Pattern, lines []string, startFrom int) int {
 	lineCount := len(lines)
 	resultLine := startFrom
