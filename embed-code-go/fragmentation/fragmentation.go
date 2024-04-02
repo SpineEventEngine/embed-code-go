@@ -200,9 +200,9 @@ func ShouldFragmentize(filePath string) bool {
 //
 // line — a string to parse.
 //
-// contentToRender — a list of strings which meant to be rendered. It does filling up here.
+// contentToRender — a list of strings which meant to be rendered. It fills up here.
 //
-// fragmentBuilders — a list of FragmentBuilder. This list does filling up here and gets start/end
+// fragmentBuilders — a list of FragmentBuilder. This list fills up here and gets start/end
 // positions of it's items updated.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
