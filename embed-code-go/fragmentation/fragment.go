@@ -79,13 +79,13 @@ func (fragment Fragment) WriteTo(
 
 // Calculates and returns a list which contains corresponding lines for every partition.
 //
-// allLines — a list with every line of the file.
+// lines — a list with every line of the file.
 //
 // partitions — a list with partitions to select lines from.
-func calculatePartitionLines(allLines []string, partitions []Partition) [][]string {
+func calculatePartitionLines(lines []string, partitions []Partition) [][]string {
 	partitionLines := [][]string{}
 	for _, part := range partitions {
-		partitionText := part.Select(allLines)
+		partitionText := part.Select(lines)
 		partitionLines = append(partitionLines, partitionText)
 	}
 	return partitionLines
@@ -114,14 +114,14 @@ func calculateCommonIndentation(partitionLines [][]string) int {
 //
 // The each partition of the fragment is separated with the Configuration.Separator.
 //
-// allLines — a list with every line of the file.
-func (fragment Fragment) text(allLines []string, configuration configuration.Configuration) string {
+// lines — a list with every line of the file.
+func (fragment Fragment) text(lines []string, configuration configuration.Configuration) string {
 
 	if fragment.isDefault() {
-		return strings.Join(allLines, "")
+		return strings.Join(lines, "")
 	}
 
-	partitionLines := calculatePartitionLines(allLines, fragment.Partitions)
+	partitionLines := calculatePartitionLines(lines, fragment.Partitions)
 	commonIndentation := calculateCommonIndentation(partitionLines)
 
 	text := ""
