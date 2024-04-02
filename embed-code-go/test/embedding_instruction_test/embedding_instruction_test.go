@@ -21,13 +21,10 @@ package embedding_instruction_test
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding_instruction"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-
-	//"embed-code/embed-code-go/embedding_instruction"
-
-	"fmt"
 	"testing"
 )
 
