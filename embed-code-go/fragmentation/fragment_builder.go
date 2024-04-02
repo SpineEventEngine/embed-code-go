@@ -21,14 +21,15 @@ package fragmentation
 import "fmt"
 
 // A single fragment builder.
+//
+// CodeFilePath — a path to a file to fragment.
+//
+// Partitions — a list of partitions of a file to fragment.
+//
+// Name — a name of a Fragment.
 type FragmentBuilder struct {
-	// A path to a file to fragment.
 	CodeFilePath string
-
-	// A list of partitions of a file to fragment.
 	Partitions []Partition
-
-	// A name of a Fragment.
 	Name string
 }
 

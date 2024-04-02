@@ -30,9 +30,13 @@ const (
 )
 
 // A single fragment in a file.
+//
+// Name — a name of a Fragment.
+// 
+// Partitions — a list of partitions found for a Fragment.
 type Fragment struct {
-	Name       string      // A name of a Fragment.
-	Partitions []Partition // A list of partitions found for a Fragment.
+	Name       string      
+	Partitions []Partition
 }
 
 //

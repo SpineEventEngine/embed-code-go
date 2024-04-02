@@ -29,10 +29,16 @@ import (
 )
 
 // A file storing a single fragment from the file.
+//
+// CodeFile — a relative path to a code file.
+//
+// FragmentName — a name of the fragment in the code file.
+//
+// Configuration — a configuration for embedding.
 type FragmentFile struct {
-	CodeFile      string                      // A relative path to a code file.
-	FragmentName  string                      // A name of the fragment in the code file.
-	Configuration configuration.Configuration // A configuration for embedding.
+	CodeFile      string                     
+	FragmentName  string                     
+	Configuration configuration.Configuration
 }
 
 // Iniitalizers
