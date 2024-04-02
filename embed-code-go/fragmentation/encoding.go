@@ -24,14 +24,14 @@ import (
 )
 
 // Reports whether given bytes are UTF8-encoded.
-func areBytesUTF8Encoded(bytes []byte) bool {
+func areUTF8Encoded(bytes []byte) bool {
 	return utf8.Valid(bytes)
 }
 
 // Reports whether given bytes are ASCII-encoded.
 //
 // If all the characters fall within the ASCII range (0 to 127), it’s likely an ASCII-encoded file.
-func areBytesASCIIEncoded(bytes []byte) bool {
+func areASCIIEncoded(bytes []byte) bool {
 	for _, char := range bytes {
 		if char > 127 {
 			return false
@@ -52,7 +52,7 @@ func IsEncodedAsText(filePath string) bool {
 		panic(err)
 	}
 
-	isUTF8Encoded := areBytesUTF8Encoded(content)
-	isASCIIEncoded := areBytesASCIIEncoded(content)
+	isUTF8Encoded := areUTF8Encoded(content)
+	isASCIIEncoded := areASCIIEncoded(content)
 	return isUTF8Encoded || isASCIIEncoded
 }
