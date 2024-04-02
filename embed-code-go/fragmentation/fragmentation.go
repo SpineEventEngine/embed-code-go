@@ -45,6 +45,8 @@ import (
 
 // Splits the given file into fragments and writes them into corresponding output files.
 //
+// Configuration — a configuration for embedding.
+//
 // SourcesRoot — a full path of the root directory of the source code to be embedded.
 //
 // CodeFile — a full path of a file to fragment.
@@ -61,6 +63,8 @@ type Fragmentation struct {
 // Builds Fragmentation from given codeFileRelative and config.
 //
 // codeFileRelative — a relative path to a code file to fragment.
+//
+// config — a configuration for embedding.
 func NewFragmentation(
 	codeFileRelative string,
 	config configuration.Configuration,
@@ -154,6 +158,8 @@ func (fragmentation Fragmentation) WriteFragments() error {
 // All fragments are placed inside Configuration.FragmentsDir with
 // keeping the original directory structure relative to the sources root dir.
 // That is, `SRC/src/main` becomes `OUT/src/main`.
+//
+// Configuration — a configuration for embedding.
 func WriteFragmentFiles(configuration configuration.Configuration) error {
 	includes := configuration.CodeIncludes
 	codeRoot := configuration.CodeRoot
@@ -173,10 +179,10 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 	return nil
 }
 
-// Returns true if the file stored at filePath is:
+// Returns true if the file stored at filePath:
 //   - exists
-//   - file (not a dir)
-//   - textual-encoded.
+//   - is a file (not a dir)
+//   - is textual-encoded.
 func ShouldFragmentize(filePath string) bool {
 	info, err := os.Stat(filePath)
 	if err != nil {
