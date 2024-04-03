@@ -35,11 +35,9 @@ type Item struct {
 	Attrs   []xml.Attr `xml:",any,attr"`
 }
 
-// Parses given XML-encoded xmlLine and extracts attributes data as key-value pairs.
+// Parses given XML-encoded xmlLine and returns attributes data as key-value pairs.
 //
 // xmlLine — a XML-encoded line.
-//
-// Returns — a map where keys and values represent names and values of attributes correspondingly.
 func ParseXmlLine(xmlLine string) map[string]string {
 	var root Item
 	err := xml.Unmarshal([]byte(xmlLine), &root)
