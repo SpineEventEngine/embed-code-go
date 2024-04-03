@@ -29,7 +29,7 @@ const xmlStringHeader string = "embed-code"
 //
 // XMLName — a name of the tag in XML line.
 //
-// Attrs — a list of xml.Attr. The xml.Attr contains both names and values for attributes.
+// Attrs — a list of xml.Attr. The xml.Attr contains both names and values of attributes.
 type Item struct {
 	XMLName xml.Name
 	Attrs   []xml.Attr `xml:",any,attr"`
