@@ -25,11 +25,21 @@ import (
 
 const xmlStringHeader string = "embed-code"
 
+// Needed for xml.Unmarshal parsing. The fields are filling up during the parsing.
+//
+// XMLName — a name of the tag in XML line.
+//
+// Attrs — a list of xml.Attr. The xml.Attr contains both names and values for attributes.
 type Item struct {
 	XMLName xml.Name
 	Attrs   []xml.Attr `xml:",any,attr"`
 }
 
+// Parses given XML-encoded xmlLine and extracts attributes data as key-value pairs.
+//
+// xmlLine — a XML-encoded line.
+//
+// Returns — a map where keys and values represent names and values of attributes correspondingly.
 func ParseXmlLine(xmlLine string) map[string]string {
 	var root Item
 	err := xml.Unmarshal([]byte(xmlLine), &root)
