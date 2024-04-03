@@ -47,7 +47,7 @@ type Pattern struct {
 // modified pattern suitable for matching.
 //
 // The modified pattern is the original one, but enclosed with the "*" wildcards,
-// unless start of the line or end of the line wildcards weren't specified.
+// unless start of the line or end of the line wildcards were specified.
 //
 // glob — a string that represents a pattern that can include such wildcards:
 //   - "*" — matches any sequence of characters;
