@@ -54,7 +54,7 @@ type EmbeddingInstruction struct {
 
 // Creates a new EmbeddingInstruction based on the provided values and configuration.
 //
-// values — a map with string-typed both keys and values. Possible keys are:
+// attributes — a map with string-typed both keys and values. Possible keys are:
 //   - file — a mandatory relative path to the file with the code;
 //   - fragment — an optional name of the particular fragment in the code. If no fragment is specified,
 //     the whole file is embedded;
@@ -62,11 +62,11 @@ type EmbeddingInstruction struct {
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
 //
 // config — a Configuration with all embed-code settings.
-func NewEmbeddingInstruction(values map[string]string, config configuration.Configuration) EmbeddingInstruction {
-	codeFile := values["file"]
-	fragment := values["fragment"]
-	startValue := values["start"]
-	endValue := values["end"]
+func NewEmbeddingInstruction(attributes map[string]string, config configuration.Configuration) EmbeddingInstruction {
+	codeFile := attributes["file"]
+	fragment := attributes["fragment"]
+	startValue := attributes["start"]
+	endValue := attributes["end"]
 
 	if fragment != "" && (startValue != "" || endValue != "") {
 		panic("<embed-code> must NOT specify both a fragment name and start/end patterns.")
