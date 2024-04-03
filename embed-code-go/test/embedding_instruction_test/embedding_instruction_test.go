@@ -97,7 +97,6 @@ func xmlAttribute(name string, value string) string {
 }
 
 func TestFalseXML(t *testing.T) {
-
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("FromXML had to raise a panic, but it didn't.")
@@ -111,31 +110,33 @@ func TestFalseXML(t *testing.T) {
 }
 
 func TestParseFromXML(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Error: an exception occured on FromXML.")
+		}
+	}()
+
 	instructionParams := buildInstructionParams{}
 	instructionParams.fragment = "Hello class"
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-
-	instruction := embedding_instruction.FromXML(xmlString, config)
-	fmt.Println(xmlString)
-	fmt.Println(config)
-	fmt.Println(instruction)
+	embedding_instruction.FromXML(xmlString, config)
 }
 
 func TestParseWithClosingTag(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Error: an exception occured on FromXML.")
+		}
+	}()
+
 	instructionParams := buildInstructionParams{}
 	instructionParams.fragment = "Hello class"
 	instructionParams.closeTag = true
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
 
-	instruction := embedding_instruction.FromXML(xmlString, config)
-	// if instruction == nil {
-	// 	t.Error("Expected non-nil instruction")
-	// }
-	fmt.Println(xmlString)
-	fmt.Println(config)
-	fmt.Println(instruction)
+	embedding_instruction.FromXML(xmlString, config)
 }
 
 func TestReadFragmentDir(t *testing.T) {
