@@ -52,7 +52,7 @@ type EmbeddingInstruction struct {
 // Initializers
 //
 
-// Creates a new EmbeddingInstruction based on the provided values and configuration.
+// Creates a new EmbeddingInstruction based on provided attributes and configuration.
 //
 // attributes — a map with string-typed both keys and values. Possible keys are:
 //   - file — a mandatory relative path to the file with the code;
@@ -114,7 +114,7 @@ func FromXML(line string, config configuration.Configuration) EmbeddingInstructi
 // Public methods
 //
 
-// Reads and returns the specified fragment from the code.
+// Reads and returns the lines for specified fragment from the code.
 func (e EmbeddingInstruction) Content() []string {
 	fragmentName := e.Fragment
 	if fragmentName == "" {
