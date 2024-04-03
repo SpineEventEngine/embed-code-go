@@ -96,6 +96,20 @@ func xmlAttribute(name string, value string) string {
 	return fmt.Sprintf("%s=\"%v\"", name, value)
 }
 
+func TestFalseXML(t *testing.T) {
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("FromXML had to raise a panic, but it didn't.")
+		}
+	}()
+
+	xmlString := "<file=\"org/example/Hello.java\" fragment=\"Hello class\"/>"
+	config := buildConfigWithPreparedFragments()
+
+	embedding_instruction.FromXML(xmlString, config)
+}
+
 func TestParseFromXML(t *testing.T) {
 	instructionParams := buildInstructionParams{}
 	instructionParams.fragment = "Hello class"
@@ -103,9 +117,6 @@ func TestParseFromXML(t *testing.T) {
 	config := buildConfigWithPreparedFragments()
 
 	instruction := embedding_instruction.FromXML(xmlString, config)
-	// if instruction == nil {
-	// 	t.Error("Expected non-nil instruction")
-	// }
 	fmt.Println(xmlString)
 	fmt.Println(config)
 	fmt.Println(instruction)
