@@ -27,7 +27,7 @@ import (
 
 // Represents a glob-like pattern to match a line of a source file.
 //
-// Contains both the original glob string and a modified pattern suitable for matching.
+// Contains both original glob string and modified pattern suitable for matching.
 //
 // sourceGlob — a glob-like string, e.g. "*main*" or "^main".
 //
@@ -41,9 +41,9 @@ type Pattern struct {
 // Initializers
 //
 
-// Creates a new Pattern based on the provided glob string.
+// Creates a new Pattern based on provided glob string.
 //
-// The resulting Pattern struct contains both the original glob string and a
+// The resulting Pattern struct contains both original glob string and
 // modified pattern suitable for matching.
 //
 // The modified pattern is the original one, but enclosed with the "*" wildcards,
