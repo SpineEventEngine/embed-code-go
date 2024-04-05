@@ -20,18 +20,18 @@ func NewEmbeddingProcessor(docFile string, config configuration.Configuration) E
 	}
 }
 
-func (ep EmbeddingProcessor) embed() {
+func (ep EmbeddingProcessor) Embed() {
 	context := ep.constructEmbedding()
 
 	if context.checkContainsEmbedding() && context.checkContentChanged() {
-		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.result, "")), 0644)
+		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.result, "\n")), 0644)
 		if err != nil {
 			fmt.Println("Error writing to file:", err)
 		}
 	}
 }
 
-func (ep EmbeddingProcessor) upToDate() bool {
+func (ep EmbeddingProcessor) CheckUpToDate() bool {
 	context := ep.constructEmbedding()
 	return !context.checkContentChanged()
 }
@@ -46,7 +46,7 @@ func (ep EmbeddingProcessor) constructEmbedding() ParsingContext {
 			transition := StateToTransition[nextState]
 			if transition.recognize(context) {
 				currentState = nextState
-				transition.accept(context, ep.Config)
+				transition.accept(&context, ep.Config)
 				accepted = true
 				break
 			}
@@ -63,14 +63,14 @@ func (ep EmbeddingProcessor) constructEmbedding() ParsingContext {
 // Static functions
 //
 
-func embedAll(configuration configuration.Configuration) {
+func EmbedAll(configuration configuration.Configuration) {
 	documentationRoot := configuration.DocumentationRoot
 	docPatterns := configuration.DocIncludes
 	for _, pattern := range docPatterns {
 		documentationFiles, _ := filepath.Glob(filepath.Join(documentationRoot, pattern))
 		for _, documentationFile := range documentationFiles {
 			processor := NewEmbeddingProcessor(documentationFile, configuration)
-			processor.embed()
+			processor.Embed()
 		}
 	}
 }
