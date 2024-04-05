@@ -16,8 +16,43 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-module embed-code/embed-code-go
+package embedding_instruction
 
-go 1.22.1
+import (
+	"encoding/xml"
+	"fmt"
+)
 
-require github.com/gobwas/glob v0.2.3 // indirect
+const xmlStringHeader string = "embed-code"
+
+// Needed for xml.Unmarshal parsing. The fields are filling up during the parsing.
+//
+// XMLName — a name of the tag in XML line.
+//
+// Attrs — a list of xml.Attr. The xml.Attr contains both names and values of attributes.
+type Item struct {
+	XMLName xml.Name
+	Attrs   []xml.Attr `xml:",any,attr"`
+}
+
+// Parses given XML-encoded xmlLine and returns attributes data as key-value pairs.
+//
+// xmlLine — a XML-encoded line.
+func ParseXMLLine(xmlLine string) map[string]string {
+	var root Item
+	err := xml.Unmarshal([]byte(xmlLine), &root)
+	if err != nil {
+		panic(err)
+	}
+
+	if root.XMLName.Local != xmlStringHeader {
+		panic(fmt.Sprintf("The provided line's header is not 'embed-code':\n%s", xmlLine))
+	}
+
+	attributes := make(map[string]string)
+	for _, subItem := range root.Attrs {
+		attributes[subItem.Name.Local] = subItem.Value
+	}
+
+	return attributes
+}
