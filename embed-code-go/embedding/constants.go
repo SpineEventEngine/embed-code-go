@@ -10,7 +10,7 @@ var Transitions = map[string][]string{
 	"CODE_FENCE_END":        {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
 }
 
-var StateToTransition = map[string]interface{}{
+var StateToTransition = map[string]Transition{
 	"REGULAR_LINE":          RegularLine{},
 	"EMBEDDING_INSTRUCTION": EmbedInstructionToken{},
 	"BLANK_LINE":            BlankLine{},
