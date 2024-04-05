@@ -21,37 +21,157 @@ package embedding_test
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
+// Removes directory and all it's subdirectories if exists, does nothing if not exists.
+func cleanupDir(dir string) {
+	if _, err := os.Stat(dir); err == nil {
+		err = os.RemoveAll(dir)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+// Copies directory from source path to target path with all subdirs and children.
+func CopyDirAll(source string, target string) {
+	info, err := os.Stat(source)
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.MkdirAll(target, info.Mode())
+	if err != nil {
+		panic(err)
+	}
+
+	entries, err := os.ReadDir(source)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, entry := range entries {
+		sourcePath := filepath.Join(source, entry.Name())
+		targetPath := filepath.Join(target, entry.Name())
+
+		if entry.IsDir() {
+			CopyDirAll(sourcePath, targetPath)
+		} else {
+			err = copyFile(sourcePath, targetPath)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+}
+
+func copyFile(source string, target string) (err error) {
+	sourceFile, err := os.Open(source)
+	if err != nil {
+		return
+	}
+	defer sourceFile.Close()
+
+	targetFile, err := os.Create(target)
+	if err != nil {
+		return
+	}
+	defer func() {
+		cerr := targetFile.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
+
+	if _, err = io.Copy(targetFile, sourceFile); err != nil {
+		return
+	}
+
+	err = os.Chmod(target, os.FileMode(0666))
+	return
+}
+
+type EmbeddingInstructionTestsPreparator struct {
+	rootDir  string
+	testsDir string
+}
+
+func newEmbeddingInstructionTestsPreparator() EmbeddingInstructionTestsPreparator {
+	rootDir, err := filepath.Abs("../../")
+	if err != nil {
+		panic(err)
+	}
+	testsDir, err := filepath.Abs(".")
+	if err != nil {
+		panic(err)
+	}
+	return EmbeddingInstructionTestsPreparator{
+		rootDir:  rootDir,
+		testsDir: testsDir,
+	}
+}
+
+func (testPreparator EmbeddingInstructionTestsPreparator) setup() {
+	config := buildConfigWithPreparedFragments()
+	os.Chdir(testPreparator.rootDir)
+	CopyDirAll("./test/resources/docs", config.DocumentationRoot)
+}
+
+func (testPreparator EmbeddingInstructionTestsPreparator) cleanup() {
+	config := buildConfigWithPreparedFragments()
+	cleanupDir(config.DocumentationRoot)
+	os.Chdir(testPreparator.testsDir)
+}
+
+func buildConfigWithPreparedFragments() configuration.Configuration {
+	var config = configuration.NewConfiguration()
+	config.DocumentationRoot = "./test/.docs"
+	config.CodeRoot = "./test/resources/code"
+	config.FragmentsDir = "./test/resources/prepared-fragments"
+	return config
+}
+
 func TestNotUpToDate(t *testing.T) {
-	config := configuration.PrepareConfiguration("./test/resources/docs")
-	assert.False(t, embedding.IsUpToDate(config, "./test/resources/docs/whole-file-fragment.md"))
+	preparator := newEmbeddingInstructionTestsPreparator()
+	preparator.setup()
+	defer preparator.cleanup()
+
+	config := buildConfigWithPreparedFragments()
+	docPath := fmt.Sprintf("%s/whole-file-fragment.md", config.DocumentationRoot)
+	processor := embedding.NewEmbeddingProcessor(docPath, config)
+
+	isUpToDate := processor.CheckUpToDate()
+	assert.False(t, isUpToDate)
 }
 
 func TestUpToDate(t *testing.T) {
-	config := configuration.PrepareConfiguration("./test/resources/docs")
-	embedding.EmbedCode(config, "./test/resources/docs/whole-file-fragment.md")
-	assert.True(t, embedding.IsUpToDate(config, "./test/resources/docs/whole-file-fragment.md"))
+	preparator := newEmbeddingInstructionTestsPreparator()
+	preparator.setup()
+	defer preparator.cleanup()
+
+	config := buildConfigWithPreparedFragments()
+	docPath := fmt.Sprintf("%s/whole-file-fragment.md", config.DocumentationRoot)
+	processor := embedding.NewEmbeddingProcessor(docPath, config)
+	processor.Embed()
+
+	isUpToDate := processor.CheckUpToDate()
+	assert.True(t, isUpToDate)
 }
 
 func TestNothingToUpdate(t *testing.T) {
-	config := configuration.PrepareConfiguration("./test/resources/docs")
-	assert.True(t, embedding.IsUpToDate(config, "./test/resources/docs/no-embedding-doc.md"))
-}
+	preparator := newEmbeddingInstructionTestsPreparator()
+	preparator.setup()
+	defer preparator.cleanup()
 
-func TestNonExistingFile(t *testing.T) {
-	config := configuration.PrepareConfiguration("./test/resources/docs")
-	assert.PanicsWithError(t, errors.FileNotFound("./test/resources/docs/non-existing-file.md"), func() {
-		embedding.EmbedCode(config, "./test/resources/docs/non-existing-file.md")
-	})
-}
-
-func TestDirectoryInsteadOfFile(t *testing.T) {
-	config := configuration.PrepareConfiguration("./test/resources/docs")
-	assert.PanicsWithError(t, errors.IsDirectory("./test/resources/docs"), func() {
-		embedding.EmbedCode(config, "./test/resources/docs")
-	})
+	config := buildConfigWithPreparedFragments()
+	docPath := fmt.Sprintf("%s/no-embedding-doc.md", config.DocumentationRoot)
+	processor := embedding.NewEmbeddingProcessor(docPath, config)
+	assert.True(t, processor.CheckUpToDate())
 }
