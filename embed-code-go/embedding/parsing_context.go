@@ -8,14 +8,15 @@ import (
 )
 
 type ParsingContext struct {
-	embedding            *embedding_instruction.EmbeddingInstruction
-	source               []string
-	markdownFile         string
-	lineIndex            int
-	result               []string
-	codeFenceStarted     bool
-	codeFenceIndentation int
-	fragmentsDir         string
+	embedding               *embedding_instruction.EmbeddingInstruction
+	source                  []string
+	markdownFile            string
+	lineIndex               int
+	result                  []string
+	codeFenceStarted        bool
+	codeFenceIndentation    int
+	fragmentsDir            string
+	file_contains_embedding bool
 }
 
 func NewParsingContext(markdownFile string) ParsingContext {
@@ -40,7 +41,7 @@ func (pc ParsingContext) reachedEOF() bool {
 }
 
 func (pc ParsingContext) checkContentChanged() bool {
-	for i := 0; i <= pc.lineIndex; i++ {
+	for i := 0; i < pc.lineIndex; i++ {
 		if pc.source[i] != pc.result[i] {
 			return true
 		}
@@ -49,11 +50,12 @@ func (pc ParsingContext) checkContentChanged() bool {
 }
 
 func (pc ParsingContext) checkContainsEmbedding() bool {
-	return pc.embedding != nil
+	return pc.file_contains_embedding
 }
 
-func (pc *ParsingContext) setEmbedding(embedding embedding_instruction.EmbeddingInstruction) {
-	pc.embedding = &embedding
+func (pc *ParsingContext) setEmbedding(embedding *embedding_instruction.EmbeddingInstruction) {
+	pc.file_contains_embedding = true
+	pc.embedding = embedding
 }
 
 func (pc ParsingContext) String() string {
