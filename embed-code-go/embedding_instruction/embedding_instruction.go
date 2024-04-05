@@ -158,7 +158,7 @@ func (e EmbeddingInstruction) matchingLines(lines []string) []string {
 	return indent.CutIndent(requiredLines, indentation)
 }
 
-// Returns the index of a line that matches given pattern.
+// Returns the index of a first line that matches given pattern.
 //
 // pattern — a pattern to search in lines for.
 //
