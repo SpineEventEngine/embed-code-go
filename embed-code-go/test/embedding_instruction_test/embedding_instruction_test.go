@@ -116,8 +116,9 @@ func TestParseFromXML(t *testing.T) {
 		}
 	}()
 
-	instructionParams := buildInstructionParams{}
-	instructionParams.fragment = "Hello class"
+	instructionParams := buildInstructionParams{
+		fragment: "Hello class",
+	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
 	embedding_instruction.FromXML(xmlString, config)
@@ -130,9 +131,10 @@ func TestParseWithClosingTag(t *testing.T) {
 		}
 	}()
 
-	instructionParams := buildInstructionParams{}
-	instructionParams.fragment = "Hello class"
-	instructionParams.closeTag = true
+	instructionParams := buildInstructionParams{
+		fragment: "Hello class",
+		closeTag: true,
+	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
 
@@ -143,8 +145,9 @@ func TestReadFragmentDir(t *testing.T) {
 	preparator := newEmbeddingInstructionTestsPreparator()
 	preparator.setup()
 
-	instructionParams := buildInstructionParams{}
-	instructionParams.closeTag = true
+	instructionParams := buildInstructionParams{
+		closeTag: true,
+	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
 	instruction := embedding_instruction.FromXML(xmlString, config)
@@ -173,7 +176,10 @@ func TestFragmentAndStart(t *testing.T) {
 		preparator.cleanup()
 	}()
 
-	instructionParams := buildInstructionParams{fragment: "fragment", startGlob: "public void hello()"}
+	instructionParams := buildInstructionParams{
+		fragment:  "fragment",
+		startGlob: "public void hello()",
+	}
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
@@ -193,7 +199,10 @@ func TestFragmentAndEnd(t *testing.T) {
 		preparator.cleanup()
 	}()
 
-	instructionParams := buildInstructionParams{fragment: "fragment", endGlob: "}"}
+	instructionParams := buildInstructionParams{
+		fragment: "fragment",
+		endGlob:  "}",
+	}
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
