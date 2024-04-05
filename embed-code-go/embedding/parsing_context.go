@@ -8,15 +8,14 @@ import (
 )
 
 type ParsingContext struct {
-	embedding             embedding_instruction.EmbeddingInstruction
-	fileContainsEmbedding bool
-	source                []string
-	markdownFile          string
-	lineIndex             int
-	result                []string
-	codeFenceStarted      bool
-	codeFenceIndentation  int
-	fragmentsDir          string
+	embedding            *embedding_instruction.EmbeddingInstruction
+	source               []string
+	markdownFile         string
+	lineIndex            int
+	result               []string
+	codeFenceStarted     bool
+	codeFenceIndentation int
+	fragmentsDir         string
 }
 
 func NewParsingContext(markdownFile string) ParsingContext {
@@ -28,7 +27,7 @@ func NewParsingContext(markdownFile string) ParsingContext {
 	}
 }
 
-func (pc *ParsingContext) currentLine() string {
+func (pc ParsingContext) currentLine() string {
 	return pc.source[pc.lineIndex]
 }
 
@@ -36,20 +35,28 @@ func (pc *ParsingContext) toNextLine() {
 	pc.lineIndex++
 }
 
-func (pc *ParsingContext) reachedEOF() bool {
+func (pc ParsingContext) reachedEOF() bool {
 	return pc.lineIndex >= len(pc.source)
 }
 
-func (pc *ParsingContext) setContentChanged() {
+func (pc ParsingContext) checkContentChanged() bool {
 	for i := 0; i <= pc.lineIndex; i++ {
 		if pc.source[i] != pc.result[i] {
-			pc.fileContainsEmbedding = true
-			return
+			return true
 		}
 	}
+	return false
 }
 
-func (pc *ParsingContext) String() string {
+func (pc ParsingContext) checkContainsEmbedding() bool {
+	return pc.embedding != nil
+}
+
+func (pc *ParsingContext) setEmbedding(embedding embedding_instruction.EmbeddingInstruction) {
+	pc.embedding = &embedding
+}
+
+func (pc ParsingContext) String() string {
 	return fmt.Sprintf("ParsingContext[embedding=`%s`, file=`%s`, line=`%d`]",
 		pc.embedding, pc.markdownFile, pc.lineIndex)
 }
