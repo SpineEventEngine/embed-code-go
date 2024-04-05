@@ -106,7 +106,7 @@ func NewEmbeddingInstruction(attributes map[string]string, config configuration.
 //
 // config — a Configuration with all embed-code settings.
 func FromXML(line string, config configuration.Configuration) EmbeddingInstruction {
-	fields := ParseXmlLine(line)
+	fields := ParseXMLLine(line)
 	return NewEmbeddingInstruction(fields, config)
 }
 

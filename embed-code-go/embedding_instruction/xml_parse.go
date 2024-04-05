@@ -38,7 +38,7 @@ type Item struct {
 // Parses given XML-encoded xmlLine and returns attributes data as key-value pairs.
 //
 // xmlLine — a XML-encoded line.
-func ParseXmlLine(xmlLine string) map[string]string {
+func ParseXMLLine(xmlLine string) map[string]string {
 	var root Item
 	err := xml.Unmarshal([]byte(xmlLine), &root)
 	if err != nil {
