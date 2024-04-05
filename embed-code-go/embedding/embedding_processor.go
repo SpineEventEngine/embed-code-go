@@ -4,6 +4,8 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 type EmbeddingProcessor struct {
@@ -11,38 +13,38 @@ type EmbeddingProcessor struct {
 	Config  configuration.Configuration
 }
 
-func NewEmbeddingProcessor(docFile string, config configuration.Configuration) *EmbeddingProcessor {
-	return &EmbeddingProcessor{
+func NewEmbeddingProcessor(docFile string, config configuration.Configuration) EmbeddingProcessor {
+	return EmbeddingProcessor{
 		DocFile: docFile,
 		Config:  config,
 	}
 }
 
-func (ep *EmbeddingProcessor) embed() {
+func (ep EmbeddingProcessor) embed() {
 	context := ep.constructEmbedding()
 
-	if context.fileContainsEmbedding && context.contentChanged() {
-		err := os.WriteFile(ep.DocFile, []byte(context.result()), 0644)
+	if context.checkContainsEmbedding() && context.checkContentChanged() {
+		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.result, "")), 0644)
 		if err != nil {
 			fmt.Println("Error writing to file:", err)
 		}
 	}
 }
 
-func (ep *EmbeddingProcessor) upToDate() bool {
+func (ep EmbeddingProcessor) upToDate() bool {
 	context := ep.constructEmbedding()
-	return !context.contentChanged()
+	return !context.checkContentChanged()
 }
 
-func (ep *EmbeddingProcessor) constructEmbedding() ParsingContext {
+func (ep EmbeddingProcessor) constructEmbedding() ParsingContext {
 	context := NewParsingContext(ep.DocFile)
 
 	currentState := "START"
 	for currentState != "FINISH" {
 		accepted := false
-		for _, nextState := range TRANSITIONS[currentState] {
-			transition := STATE_TO_TRANSITION[nextState]
-			if transition.recognize() {
+		for _, nextState := range Transitions[currentState] {
+			transition := StateToTransition[nextState]
+			if transition.recognize(context) {
 				currentState = nextState
 				transition.accept(context, ep.Config)
 				accepted = true
@@ -57,17 +59,18 @@ func (ep *EmbeddingProcessor) constructEmbedding() ParsingContext {
 	return context
 }
 
-type EmbeddingContext struct {
-	fileContainsEmbedding bool
-	contentChanged        bool
-	// Other relevant fields...
-}
+//
+// Static functions
+//
 
-func (ec EmbeddingProcessor) result() string {
-	// Construct the final result based on the context.
-	// Return the result as a string.
-}
-
-func (ep EmbeddingProcessor) constructEmbedding() ParsingContext {
-
+func embedAll(configuration configuration.Configuration) {
+	documentationRoot := configuration.DocumentationRoot
+	docPatterns := configuration.DocIncludes
+	for _, pattern := range docPatterns {
+		documentationFiles, _ := filepath.Glob(filepath.Join(documentationRoot, pattern))
+		for _, documentationFile := range documentationFiles {
+			processor := NewEmbeddingProcessor(documentationFile, configuration)
+			processor.embed()
+		}
+	}
 }
