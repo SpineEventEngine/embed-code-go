@@ -10,7 +10,7 @@ import (
 const statement = "<embed-code"
 
 type Transition interface {
-	accept(context ParsingContext, config configuration.Configuration)
+	accept(context *ParsingContext, config configuration.Configuration)
 	recognize(context ParsingContext) bool
 }
 
@@ -24,7 +24,7 @@ func (f Finish) recognize(context ParsingContext) bool {
 	return context.reachedEOF()
 }
 
-func (f Finish) accept(context ParsingContext, config configuration.Configuration) {
+func (f Finish) accept(context *ParsingContext, config configuration.Configuration) {
 }
 
 //
@@ -37,7 +37,7 @@ func (c CodeSampleLine) recognize(context ParsingContext) bool {
 	return !context.reachedEOF() && context.codeFenceStarted
 }
 
-func (c CodeSampleLine) accept(context ParsingContext, config configuration.Configuration) {
+func (c CodeSampleLine) accept(context *ParsingContext, config configuration.Configuration) {
 	context.toNextLine()
 }
 
@@ -57,19 +57,19 @@ func (c CodeFenceEnd) recognize(context ParsingContext) bool {
 	return false
 }
 
-func (c CodeFenceEnd) accept(context ParsingContext, config configuration.Configuration) {
+func (c CodeFenceEnd) accept(context *ParsingContext, config configuration.Configuration) {
 	// Assuming the two arguments are of type `interface{}`.
 	// Implement your logic here.
 	line := context.currentLine()
 	renderSample(context)
 	context.result = append(context.result, line)
-	context.embedding = nil
+	context.setEmbedding(nil)
 	context.codeFenceStarted = false
 	context.codeFenceIndentation = 0
 	context.toNextLine()
 }
 
-func renderSample(context ParsingContext) {
+func renderSample(context *ParsingContext) {
 	for _, line := range context.embedding.Content() {
 		indentation := strings.Repeat(" ", context.codeFenceIndentation)
 		context.result = append(context.result, indentation+line)
@@ -89,7 +89,7 @@ func (c CodeFenceStart) recognize(context ParsingContext) bool {
 	return false
 }
 
-func (c CodeFenceStart) accept(context ParsingContext, config configuration.Configuration) {
+func (c CodeFenceStart) accept(context *ParsingContext, config configuration.Configuration) {
 	line := context.currentLine()
 	context.result = append(context.result, line)
 	context.codeFenceStarted = true
@@ -111,7 +111,7 @@ func (b BlankLine) recognize(context ParsingContext) bool {
 	return false
 }
 
-func (b BlankLine) accept(context ParsingContext, config configuration.Configuration) {
+func (b BlankLine) accept(context *ParsingContext, config configuration.Configuration) {
 	line := context.currentLine()
 	context.result = append(context.result, line)
 	context.toNextLine()
@@ -127,7 +127,7 @@ func (r RegularLine) recognize(context ParsingContext) bool {
 	return true
 }
 
-func (r RegularLine) accept(context ParsingContext, config configuration.Configuration) {
+func (r RegularLine) accept(context *ParsingContext, config configuration.Configuration) {
 	line := context.currentLine()
 	context.result = append(context.result, line)
 	context.toNextLine()
@@ -141,18 +141,19 @@ type EmbedInstructionToken struct{}
 
 func (e EmbedInstructionToken) recognize(context ParsingContext) bool {
 	line := context.currentLine()
-	if context.embedding != nil && !context.reachedEOF() && strings.HasPrefix(strings.TrimSpace(line), statement) {
+	isStatement := strings.HasPrefix(strings.TrimSpace(line), statement)
+	if context.embedding == nil && !context.reachedEOF() && isStatement {
 		return true
 	}
 	return false
 }
 
-func (e EmbedInstructionToken) accept(context ParsingContext, config configuration.Configuration) {
+func (e EmbedInstructionToken) accept(context *ParsingContext, config configuration.Configuration) {
 	instructionBody := []string{}
 	for !context.reachedEOF() {
 		instructionBody = append(instructionBody, context.currentLine())
 		instruction := embedding_instruction.FromXML(strings.Join(instructionBody, ""), config)
-		context.setEmbedding(instruction)
+		context.setEmbedding(&instruction)
 		context.result = append(context.result, context.currentLine())
 		context.toNextLine()
 		if context.embedding != nil {
