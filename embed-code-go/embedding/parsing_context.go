@@ -15,7 +15,6 @@ type ParsingContext struct {
 	result                  []string
 	codeFenceStarted        bool
 	codeFenceIndentation    int
-	fragmentsDir            string
 	file_contains_embedding bool
 }
 
