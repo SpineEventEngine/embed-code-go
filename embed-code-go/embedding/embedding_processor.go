@@ -26,7 +26,7 @@ func (ep EmbeddingProcessor) Embed() {
 	if context.checkContainsEmbedding() && context.checkContentChanged() {
 		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.result, "\n")), 0644)
 		if err != nil {
-			fmt.Println("Error writing to file:", err)
+			panic(err)
 		}
 	}
 }
@@ -52,7 +52,7 @@ func (ep EmbeddingProcessor) constructEmbedding() ParsingContext {
 			}
 		}
 		if !accepted {
-			panic(fmt.Sprintf("Failed to parse the doc file `%s`. Context: %+v", ep.DocFile, context))
+			panic(fmt.Sprintf("failed to parse the doc file `%s`. Context: %+v", ep.DocFile, context))
 		}
 	}
 
