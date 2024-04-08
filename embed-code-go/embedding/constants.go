@@ -1,5 +1,6 @@
 package embedding
 
+// Maps state names to the list of possible next states.
 var Transitions = map[string][]string{
 	"START":                 {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
 	"REGULAR_LINE":          {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
@@ -10,6 +11,7 @@ var Transitions = map[string][]string{
 	"CODE_FENCE_END":        {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
 }
 
+// Maps a state name to a Transition.
 var StateToTransition = map[string]Transition{
 	"REGULAR_LINE":          RegularLine{},
 	"EMBEDDING_INSTRUCTION": EmbedInstructionToken{},
