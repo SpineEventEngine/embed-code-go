@@ -41,7 +41,7 @@ func cleanupDir(dir string) {
 }
 
 // Copies directory from source path to target path with all subdirs and children.
-func CopyDirAll(source string, target string) {
+func copyDirRecursive(source string, target string) {
 	info, err := os.Stat(source)
 	if err != nil {
 		panic(err)
@@ -62,7 +62,7 @@ func CopyDirAll(source string, target string) {
 		targetPath := filepath.Join(target, entry.Name())
 
 		if entry.IsDir() {
-			CopyDirAll(sourcePath, targetPath)
+			copyDirRecursive(sourcePath, targetPath)
 		} else {
 			err = copyFile(sourcePath, targetPath)
 			if err != nil {
@@ -121,7 +121,7 @@ func newEmbeddingInstructionTestsPreparator() EmbeddingInstructionTestsPreparato
 func (testPreparator EmbeddingInstructionTestsPreparator) setup() {
 	config := buildConfigWithPreparedFragments()
 	os.Chdir(testPreparator.rootDir)
-	CopyDirAll("./test/resources/docs", config.DocumentationRoot)
+	copyDirRecursive("./test/resources/docs", config.DocumentationRoot)
 }
 
 func (testPreparator EmbeddingInstructionTestsPreparator) cleanup() {
