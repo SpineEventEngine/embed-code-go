@@ -2,6 +2,7 @@ package embedding
 
 import (
 	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding/parsing"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,7 +41,7 @@ func (ep EmbeddingProcessor) Embed() {
 	context := ep.constructEmbedding()
 
 	if context.СheckContainsEmbedding() && context.СheckContentChanged() {
-		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.result, "\n")), 0644)
+		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.GetResult(), "\n")), 0644)
 		if err != nil {
 			panic(err)
 		}
@@ -65,17 +66,17 @@ func (ep EmbeddingProcessor) CheckUpToDate() bool {
 // it updates the current state and accepts the transition.
 // If no transition is accepted, it panics with a message
 // indicating the failure to parse the document file.
-func (ep EmbeddingProcessor) constructEmbedding() ParsingContext {
-	context := NewParsingContext(ep.DocFile)
+func (ep EmbeddingProcessor) constructEmbedding() parsing.ParsingContext {
+	context := parsing.NewParsingContext(ep.DocFile)
 
 	currentState := "START"
 	for currentState != "FINISH" {
 		accepted := false
-		for _, nextState := range Transitions[currentState] {
-			transition := StateToTransition[nextState]
-			if transition.recognize(context) {
+		for _, nextState := range parsing.Transitions[currentState] {
+			transition := parsing.StateToTransition[nextState]
+			if transition.Recognize(context) {
 				currentState = nextState
-				transition.accept(&context, ep.Config)
+				transition.Accept(&context, ep.Config)
 				accepted = true
 				break
 			}

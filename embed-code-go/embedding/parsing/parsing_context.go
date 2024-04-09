@@ -1,4 +1,4 @@
-package embedding
+package parsing
 
 import (
 	"bufio"
@@ -93,6 +93,11 @@ func (pc *ParsingContext) SetEmbedding(embedding *embedding_instruction.Embeddin
 		pc.file_contains_embedding = true
 	}
 	pc.embedding = embedding
+}
+
+// Returns the result lines of the ParsingContext.
+func (pc ParsingContext) GetResult() []string {
+	return pc.result
 }
 
 // Returns a string representation of ParsingContext.

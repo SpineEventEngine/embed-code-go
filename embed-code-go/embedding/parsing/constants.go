@@ -1,4 +1,4 @@
-package embedding
+package parsing
 
 // Maps state names to the list of possible next states.
 var Transitions = map[string][]string{
@@ -21,5 +21,3 @@ var StateToTransition = map[string]Transition{
 	"CODE_SAMPLE_LINE":      CodeSampleLine{},
 	"FINISH":                Finish{},
 }
-
-const Statement = "<embed-code"
