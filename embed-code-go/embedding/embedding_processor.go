@@ -39,7 +39,7 @@ func NewEmbeddingProcessor(docFile string, config configuration.Configuration) E
 func (ep EmbeddingProcessor) Embed() {
 	context := ep.constructEmbedding()
 
-	if context.checkContainsEmbedding() && context.checkContentChanged() {
+	if context.СheckContainsEmbedding() && context.СheckContentChanged() {
 		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.result, "\n")), 0644)
 		if err != nil {
 			panic(err)
@@ -50,7 +50,7 @@ func (ep EmbeddingProcessor) Embed() {
 // Reports whether the embedding of the target markdown is up-to-date with the code file.
 func (ep EmbeddingProcessor) CheckUpToDate() bool {
 	context := ep.constructEmbedding()
-	return !context.checkContentChanged()
+	return !context.СheckContentChanged()
 }
 
 //

@@ -21,7 +21,7 @@ type Transition interface {
 type Finish struct{}
 
 func (f Finish) recognize(context ParsingContext) bool {
-	return context.reachedEOF()
+	return context.ReachedEOF()
 }
 
 func (f Finish) accept(context *ParsingContext, config configuration.Configuration) {
@@ -34,11 +34,11 @@ func (f Finish) accept(context *ParsingContext, config configuration.Configurati
 type CodeSampleLine struct{}
 
 func (c CodeSampleLine) recognize(context ParsingContext) bool {
-	return !context.reachedEOF() && context.codeFenceStarted
+	return !context.ReachedEOF() && context.codeFenceStarted
 }
 
 func (c CodeSampleLine) accept(context *ParsingContext, config configuration.Configuration) {
-	context.toNextLine()
+	context.ToNextLine()
 }
 
 //
@@ -50,9 +50,9 @@ type CodeFenceEnd struct{}
 func (c CodeFenceEnd) recognize(context ParsingContext) bool {
 	// Assuming context is of type `interface{}`.
 	// Implement your logic here.
-	if !context.reachedEOF() {
+	if !context.ReachedEOF() {
 		indentation := strings.Repeat(" ", context.codeFenceIndentation)
-		return context.codeFenceStarted && strings.HasPrefix(context.currentLine(), indentation+"```")
+		return context.codeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
 	}
 	return false
 }
@@ -60,13 +60,13 @@ func (c CodeFenceEnd) recognize(context ParsingContext) bool {
 func (c CodeFenceEnd) accept(context *ParsingContext, config configuration.Configuration) {
 	// Assuming the two arguments are of type `interface{}`.
 	// Implement your logic here.
-	line := context.currentLine()
+	line := context.CurrentLine()
 	renderSample(context)
 	context.result = append(context.result, line)
-	context.setEmbedding(nil)
+	context.SetEmbedding(nil)
 	context.codeFenceStarted = false
 	context.codeFenceIndentation = 0
-	context.toNextLine()
+	context.ToNextLine()
 }
 
 func renderSample(context *ParsingContext) {
@@ -83,19 +83,19 @@ func renderSample(context *ParsingContext) {
 type CodeFenceStart struct{}
 
 func (c CodeFenceStart) recognize(context ParsingContext) bool {
-	if !context.reachedEOF() {
-		return strings.HasPrefix(strings.TrimSpace(context.currentLine()), "```")
+	if !context.ReachedEOF() {
+		return strings.HasPrefix(strings.TrimSpace(context.CurrentLine()), "```")
 	}
 	return false
 }
 
 func (c CodeFenceStart) accept(context *ParsingContext, config configuration.Configuration) {
-	line := context.currentLine()
+	line := context.CurrentLine()
 	context.result = append(context.result, line)
 	context.codeFenceStarted = true
 	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
 	context.codeFenceIndentation = leadingSpaces
-	context.toNextLine()
+	context.ToNextLine()
 }
 
 //
@@ -105,16 +105,16 @@ func (c CodeFenceStart) accept(context *ParsingContext, config configuration.Con
 type BlankLine struct{}
 
 func (b BlankLine) recognize(context ParsingContext) bool {
-	if !context.reachedEOF() && strings.TrimSpace(context.currentLine()) == "" {
+	if !context.ReachedEOF() && strings.TrimSpace(context.CurrentLine()) == "" {
 		return !context.codeFenceStarted && context.embedding != nil
 	}
 	return false
 }
 
 func (b BlankLine) accept(context *ParsingContext, config configuration.Configuration) {
-	line := context.currentLine()
+	line := context.CurrentLine()
 	context.result = append(context.result, line)
-	context.toNextLine()
+	context.ToNextLine()
 }
 
 //
@@ -128,9 +128,9 @@ func (r RegularLine) recognize(context ParsingContext) bool {
 }
 
 func (r RegularLine) accept(context *ParsingContext, config configuration.Configuration) {
-	line := context.currentLine()
+	line := context.CurrentLine()
 	context.result = append(context.result, line)
-	context.toNextLine()
+	context.ToNextLine()
 }
 
 //
@@ -140,9 +140,9 @@ func (r RegularLine) accept(context *ParsingContext, config configuration.Config
 type EmbedInstructionToken struct{}
 
 func (e EmbedInstructionToken) recognize(context ParsingContext) bool {
-	line := context.currentLine()
+	line := context.CurrentLine()
 	isStatement := strings.HasPrefix(strings.TrimSpace(line), statement)
-	if context.embedding == nil && !context.reachedEOF() && isStatement {
+	if context.embedding == nil && !context.ReachedEOF() && isStatement {
 		return true
 	}
 	return false
@@ -150,12 +150,12 @@ func (e EmbedInstructionToken) recognize(context ParsingContext) bool {
 
 func (e EmbedInstructionToken) accept(context *ParsingContext, config configuration.Configuration) {
 	instructionBody := []string{}
-	for !context.reachedEOF() {
-		instructionBody = append(instructionBody, context.currentLine())
+	for !context.ReachedEOF() {
+		instructionBody = append(instructionBody, context.CurrentLine())
 		instruction := embedding_instruction.FromXML(strings.Join(instructionBody, ""), config)
-		context.setEmbedding(&instruction)
-		context.result = append(context.result, context.currentLine())
-		context.toNextLine()
+		context.SetEmbedding(&instruction)
+		context.result = append(context.result, context.CurrentLine())
+		context.ToNextLine()
 		if context.embedding != nil {
 			break
 		}
