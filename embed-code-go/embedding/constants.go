@@ -21,3 +21,5 @@ var StateToTransition = map[string]Transition{
 	"CODE_SAMPLE_LINE":      CodeSampleLine{},
 	"FINISH":                Finish{},
 }
+
+const Statement = "<embed-code"

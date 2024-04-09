@@ -7,8 +7,6 @@ import (
 	"strings"
 )
 
-const statement = "<embed-code"
-
 type Transition interface {
 	accept(context *ParsingContext, config configuration.Configuration)
 	recognize(context ParsingContext) bool
@@ -141,7 +139,7 @@ type EmbedInstructionToken struct{}
 
 func (e EmbedInstructionToken) recognize(context ParsingContext) bool {
 	line := context.CurrentLine()
-	isStatement := strings.HasPrefix(strings.TrimSpace(line), statement)
+	isStatement := strings.HasPrefix(strings.TrimSpace(line), Statement)
 	if context.embedding == nil && !context.ReachedEOF() && isStatement {
 		return true
 	}
