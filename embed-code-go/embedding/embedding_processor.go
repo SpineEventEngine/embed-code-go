@@ -92,17 +92,17 @@ func (ep EmbeddingProcessor) constructEmbedding() ParsingContext {
 // Static functions
 //
 
-// Processes embedding for multiple documentation files based on provided configuration.
+// Processes embedding for multiple documentation files based on provided config.
 //
 // Iterates over patterns in the configuration, finds documentation files matching those patterns,
 // creates an EmbeddingProcessor for each file, and embeds code fragments in them.
-func EmbedAll(configuration configuration.Configuration) {
-	documentationRoot := configuration.DocumentationRoot
-	docPatterns := configuration.DocIncludes
+func EmbedAll(config configuration.Configuration) {
+	documentationRoot := config.DocumentationRoot
+	docPatterns := config.DocIncludes
 	for _, pattern := range docPatterns {
 		documentationFiles, _ := filepath.Glob(filepath.Join(documentationRoot, pattern))
 		for _, documentationFile := range documentationFiles {
-			processor := NewEmbeddingProcessor(documentationFile, configuration)
+			processor := NewEmbeddingProcessor(documentationFile, config)
 			processor.Embed()
 		}
 	}
