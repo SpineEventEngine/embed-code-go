@@ -71,7 +71,7 @@ func (pc ParsingContext) ReachedEOF() bool {
 
 // Reports whether the content of the code file has changed
 // compared to the embedding of the markdown file.
-func (pc ParsingContext) СheckContentChanged() bool {
+func (pc ParsingContext) IsContentChanged() bool {
 	for i := 0; i < pc.lineIndex; i++ {
 		if pc.source[i] != pc.result[i] {
 			return true
@@ -81,7 +81,7 @@ func (pc ParsingContext) СheckContentChanged() bool {
 }
 
 // Reports whether the doc file contains an embedding.
-func (pc ParsingContext) СheckContainsEmbedding() bool {
+func (pc ParsingContext) IsContainsEmbedding() bool {
 	return pc.file_contains_embedding
 }
 

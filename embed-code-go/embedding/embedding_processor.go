@@ -56,7 +56,7 @@ func NewEmbeddingProcessorWithTransitions(docFile string,
 func (ep EmbeddingProcessor) Embed() {
 	context := ep.constructEmbedding()
 
-	if context.СheckContainsEmbedding() && context.СheckContentChanged() {
+	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.GetResult(), "\n")), filePermission)
 		if err != nil {
 			panic(err)
@@ -65,9 +65,9 @@ func (ep EmbeddingProcessor) Embed() {
 }
 
 // Reports whether the embedding of the target markdown is up-to-date with the code file.
-func (ep EmbeddingProcessor) CheckUpToDate() bool {
+func (ep EmbeddingProcessor) IsUpToDate() bool {
 	context := ep.constructEmbedding()
-	return !context.СheckContentChanged()
+	return !context.IsContentChanged()
 }
 
 //

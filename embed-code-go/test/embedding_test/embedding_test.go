@@ -147,7 +147,7 @@ func TestNotUpToDate(t *testing.T) {
 	docPath := fmt.Sprintf("%s/whole-file-fragment.md", config.DocumentationRoot)
 	processor := embedding.NewEmbeddingProcessor(docPath, config)
 
-	isUpToDate := processor.CheckUpToDate()
+	isUpToDate := processor.IsUpToDate()
 	assert.False(t, isUpToDate)
 }
 
@@ -161,7 +161,7 @@ func TestUpToDate(t *testing.T) {
 	processor := embedding.NewEmbeddingProcessor(docPath, config)
 	processor.Embed()
 
-	isUpToDate := processor.CheckUpToDate()
+	isUpToDate := processor.IsUpToDate()
 	assert.True(t, isUpToDate)
 }
 
@@ -173,7 +173,7 @@ func TestNothingToUpdate(t *testing.T) {
 	config := buildConfigWithPreparedFragments()
 	docPath := fmt.Sprintf("%s/no-embedding-doc.md", config.DocumentationRoot)
 	processor := embedding.NewEmbeddingProcessor(docPath, config)
-	assert.True(t, processor.CheckUpToDate())
+	assert.True(t, processor.IsUpToDate())
 }
 
 func TestFalseTransitions(t *testing.T) {
