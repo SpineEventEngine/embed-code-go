@@ -97,6 +97,8 @@ func (ep EmbeddingProcessor) constructEmbedding() parsing.ParsingContext {
 //
 // Iterates over patterns in the configuration, finds documentation files matching those patterns,
 // creates an EmbeddingProcessor for each file, and embeds code fragments in them.
+//
+// config — a configuration for embedding.
 func EmbedAll(config configuration.Configuration) {
 	documentationRoot := config.DocumentationRoot
 	docPatterns := config.DocIncludes
