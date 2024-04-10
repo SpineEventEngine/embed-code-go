@@ -1,6 +1,8 @@
 package parsing
 
 // Maps state names to the list of possible next states.
+//
+// The order of the next states is important.
 var Transitions = map[string][]string{
 	"START":                 {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
 	"REGULAR_LINE":          {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
