@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+const filePermission = 0644
+
 // The EmbeddingProcessor entity processes a single documentation file and embeds code snippets
 // into it based on the provided configuration.
 //
@@ -41,7 +43,7 @@ func (ep EmbeddingProcessor) Embed() {
 	context := ep.constructEmbedding()
 
 	if context.СheckContainsEmbedding() && context.СheckContentChanged() {
-		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.GetResult(), "\n")), 0644)
+		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.GetResult(), "\n")), filePermission)
 		if err != nil {
 			panic(err)
 		}
