@@ -18,19 +18,33 @@ const filePermission = 0644
 //
 // Config — a configuration for embedding.
 type EmbeddingProcessor struct {
-	DocFile string
-	Config  configuration.Configuration
+	DocFile        string
+	Config         configuration.Configuration
+	TransitionsMap map[string][]string
 }
 
 //
 // Initializers
 //
 
-// Creates and returns new EmbeddingProcessor with the given docFile and config.
+// Creates and returns new EmbeddingProcessor with given docFile and config.
 func NewEmbeddingProcessor(docFile string, config configuration.Configuration) EmbeddingProcessor {
 	return EmbeddingProcessor{
-		DocFile: docFile,
-		Config:  config,
+		DocFile:        docFile,
+		Config:         config,
+		TransitionsMap: parsing.Transitions,
+	}
+}
+
+// Creates and returns new EmbeddingProcessor with given docFile, config and transitions.
+func NewEmbeddingProcessorWithTransitions(docFile string,
+	config configuration.Configuration,
+	transitions map[string][]string,
+) EmbeddingProcessor {
+	return EmbeddingProcessor{
+		DocFile:        docFile,
+		Config:         config,
+		TransitionsMap: transitions,
 	}
 }
 
