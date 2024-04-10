@@ -18,9 +18,7 @@ func (f Finish) Recognize(context ParsingContext) bool {
 	return context.ReachedEOF()
 }
 
-// Reports whether the current line satisfies the transition.
-//
-// Updates the parsing context based on the transition.
+// Accepts finish, there's no need to do anything.
 //
 // context — a context of the parsing process.
 //

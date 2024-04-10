@@ -30,6 +30,7 @@ func (e EmbedInstructionToken) Recognize(context ParsingContext) bool {
 }
 
 // Parses the embedding instruction and extracts relevant information to update the parsing context.
+// Switches the context to the next line.
 //
 // context — a context of the parsing process.
 //

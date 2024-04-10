@@ -11,6 +11,8 @@ type Transition interface {
 
 	// Updates the parsing context based on the transition.
 	//
+	// Switches context to the next line if EOF is not reached yet.
+	//
 	// context — a context of the parsing process.
 	//
 	// config — a configuration of the embedding.
