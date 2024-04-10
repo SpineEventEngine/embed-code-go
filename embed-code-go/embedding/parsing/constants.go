@@ -2,7 +2,11 @@ package parsing
 
 // Maps state names to the list of possible next states.
 //
-// The order of the next states is important.
+// States are chosen considered the logical validity of their existence.
+//
+// The order of the next states is important. States are ordered by the level of their specificity,
+// so the first state in the list is the most specific one.
+// When the state is chosen, the latter ones are skipped.
 var Transitions = map[string][]string{
 	"START":                 {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
 	"REGULAR_LINE":          {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
