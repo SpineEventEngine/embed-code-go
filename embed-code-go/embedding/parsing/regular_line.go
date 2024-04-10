@@ -22,6 +22,10 @@ func (r RegularLine) Recognize(context ParsingContext) bool {
 
 // Adds the current line from the parsing context to the result
 // and moves to the next line in the context.
+//
+// context — a context of the parsing process.
+//
+// config — a configuration of the embedding.
 func (r RegularLine) Accept(context *ParsingContext, config configuration.Configuration) {
 	line := context.CurrentLine()
 	context.result = append(context.result, line)

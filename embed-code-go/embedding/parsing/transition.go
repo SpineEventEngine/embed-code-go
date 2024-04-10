@@ -10,6 +10,10 @@ const Statement = "<embed-code"
 type Transition interface {
 
 	// Updates the parsing context based on the transition.
+	//
+	// context — a context of the parsing process.
+	//
+	// config — a configuration of the embedding.
 	Accept(context *ParsingContext, config configuration.Configuration)
 
 	// Reports whether the current line satisfies the transition.
