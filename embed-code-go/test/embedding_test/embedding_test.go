@@ -175,3 +175,28 @@ func TestNothingToUpdate(t *testing.T) {
 	processor := embedding.NewEmbeddingProcessor(docPath, config)
 	assert.True(t, processor.CheckUpToDate())
 }
+
+func TestFalseTransitions(t *testing.T) {
+	preparator := newEmbeddingInstructionTestsPreparator()
+	preparator.setup()
+	defer preparator.cleanup()
+
+	config := buildConfigWithPreparedFragments()
+	docPath := fmt.Sprintf("%s/split-lines.md", config.DocumentationRoot)
+
+	falseTransitions := map[string][]string{
+		"START":                 {"REGULAR_LINE", "FINISH", "EMBEDDING_INSTRUCTION"},
+		"REGULAR_LINE":          {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
+		"EMBEDDING_INSTRUCTION": {"CODE_FENCE_START", "BLANK_LINE"},
+		"BLANK_LINE":            {"CODE_FENCE_START", "BLANK_LINE"},
+		"CODE_FENCE_START":      {"CODE_FENCE_END", "CODE_SAMPLE_LINE"},
+		"CODE_SAMPLE_LINE":      {"CODE_FENCE_END", "CODE_SAMPLE_LINE"},
+		"CODE_FENCE_END":        {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
+	}
+
+	falseProcessor := embedding.NewEmbeddingProcessorWithTransitions(docPath, config, falseTransitions)
+
+	assert.Panics(t, assert.PanicTestFunc(func() {
+		falseProcessor.Embed()
+	}))
+}
