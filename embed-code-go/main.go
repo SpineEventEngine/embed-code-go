@@ -18,5 +18,26 @@
 
 package main
 
-// This is the dummy entry point.
-func main() {}
+import (
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding"
+	"flag"
+	"fmt"
+)
+
+func main() {
+	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
+	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
+
+	flag.Parse()
+
+	if codeRoot == nil || docsRoot == nil {
+		panic("code_root and docs_root must be set")
+	}
+
+	config := configuration.NewConfigurationWithRoots(*codeRoot, *docsRoot)
+
+	fmt.Println(config)
+
+	embedding.EmbedAll(config)
+}

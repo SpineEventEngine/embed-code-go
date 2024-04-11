@@ -83,3 +83,14 @@ func NewConfiguration() Configuration {
 		Separator:    DefaultSeparator,
 	}
 }
+
+func NewConfigurationWithRoots(codeRoot string, docsRoot string) Configuration {
+	return Configuration{
+		CodeIncludes:      DefaultInclude,
+		DocIncludes:       DefaultDocIncludes,
+		FragmentsDir:      DefaultFragmentsDir,
+		Separator:         DefaultSeparator,
+		CodeRoot:          codeRoot,
+		DocumentationRoot: docsRoot,
+	}
+}
