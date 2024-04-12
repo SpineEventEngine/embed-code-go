@@ -19,15 +19,15 @@
 package main
 
 import (
+	"embed-code/embed-code-go/cli"
 	"embed-code/embed-code-go/configuration"
-	"embed-code/embed-code-go/embedding"
 	"flag"
 	"fmt"
 )
 
 func main() {
-	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
-	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
+	codeRoot := flag.String("code_root", "C:/Users/vladyslav.bakanov/JekyllHugoMigration/full_test/docs_test/_i18n", "a path to a root directory with code files")
+	docsRoot := flag.String("docs_root", "C:/Users/vladyslav.bakanov/JekyllHugoMigration/full_test/code_original/_samples/src/main", "a path to a root directory with docs files")
 
 	flag.Parse()
 
@@ -37,7 +37,7 @@ func main() {
 
 	config := configuration.NewConfigurationWithRoots(*codeRoot, *docsRoot)
 
-	fmt.Println(config)
+	cli.EmbedCodeSamples(config)
 
-	embedding.EmbedAll(config)
+	fmt.Println("Done!")
 }
