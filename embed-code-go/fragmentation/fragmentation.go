@@ -41,6 +41,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 // Splits the given file into fragments and writes them into corresponding output files.
@@ -165,7 +167,7 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 	codeRoot := configuration.CodeRoot
 	for _, rule := range includes {
 		pattern := fmt.Sprintf("%s/%s", codeRoot, rule)
-		codeFiles, _ := filepath.Glob(pattern)
+		codeFiles, _ := doublestar.FilepathGlob(pattern)
 		for _, codeFile := range codeFiles {
 			if ShouldFragmentize(codeFile) {
 				fragmentation := NewFragmentation(codeFile, configuration)
