@@ -128,3 +128,33 @@ func EmbedAll(config configuration.Configuration) {
 		}
 	}
 }
+
+func CheckUpToDate(config configuration.Configuration) {
+	changedFiles := findChangedFiles(config)
+	if len(changedFiles) > 0 {
+		panic(UnexpectedDiffError{changedFiles})
+	}
+}
+
+func findChangedFiles(config configuration.Configuration) []string {
+	documentationRoot := config.DocumentationRoot
+	docPatterns := config.DocIncludes
+	var changedFiles []string
+
+	for _, pattern := range docPatterns {
+		globString := strings.Join([]string{documentationRoot, pattern}, "/")
+		matches, err := doublestar.FilepathGlob(globString)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, documentationFile := range matches {
+			upToDate := NewEmbeddingProcessor(documentationFile, config).IsUpToDate()
+			if !upToDate {
+				changedFiles = append(changedFiles, documentationFile)
+			}
+		}
+	}
+
+	return changedFiles
+}
