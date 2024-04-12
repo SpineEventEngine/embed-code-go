@@ -21,6 +21,7 @@ module embed-code/embed-code-go
 go 1.22.1
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

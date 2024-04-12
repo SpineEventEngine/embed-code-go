@@ -5,8 +5,9 @@ import (
 	"embed-code/embed-code-go/embedding/parsing"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
+
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 const filePermission = 0644
@@ -119,7 +120,8 @@ func EmbedAll(config configuration.Configuration) {
 	documentationRoot := config.DocumentationRoot
 	docPatterns := config.DocIncludes
 	for _, pattern := range docPatterns {
-		documentationFiles, _ := filepath.Glob(filepath.Join(documentationRoot, pattern))
+		globString := strings.Join([]string{documentationRoot, pattern}, "/")
+		documentationFiles, _ := doublestar.FilepathGlob(globString)
 		for _, documentationFile := range documentationFiles {
 			processor := NewEmbeddingProcessor(documentationFile, config)
 			processor.Embed()
