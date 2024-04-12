@@ -39,8 +39,12 @@ func (e EmbedInstructionToken) Accept(context *ParsingContext, config configurat
 	instructionBody := []string{}
 	for !context.ReachedEOF() {
 		instructionBody = append(instructionBody, context.CurrentLine())
-		instruction := embedding_instruction.FromXML(strings.Join(instructionBody, ""), config)
-		context.SetEmbedding(&instruction)
+
+		instruction, err := embedding_instruction.FromXML(strings.Join(instructionBody, ""), config)
+		if err == nil {
+			context.SetEmbedding(&instruction)
+		}
+
 		context.result = append(context.result, context.CurrentLine())
 		context.ToNextLine()
 		if context.embedding != nil {

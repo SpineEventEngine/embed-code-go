@@ -62,14 +62,14 @@ type EmbeddingInstruction struct {
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
 //
 // config — a Configuration with all embed-code settings.
-func NewEmbeddingInstruction(attributes map[string]string, config configuration.Configuration) EmbeddingInstruction {
+func NewEmbeddingInstruction(attributes map[string]string, config configuration.Configuration) (EmbeddingInstruction, error) {
 	codeFile := attributes["file"]
 	fragment := attributes["fragment"]
 	startValue := attributes["start"]
 	endValue := attributes["end"]
 
 	if fragment != "" && (startValue != "" || endValue != "") {
-		panic("<embed-code> must NOT specify both a fragment name and start/end patterns.")
+		return EmbeddingInstruction{}, fmt.Errorf("<embed-code> must NOT specify both a fragment name and start/end patterns")
 	}
 	var end *Pattern
 	var start *Pattern
@@ -89,7 +89,7 @@ func NewEmbeddingInstruction(attributes map[string]string, config configuration.
 		StartPattern:  start,
 		EndPattern:    end,
 		Configuration: config,
-	}
+	}, nil
 }
 
 // Reads the instruction from the '<embed-code>' XML tag and creates new EmbeddingInstruction.
@@ -105,8 +105,11 @@ func NewEmbeddingInstruction(attributes map[string]string, config configuration.
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
 //
 // config — a Configuration with all embed-code settings.
-func FromXML(line string, config configuration.Configuration) EmbeddingInstruction {
-	fields := ParseXMLLine(line)
+func FromXML(line string, config configuration.Configuration) (EmbeddingInstruction, error) {
+	fields, err := ParseXMLLine(line)
+	if err != nil {
+		return EmbeddingInstruction{}, err
+	}
 	return NewEmbeddingInstruction(fields, config)
 }
 

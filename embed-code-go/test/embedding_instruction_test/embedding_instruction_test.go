@@ -97,40 +97,28 @@ func xmlAttribute(name string, value string) string {
 }
 
 func TestFalseXML(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("FromXML had to raise a panic, but it didn't.")
-		}
-	}()
-
 	xmlString := "<file=\"org/example/Hello.java\" fragment=\"Hello class\"/>"
 	config := buildConfigWithPreparedFragments()
 
-	embedding_instruction.FromXML(xmlString, config)
+	_, err := embedding_instruction.FromXML(xmlString, config)
+	if err == nil {
+		t.Errorf("FromXML had to raise a panic, but it didn't.")
+	}
 }
 
 func TestParseFromXML(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Errorf("Error: an exception occured on FromXML.")
-		}
-	}()
-
 	instructionParams := buildInstructionParams{
 		fragment: "Hello class",
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	embedding_instruction.FromXML(xmlString, config)
+	_, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
 }
 
 func TestParseWithClosingTag(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Errorf("Error: an exception occured on FromXML.")
-		}
-	}()
-
 	instructionParams := buildInstructionParams{
 		fragment: "Hello class",
 		closeTag: true,
@@ -138,7 +126,10 @@ func TestParseWithClosingTag(t *testing.T) {
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
 
-	embedding_instruction.FromXML(xmlString, config)
+	_, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
 }
 
 func TestReadFragmentDir(t *testing.T) {
@@ -150,7 +141,12 @@ func TestReadFragmentDir(t *testing.T) {
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	lines := instruction.Content()
 
 	if len(lines) != 29 {
@@ -169,12 +165,7 @@ func TestFragmentAndStart(t *testing.T) {
 	preparator := newEmbeddingInstructionTestsPreparator()
 	preparator.setup()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("FromXML had to raise a panic, but it didn't.")
-		}
-		preparator.cleanup()
-	}()
+	defer preparator.cleanup()
 
 	instructionParams := buildInstructionParams{
 		fragment:  "fragment",
@@ -183,21 +174,18 @@ func TestFragmentAndStart(t *testing.T) {
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	embedding_instruction.FromXML(xmlString, config)
 
-	preparator.cleanup()
+	_, err := embedding_instruction.FromXML(xmlString, config)
+	if err == nil {
+		t.Errorf("FromXML had to raise a panic, but it didn't.")
+	}
 }
 
 func TestFragmentAndEnd(t *testing.T) {
 	preparator := newEmbeddingInstructionTestsPreparator()
 	preparator.setup()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("FromXML had to raise a panic, but it didn't.")
-		}
-		preparator.cleanup()
-	}()
+	defer preparator.cleanup()
 
 	instructionParams := buildInstructionParams{
 		fragment: "fragment",
@@ -206,9 +194,11 @@ func TestFragmentAndEnd(t *testing.T) {
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	embedding_instruction.FromXML(xmlString, config)
 
-	preparator.cleanup()
+	_, err := embedding_instruction.FromXML(xmlString, config)
+	if err == nil {
+		t.Errorf("FromXML had to raise a panic, but it didn't.")
+	}
 }
 
 func TestExtractByGlob(t *testing.T) {
@@ -222,7 +212,12 @@ func TestExtractByGlob(t *testing.T) {
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	lines := instruction.Content()
 
 	if len(lines) != 4 {
@@ -252,7 +247,12 @@ func TestMinIndentation(t *testing.T) {
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	lines := instruction.Content()
 
 	if len(lines) != 3 {
@@ -281,7 +281,12 @@ func TestStartWithoutEnd(t *testing.T) {
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	lines := instruction.Content()
 
 	if len(lines) != 7 {
@@ -305,7 +310,12 @@ func TestEndWithoutStart(t *testing.T) {
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	lines := instruction.Content()
 
 	if len(lines) != 21 {
@@ -335,7 +345,12 @@ func TestOneLine(t *testing.T) {
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	lines := instruction.Content()
 
 	if len(lines) != 1 {
@@ -368,7 +383,12 @@ func TestNoMatchStart(t *testing.T) {
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	instruction.Content()
 
 	preparator.cleanup()
@@ -392,7 +412,12 @@ func TestNoMatchEnd(t *testing.T) {
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	instruction.Content()
 
 	preparator.cleanup()
@@ -408,7 +433,12 @@ func TestImplyAsterisk(t *testing.T) {
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	lines := instruction.Content()
 
 	if len(lines) != 2 {
@@ -438,7 +468,12 @@ func TestExplicitLineStart(t *testing.T) {
 	}
 	xmlString := buildInstruction("plain-text-to-embed.txt", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	lines := instruction.Content()
 
 	if len(lines) != 4 {
@@ -468,7 +503,12 @@ func TestExplicitLineEnd(t *testing.T) {
 	}
 	xmlString := buildInstruction("plain-text-to-embed.txt", instructionParams)
 	config := buildConfigWithPreparedFragments()
-	instruction := embedding_instruction.FromXML(xmlString, config)
+
+	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	if err != nil {
+		t.Errorf("FromXML caused an error: %v", err)
+	}
+
 	lines := instruction.Content()
 
 	if len(lines) != 6 {
