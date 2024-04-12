@@ -32,10 +32,10 @@ const (
 // A single fragment in a file.
 //
 // Name — a name of a Fragment.
-// 
+//
 // Partitions — a list of partitions found for a Fragment.
 type Fragment struct {
-	Name       string      
+	Name       string
 	Partitions []Partition
 }
 
@@ -120,7 +120,7 @@ func calculateCommonIndentation(partitionLines [][]string) int {
 func (fragment Fragment) text(lines []string, configuration configuration.Configuration) string {
 
 	if fragment.isDefault() {
-		return strings.Join(lines, "")
+		return strings.Join(lines, "\n")
 	}
 
 	partitionLines := calculatePartitionLines(lines, fragment.Partitions)
@@ -133,7 +133,7 @@ func (fragment Fragment) text(lines []string, configuration configuration.Config
 		}
 		cutIndentLines := indent.CutIndent(line, commonIndentation)
 		for _, cutIndentLine := range cutIndentLines {
-			text += cutIndentLine
+			text += cutIndentLine + "\n"
 		}
 	}
 	return text

@@ -112,7 +112,7 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		line := scanner.Text() + "\n"
+		line := scanner.Text()
 		contentToRender, fragmentBuilders, err = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
 		if err != nil {
 			return nil, nil, err
