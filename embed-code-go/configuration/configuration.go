@@ -24,7 +24,7 @@ const (
 	DefaultFragmentsDir = "./build/fragments"
 )
 
-var DefaultInclude = []string{"**/*"}
+var DefaultInclude = []string{"**/*.*"}
 var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 
 // The configuration for all the settings for the plugin to work.
