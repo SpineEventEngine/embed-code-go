@@ -36,8 +36,8 @@ import (
 //
 // Configuration — a configuration for embedding.
 type FragmentFile struct {
-	CodeFile      string                     
-	FragmentName  string                     
+	CodeFile      string
+	FragmentName  string
 	Configuration configuration.Configuration
 }
 
@@ -95,8 +95,10 @@ func (fragmentFile FragmentFile) Content() []string {
 	isPathFileExits, err := IsFileExists(path)
 	if isPathFileExits {
 		return ReadLines(path)
-	} else {
+	} else if err != nil {
 		panic(err)
+	} else {
+		panic(fmt.Sprintf("file %s doesn't exist", path))
 	}
 }
 
