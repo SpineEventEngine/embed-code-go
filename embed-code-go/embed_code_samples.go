@@ -22,16 +22,15 @@ import (
 	"embed-code/embed-code-go/cli"
 	"embed-code/embed-code-go/configuration"
 	"flag"
-	"fmt"
 )
 
 func main() {
-	codeRoot := flag.String("code_root", "C:/Users/vladyslav.bakanov/JekyllHugoMigration/full_test/docs_test/_i18n", "a path to a root directory with code files")
-	docsRoot := flag.String("docs_root", "C:/Users/vladyslav.bakanov/JekyllHugoMigration/full_test/code_original/_samples/src/main", "a path to a root directory with docs files")
+	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
+	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
 
 	flag.Parse()
 
-	if codeRoot == nil || docsRoot == nil {
+	if (codeRoot == nil || docsRoot == nil) || (*codeRoot == "" || *docsRoot == "") {
 		panic("code_root and docs_root must be set")
 	}
 
@@ -39,5 +38,5 @@ func main() {
 
 	cli.EmbedCodeSamples(config)
 
-	fmt.Println("Done!")
+	cli.CheckCodeSamples(config)
 }
