@@ -49,7 +49,8 @@ func IsEncodedAsText(filePath string) bool {
 	// Read the entire file into memory.
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		panic(err)
+		// If error occurs, it's not a text-encoded file.
+		return false
 	}
 
 	isUTF8Encoded := areUTF8Encoded(content)
