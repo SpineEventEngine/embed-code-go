@@ -1,9 +1,11 @@
 package embedding
 
+import "fmt"
+
 type UnexpectedDiffError struct {
 	changedFiles []string
 }
 
 func (m *UnexpectedDiffError) Error() string {
-	return "boom"
+	return fmt.Sprintf("unexpected diff: %v", m.changedFiles)
 }
