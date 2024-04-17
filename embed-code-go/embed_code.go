@@ -20,155 +20,40 @@ package main
 
 import (
 	"embed-code/embed-code-go/cli"
-	"embed-code/embed-code-go/configuration"
-	"flag"
 	"fmt"
-
-	"os"
-
-	"gopkg.in/yaml.v3"
 )
-
-// Struct with user-specified flags.
-//
-// codeRoot — a path to a root directory with code files.
-//
-// docsRoot — a path to a root directory with docs files.
-//
-// configPath — a path to a yaml configuration file which contains the roots.
-//
-// checkUpToDate — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
-type flags struct {
-	codeRoot      string
-	docsRoot      string
-	configPath    string
-	checkUpToDate bool
-}
-
-// Struct with roots that contained in a yaml configuration file.
-//
-// codeRoot — a path to a root directory with code files.
-//
-// docsRoot — a path to a root directory with docs files.
-type configFields struct {
-	CodeRoot string `yaml:"code_root"`
-	DocsRoot string `yaml:"docs_root"`
-}
-
-// Reads the roots from the provided configPath and returns a configFields struct.
-//
-// configPath — a path to a yaml configuration file which contains the roots.
-//
-// Returns a configFields struct filled with the roots.
-func readConfigFields(configPath string) configFields {
-	content, err := os.ReadFile(configPath)
-	if err != nil {
-		panic(err)
-	}
-
-	configFields := configFields{}
-	err = yaml.Unmarshal(content, &configFields)
-	if err != nil {
-		panic(err)
-	}
-
-	return configFields
-}
-
-// Reads user-specified flags from the command line.
-//
-// Returns a flags struct filled with the corresponding flags.
-func readFlags() flags {
-	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
-	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
-
-	configPath := flag.String("config_path", "",
-		"a path to a yaml configuration file, which contains 'code_root' and 'docs_root' fields")
-
-	checkUpToDate := flag.Bool("up_to_date", false,
-		"true to check for code embeddings to be up-to-date, false to perform embedding")
-
-	flag.Parse()
-
-	return flags{
-		codeRoot:      *codeRoot,
-		docsRoot:      *docsRoot,
-		configPath:    *configPath,
-		checkUpToDate: *checkUpToDate,
-	}
-
-}
-
-// Checks the validity of user-provided flags and returns an error message if any of the validation rules are broken.
-// If everything is ok, returns an empty string.
-//
-// flagsSet — a struct with user-provided flags.
-func validate(flagsSet flags) string {
-	isRootsSet := flagsSet.codeRoot != "" && flagsSet.docsRoot != ""
-	isOneOfRootsSet := flagsSet.codeRoot != "" || flagsSet.docsRoot != ""
-	isConfigSet := flagsSet.configPath != ""
-
-	validationMessage := ""
-
-	if isConfigSet && isOneOfRootsSet {
-		return "Config path cannot be set when code_root and docs_root are set."
-	}
-	if isOneOfRootsSet && !isRootsSet {
-		return "If one of code_root and docs_root is set, the another one must be set as well."
-	}
-	if !(isRootsSet || isConfigSet) {
-		return "Embed code should be used with either config_path or both code_root and docs_root being set."
-	}
-
-	return validationMessage
-}
-
-// Generates and returns a configuration based on the provided flags.
-//
-// flagsSet — a struct with user-provided flags.
-func buildEmbedCodeConfiguration(flagsSet flags) configuration.Configuration {
-	codeRoot := flagsSet.codeRoot
-	docsRoot := flagsSet.docsRoot
-	if flagsSet.configPath != "" {
-		configFields := readConfigFields(flagsSet.configPath)
-		codeRoot = configFields.CodeRoot
-		docsRoot = configFields.DocsRoot
-	}
-
-	return configuration.NewConfigurationWithRoots(codeRoot, docsRoot)
-}
 
 // The entry point for embed-code.
 //
-// There are two modes, which are chosen by 'up_to_date' flag. If it is set to 'true',
+// There are two modes, which are chosen by 'up_to_date' arg. If it is set to 'true',
 // then the check for up-to-date is performed. Otherwise, the embedding is performed.
 //
 // There are two options to set the roots:
-//   - code_root and docs_root flags, in this case roots are read directly from provided paths;
-//   - config_path flag, in this case roots are read from the given config file.
+//   - code_root and docs_root args, in this case roots are read directly from provided paths;
+//   - config_path arg, in this case roots are read from the given config file.
 //
 // If both options are missed, the embedding fails.
 // If both options are set, the embedding fails as well.
 //
-// All possible flags:
+// All possible args:
 //   - code_root — a path to a root directory with code files;
 //   - docs_root — a path to a root directory with docs files;
 //   - config_path — a path to a yaml configuration file. It must contain 'code_root' and 'docs_root' fields;
 //   - up_to_date — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
 func main() {
 
-	flagsSet := readFlags()
+	userArgs := cli.ReadArgs()
 
-	validationMessage := validate(flagsSet)
+	validationMessage := cli.Validate(userArgs)
 	if validationMessage != "" {
 		fmt.Println("Validation error:")
 		fmt.Println(validationMessage)
 		return
 	}
 
-	config := buildEmbedCodeConfiguration(flagsSet)
+	config := cli.BuildEmbedCodeConfiguration(userArgs)
 
-	if flagsSet.checkUpToDate {
+	if userArgs.CheckUpToDate {
 		cli.CheckCodeSamples(config)
 	} else {
 		cli.EmbedCodeSamples(config)
