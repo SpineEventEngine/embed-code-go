@@ -37,7 +37,7 @@ import (
 //
 // configPath — a path to a yaml configuration file which contains the roots.
 //
-// checkUpToDate — true to check for code embeddings to be up to date. Otherwise, the embedding is performed.
+// checkUpToDate — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
 type flags struct {
 	codeRoot      string
 	docsRoot      string
@@ -86,7 +86,7 @@ func readFlags() flags {
 		"a path to a yaml configuration file, which contains 'code_root' and 'docs_root' fields")
 
 	checkUpToDate := flag.Bool("up_to_date", false,
-		"true to check for code embeddings to be up to date, false to perform embedding")
+		"true to check for code embeddings to be up-to-date, false to perform embedding")
 
 	flag.Parse()
 
