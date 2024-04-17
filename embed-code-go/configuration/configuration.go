@@ -84,6 +84,11 @@ func NewConfiguration() Configuration {
 	}
 }
 
+// Builds the config with given codeRoot and docsRoot.
+//
+// codeRoot — a root directory of the source code to be embedded.
+//
+// docsRoot — a root directory of the documentation files.
 func NewConfigurationWithRoots(codeRoot string, docsRoot string) Configuration {
 	return Configuration{
 		CodeIncludes:      DefaultInclude,
