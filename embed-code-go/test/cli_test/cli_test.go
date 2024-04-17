@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Removes directory and all it's subdirectories if exists, does nothing if not exists.
+// Removes directory and all its subdirectories if exists, does nothing if not exists.
 func cleanupDir(dir string) {
 	if _, err := os.Stat(dir); err == nil {
 		err = os.RemoveAll(dir)
