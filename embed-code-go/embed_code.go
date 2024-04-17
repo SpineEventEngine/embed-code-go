@@ -23,7 +23,8 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"flag"
 	"fmt"
-	"io/ioutil"
+
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -41,7 +42,7 @@ type configFields struct {
 }
 
 func readRootsFromConfig(configPath string) configFields {
-	content, err := ioutil.ReadFile("final-result.yml")
+	content, err := os.ReadFile("final-result.yml")
 	if err != nil {
 		panic(err)
 	}
