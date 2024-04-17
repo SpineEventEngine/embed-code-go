@@ -8,7 +8,7 @@ import (
 
 // Checks documentation to be up-to-date with code files. Raises UnexpectedDiffError if not.
 //
-// config — a configuration for embedding.
+// config — a configuration for checking code samples.
 func CheckCodeSamples(config configuration.Configuration) {
 	fragmentation.WriteFragmentFiles(config)
 	embedding.CheckUpToDate(config)
