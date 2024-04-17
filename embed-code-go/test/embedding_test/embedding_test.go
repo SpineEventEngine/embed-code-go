@@ -201,13 +201,13 @@ func TestFalseTransitions(t *testing.T) {
 	}))
 }
 
-func TestInstructTagTakesTwoLines(t *testing.T) {
+func TestMultiLinedTag(t *testing.T) {
 	preparator := newEmbeddingInstructionTestsPreparator()
 	preparator.setup()
 	defer preparator.cleanup()
 
 	config := buildConfigWithPreparedFragments()
-	docPath := fmt.Sprintf("%s/whole-file-fragment-tag-takes-two-lines.md", config.DocumentationRoot)
+	docPath := fmt.Sprintf("%s/multi-lined-tag.md", config.DocumentationRoot)
 	processor := embedding.NewEmbeddingProcessor(docPath, config)
 	processor.Embed()
 
