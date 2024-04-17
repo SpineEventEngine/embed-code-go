@@ -83,7 +83,7 @@ func readFlags() flags {
 	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
 
 	configPath := flag.String("config_path", "",
-		"a path to a yaml configuration file, which contains 'codeRoot' and 'docsRoot' fields")
+		"a path to a yaml configuration file, which contains 'code_root' and 'docs_root' fields")
 
 	checkUpToDate := flag.Bool("up_to_date", false,
 		"true to check for code embeddings to be up to date, false to perform embedding")
@@ -153,7 +153,7 @@ func buildEmbedCodeConfiguration(flagsSet flags) configuration.Configuration {
 // All possible flags:
 //   - code_root — a path to a root directory with code files;
 //   - docs_root — a path to a root directory with docs files;
-//   - config_path — a path to a yaml configuration file;
+//   - config_path — a path to a yaml configuration file. It must contain 'code_root' and 'docs_root' fields;
 //   - up_to_date — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
 func main() {
 
