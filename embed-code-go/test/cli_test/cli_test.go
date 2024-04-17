@@ -108,6 +108,7 @@ func (testPreparator TestsPreparator) setup() {
 func (testPreparator TestsPreparator) cleanup() {
 	config := buildConfig()
 	cleanupDir(config.DocumentationRoot)
+	cleanupDir(config.FragmentsDir)
 	os.Chdir(testPreparator.testsDir)
 }
 
