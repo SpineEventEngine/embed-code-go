@@ -129,6 +129,9 @@ func EmbedAll(config configuration.Configuration) {
 	}
 }
 
+// Raises an error if the documentation files are not up-to-date with code files.
+//
+// config — a configuration for embedding.
 func CheckUpToDate(config configuration.Configuration) {
 	changedFiles := findChangedFiles(config)
 	if len(changedFiles) > 0 {
@@ -136,6 +139,9 @@ func CheckUpToDate(config configuration.Configuration) {
 	}
 }
 
+// Returns a list of documentation files that are not up-to-date with their code files.
+//
+// config — a configuration for embedding.
 func findChangedFiles(config configuration.Configuration) []string {
 	documentationRoot := config.DocumentationRoot
 	docPatterns := config.DocIncludes
