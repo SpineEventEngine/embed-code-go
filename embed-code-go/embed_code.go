@@ -82,9 +82,11 @@ func readFlags() flags {
 	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
 	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
 
-	configPath := flag.String("config_path", "", "a path to a configuration file")
+	configPath := flag.String("config_path", "",
+		"a path to a yaml configuration file, which contains 'codeRoot' and 'docsRoot' fields")
 
-	checkUpToDate := flag.Bool("up_to_date", false, "true to check for code embeddings to be up to date")
+	checkUpToDate := flag.Bool("up_to_date", false,
+		"true to check for code embeddings to be up to date, false to perform embedding")
 
 	flag.Parse()
 
