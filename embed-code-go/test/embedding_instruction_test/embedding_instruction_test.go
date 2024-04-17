@@ -149,8 +149,8 @@ func TestReadFragmentDir(t *testing.T) {
 
 	lines := instruction.Content()
 
-	if len(lines) != 29 {
-		t.Errorf("Error: the length of the lines is %d, but have to be 29", len(lines))
+	if len(lines) != 28 {
+		t.Errorf("Error: the length of the lines is %d, but have to be 28", len(lines))
 	}
 	if lines[22] != "public class Hello {" {
 		t.Errorf(
@@ -289,8 +289,8 @@ func TestStartWithoutEnd(t *testing.T) {
 
 	lines := instruction.Content()
 
-	if len(lines) != 7 {
-		t.Errorf("Error: the length of the lines is %d, but have to be 7", len(lines))
+	if len(lines) != 6 {
+		t.Errorf("Error: the length of the lines is %d, but have to be 6", len(lines))
 	}
 	if lines[5] != "}" {
 		t.Errorf(
