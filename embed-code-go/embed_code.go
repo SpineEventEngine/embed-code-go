@@ -152,7 +152,7 @@ func buildEmbedCodeConfiguration(flagsSet flags) configuration.Configuration {
 //   - code_root — a path to a root directory with code files;
 //   - docs_root — a path to a root directory with docs files;
 //   - config_path — a path to a yaml configuration file;
-//   - up_to_date — true to check for code embeddings to be up to date. Otherwise, the embedding is performed.
+//   - up_to_date — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
 func main() {
 
 	flagsSet := readFlags()
