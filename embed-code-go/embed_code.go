@@ -26,7 +26,7 @@ import (
 
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // Struct with user-specified flags.
@@ -51,8 +51,8 @@ type flags struct {
 //
 // docsRoot — a path to a root directory with docs files.
 type configFields struct {
-	codeRoot string
-	docsRoot string
+	CodeRoot string `yaml:"code_root"`
+	DocsRoot string `yaml:"docs_root"`
 }
 
 // Reads the roots from the provided configPath and returns a configFields struct.
@@ -131,8 +131,8 @@ func buildEmbedCodeConfiguration(flagsSet flags) configuration.Configuration {
 	docsRoot := flagsSet.docsRoot
 	if flagsSet.configPath != "" {
 		configFields := readRootsFromConfig(flagsSet.configPath)
-		codeRoot = configFields.codeRoot
-		docsRoot = configFields.docsRoot
+		codeRoot = configFields.CodeRoot
+		docsRoot = configFields.DocsRoot
 	}
 
 	return configuration.NewConfigurationWithRoots(codeRoot, docsRoot)
