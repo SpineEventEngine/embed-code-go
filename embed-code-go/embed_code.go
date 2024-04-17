@@ -60,7 +60,7 @@ type configFields struct {
 // configPath — a path to a yaml configuration file which contains the roots.
 //
 // Returns a configFields struct filled with the roots.
-func readRootsFromConfig(configPath string) configFields {
+func readConfigFields(configPath string) configFields {
 	content, err := os.ReadFile(configPath)
 	if err != nil {
 		panic(err)
@@ -130,7 +130,7 @@ func buildEmbedCodeConfiguration(flagsSet flags) configuration.Configuration {
 	codeRoot := flagsSet.codeRoot
 	docsRoot := flagsSet.docsRoot
 	if flagsSet.configPath != "" {
-		configFields := readRootsFromConfig(flagsSet.configPath)
+		configFields := readConfigFields(flagsSet.configPath)
 		codeRoot = configFields.CodeRoot
 		docsRoot = configFields.DocsRoot
 	}
