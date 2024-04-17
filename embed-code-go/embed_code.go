@@ -58,7 +58,7 @@ func readRootsFromConfig(configPath string) configFields {
 
 func readFlags() flags {
 	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
-	docsRoot := flag.String("docs_root", "ag", "a path to a root directory with docs files")
+	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
 
 	configPath := flag.String("config_path", "", "a path to a configuration file")
 
