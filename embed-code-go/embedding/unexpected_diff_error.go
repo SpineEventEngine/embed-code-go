@@ -2,7 +2,7 @@ package embedding
 
 import "fmt"
 
-// Describes an error which occurs if not up-to-dated files are found during the checking.
+// Describes an error which occurs if outdated files are found during the checking.
 type UnexpectedDiffError struct {
 	changedFiles []string
 }
