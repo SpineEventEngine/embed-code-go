@@ -29,6 +29,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Struct with user-specified flags.
+//
+// codeRoot — a path to a root directory with code files.
+//
+// docsRoot — a path to a root directory with docs files.
+//
+// configPath — a path to a yaml configuration file which contains the roots.
+//
+// checkUpToDate — true to check for code embeddings to be up to date. Otherwise, the embedding is performed.
 type flags struct {
 	codeRoot      string
 	docsRoot      string
@@ -36,13 +45,23 @@ type flags struct {
 	checkUpToDate bool
 }
 
+// Struct with roots that contained in a yaml configuration file.
+//
+// codeRoot — a path to a root directory with code files.
+//
+// docsRoot — a path to a root directory with docs files.
 type configFields struct {
 	codeRoot string
 	docsRoot string
 }
 
+// Reads the roots from the provided configPath and returns a configFields struct.
+//
+// configPath — a path to a yaml configuration file which contains the roots.
+//
+// Returns a configFields struct filled with the roots.
 func readRootsFromConfig(configPath string) configFields {
-	content, err := os.ReadFile("final-result.yml")
+	content, err := os.ReadFile(configPath)
 	if err != nil {
 		panic(err)
 	}
@@ -56,6 +75,9 @@ func readRootsFromConfig(configPath string) configFields {
 	return configFields
 }
 
+// Reads user-specified flags from the command line.
+//
+// Returns a flags struct filled with the corresponding flags.
 func readFlags() flags {
 	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
 	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
@@ -75,6 +97,10 @@ func readFlags() flags {
 
 }
 
+// Checks the validity of user-provided flags and returns an error message if any of the validation rules are broken.
+// If everything is ok, returns an empty string.
+//
+// flagsSet — a struct with user-provided flags.
 func validate(flagsSet flags) string {
 	isRootsSet := flagsSet.codeRoot != "" && flagsSet.docsRoot != ""
 	isOneOfRootsSet := flagsSet.codeRoot != "" || flagsSet.docsRoot != ""
@@ -95,6 +121,9 @@ func validate(flagsSet flags) string {
 	return validationMessage
 }
 
+// Generates and returns a configuration based on the provided flags.
+//
+// flagsSet — a struct with user-provided flags.
 func buildEmbedCodeConfiguration(flagsSet flags) configuration.Configuration {
 	codeRoot := flagsSet.codeRoot
 	docsRoot := flagsSet.docsRoot
@@ -107,6 +136,23 @@ func buildEmbedCodeConfiguration(flagsSet flags) configuration.Configuration {
 	return configuration.NewConfigurationWithRoots(codeRoot, docsRoot)
 }
 
+// The entry point for embed-code.
+//
+// There are two modes, which are chosen by 'up_to_date' flag. If it is set to 'true',
+// then the check for up-to-date is performed. Otherwise, the embedding is performed.
+//
+// There are two options to set the roots:
+//   - code_root and docs_root flags, in this case roots are read directly from provided paths;
+//   - config_path flag, in this case roots are read from the given config file.
+//
+// If both options are missed, the embedding fails.
+// If both options are set, the embedding fails as well.
+//
+// All possible flags:
+//   - code_root — a path to a root directory with code files;
+//   - docs_root — a path to a root directory with docs files;
+//   - config_path — a path to a yaml configuration file;
+//   - up_to_date — true to check for code embeddings to be up to date. Otherwise, the embedding is performed.
 func main() {
 
 	flagsSet := readFlags()
