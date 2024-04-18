@@ -132,9 +132,7 @@ func (fragment Fragment) text(lines []string, configuration configuration.Config
 			text += configuration.Separator + "\n"
 		}
 		cutIndentLines := indent.CutIndent(line, commonIndentation)
-		for _, cutIndentLine := range cutIndentLines {
-			text += cutIndentLine + "\n"
-		}
+		text += strings.Join(cutIndentLines, "\n") + "\n"
 	}
 	return text
 }
