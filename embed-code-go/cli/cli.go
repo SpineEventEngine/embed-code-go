@@ -15,31 +15,31 @@ import (
 
 // User-specified embed-code Args.
 //
-// codeRoot — a path to a root directory with code files.
+// CodeRoot — a path to a root directory with code files.
 //
-// docsRoot — a path to a root directory with docs files.
+// DocsRoot — a path to a root directory with docs files.
 //
-// codeIncludes — a string with coma-separated patterns for filtering the code files to be considered.
+// CodeIncludes — a string with coma-separated patterns for filtering the code files to be considered.
 // Directories are never matched by these patterns.
 // For example, "**/*.java,**/*.gradle".
 // The default value is "**/*.*".
 //
-// docIncludes — a string with coma-separated patterns for filtering files
+// DocIncludes — a string with coma-separated patterns for filtering files
 // in which we should look for embedding instructions.
 // The patterns are resolved relatively to the `documentation_root`.
 // Directories are never matched by these patterns.
 // For example, "docs/**/*.md,guides/*.html".
 // The default value is "**/*.md,**/*.html".
 //
-// fragmentsDir — a directory where fragmented code is stored. A temporary directory that should not be
+// FragmentsDir — a directory where fragmented code is stored. A temporary directory that should not be
 // tracked in VCS. The default value is: "./build/fragments".
 //
-// separator — a string that's inserted between multiple partitions of a single fragment.
+// Separator — a string that's inserted between multiple partitions of a single fragment.
 // The default value is "...".
 //
-// configPath — a path to a yaml configuration file which contains the roots.
+// ConfigPath — a path to a yaml configuration file which contains the roots.
 //
-// checkUpToDate — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
+// CheckUpToDate — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
 type Args struct {
 	CodeRoot      string
 	DocsRoot      string
