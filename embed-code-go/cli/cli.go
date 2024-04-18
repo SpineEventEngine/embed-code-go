@@ -5,6 +5,7 @@ import (
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/fragmentation"
 	"flag"
+	"fmt"
 	"strings"
 
 	"os"
@@ -113,11 +114,13 @@ func Validate(userArgs Args) string {
 	isRootsSet := userArgs.CodeRoot != "" && userArgs.DocsRoot != ""
 	isOneOfRootsSet := userArgs.CodeRoot != "" || userArgs.DocsRoot != ""
 	isConfigSet := userArgs.ConfigPath != ""
+	isOptionalParamsSet := userArgs.CodeIncludes != "" || userArgs.DocIncludes != "" ||
+		userArgs.FragmentsDir != "" || userArgs.Separator != ""
 
 	validationMessage := ""
 
-	if isConfigSet && isOneOfRootsSet {
-		return "Config path cannot be set when code_root and docs_root are set."
+	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
+		return "Config path cannot be set when code_root, docs_root or optional params are set."
 	}
 	if isOneOfRootsSet && !isRootsSet {
 		return "If one of code_root and docs_root is set, the another one must be set as well."
@@ -129,35 +132,78 @@ func Validate(userArgs Args) string {
 	return validationMessage
 }
 
+// Performs several checks to ensure that the necessary configuration values are present.
+// Also checks for the existence of the config file.
+//
+// configPath — a path to a yaml configuration file.
+//
+// Returns validation message. If everything is ok, returns an empty string.
+func ValidateConfig(configPath string) string {
+	validationMessage := ""
+
+	stat, err := os.Stat(configPath)
+	if os.IsNotExist(err) {
+		return fmt.Sprintf("The file %s is not exists.", configPath)
+	}
+	if stat.IsDir() {
+		return fmt.Sprintf("%s is a dir, not a file.", configPath)
+	}
+	configFields := readConfigFields(configPath)
+	if configFields.CodeRoot == "" || configFields.DocsRoot == "" {
+		return "Config must include both code_root and docs_root fields."
+	}
+	return validationMessage
+}
+
+// Fills args with the values read from config file.
+//
+// configPath — a path to a yaml configuration file.
+//
+// args — an Args struct with user-provided args.
+//
+// Returns filled Args.
+func FillArgsFromConfig(args Args) Args {
+	configFields := readConfigFields(args.ConfigPath)
+	args.CodeRoot = configFields.CodeRoot
+	args.DocsRoot = configFields.DocsRoot
+
+	if configFields.CodeIncludes != "" {
+		args.CodeIncludes = configFields.CodeIncludes
+	}
+	if configFields.DocIncludes != "" {
+		args.DocIncludes = configFields.DocIncludes
+	}
+	if configFields.FragmentsDir != "" {
+		args.FragmentsDir = configFields.FragmentsDir
+	}
+	if configFields.Separator != "" {
+		args.Separator = configFields.Separator
+	}
+	return args
+}
+
 // Generates and returns a configuration based on provided userArgs.
 //
 // userArgs — a struct with user-provided args.
 func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
-	codeRoot := userArgs.CodeRoot
-	docsRoot := userArgs.DocsRoot
-	if userArgs.ConfigPath != "" {
-		configFields := readConfigFields(userArgs.ConfigPath)
-		codeRoot = configFields.CodeRoot
-		docsRoot = configFields.DocsRoot
-	}
 
-	config := configuration.NewConfiguration()
-	config.CodeRoot = codeRoot
-	config.DocumentationRoot = docsRoot
+	embedCodeConfig := configuration.NewConfiguration()
+	embedCodeConfig.CodeRoot = userArgs.CodeRoot
+	embedCodeConfig.DocumentationRoot = userArgs.DocsRoot
 
 	if userArgs.CodeIncludes != "" {
-		config.CodeIncludes = parseListArgument(userArgs.CodeIncludes)
+		embedCodeConfig.CodeIncludes = parseListArgument(userArgs.CodeIncludes)
 	}
 	if userArgs.DocIncludes != "" {
-		config.DocIncludes = parseListArgument(userArgs.DocIncludes)
+		embedCodeConfig.DocIncludes = parseListArgument(userArgs.DocIncludes)
 	}
 	if userArgs.FragmentsDir != "" {
-		config.FragmentsDir = userArgs.FragmentsDir
+		embedCodeConfig.FragmentsDir = userArgs.FragmentsDir
 	}
 	if userArgs.Separator != "" {
-		config.Separator = userArgs.Separator
+		embedCodeConfig.Separator = userArgs.Separator
 	}
-	return config
+	return embedCodeConfig
 }
 
 // Returns a list of strings from given coma-separated string listArgument.
