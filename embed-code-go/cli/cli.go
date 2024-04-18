@@ -15,7 +15,7 @@ import (
 
 // User-specified embed-code Args.
 //
-// CodeRoot — a path to a root directory with code files.
+// codeRoot — a path to a root directory with code files.
 //
 // DocsRoot — a path to a root directory with docs files.
 //
@@ -37,18 +37,18 @@ import (
 // Separator — a string that's inserted between multiple partitions of a single fragment.
 // The default value is "...".
 //
-// ConfigPath — a path to a yaml configuration file which contains the roots.
+// ConfigFilePath — a path to a yaml configuration file which contains the roots.
 //
 // CheckUpToDate — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
 type Args struct {
-	CodeRoot      string
-	DocsRoot      string
-	CodeIncludes  string
-	DocIncludes   string
-	FragmentsDir  string
-	Separator     string
-	ConfigPath    string
-	CheckUpToDate bool
+	CodeRoot       string
+	DocsRoot       string
+	CodeIncludes   string
+	DocIncludes    string
+	FragmentsDir   string
+	Separator      string
+	ConfigFilePath string
+	CheckUpToDate  bool
 }
 
 // Needed for yaml.Unmarshal to parse into.
@@ -87,21 +87,21 @@ func ReadArgs() Args {
 	docIncludes := flag.String("doc_includes", "", "a coma-separated list of glob patterns for docs files to include")
 	fragmentsDir := flag.String("fragments_dir", "", "a path to a directory where fragmented code is stored")
 	separator := flag.String("separator", "", "a string that's inserted between multiple partitions of a single fragment")
-	configPath := flag.String("config_path", "", "a path to a yaml configuration file")
+	configFilePath := flag.String("config_file_path", "", "a path to a yaml configuration file")
 	checkUpToDate := flag.Bool("up_to_date", false,
 		"true to check for code embeddings to be up-to-date, false to perform embedding")
 
 	flag.Parse()
 
 	return Args{
-		CodeRoot:      *codeRoot,
-		DocsRoot:      *docsRoot,
-		CodeIncludes:  *codeIncludes,
-		DocIncludes:   *docIncludes,
-		FragmentsDir:  *fragmentsDir,
-		Separator:     *separator,
-		ConfigPath:    *configPath,
-		CheckUpToDate: *checkUpToDate,
+		CodeRoot:       *codeRoot,
+		DocsRoot:       *docsRoot,
+		CodeIncludes:   *codeIncludes,
+		DocIncludes:    *docIncludes,
+		FragmentsDir:   *fragmentsDir,
+		Separator:      *separator,
+		ConfigFilePath: *configFilePath,
+		CheckUpToDate:  *checkUpToDate,
 	}
 
 }
@@ -113,7 +113,7 @@ func ReadArgs() Args {
 func Validate(userArgs Args) string {
 	isRootsSet := userArgs.CodeRoot != "" && userArgs.DocsRoot != ""
 	isOneOfRootsSet := userArgs.CodeRoot != "" || userArgs.DocsRoot != ""
-	isConfigSet := userArgs.ConfigPath != ""
+	isConfigSet := userArgs.ConfigFilePath != ""
 	isOptionalParamsSet := userArgs.CodeIncludes != "" || userArgs.DocIncludes != "" ||
 		userArgs.FragmentsDir != "" || userArgs.Separator != ""
 
@@ -126,7 +126,7 @@ func Validate(userArgs Args) string {
 		return "If one of code_root and docs_root is set, the another one must be set as well."
 	}
 	if !(isRootsSet || isConfigSet) {
-		return "Embed code should be used with either config_path or both code_root and docs_root being set."
+		return "Embed code should be used with either config_file_path or both code_root and docs_root being set."
 	}
 
 	return validationMessage
@@ -135,20 +135,20 @@ func Validate(userArgs Args) string {
 // Performs several checks to ensure that the necessary configuration values are present.
 // Also checks for the existence of the config file.
 //
-// configPath — a path to a yaml configuration file.
+// configFilePath — a path to a yaml configuration file.
 //
 // Returns validation message. If everything is ok, returns an empty string.
-func ValidateConfig(configPath string) string {
+func ValidateConfig(configFilePath string) string {
 	validationMessage := ""
 
-	stat, err := os.Stat(configPath)
+	stat, err := os.Stat(configFilePath)
 	if os.IsNotExist(err) {
-		return fmt.Sprintf("The file %s is not exists.", configPath)
+		return fmt.Sprintf("The file %s is not exists.", configFilePath)
 	}
 	if stat.IsDir() {
-		return fmt.Sprintf("%s is a dir, not a file.", configPath)
+		return fmt.Sprintf("%s is a dir, not a file.", configFilePath)
 	}
-	configFields := readConfigFields(configPath)
+	configFields := readConfigFields(configFilePath)
 	if configFields.CodeRoot == "" || configFields.DocsRoot == "" {
 		return "Config must include both code_root and docs_root fields."
 	}
@@ -157,13 +157,11 @@ func ValidateConfig(configPath string) string {
 
 // Fills args with the values read from config file.
 //
-// configPath — a path to a yaml configuration file.
-//
 // args — an Args struct with user-provided args.
 //
 // Returns filled Args.
-func FillArgsFromConfig(args Args) Args {
-	configFields := readConfigFields(args.ConfigPath)
+func FillArgsFromConfigFile(args Args) Args {
+	configFields := readConfigFields(args.ConfigFilePath)
 	args.CodeRoot = configFields.CodeRoot
 	args.DocsRoot = configFields.DocsRoot
 
@@ -215,13 +213,13 @@ func parseListArgument(listArgument string) []string {
 	return extractedArgs
 }
 
-// Reads the file from provided configPath and returns a ConfigFields struct.
+// Reads the file from provided configFilePath and returns a ConfigFields struct.
 //
-// configPath — a path to a yaml configuration file.
+// configFilePath — a path to a yaml configuration file.
 //
 // Returns a filled ConfigFields struct.
-func readConfigFields(configPath string) ConfigFields {
-	content, err := os.ReadFile(configPath)
+func readConfigFields(configFilePath string) ConfigFields {
+	content, err := os.ReadFile(configFilePath)
 	if err != nil {
 		panic(err)
 	}

@@ -41,7 +41,7 @@ import (
 //
 // There are two options to set the roots:
 //   - code_root and docs_root args, in this case roots are read directly from provided paths;
-//   - config_path arg, in this case roots are read from the given config file.
+//   - config_file_path arg, in this case roots are read from the given config file.
 //
 // If both options are missed, the embedding fails.
 // If both options are set, the embedding fails as well.
@@ -49,7 +49,7 @@ import (
 // All possible args:
 //   - code_root — a path to a root directory with code files;
 //   - docs_root — a path to a root directory with docs files;
-//   - config_path — a path to a yaml configuration file.
+//   - config_file_path — a path to a yaml configuration file.
 //   - up_to_date — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
 func main() {
 
@@ -62,14 +62,14 @@ func main() {
 		return
 	}
 
-	if userArgs.ConfigPath != "" {
-		validationMessage := cli.ValidateConfig(userArgs.ConfigPath)
+	if userArgs.ConfigFilePath != "" {
+		validationMessage := cli.ValidateConfig(userArgs.ConfigFilePath)
 		if validationMessage != "" {
 			fmt.Println("Validation error:")
 			fmt.Println(validationMessage)
 			return
 		}
-		userArgs = cli.FillArgsFromConfig(userArgs)
+		userArgs = cli.FillArgsFromConfigFile(userArgs)
 	}
 
 	config := cli.BuildEmbedCodeConfiguration(userArgs)
