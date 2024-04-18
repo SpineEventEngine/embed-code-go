@@ -96,13 +96,13 @@ func xmlAttribute(name string, value string) string {
 	return fmt.Sprintf("%s=\"%v\"", name, value)
 }
 
-func TestFalseXML(t *testing.T) {
+func TestParsingMisformedXML(t *testing.T) {
 	xmlString := "<file=\"org/example/Hello.java\" fragment=\"Hello class\"/>"
 	config := buildConfigWithPreparedFragments()
 
 	_, err := embedding_instruction.FromXML(xmlString, config)
 	if err == nil {
-		t.Errorf("FromXML had to raise a panic, but it didn't.")
+		t.Errorf("Parsing misformed XML should cause an error.")
 	}
 }
 
@@ -114,7 +114,7 @@ func TestParseFromXML(t *testing.T) {
 	config := buildConfigWithPreparedFragments()
 	_, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 }
 
@@ -128,7 +128,7 @@ func TestParseWithClosingTag(t *testing.T) {
 
 	_, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 }
 
@@ -144,7 +144,7 @@ func TestReadFragmentDir(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	lines := instruction.Content()
@@ -177,7 +177,7 @@ func TestFragmentAndStart(t *testing.T) {
 
 	_, err := embedding_instruction.FromXML(xmlString, config)
 	if err == nil {
-		t.Errorf("FromXML had to raise a panic, but it didn't.")
+		t.Errorf("Instruction tag with both fragment and startGlob provided should cause an error.")
 	}
 }
 
@@ -197,7 +197,7 @@ func TestFragmentAndEnd(t *testing.T) {
 
 	_, err := embedding_instruction.FromXML(xmlString, config)
 	if err == nil {
-		t.Errorf("FromXML had to raise a panic, but it didn't.")
+		t.Errorf("Instruction tag with both fragment and endGlob provided should cause an error.")
 	}
 }
 
@@ -215,7 +215,7 @@ func TestExtractByGlob(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	lines := instruction.Content()
@@ -250,7 +250,7 @@ func TestMinIndentation(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	lines := instruction.Content()
@@ -284,7 +284,7 @@ func TestStartWithoutEnd(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	lines := instruction.Content()
@@ -313,7 +313,7 @@ func TestEndWithoutStart(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	lines := instruction.Content()
@@ -348,7 +348,7 @@ func TestOneLine(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	lines := instruction.Content()
@@ -386,7 +386,7 @@ func TestNoMatchStart(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	instruction.Content()
@@ -415,7 +415,7 @@ func TestNoMatchEnd(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	instruction.Content()
@@ -436,7 +436,7 @@ func TestImplyAsterisk(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	lines := instruction.Content()
@@ -471,7 +471,7 @@ func TestExplicitLineStart(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	lines := instruction.Content()
@@ -506,7 +506,7 @@ func TestExplicitLineEnd(t *testing.T) {
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
 	if err != nil {
-		t.Errorf("FromXML caused an error: %v", err)
+		t.Errorf("There was unexpected error during the XML parsing: %v", err)
 	}
 
 	lines := instruction.Content()
