@@ -93,10 +93,13 @@ func (fragmentFile FragmentFile) Write(text string) {
 func (fragmentFile FragmentFile) Content() []string {
 	path := fragmentFile.absolutePath()
 	isPathFileExits, err := IsFileExists(path)
+
+	if err != nil {
+		panic(err)
+	}
+
 	if isPathFileExits {
 		return ReadLines(path)
-	} else if err != nil {
-		panic(err)
 	} else {
 		panic(fmt.Sprintf("file %s doesn't exist", path))
 	}
