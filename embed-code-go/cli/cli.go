@@ -18,16 +18,17 @@ import (
 //
 // docsRoot — a path to a root directory with docs files.
 //
-// codeIncludes — list of patterns for filtering the code files to be considered.
+// codeIncludes — a string with coma-separated patterns for filtering the code files to be considered.
 // Directories are never matched by these patterns.
-// For example, ["**/*.java", "**/*.gradle"].
+// For example, "**/*.java,**/*.gradle".
 // The default value is "**/*.*".
 //
-// docIncludes — list of patterns for filtering files in which we should look for embedding instructions.
+// docIncludes — a string with coma-separated patterns for filtering files
+// in which we should look for embedding instructions.
 // The patterns are resolved relatively to the `documentation_root`.
 // Directories are never matched by these patterns.
-// For example, ["docs/**/*.md", "guides/*.html"].
-// The default value is ["**/*.md", "**/*.html"].
+// For example, "docs/**/*.md,guides/*.html".
+// The default value is "**/*.md,**/*.html".
 //
 // fragmentsDir — a directory where fragmented code is stored. A temporary directory that should not be
 // tracked in VCS. The default value is: "./build/fragments".
@@ -49,6 +50,7 @@ type Args struct {
 	CheckUpToDate bool
 }
 
+// Needed for yaml.Unmarshal to parse into.
 type ConfigFields struct {
 	CodeRoot     string `yaml:"code_root"`
 	DocsRoot     string `yaml:"docs_root"`
@@ -76,7 +78,7 @@ func EmbedCodeSamples(config configuration.Configuration) {
 
 // Reads user-specified args from the command line.
 //
-// Returns an args struct filled with the corresponding args.
+// Returns an Args struct filled with the corresponding args.
 func ReadArgs() Args {
 	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
 	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
@@ -103,7 +105,7 @@ func ReadArgs() Args {
 
 }
 
-// Checks the validity of user-provided args and returns an error message if any of the validation rules are broken.
+// Checks the validity of provided userArgs and returns an error message if any of the validation rules are broken.
 // If everything is ok, returns an empty string.
 //
 // userArgs — a struct with user-provided args.
@@ -127,7 +129,7 @@ func Validate(userArgs Args) string {
 	return validationMessage
 }
 
-// Generates and returns a configuration based on the provided args.
+// Generates and returns a configuration based on provided userArgs.
 //
 // userArgs — a struct with user-provided args.
 func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
@@ -158,7 +160,7 @@ func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
 	return config
 }
 
-// Returns a list of strings from given coma-separated string argument.
+// Returns a list of strings from given coma-separated string listArgument.
 func parseListArgument(listArgument string) []string {
 	extractedArgs := strings.Split(listArgument, ",")
 	for i, v := range extractedArgs {
@@ -167,7 +169,7 @@ func parseListArgument(listArgument string) []string {
 	return extractedArgs
 }
 
-// Reads the file from the provided configPath and returns a ConfigFields struct.
+// Reads the file from provided configPath and returns a ConfigFields struct.
 //
 // configPath — a path to a yaml configuration file.
 //

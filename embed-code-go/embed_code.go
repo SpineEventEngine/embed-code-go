@@ -38,7 +38,9 @@ import (
 // All possible args:
 //   - code_root — a path to a root directory with code files;
 //   - docs_root — a path to a root directory with docs files;
-//   - config_path — a path to a yaml configuration file. It must contain 'code_root' and 'docs_root' fields;
+//   - config_path — a path to a yaml configuration file. It must contain 'code_root' and 'docs_root' fields.
+//     The other fields are optional and have default values,
+//     but they can be set up with config. In this case they are used in the same format as in the CLI;
 //   - up_to_date — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
 func main() {
 
