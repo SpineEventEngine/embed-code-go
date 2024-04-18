@@ -12,9 +12,11 @@ import (
 )
 
 // Removes directory and all its subdirectories if exists, does nothing if not exists.
-func cleanupDir(dir string) {
-	if _, err := os.Stat(dir); err == nil {
-		err = os.RemoveAll(dir)
+//
+// dir_path — a path (full or relative) of the directory to be removed.
+func cleanupDir(dir_path string) {
+	if _, err := os.Stat(dir_path); err == nil {
+		err = os.RemoveAll(dir_path)
 		if err != nil {
 			panic(err)
 		}
@@ -22,25 +24,29 @@ func cleanupDir(dir string) {
 }
 
 // Copies directory from source path to target path with all subdirs and children.
-func copyDirRecursive(source string, target string) {
-	info, err := os.Stat(source)
+//
+// source_dir_path — a path (full or relative) of the directory to be copied.
+//
+// target_dir_path — a path (full or relative) of the directory to be copied to.
+func copyDirRecursive(source_dir_path string, target_dir_path string) {
+	info, err := os.Stat(source_dir_path)
 	if err != nil {
 		panic(err)
 	}
 
-	err = os.MkdirAll(target, info.Mode())
+	err = os.MkdirAll(target_dir_path, info.Mode())
 	if err != nil {
 		panic(err)
 	}
 
-	entries, err := os.ReadDir(source)
+	entries, err := os.ReadDir(source_dir_path)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, entry := range entries {
-		sourcePath := filepath.Join(source, entry.Name())
-		targetPath := filepath.Join(target, entry.Name())
+		sourcePath := filepath.Join(source_dir_path, entry.Name())
+		targetPath := filepath.Join(target_dir_path, entry.Name())
 
 		if entry.IsDir() {
 			copyDirRecursive(sourcePath, targetPath)
@@ -53,14 +59,15 @@ func copyDirRecursive(source string, target string) {
 	}
 }
 
-func copyFile(source string, target string) (err error) {
-	sourceFile, err := os.Open(source)
+// Copies file from source_file_path to target_file_path.
+func copyFile(source_file_path string, target_file_path string) (err error) {
+	sourceFile, err := os.Open(source_file_path)
 	if err != nil {
 		return
 	}
 	defer sourceFile.Close()
 
-	targetFile, err := os.Create(target)
+	targetFile, err := os.Create(target_file_path)
 	if err != nil {
 		return
 	}
@@ -75,7 +82,7 @@ func copyFile(source string, target string) (err error) {
 		return
 	}
 
-	err = os.Chmod(target, os.FileMode(0666))
+	err = os.Chmod(target_file_path, os.FileMode(0666))
 	return
 }
 
