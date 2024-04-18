@@ -30,7 +30,7 @@ import (
 
 // A file storing a single fragment from the file.
 //
-// CodeFile — a relative path to a code file.
+// CodeFile — a relative path to a code file. The path is relative to Configuration.CodeRoot.
 //
 // FragmentName — a name of the fragment in the code file.
 //
