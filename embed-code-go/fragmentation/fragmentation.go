@@ -192,9 +192,11 @@ func ShouldFragmentize(filePath string) bool {
 	}
 
 	isFile := !info.IsDir()
-	isValidEncoding := IsEncodedAsText(filePath)
+	if isFile {
+		return IsEncodedAsText(filePath)
+	}
 
-	return isFile && isValidEncoding
+	return false
 }
 
 //
