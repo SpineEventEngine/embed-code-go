@@ -28,6 +28,17 @@ import (
 // There are two modes, which are chosen by 'up_to_date' arg. If it is set to 'true',
 // then the check for up-to-date is performed. Otherwise, the embedding is performed.
 //
+// Embedding is the process that consists of the following steps:
+//   - the code fragments are extracted from the code files;
+//   - the docs files are scanned for <embed-code> tags;
+//   - for each tag, the code fragments are embedded into the docs. The embedding is parametrized with the tag attributes.
+//
+// Checking for up-to-date is the process that consists of the following steps:
+//   - the code fragments are extracted from the code files;
+//   - the docs files are scanned for <embed-code> tags;
+//   - for each tag, the code fragments are compared to the code which is already embedded into the docs;
+//   - if there is a difference, the error is reported.
+//
 // There are two options to set the roots:
 //   - code_root and docs_root args, in this case roots are read directly from provided paths;
 //   - config_path arg, in this case roots are read from the given config file.
