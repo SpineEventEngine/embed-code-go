@@ -138,7 +138,7 @@ func Validate(userArgs Args) string {
 // configFilePath — a path to a yaml configuration file.
 //
 // Returns validation message. If everything is ok, returns an empty string.
-func ValidateConfig(configFilePath string) string {
+func ValidateConfigFile(configFilePath string) string {
 	validationMessage := ""
 
 	stat, err := os.Stat(configFilePath)
