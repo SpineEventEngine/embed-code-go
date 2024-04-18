@@ -206,11 +206,14 @@ func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
 
 // Returns a list of strings from given coma-separated string listArgument.
 func parseListArgument(listArgument string) []string {
-	extractedArgs := strings.Split(listArgument, ",")
-	for i, v := range extractedArgs {
-		extractedArgs[i] = strings.TrimSpace(v)
+	splitArgs := strings.Split(listArgument, ",")
+	parsedArgs := make([]string, 0)
+	for _, v := range splitArgs {
+		if trimmed := strings.TrimSpace(v); trimmed != "" {
+			parsedArgs = append(parsedArgs, trimmed)
+		}
 	}
-	return extractedArgs
+	return parsedArgs
 }
 
 // Reads the file from provided configFilePath and returns a ConfigFields struct.
