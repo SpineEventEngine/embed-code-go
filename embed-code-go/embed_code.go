@@ -25,8 +25,8 @@ import (
 
 // The entry point for embed-code.
 //
-// There are two modes, which are chosen by 'up_to_date' arg. If it is set to 'true',
-// then the check for up-to-date is performed. Otherwise, the embedding is performed.
+// There are two modes, which are chosen by 'mode' arg. If it is set to 'check',
+// then the checking for up-to-date is performed. If it is set to 'embed', the embedding is performed.
 //
 // Embedding is the process that consists of the following steps:
 //   - the code fragments are extracted from the code files;
@@ -39,7 +39,10 @@ import (
 //   - for each tag, the code fragments are compared to the code which is already embedded into the docs;
 //   - if there is a difference, the error is reported.
 //
-// There are two options to set the roots:
+// The 'mode' arg is required.
+//
+// Embed code also needs root directories to be set.
+// There are two options to set them:
 //   - code_root and docs_root args, in this case roots are read directly from provided paths;
 //   - config_file_path arg, in this case roots are read from the given config file.
 //
@@ -50,7 +53,8 @@ import (
 //   - code_root — a path to a root directory with code files;
 //   - docs_root — a path to a root directory with docs files;
 //   - config_file_path — a path to a yaml configuration file.
-//   - up_to_date — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
+//   - mode — string which represents the mode of embed-code execution. if it is set to 'check',
+//     then the checking for up-to-date is performed. If it is set to 'embed', the embedding is performed.
 func main() {
 
 	userArgs := cli.ReadArgs()
@@ -74,7 +78,7 @@ func main() {
 
 	config := cli.BuildEmbedCodeConfiguration(userArgs)
 
-	if userArgs.CheckUpToDate {
+	if userArgs.Mode == "check" {
 		cli.CheckCodeSamples(config)
 	} else {
 		cli.EmbedCodeSamples(config)

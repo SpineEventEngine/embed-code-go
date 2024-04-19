@@ -39,7 +39,7 @@ import (
 //
 // ConfigFilePath — a path to a yaml configuration file which contains the roots.
 //
-// CheckUpToDate — true to check for code embeddings to be up-to-date. Otherwise, the embedding is performed.
+// Mode — defines the mode of embed-code execution.
 type Args struct {
 	CodeRoot       string
 	DocsRoot       string
@@ -48,7 +48,7 @@ type Args struct {
 	FragmentsDir   string
 	Separator      string
 	ConfigFilePath string
-	CheckUpToDate  bool
+	Mode           string
 }
 
 // Needed for yaml.Unmarshal to parse into.
@@ -88,8 +88,8 @@ func ReadArgs() Args {
 	fragmentsDir := flag.String("fragments_dir", "", "a path to a directory where fragmented code is stored")
 	separator := flag.String("separator", "", "a string that's inserted between multiple partitions of a single fragment")
 	configFilePath := flag.String("config_file_path", "", "a path to a yaml configuration file")
-	checkUpToDate := flag.Bool("up_to_date", false,
-		"true to check for code embeddings to be up-to-date, false to perform embedding")
+	mode := flag.String("mode", "",
+		"a mode of embed-code execution, which can be 'check' or 'embed'")
 
 	flag.Parse()
 
@@ -101,7 +101,7 @@ func ReadArgs() Args {
 		FragmentsDir:   *fragmentsDir,
 		Separator:      *separator,
 		ConfigFilePath: *configFilePath,
-		CheckUpToDate:  *checkUpToDate,
+		Mode:           *mode,
 	}
 
 }
@@ -111,6 +111,7 @@ func ReadArgs() Args {
 //
 // userArgs — a struct with user-provided args.
 func Validate(userArgs Args) string {
+	isModeSet := userArgs.Mode != ""
 	isRootsSet := userArgs.CodeRoot != "" && userArgs.DocsRoot != ""
 	isOneOfRootsSet := userArgs.CodeRoot != "" || userArgs.DocsRoot != ""
 	isConfigSet := userArgs.ConfigFilePath != ""
@@ -119,6 +120,9 @@ func Validate(userArgs Args) string {
 
 	validationMessage := ""
 
+	if !isModeSet {
+		return "Mode must be set."
+	}
 	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
 		return "Config path cannot be set when code_root, docs_root or optional params are set."
 	}
