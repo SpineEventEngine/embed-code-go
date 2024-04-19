@@ -83,8 +83,8 @@ func EmbedCodeSamples(config configuration.Configuration) {
 func ReadArgs() Args {
 	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
 	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
-	codeIncludes := flag.String("code_includes", "", "a coma-separated list of glob patterns for code files to include")
-	docIncludes := flag.String("doc_includes", "", "a coma-separated list of glob patterns for docs files to include")
+	codeIncludes := flag.String("code_includes", "", "a coma-separated string of glob patterns for code files to include")
+	docIncludes := flag.String("doc_includes", "", "a coma-separated string of glob patterns for docs files to include")
 	fragmentsDir := flag.String("fragments_dir", "", "a path to a directory where fragmented code is stored")
 	separator := flag.String("separator", "", "a string that's inserted between multiple partitions of a single fragment")
 	configFilePath := flag.String("config_file_path", "", "a path to a yaml configuration file")
