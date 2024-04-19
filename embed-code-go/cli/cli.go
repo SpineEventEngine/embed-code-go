@@ -61,6 +61,10 @@ type ConfigFields struct {
 	Separator    string `yaml:"separator"`
 }
 
+//
+// Public functions
+//
+
 // Checks documentation to be up-to-date with code files. Raises UnexpectedDiffError if not.
 //
 // config — a configuration for checking code samples.
@@ -207,6 +211,10 @@ func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
 	}
 	return embedCodeConfig
 }
+
+//
+// Private functions
+//
 
 // Returns a list of strings from given coma-separated string listArgument.
 func parseListArgument(listArgument string) []string {
