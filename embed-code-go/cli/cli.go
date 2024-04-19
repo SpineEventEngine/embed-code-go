@@ -15,7 +15,7 @@ import (
 
 // User-specified embed-code Args.
 //
-// codeRoot — a path to a root directory with code files.
+// СodeRoot — a path to a root directory with code files.
 //
 // DocsRoot — a path to a root directory with docs files.
 //
