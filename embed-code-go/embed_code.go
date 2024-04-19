@@ -61,9 +61,9 @@ const (
 //   - config_file_path — a path to a yaml configuration file;
 //   - mode — string which represents the mode of embed-code execution. if it is set to 'check',
 //     then the checking for up-to-date is performed. If it is set to 'embed', the embedding is performed;
-//   - code_includes — a coma-separated string of glob patterns for code files to include. For example:
+//   - code_includes — a comma-separated string of glob patterns for code files to include. For example:
 //     "**/*.java,**/*.gradle". Default value is "**/*.*";
-//   - doc_includes — a coma-separated string of glob patterns for docs files to include. For example:
+//   - doc_includes — a comma-separated string of glob patterns for docs files to include. For example:
 //     "docs/**/*.md,guides/*.html". Default value is "**/*.md,**/*.html";
 //   - fragments_dir — a path to a directory with code fragments. Default value is "./build/fragments";
 //   - separator — a string which is used as a separator between code fragments. Default value is "...".

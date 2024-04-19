@@ -19,12 +19,12 @@ import (
 //
 // DocsRoot — a path to a root directory with docs files.
 //
-// CodeIncludes — a string with coma-separated patterns for filtering the code files to be considered.
+// CodeIncludes — a string with comma-separated patterns for filtering the code files to be considered.
 // Directories are never matched by these patterns.
 // For example, "**/*.java,**/*.gradle".
 // The default value is "**/*.*".
 //
-// DocIncludes — a string with coma-separated patterns for filtering files
+// DocIncludes — a string with comma-separated patterns for filtering files
 // in which we should look for embedding instructions.
 // The patterns are resolved relatively to the `documentation_root`.
 // Directories are never matched by these patterns.
@@ -87,8 +87,8 @@ func EmbedCodeSamples(config configuration.Configuration) {
 func ReadArgs() Args {
 	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
 	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
-	codeIncludes := flag.String("code_includes", "", "a coma-separated string of glob patterns for code files to include")
-	docIncludes := flag.String("doc_includes", "", "a coma-separated string of glob patterns for docs files to include")
+	codeIncludes := flag.String("code_includes", "", "a comma-separated string of glob patterns for code files to include")
+	docIncludes := flag.String("doc_includes", "", "a comma-separated string of glob patterns for docs files to include")
 	fragmentsDir := flag.String("fragments_dir", "", "a path to a directory where fragmented code is stored")
 	separator := flag.String("separator", "", "a string that's inserted between multiple partitions of a single fragment")
 	configFilePath := flag.String("config_file_path", "", "a path to a yaml configuration file")
@@ -216,7 +216,7 @@ func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
 // Private functions
 //
 
-// Returns a list of strings from given coma-separated string listArgument.
+// Returns a list of strings from given comma-separated string listArgument.
 func parseListArgument(listArgument string) []string {
 	splitArgs := strings.Split(listArgument, ",")
 	parsedArgs := make([]string, 0)
