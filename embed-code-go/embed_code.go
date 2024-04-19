@@ -23,6 +23,11 @@ import (
 	"fmt"
 )
 
+const (
+	ModeCheck = "check"
+	ModeEmbed = "embed"
+)
+
 // The entry point for embed-code.
 //
 // There are two modes, which are chosen by 'mode' arg. If it is set to 'check',
@@ -85,9 +90,9 @@ func main() {
 
 	config := cli.BuildEmbedCodeConfiguration(userArgs)
 
-	if userArgs.Mode == "check" {
+	if userArgs.Mode == ModeCheck {
 		cli.CheckCodeSamples(config)
-	} else {
+	} else if userArgs.Mode == ModeEmbed {
 		cli.EmbedCodeSamples(config)
 		cli.CheckCodeSamples(config)
 	}
