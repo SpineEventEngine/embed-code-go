@@ -48,6 +48,7 @@ import (
 //
 // If both options are missed, the embedding fails.
 // If both options are set, the embedding fails as well.
+// If config file is not exists or does not contain 'code_root' and 'docs_root' fields, the embedding fails.
 //
 // All possible args:
 //   - code_root — a path to a root directory with code files;
