@@ -114,8 +114,7 @@ func (pc ParsingContext) String() string {
 func readLines(filepath string) []string {
 	file, err := os.Open(filepath)
 	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return nil
+		panic(err)
 	}
 	defer file.Close()
 
@@ -125,8 +124,7 @@ func readLines(filepath string) []string {
 		lines = append(lines, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading file:", err)
-		return nil
+		panic(err)
 	}
 	return lines
 }
