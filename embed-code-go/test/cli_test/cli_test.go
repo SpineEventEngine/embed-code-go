@@ -43,16 +43,14 @@ func (suite *CLITestSuite) TearDownTest() {
 }
 
 func (suite *CLITestSuite) TestEmbedding() {
-	config := buildConfig()
-
 	suite.Panics(assert.PanicTestFunc(func() {
-		cli.CheckCodeSamples(config)
+		cli.CheckCodeSamples(suite.config)
 	}))
 
-	cli.EmbedCodeSamples(config)
+	cli.EmbedCodeSamples(suite.config)
 
 	suite.NotPanics(assert.PanicTestFunc(func() {
-		cli.CheckCodeSamples(config)
+		cli.CheckCodeSamples(suite.config)
 	}))
 }
 

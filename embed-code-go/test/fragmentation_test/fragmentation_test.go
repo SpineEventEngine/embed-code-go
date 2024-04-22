@@ -49,6 +49,7 @@ func buildTestFragmentation(
 
 type FragmentationTestSuite struct {
 	suite.Suite
+	config configuration.Configuration
 }
 
 func (suite *FragmentationTestSuite) SetupSuite() {
@@ -57,24 +58,23 @@ func (suite *FragmentationTestSuite) SetupSuite() {
 		panic(err)
 	}
 	os.Chdir(rootDir)
+	suite.config = buildTestConfig()
 }
 
 func (suite *FragmentationTestSuite) TearDownTest() {
-	var config = buildTestConfig()
-	utils.CleanupDir(config.FragmentsDir)
+	utils.CleanupDir(suite.config.FragmentsDir)
 }
 
 func (suite *FragmentationTestSuite) TestFragmentizeFile() {
-	var config = buildTestConfig()
 	fileName := "Hello.java"
-	frag := buildTestFragmentation(fileName, config)
+	frag := buildTestFragmentation(fileName, suite.config)
 	frag.WriteFragments()
 
-	fragmentChildren, _ := os.ReadDir(config.FragmentsDir)
+	fragmentChildren, _ := os.ReadDir(suite.config.FragmentsDir)
 	suite.Len(fragmentChildren, 1)
 	suite.Equal("org", fragmentChildren[0].Name())
 
-	fragmentFiles, _ := os.ReadDir(fmt.Sprintf("%s/org/example", config.FragmentsDir))
+	fragmentFiles, _ := os.ReadDir(fmt.Sprintf("%s/org/example", suite.config.FragmentsDir))
 	suite.Len(fragmentFiles, 4)
 
 	defaultFragmentExists := false
@@ -90,21 +90,19 @@ func (suite *FragmentationTestSuite) TestFragmentizeFile() {
 }
 
 func (suite *FragmentationTestSuite) TestFailNotOpenFragment() {
-	var config = buildTestConfig()
 	fileName := "Unopen.java"
-	frag := buildTestFragmentation(fileName, config)
+	frag := buildTestFragmentation(fileName, suite.config)
 	err := frag.WriteFragments()
 	suite.Error(err, "The file without opening tag should not be processed.")
 }
 
 func (suite *FragmentationTestSuite) TestFragmentWithoutEnd() {
-	config := buildTestConfig()
 	fileName := "Unclosed.java"
-	frag := buildTestFragmentation(fileName, config)
+	frag := buildTestFragmentation(fileName, suite.config)
 	err := frag.WriteFragments()
 	suite.Require().NoError(err, "Writing fragments went wrong.")
 
-	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
+	fragmentDir := fmt.Sprintf("%s/org/example", suite.config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
 	suite.Len(fragmentFiles, 2)
 
@@ -127,12 +125,11 @@ func (suite *FragmentationTestSuite) TestFragmentWithoutEnd() {
 }
 
 func (suite *FragmentationTestSuite) TestFragmentizeEmptyFile() {
-	config := buildTestConfig()
 	fileName := "Empty.java"
-	frag := buildTestFragmentation(fileName, config)
+	frag := buildTestFragmentation(fileName, suite.config)
 	frag.WriteFragments()
 
-	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
+	fragmentDir := fmt.Sprintf("%s/org/example", suite.config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
 	suite.Len(fragmentFiles, 1)
 
@@ -141,21 +138,20 @@ func (suite *FragmentationTestSuite) TestFragmentizeEmptyFile() {
 }
 
 func (suite *FragmentationTestSuite) TestIgnoreBinary() {
-	configuration := buildTestConfig()
-	configuration.CodeIncludes = []string{"**.jar"}
+	config := suite.config
+	config.CodeIncludes = []string{"**.jar"}
 
-	fragmentation.WriteFragmentFiles(configuration)
-	suite.NoDirExists(configuration.FragmentsDir)
+	fragmentation.WriteFragmentFiles(config)
+	suite.NoDirExists(config.FragmentsDir)
 }
 
 func (suite *FragmentationTestSuite) TestManyPartitions() {
-	config := buildTestConfig()
 
 	fileName := "Complex.java"
-	frag := buildTestFragmentation(fileName, config)
+	frag := buildTestFragmentation(fileName, suite.config)
 	frag.WriteFragments()
 
-	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
+	fragmentDir := fmt.Sprintf("%s/org/example", suite.config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
 	suite.Len(fragmentFiles, 2)
 
@@ -170,13 +166,13 @@ func (suite *FragmentationTestSuite) TestManyPartitions() {
 	fragmentLines := fragmentation.ReadLines(fmt.Sprintf("%s/%s", fragmentDir, fragmentFileName))
 
 	suite.Equal("public class Main {", fragmentLines[0])
-	suite.Equal(config.Separator, fragmentLines[1])
+	suite.Equal(suite.config.Separator, fragmentLines[1])
 	suite.Regexp(`\s{4}public.*`, fragmentLines[2])
-	suite.Equal(config.Separator, fragmentLines[3])
+	suite.Equal(suite.config.Separator, fragmentLines[3])
 	suite.Regexp(`\s{8}System.*`, fragmentLines[4])
 	suite.Equal("", fragmentLines[5])
 	suite.Equal("    }", fragmentLines[6])
-	suite.Equal(config.Separator, fragmentLines[7])
+	suite.Equal(suite.config.Separator, fragmentLines[7])
 	suite.Equal("}", fragmentLines[8])
 }
 

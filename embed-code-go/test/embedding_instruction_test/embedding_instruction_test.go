@@ -85,9 +85,8 @@ func (suite *EmbeddingInstructionTestSuite) SetupSuite() {
 
 func (suite *EmbeddingInstructionTestSuite) TestParsingMisformedXML() {
 	xmlString := "<file=\"org/example/Hello.java\" fragment=\"Hello class\"/>"
-	config := buildConfigWithPreparedFragments()
 
-	_, err := embedding_instruction.FromXML(xmlString, config)
+	_, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().Error(err, "Parsing misformed XML should cause an error.")
 }
 
@@ -96,8 +95,8 @@ func (suite *EmbeddingInstructionTestSuite) TestParseFromXML() {
 		fragment: "Hello class",
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
-	_, err := embedding_instruction.FromXML(xmlString, config)
+
+	_, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.NoError(err, "There was unexpected error during the XML parsing.")
 }
 
@@ -107,9 +106,8 @@ func (suite *EmbeddingInstructionTestSuite) TestParseWithClosingTag() {
 		closeTag: true,
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	_, err := embedding_instruction.FromXML(xmlString, config)
+	_, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.NoError(err, "There was unexpected error during the XML parsing.")
 }
 
@@ -118,9 +116,8 @@ func (suite *EmbeddingInstructionTestSuite) TestReadFragmentDir() {
 		closeTag: true,
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
@@ -136,9 +133,8 @@ func (suite *EmbeddingInstructionTestSuite) TestFragmentAndStart() {
 	}
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	_, err := embedding_instruction.FromXML(xmlString, config)
+	_, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Error(err, "Instruction tag with both fragment and startGlob provided should cause an error.")
 }
 
@@ -149,9 +145,8 @@ func (suite *EmbeddingInstructionTestSuite) TestFragmentAndEnd() {
 	}
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	_, err := embedding_instruction.FromXML(xmlString, config)
+	_, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Error(err, "Instruction tag with both fragment and endGlob provided should cause an error.")
 }
 
@@ -162,9 +157,8 @@ func (suite *EmbeddingInstructionTestSuite) TestExtractByGlob() {
 	}
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
@@ -180,9 +174,8 @@ func (suite *EmbeddingInstructionTestSuite) TestMinIndentation() {
 		endGlob:   "*}*",
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
@@ -197,9 +190,8 @@ func (suite *EmbeddingInstructionTestSuite) TestStartWithoutEnd() {
 		startGlob: "*class*",
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
@@ -213,9 +205,8 @@ func (suite *EmbeddingInstructionTestSuite) TestEndWithoutStart() {
 		endGlob: "package*",
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
@@ -231,9 +222,8 @@ func (suite *EmbeddingInstructionTestSuite) TestOneLine() {
 		endGlob:   "*main*",
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
@@ -249,9 +239,8 @@ func (suite *EmbeddingInstructionTestSuite) TestNoMatchStart() {
 	}
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	suite.Require().Panics(func() {
@@ -266,9 +255,8 @@ func (suite *EmbeddingInstructionTestSuite) TestNoMatchEnd() {
 	}
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	suite.Require().Panics(func() {
@@ -282,9 +270,8 @@ func (suite *EmbeddingInstructionTestSuite) TestImplyAsterisk() {
 		endGlob:   "world",
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
@@ -300,9 +287,8 @@ func (suite *EmbeddingInstructionTestSuite) TestExplicitLineStart() {
 		endGlob:   "^bar",
 	}
 	xmlString := buildInstruction("plain-text-to-embed.txt", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
@@ -318,9 +304,8 @@ func (suite *EmbeddingInstructionTestSuite) TestExplicitLineEnd() {
 		endGlob:   "bar$",
 	}
 	xmlString := buildInstruction("plain-text-to-embed.txt", instructionParams)
-	config := buildConfigWithPreparedFragments()
 
-	instruction, err := embedding_instruction.FromXML(xmlString, config)
+	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
