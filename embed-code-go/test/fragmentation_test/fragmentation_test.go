@@ -82,11 +82,11 @@ func (suite *FragmentationTestSuite) TestFragmentizeFile() {
 		if file.Name() == fileName {
 			defaultFragmentExists = true
 		} else {
-			suite.Regexp(`Hello-\w+\.java`, file.Name(), "File name does not match pattern")
+			suite.Regexp(`Hello-\w+\.java`, file.Name(), "File name does not match pattern.")
 		}
 	}
 
-	suite.True(defaultFragmentExists, "Default fragment '%s' does not exist", fileName)
+	suite.True(defaultFragmentExists, "Default fragment '%s' does not exist.", fileName)
 }
 
 func (suite *FragmentationTestSuite) TestFailNotOpenFragment() {
@@ -102,7 +102,7 @@ func (suite *FragmentationTestSuite) TestFragmentWithoutEnd() {
 	fileName := "Unclosed.java"
 	frag := buildTestFragmentation(fileName, config)
 	err := frag.WriteFragments()
-	suite.Require().NoError(err, "Writing fragments went wrong")
+	suite.Require().NoError(err, "Writing fragments went wrong.")
 
 	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
@@ -123,7 +123,7 @@ func (suite *FragmentationTestSuite) TestFragmentWithoutEnd() {
 
 	matched := re.FindStringSubmatch(fragmentContentStr)
 
-	suite.Greater(len(matched), 0, "Fragment content does not match pattern", fragmentContentStr)
+	suite.Greater(len(matched), 0)
 }
 
 func (suite *FragmentationTestSuite) TestFragmentizeEmptyFile() {
@@ -137,7 +137,7 @@ func (suite *FragmentationTestSuite) TestFragmentizeEmptyFile() {
 	suite.Len(fragmentFiles, 1)
 
 	fragmentContent, _ := os.ReadFile(fmt.Sprintf("%s/%s", fragmentDir, fragmentFiles[0].Name()))
-	suite.Equal("", string(fragmentContent), "Expected empty string, got '%s'", string(fragmentContent))
+	suite.Equal("", string(fragmentContent))
 }
 
 func (suite *FragmentationTestSuite) TestIgnoreBinary() {
@@ -145,7 +145,7 @@ func (suite *FragmentationTestSuite) TestIgnoreBinary() {
 	configuration.CodeIncludes = []string{"**.jar"}
 
 	fragmentation.WriteFragmentFiles(configuration)
-	suite.NoDirExists(configuration.FragmentsDir, "Expected file does not exist")
+	suite.NoDirExists(configuration.FragmentsDir)
 }
 
 func (suite *FragmentationTestSuite) TestManyPartitions() {

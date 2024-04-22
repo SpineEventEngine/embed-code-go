@@ -98,7 +98,7 @@ func (suite *EmbeddingInstructionTestSuite) TestParseFromXML() {
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 	config := buildConfigWithPreparedFragments()
 	_, err := embedding_instruction.FromXML(xmlString, config)
-	suite.NoError(err, "There was unexpected error during the XML parsing")
+	suite.NoError(err, "There was unexpected error during the XML parsing.")
 }
 
 func (suite *EmbeddingInstructionTestSuite) TestParseWithClosingTag() {
@@ -110,7 +110,7 @@ func (suite *EmbeddingInstructionTestSuite) TestParseWithClosingTag() {
 	config := buildConfigWithPreparedFragments()
 
 	_, err := embedding_instruction.FromXML(xmlString, config)
-	suite.NoError(err, "There was unexpected error during the XML parsing")
+	suite.NoError(err, "There was unexpected error during the XML parsing.")
 }
 
 func (suite *EmbeddingInstructionTestSuite) TestReadFragmentDir() {
@@ -121,12 +121,12 @@ func (suite *EmbeddingInstructionTestSuite) TestReadFragmentDir() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
 
 	suite.Len(lines, 28)
-	suite.Equal("public class Hello {", lines[22], "the line at the 22 index is incorrect")
+	suite.Equal("public class Hello {", lines[22])
 }
 
 func (suite *EmbeddingInstructionTestSuite) TestFragmentAndStart() {
@@ -165,13 +165,13 @@ func (suite *EmbeddingInstructionTestSuite) TestExtractByGlob() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
 
 	suite.Len(lines, 4)
-	suite.Equal("public class Hello {", lines[0], "the line at the 0 index is not equal to \"public class Hello {\"")
-	suite.Equal("        System.out.println(\"Hello world\");", lines[3], "the line at the 3 index is incorrect")
+	suite.Equal("public class Hello {", lines[0])
+	suite.Equal("        System.out.println(\"Hello world\");", lines[3])
 }
 
 func (suite *EmbeddingInstructionTestSuite) TestMinIndentation() {
@@ -183,7 +183,7 @@ func (suite *EmbeddingInstructionTestSuite) TestMinIndentation() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
 
@@ -200,7 +200,7 @@ func (suite *EmbeddingInstructionTestSuite) TestStartWithoutEnd() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
 
@@ -216,7 +216,7 @@ func (suite *EmbeddingInstructionTestSuite) TestEndWithoutStart() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
 
@@ -234,7 +234,7 @@ func (suite *EmbeddingInstructionTestSuite) TestOneLine() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
 
@@ -252,7 +252,7 @@ func (suite *EmbeddingInstructionTestSuite) TestNoMatchStart() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	suite.Require().Panics(func() {
 		instruction.Content()
@@ -269,7 +269,7 @@ func (suite *EmbeddingInstructionTestSuite) TestNoMatchEnd() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	suite.Require().Panics(func() {
 		instruction.Content()
@@ -285,7 +285,7 @@ func (suite *EmbeddingInstructionTestSuite) TestImplyAsterisk() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
 
@@ -303,7 +303,7 @@ func (suite *EmbeddingInstructionTestSuite) TestExplicitLineStart() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
 
@@ -321,7 +321,7 @@ func (suite *EmbeddingInstructionTestSuite) TestExplicitLineEnd() {
 	config := buildConfigWithPreparedFragments()
 
 	instruction, err := embedding_instruction.FromXML(xmlString, config)
-	suite.Require().NoError(err, "There was unexpected error during the XML parsing")
+	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
 	lines := instruction.Content()
 
