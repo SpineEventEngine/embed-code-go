@@ -52,6 +52,6 @@ func (e EmbedInstructionToken) Accept(context *ParsingContext, config configurat
 		}
 	}
 	if context.embedding == nil {
-		panic(fmt.Sprintf("Failed to parse an embedding instruction. Context: %v", context))
+		panic(fmt.Sprintf("failed to parse an embedding instruction. Context: %v", context))
 	}
 }

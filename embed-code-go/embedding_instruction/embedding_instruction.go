@@ -178,5 +178,5 @@ func (e EmbeddingInstruction) matchGlob(pattern *Pattern, lines []string, startF
 		}
 		resultLine++
 	}
-	panic(fmt.Sprintf("There is no line matching `%s`.", pattern))
+	panic(fmt.Sprintf("there is no line matching `%s`", pattern))
 }
