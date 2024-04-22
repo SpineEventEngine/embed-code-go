@@ -19,48 +19,49 @@
 package indent_test
 
 import (
-	"embed-code/embed-code-go/indent"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
+
+	"embed-code/embed-code-go/indent"
 )
 
-func TestNoSpaces(t *testing.T) {
+type IndentTestSuite struct {
+	suite.Suite
+}
+
+func (suite *IndentTestSuite) TestNoSpaces() {
 	testLines := []string{"", "foo", "bar", "", "baz", ""}
-	got := indent.MaxCommonIndentation(testLines)
-	if got != 0 {
-		t.Errorf("The indentation is %d; want 0", got)
-	}
+
+	assert.Equal(suite.T(), 0, indent.MaxCommonIndentation(testLines))
 }
 
-func TestNoLines(t *testing.T) {
+func (suite *IndentTestSuite) TestNoLines() {
 	testLines := []string{}
-	got := indent.MaxCommonIndentation(testLines)
-	if got != 0 {
-		t.Errorf("The indentation is %d; want 0", got)
-	}
+
+	assert.Equal(suite.T(), 0, indent.MaxCommonIndentation(testLines))
 }
 
-func TestOnlyEmptyLines(t *testing.T) {
+func (suite *IndentTestSuite) TestOnlyEmptyLines() {
 	testLines := []string{"", "    ", ""}
-	got := indent.MaxCommonIndentation(testLines)
-	if got != 0 {
-		t.Errorf("The indentation is %d; want 0", got)
-	}
+
+	assert.Equal(suite.T(), 0, indent.MaxCommonIndentation(testLines))
 }
 
-func TestTwoIndents(t *testing.T) {
+func (suite *IndentTestSuite) TestTwoIndents() {
 	testLines := []string{"", "  foo", "    bar", "", "", "  baz"}
-	got := indent.MaxCommonIndentation(testLines)
-	if got != 2 {
-		t.Errorf("The indentation is %d; want 0", got)
-	}
+
+	assert.Equal(suite.T(), 2, indent.MaxCommonIndentation(testLines))
 }
 
-func TestCutIndent(t *testing.T) {
+func (suite *IndentTestSuite) TestCutIndent() {
 	testLines := []string{"", "  foo", "    bar", "", "", "  baz"}
 	testLinesChanged := indent.CutIndent(testLines, 2)
 
-	if reflect.DeepEqual(testLines, testLinesChanged) {
-		t.Errorf("The given lines weren't changed")
-	}
+	assert.NotEqual(suite.T(), testLines, testLinesChanged)
+}
+
+func TestIndentTestSuite(t *testing.T) {
+	suite.Run(t, new(IndentTestSuite))
 }
