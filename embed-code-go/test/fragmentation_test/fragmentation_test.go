@@ -21,46 +21,15 @@ package fragmentation_test
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/fragmentation"
+	"embed-code/embed-code-go/test/utils"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"testing"
+
+	"github.com/stretchr/testify/suite"
 )
-
-type FragmentationTestsPreparator struct {
-	rootDir  string
-	testsDir string
-}
-
-func newFragmentationTestsPreparator() FragmentationTestsPreparator {
-	rootDir, err := filepath.Abs("../../")
-	if err != nil {
-		panic(err)
-	}
-	testsDir, err := filepath.Abs(".")
-	if err != nil {
-		panic(err)
-	}
-	return FragmentationTestsPreparator{
-		rootDir:  rootDir,
-		testsDir: testsDir,
-	}
-}
-
-func (testPreparator FragmentationTestsPreparator) setup() {
-	os.Chdir(testPreparator.rootDir)
-}
-
-func (testPreparator FragmentationTestsPreparator) cleanup() {
-	os.Chdir(testPreparator.rootDir)
-	var config = buildTestConfig()
-	err := os.RemoveAll(config.FragmentsDir)
-	if err != nil {
-		panic(err)
-	}
-	os.Chdir(testPreparator.testsDir)
-}
 
 func buildTestConfig() configuration.Configuration {
 	var config = configuration.NewConfiguration()
@@ -78,75 +47,66 @@ func buildTestFragmentation(
 	return fragmentation
 }
 
-func TestFragmentizeFile(t *testing.T) {
-	testPreparator := newFragmentationTestsPreparator()
-	testPreparator.setup()
-	defer testPreparator.cleanup()
+type FragmentationTestSuite struct {
+	suite.Suite
+}
 
+func (suite *FragmentationTestSuite) SetupSuite() {
+	rootDir, err := filepath.Abs("../../")
+	if err != nil {
+		panic(err)
+	}
+	os.Chdir(rootDir)
+}
+
+func (suite *FragmentationTestSuite) TearDownTest() {
+	var config = buildTestConfig()
+	utils.CleanupDir(config.FragmentsDir)
+}
+
+func (suite *FragmentationTestSuite) TestFragmentizeFile() {
 	var config = buildTestConfig()
 	fileName := "Hello.java"
 	frag := buildTestFragmentation(fileName, config)
 	frag.WriteFragments()
 
 	fragmentChildren, _ := os.ReadDir(config.FragmentsDir)
-	if len(fragmentChildren) != 1 {
-		t.Errorf("Expected 1, got %d", len(fragmentChildren))
-	}
-	if fragmentChildren[0].Name() != "org" {
-		t.Errorf("Expected 'org', got '%s'", fragmentChildren[0].Name())
-	}
+	suite.Len(fragmentChildren, 1, "Expected 1 fragment, got %d", len(fragmentChildren))
+	suite.Equal("org", fragmentChildren[0].Name())
 
 	fragmentFiles, _ := os.ReadDir(fmt.Sprintf("%s/org/example", config.FragmentsDir))
-	if len(fragmentFiles) != 4 {
-		t.Errorf("Expected 4, got %d", len(fragmentFiles))
-	}
+	suite.Len(fragmentFiles, 4, "Expected 4 fragments, got %d", len(fragmentFiles))
 
 	defaultFragmentExists := false
 	for _, file := range fragmentFiles {
 		if file.Name() == fileName {
 			defaultFragmentExists = true
-		} else if matched, _ := regexp.MatchString(`Hello-\w+\.java`, file.Name()); !matched {
-			t.Errorf("File name does not match pattern: %s", file.Name())
+		} else {
+			suite.Regexp(`Hello-\w+\.java`, file.Name(), "File name does not match pattern")
 		}
 	}
 
-	if !defaultFragmentExists {
-		t.Errorf("Default fragment '%s' does not exist", fileName)
-	}
+	suite.True(defaultFragmentExists, "Default fragment '%s' does not exist", fileName)
 }
 
-func TestFailNotOpenFragment(t *testing.T) {
-	testPreparator := newFragmentationTestsPreparator()
-	testPreparator.setup()
-	defer testPreparator.cleanup()
-
+func (suite *FragmentationTestSuite) TestFailNotOpenFragment() {
 	var config = buildTestConfig()
 	fileName := "Unopen.java"
 	frag := buildTestFragmentation(fileName, config)
 	err := frag.WriteFragments()
-	if err == nil {
-		t.Errorf("Expected error, got nil")
-	}
+	suite.Error(err, "The file without opening tag should not be processed.")
 }
 
-func TestFragmentWithoutEnd(t *testing.T) {
-	testPreparator := newFragmentationTestsPreparator()
-	testPreparator.setup()
-	defer testPreparator.cleanup()
-
+func (suite *FragmentationTestSuite) TestFragmentWithoutEnd() {
 	config := buildTestConfig()
 	fileName := "Unclosed.java"
 	frag := buildTestFragmentation(fileName, config)
 	err := frag.WriteFragments()
-	if err != nil {
-		t.Errorf("Writing fragments went wrong: %d", err)
-	}
+	suite.Require().NoError(err, "Writing fragments went wrong")
 
 	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
-	if len(fragmentFiles) != 2 {
-		t.Errorf("Expected 2, got %d", len(fragmentFiles))
-	}
+	suite.Len(fragmentFiles, 2, "Expected 2 fragments, got %d", len(fragmentFiles))
 
 	var fragmentFileName string
 	for _, file := range fragmentFiles {
@@ -163,16 +123,10 @@ func TestFragmentWithoutEnd(t *testing.T) {
 
 	matched := re.FindStringSubmatch(fragmentContentStr)
 
-	if len(matched) == 0 {
-		t.Errorf("Fragment content does not match pattern: %s", fragmentContentStr)
-	}
+	suite.Greater(len(matched), 0, "Fragment content does not match pattern", fragmentContentStr)
 }
 
-func TestFragmentizeEmptyFile(t *testing.T) {
-	testPreparator := newFragmentationTestsPreparator()
-	testPreparator.setup()
-	defer testPreparator.cleanup()
-
+func (suite *FragmentationTestSuite) TestFragmentizeEmptyFile() {
 	config := buildTestConfig()
 	fileName := "Empty.java"
 	frag := buildTestFragmentation(fileName, config)
@@ -180,35 +134,21 @@ func TestFragmentizeEmptyFile(t *testing.T) {
 
 	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
-	if len(fragmentFiles) != 1 {
-		t.Errorf("Expected 1, got %d", len(fragmentFiles))
-	}
+	suite.Len(fragmentFiles, 1, "Expected 1 fragment, got %d", len(fragmentFiles))
 
 	fragmentContent, _ := os.ReadFile(fmt.Sprintf("%s/%s", fragmentDir, fragmentFiles[0].Name()))
-	if string(fragmentContent) != "" {
-		t.Errorf("Expected empty string, got '%s'", string(fragmentContent))
-	}
+	suite.Equal("", string(fragmentContent), "Expected empty string, got '%s'", string(fragmentContent))
 }
 
-func TestIgnoreBinary(t *testing.T) {
-	testPreparator := newFragmentationTestsPreparator()
-	testPreparator.setup()
-	defer testPreparator.cleanup()
-
+func (suite *FragmentationTestSuite) TestIgnoreBinary() {
 	configuration := buildTestConfig()
 	configuration.CodeIncludes = []string{"**.jar"}
 
 	fragmentation.WriteFragmentFiles(configuration)
-	if _, err := os.Stat(configuration.FragmentsDir); !os.IsNotExist(err) {
-		t.Errorf("Expected file does not exist, got %v", err)
-	}
+	suite.NoDirExists(configuration.FragmentsDir, "Expected file does not exist")
 }
 
-func TestManyPartitions(t *testing.T) {
-	testPreparator := newFragmentationTestsPreparator()
-	testPreparator.setup()
-	defer testPreparator.cleanup()
-
+func (suite *FragmentationTestSuite) TestManyPartitions() {
 	config := buildTestConfig()
 
 	fileName := "Complex.java"
@@ -217,9 +157,7 @@ func TestManyPartitions(t *testing.T) {
 
 	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
-	if len(fragmentFiles) != 2 {
-		t.Errorf("Expected 2, got %d", len(fragmentFiles))
-	}
+	suite.Len(fragmentFiles, 2, "Expected 2 fragments, got %d", len(fragmentFiles))
 
 	var fragmentFileName string
 	for _, file := range fragmentFiles {
@@ -231,71 +169,35 @@ func TestManyPartitions(t *testing.T) {
 
 	fragmentLines := fragmentation.ReadLines(fmt.Sprintf("%s/%s", fragmentDir, fragmentFileName))
 
-	if fragmentLines[0] != "public class Main {" {
-		t.Errorf("Expected 'public class Main {', got '%s'", fragmentLines[0])
-	}
-	if fragmentLines[1] != config.Separator {
-		t.Errorf("Expected '%s', got '%s'", config.Separator, fragmentLines[1])
-	}
-	if matched, _ := regexp.MatchString(`\s{4}public.*`, fragmentLines[2]); !matched {
-		t.Errorf("Line does not match pattern: %s", fragmentLines[2])
-	}
-	if fragmentLines[3] != config.Separator {
-		t.Errorf("Expected '%s', got '%s'", config.Separator, fragmentLines[3])
-	}
-	if matched, _ := regexp.MatchString(`\s{8}System.*`, fragmentLines[4]); !matched {
-		t.Errorf("Line does not match pattern: %s", fragmentLines[4])
-	}
-	if fragmentLines[5] != "" {
-		t.Errorf("Expected empty string, got '%s'", fragmentLines[5])
-	}
-	if fragmentLines[6] != "    }" {
-		t.Errorf("Expected '    }', got '%s'", fragmentLines[6])
-	}
-	if fragmentLines[7] != config.Separator {
-		t.Errorf("Expected '%s', got '%s'", config.Separator, fragmentLines[7])
-	}
-	if fragmentLines[8] != "}" {
-		t.Errorf("Expected '}', got '%s'", fragmentLines[8])
-	}
+	suite.Equal("public class Main {", fragmentLines[0])
+	suite.Equal(config.Separator, fragmentLines[1])
+	suite.Regexp(`\s{4}public.*`, fragmentLines[2])
+	suite.Equal(config.Separator, fragmentLines[3])
+	suite.Regexp(`\s{8}System.*`, fragmentLines[4])
+	suite.Equal("", fragmentLines[5])
+	suite.Equal("    }", fragmentLines[6])
+	suite.Equal(config.Separator, fragmentLines[7])
+	suite.Equal("}", fragmentLines[8])
 }
 
-func TestFindFragmentOpenings(t *testing.T) {
+func (suite *FragmentationTestSuite) TestFindFragmentOpenings() {
 	testString := "// #docfragment \"main\",\"sub-main\"\n"
 	foundedOpenings := fragmentation.FindFragmentOpenings(testString)
 
-	if len(foundedOpenings) == 0 {
-		t.Errorf("No openings were found.")
-	}
-
-	if len(foundedOpenings) != 2 {
-		t.Errorf("The amount of founded openings is different from the amount of given ones.")
-	}
-
-	if foundedOpenings[0] != "main" {
-		t.Errorf("Expected 'main', got '%s'", foundedOpenings[0])
-	}
-	if foundedOpenings[1] != "sub-main" {
-		t.Errorf("Expected 'sub-main', got '%s'", foundedOpenings[1])
-	}
+	suite.Len(foundedOpenings, 2)
+	suite.Equal("main", foundedOpenings[0])
+	suite.Equal("sub-main", foundedOpenings[1])
 }
 
-func TestFindFragmentEndings(t *testing.T) {
+func (suite *FragmentationTestSuite) TestFindFragmentEndings() {
 	testString := "// #enddocfragment \"main\",\"sub-main\"\n"
 	foundedEndings := fragmentation.FindFragmentEndings(testString)
 
-	if len(foundedEndings) == 0 {
-		t.Errorf("No endings were found.")
-	}
+	suite.Len(foundedEndings, 2)
+	suite.Equal("main", foundedEndings[0])
+	suite.Equal("sub-main", foundedEndings[1])
+}
 
-	if len(foundedEndings) != 2 {
-		t.Errorf("The amount of founded endings is different from the amount of given ones.")
-	}
-
-	if foundedEndings[0] != "main" {
-		t.Errorf("Expected 'main', got '%s'", foundedEndings[0])
-	}
-	if foundedEndings[1] != "sub-main" {
-		t.Errorf("Expected 'sub-main', got '%s'", foundedEndings[1])
-	}
+func TestFragmentationTestSuite(t *testing.T) {
+	suite.Run(t, new(FragmentationTestSuite))
 }
