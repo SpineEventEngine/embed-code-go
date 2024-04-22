@@ -71,11 +71,11 @@ func (suite *FragmentationTestSuite) TestFragmentizeFile() {
 	frag.WriteFragments()
 
 	fragmentChildren, _ := os.ReadDir(config.FragmentsDir)
-	suite.Len(fragmentChildren, 1, "Expected 1 fragment, got %d", len(fragmentChildren))
+	suite.Len(fragmentChildren, 1)
 	suite.Equal("org", fragmentChildren[0].Name())
 
 	fragmentFiles, _ := os.ReadDir(fmt.Sprintf("%s/org/example", config.FragmentsDir))
-	suite.Len(fragmentFiles, 4, "Expected 4 fragments, got %d", len(fragmentFiles))
+	suite.Len(fragmentFiles, 4)
 
 	defaultFragmentExists := false
 	for _, file := range fragmentFiles {
@@ -106,7 +106,7 @@ func (suite *FragmentationTestSuite) TestFragmentWithoutEnd() {
 
 	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
-	suite.Len(fragmentFiles, 2, "Expected 2 fragments, got %d", len(fragmentFiles))
+	suite.Len(fragmentFiles, 2)
 
 	var fragmentFileName string
 	for _, file := range fragmentFiles {
@@ -134,7 +134,7 @@ func (suite *FragmentationTestSuite) TestFragmentizeEmptyFile() {
 
 	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
-	suite.Len(fragmentFiles, 1, "Expected 1 fragment, got %d", len(fragmentFiles))
+	suite.Len(fragmentFiles, 1)
 
 	fragmentContent, _ := os.ReadFile(fmt.Sprintf("%s/%s", fragmentDir, fragmentFiles[0].Name()))
 	suite.Equal("", string(fragmentContent), "Expected empty string, got '%s'", string(fragmentContent))
@@ -157,7 +157,7 @@ func (suite *FragmentationTestSuite) TestManyPartitions() {
 
 	fragmentDir := fmt.Sprintf("%s/org/example", config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
-	suite.Len(fragmentFiles, 2, "Expected 2 fragments, got %d", len(fragmentFiles))
+	suite.Len(fragmentFiles, 2)
 
 	var fragmentFileName string
 	for _, file := range fragmentFiles {

@@ -125,7 +125,7 @@ func (suite *EmbeddingInstructionTestSuite) TestReadFragmentDir() {
 
 	lines := instruction.Content()
 
-	suite.Len(lines, 28, "the length of the lines is incorrect")
+	suite.Len(lines, 28)
 	suite.Equal("public class Hello {", lines[22], "the line at the 22 index is incorrect")
 }
 
@@ -169,7 +169,7 @@ func (suite *EmbeddingInstructionTestSuite) TestExtractByGlob() {
 
 	lines := instruction.Content()
 
-	suite.Len(lines, 4, "the length of the lines should be 4")
+	suite.Len(lines, 4)
 	suite.Equal("public class Hello {", lines[0], "the line at the 0 index is not equal to \"public class Hello {\"")
 	suite.Equal("        System.out.println(\"Hello world\");", lines[3], "the line at the 3 index is incorrect")
 }
