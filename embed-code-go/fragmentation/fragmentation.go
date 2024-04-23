@@ -41,6 +41,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 // Splits the given file into fragments and writes them into corresponding output files.
@@ -110,7 +112,7 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		line := scanner.Text() + "\n"
+		line := scanner.Text()
 		contentToRender, fragmentBuilders, err = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
 		if err != nil {
 			return nil, nil, err
@@ -165,7 +167,7 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 	codeRoot := configuration.CodeRoot
 	for _, rule := range includes {
 		pattern := fmt.Sprintf("%s/%s", codeRoot, rule)
-		codeFiles, _ := filepath.Glob(pattern)
+		codeFiles, _ := doublestar.FilepathGlob(pattern)
 		for _, codeFile := range codeFiles {
 			if ShouldFragmentize(codeFile) {
 				fragmentation := NewFragmentation(codeFile, configuration)
@@ -190,9 +192,11 @@ func ShouldFragmentize(filePath string) bool {
 	}
 
 	isFile := !info.IsDir()
-	isValidEncoding := IsEncodedAsText(filePath)
+	if isFile {
+		return IsEncodedAsText(filePath)
+	}
 
-	return isFile && isValidEncoding
+	return false
 }
 
 //

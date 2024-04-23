@@ -24,7 +24,7 @@ const (
 	DefaultFragmentsDir = "./build/fragments"
 )
 
-var DefaultInclude = []string{"**/*"}
+var DefaultInclude = []string{"**/*.*"}
 var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 
 // The configuration for all the settings for the plugin to work.
@@ -62,7 +62,7 @@ type Configuration struct {
 	// The default value is ["**/*.md", "**/*.html"].
 	DocIncludes []string
 
-	// A directory where fragmentized code is stored. A temporary directory that should not be
+	// A directory where fragmented code is stored. A temporary directory that should not be
 	// tracked in VCS.
 	//
 	// The default value is: "./build/fragments".

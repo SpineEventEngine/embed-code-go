@@ -38,15 +38,15 @@ type Item struct {
 // Parses given XML-encoded xmlLine and returns attributes data as key-value pairs.
 //
 // xmlLine — a XML-encoded line.
-func ParseXMLLine(xmlLine string) map[string]string {
+func ParseXMLLine(xmlLine string) (map[string]string, error) {
 	var root Item
 	err := xml.Unmarshal([]byte(xmlLine), &root)
 	if err != nil {
-		panic(err)
+		return map[string]string{}, err
 	}
 
 	if root.XMLName.Local != xmlStringHeader {
-		panic(fmt.Sprintf("The provided line's header is not 'embed-code':\n%s", xmlLine))
+		return map[string]string{}, fmt.Errorf("The provided line's header is not 'embed-code':\n%s", xmlLine)
 	}
 
 	attributes := make(map[string]string)
@@ -54,5 +54,5 @@ func ParseXMLLine(xmlLine string) map[string]string {
 		attributes[subItem.Name.Local] = subItem.Value
 	}
 
-	return attributes
+	return attributes, nil
 }

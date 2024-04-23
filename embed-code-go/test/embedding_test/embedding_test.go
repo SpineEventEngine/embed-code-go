@@ -200,3 +200,17 @@ func TestFalseTransitions(t *testing.T) {
 		falseProcessor.Embed()
 	}))
 }
+
+func TestMultiLinedTag(t *testing.T) {
+	preparator := newEmbeddingInstructionTestsPreparator()
+	preparator.setup()
+	defer preparator.cleanup()
+
+	config := buildConfigWithPreparedFragments()
+	docPath := fmt.Sprintf("%s/multi-lined-tag.md", config.DocumentationRoot)
+	processor := embedding.NewEmbeddingProcessor(docPath, config)
+	processor.Embed()
+
+	isUpToDate := processor.IsUpToDate()
+	assert.True(t, isUpToDate)
+}

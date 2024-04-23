@@ -30,14 +30,14 @@ import (
 
 // A file storing a single fragment from the file.
 //
-// CodeFile — a relative path to a code file.
+// CodeFile — a relative path to a code file. The path is relative to Configuration.CodeRoot.
 //
 // FragmentName — a name of the fragment in the code file.
 //
 // Configuration — a configuration for embedding.
 type FragmentFile struct {
-	CodeFile      string                     
-	FragmentName  string                     
+	CodeFile      string
+	FragmentName  string
 	Configuration configuration.Configuration
 }
 
@@ -93,10 +93,15 @@ func (fragmentFile FragmentFile) Write(text string) {
 func (fragmentFile FragmentFile) Content() []string {
 	path := fragmentFile.absolutePath()
 	isPathFileExits, err := IsFileExists(path)
+
+	if err != nil {
+		panic(err)
+	}
+
 	if isPathFileExits {
 		return ReadLines(path)
 	} else {
-		panic(err)
+		panic(fmt.Sprintf("file %s doesn't exist", path))
 	}
 }
 

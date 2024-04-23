@@ -5,10 +5,12 @@ import (
 	"embed-code/embed-code-go/embedding/parsing"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
+
+	"github.com/bmatcuk/doublestar/v4"
 )
 
+// Represents read and write permissions for the owner of the file, and read-only permissions for group and others.
 const filePermission = 0644
 
 // The EmbeddingProcessor entity processes a single documentation file and embeds code snippets
@@ -119,10 +121,47 @@ func EmbedAll(config configuration.Configuration) {
 	documentationRoot := config.DocumentationRoot
 	docPatterns := config.DocIncludes
 	for _, pattern := range docPatterns {
-		documentationFiles, _ := filepath.Glob(filepath.Join(documentationRoot, pattern))
+		globString := strings.Join([]string{documentationRoot, pattern}, "/")
+		documentationFiles, _ := doublestar.FilepathGlob(globString)
 		for _, documentationFile := range documentationFiles {
 			processor := NewEmbeddingProcessor(documentationFile, config)
 			processor.Embed()
 		}
 	}
+}
+
+// Raises an error if the documentation files are not up-to-date with code files.
+//
+// config — a configuration for embedding.
+func CheckUpToDate(config configuration.Configuration) {
+	changedFiles := findChangedFiles(config)
+	if len(changedFiles) > 0 {
+		panic(UnexpectedDiffError{changedFiles})
+	}
+}
+
+// Returns a list of documentation files that are not up-to-date with their code files.
+//
+// config — a configuration for embedding.
+func findChangedFiles(config configuration.Configuration) []string {
+	documentationRoot := config.DocumentationRoot
+	docPatterns := config.DocIncludes
+	var changedFiles []string
+
+	for _, pattern := range docPatterns {
+		globString := strings.Join([]string{documentationRoot, pattern}, "/")
+		matches, err := doublestar.FilepathGlob(globString)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, documentationFile := range matches {
+			upToDate := NewEmbeddingProcessor(documentationFile, config).IsUpToDate()
+			if !upToDate {
+				changedFiles = append(changedFiles, documentationFile)
+			}
+		}
+	}
+
+	return changedFiles
 }

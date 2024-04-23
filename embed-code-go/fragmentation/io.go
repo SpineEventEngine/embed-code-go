@@ -57,10 +57,10 @@ func ReadLines(filePath string) []string {
 
 	for {
 		line, _, err := r.ReadLine()
-		lines = append(lines, string(line))
 		if err != nil {
 			break
 		}
+		lines = append(lines, string(line))
 	}
 	return lines
 }
