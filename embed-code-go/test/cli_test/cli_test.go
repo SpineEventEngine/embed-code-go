@@ -3,6 +3,7 @@ package cli_test
 import (
 	"embed-code/embed-code-go/cli"
 	"embed-code/embed-code-go/configuration"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -210,7 +211,7 @@ func TestConfigFileNotExist(t *testing.T) {
 	assert.Equal(t, "", validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)
-	assert.Equal(t, "The file /some/path/to/config.yaml is not exists.", config_file_validation_message)
+	assert.Equal(t, fmt.Sprintf("The file %s is not exists.", args.ConfigFilePath), config_file_validation_message)
 }
 
 func TestConfigFileWithoutDocsRoot(t *testing.T) {
