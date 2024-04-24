@@ -22,6 +22,7 @@ import (
 	"embed-code/embed-code-go/cli"
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/test/utils"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -134,7 +135,7 @@ func (suite *CLITestSuite) TestConfigFileNotExist() {
 	suite.Equal("", validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)
-	assert.Equal(t, fmt.Sprintf("The file %s is not exists.", args.ConfigFilePath), config_file_validation_message)
+	suite.Equal(fmt.Sprintf("The file %s is not exists.", args.ConfigFilePath), config_file_validation_message)
 }
 
 func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
