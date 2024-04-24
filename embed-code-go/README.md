@@ -21,15 +21,20 @@ The tool can be executed as a binary file or as a Go file. In the latter case, t
 
 The code and documentation files must be prepared for embedding. The instructions are provided in the [Setting up documentation and code files](#setting-up-documentation-and-code-files) section.
 
+### Running binary executable
 To run the `embed_code` binary executable, the following command can be used:
 ```
-./embed_code_<platform name> [arguments]
+./<binary_executable_name> [arguments]
 ```
+The binaries are located in the `./bin` directory. 
+
+### Running Go file
 To run the `embed_code.go` file, make sure you have Go [installed](#installation). Then, the following command can be used:
 ```
 go run ./embed_code.go [arguments]
 ```
 
+### Arguments
 The available arguments are:
   * `-mode`: mandatory, `check` to checking for code embeddings to be up-to-date; `embed` to start the embedding process;
   * `-code_root`: optional, path to the root directory containing code files;
