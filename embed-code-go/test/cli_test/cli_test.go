@@ -134,7 +134,7 @@ func (suite *CLITestSuite) TestConfigFileNotExist() {
 	suite.Equal("", validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)
-	suite.Equal("The file /some/path/to/config.yaml is not exists.", config_file_validation_message)
+	assert.Equal(t, fmt.Sprintf("The file %s is not exists.", args.ConfigFilePath), config_file_validation_message)
 }
 
 func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
