@@ -31,7 +31,7 @@ go run ./embed_code.go [arguments]
 ```
 
 The available arguments are:
-  * `-mode`: mandatory, 'check' to checking for code embeddings to be up-to-date; 'embed' to start the embedding process;
+  * `-mode`: mandatory, `check` to checking for code embeddings to be up-to-date; `embed` to start the embedding process;
   * `-code_root`: optional, path to the root directory containing code files;
   * `-docs_root`: optional, path to the root directory containing documentation files;
   * `-config_file_path`: optional, path to a YAML configuration file that contains the code_root and docs_root fields;
