@@ -12,7 +12,7 @@ Key features:
 # Running
 
 Embed-code-go can be run in two modes:
-1. Embedding - in this mode, all documentation files are scanned for `<embed-code>` tags, and the corresponding embeddings are performed.
+1. Embedding - in this mode, all documentation files are scanned for `<embed-code>` tags, and the corresponding embeddings are performed. Embedding results are written to the given documentation files.
 2. Checking for up-to-date - in this mode, all documentation files are checked for being up-to-date. If the check fails, an error message with the corresponding files is provided.
 
 The mode is selected by the mandatory `mode` argument. If it is set to `check`, the checking for up-to-date is performed. If it is set to `embed`, the embedding is performed.
