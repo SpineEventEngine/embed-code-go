@@ -17,7 +17,7 @@ Embed-code-go can be run in two modes:
 
 The mode is selected by the mandatory `mode` argument. If it is set to `check`, the checking for up-to-date is performed. If it is set to `embed`, the embedding is performed.
 
-The tool can be executed as a binary file or as a Go file. In the latter case, the user must have Go [installed](#installation). The development version is `1.22.1`. The binary files are stored in the `./bin` directory.
+The tool can be executed as a binary file or as a Go file. In the latter case, the user must have Go [installed](#installation). The binary files are stored in the `./bin` directory.
 
 The code and documentation files must be prepared for embedding. The instructions are provided in the [Setting up documentation and code files](#setting-up-documentation-and-code-files) section.
 
@@ -29,7 +29,14 @@ To run the `embed_code` binary executable, the following command can be used:
 The binaries are located in the `./bin` directory. 
 
 ### Running Go file
-To run the `embed_code.go` file, make sure you have Go [installed](#installation). Then, the following command can be used:
+
+#### Go version
+
+Make sure you have Go [installed](#installation). Our version is `1.22.1`.
+
+#### Running
+
+To run the `embed_code.go` file, the following command can be used:
 ```
 go run ./embed_code.go [arguments]
 ```
@@ -164,7 +171,7 @@ of the pattern. To match the literal `^` symbol at the start of the line, prepen
 
 # Installation
 
-* Go to https://go.dev/doc/install. Our Go version is 1.22.1
+* Go to https://go.dev/doc/install. Our Go version is `1.22.1`, which can be checked in the [go.mod](./go.mod) file
 * Make sure your Go installed successfully with the command
     ```bash
     go version
