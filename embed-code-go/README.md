@@ -183,4 +183,3 @@ There may be issues when running `go build` outside of the directory containing 
 
 This command will create an executable file named `embed_code` (or `embed_code.exe` on Windows) in the same directory.
 For further information, please refer to the [docs](https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies).
-
