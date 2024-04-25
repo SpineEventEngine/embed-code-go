@@ -21,7 +21,7 @@ package embedding_test
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
-	"embed-code/embed-code-go/test/utils"
+	"embed-code/embed-code-go/test/filesystem"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -53,11 +53,11 @@ func (suite *EmbeddingTestSuite) SetupSuite() {
 }
 
 func (suite *EmbeddingTestSuite) SetupTest() {
-	utils.CopyDirRecursive("./test/resources/docs", suite.config.DocumentationRoot)
+	filesystem.CopyDirRecursive("./test/resources/docs", suite.config.DocumentationRoot)
 }
 
 func (suite *EmbeddingTestSuite) TearDownTest() {
-	utils.CleanupDir(suite.config.DocumentationRoot)
+	filesystem.CleanupDir(suite.config.DocumentationRoot)
 }
 
 func (suite *EmbeddingTestSuite) TestNotUpToDate() {
