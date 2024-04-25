@@ -21,7 +21,7 @@ package cli_test
 import (
 	"embed-code/embed-code-go/cli"
 	"embed-code/embed-code-go/configuration"
-	"embed-code/embed-code-go/test/utils"
+	"embed-code/embed-code-go/test/filesystem"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -53,12 +53,12 @@ func (suite *CLITestSuite) SetupSuite() {
 }
 
 func (suite *CLITestSuite) SetupTest() {
-	utils.CopyDirRecursive("./test/resources/docs", suite.config.DocumentationRoot)
+	filesystem.CopyDirRecursive("./test/resources/docs", suite.config.DocumentationRoot)
 }
 
 func (suite *CLITestSuite) TearDownTest() {
-	utils.CleanupDir(suite.config.DocumentationRoot)
-	utils.CleanupDir(suite.config.FragmentsDir)
+	filesystem.CleanupDir(suite.config.DocumentationRoot)
+	filesystem.CleanupDir(suite.config.FragmentsDir)
 }
 
 func (suite *CLITestSuite) TestEmbedding() {

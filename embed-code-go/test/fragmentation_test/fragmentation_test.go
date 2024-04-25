@@ -21,7 +21,7 @@ package fragmentation_test
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/fragmentation"
-	"embed-code/embed-code-go/test/utils"
+	"embed-code/embed-code-go/test/filesystem"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -62,7 +62,7 @@ func (suite *FragmentationTestSuite) SetupSuite() {
 }
 
 func (suite *FragmentationTestSuite) TearDownTest() {
-	utils.CleanupDir(suite.config.FragmentsDir)
+	filesystem.CleanupDir(suite.config.FragmentsDir)
 }
 
 func (suite *FragmentationTestSuite) TestFragmentizeFile() {
