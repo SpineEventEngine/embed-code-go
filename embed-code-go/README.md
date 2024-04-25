@@ -172,7 +172,7 @@ of the pattern. To match the literal `^` symbol at the start of the line, prepen
 
 # Compilation
 The pre-compiled binary executables are stored in the `./bin` directory. However, it is also possible to compile the file manually.
-To compile the file, Go must have been [installed](#installation) first.
+To compile the file, ensure that the Go is [installed](#installation).
 
 Open terminal and navigate to the directory where `embed_code.go` is located. Then, use the following command to compile the file: 
 ```
