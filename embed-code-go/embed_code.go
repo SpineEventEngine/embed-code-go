@@ -24,8 +24,9 @@ import (
 )
 
 const (
-	ModeCheck = "check"
-	ModeEmbed = "embed"
+	ModeCheck   = "check"
+	ModeEmbed   = "embed"
+	ModeAnalyze = "analyze"
 )
 
 // The entry point for embed-code.
@@ -60,7 +61,8 @@ const (
 //   - docs_root — a path to a root directory with docs files;
 //   - config_file_path — a path to a yaml configuration file;
 //   - mode — string which represents the mode of embed-code execution. if it is set to 'check',
-//     then the checking for up-to-date is performed. If it is set to 'embed', the embedding is performed;
+//     then the checking for up-to-date is performed. If it is set to 'embed', the embedding is performed.
+//     If it is set to 'analyze', the analyzing is performed;
 //   - code_includes — a comma-separated string of glob patterns for code files to include. For example:
 //     "**/*.java,**/*.gradle". Default value is "**/*.*";
 //   - doc_includes — a comma-separated string of glob patterns for docs files to include. For example:
@@ -95,5 +97,7 @@ func main() {
 	} else if userArgs.Mode == ModeEmbed {
 		cli.EmbedCodeSamples(config)
 		cli.CheckCodeSamples(config)
+	} else if userArgs.Mode == ModeAnalyze {
+		cli.AnalyzeCodeSamples(config)
 	}
 }

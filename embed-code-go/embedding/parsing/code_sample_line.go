@@ -36,7 +36,7 @@ type CodeSampleLine struct{}
 //
 // context — a context of the parsing process.
 func (c CodeSampleLine) Recognize(context ParsingContext) bool {
-	return !context.ReachedEOF() && context.codeFenceStarted
+	return !context.ReachedEOF() && context.CodeFenceStarted
 }
 
 // Moves to the next line.

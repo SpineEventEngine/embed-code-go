@@ -19,6 +19,7 @@
 package cli
 
 import (
+	"embed-code/embed-code-go/analyzing"
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/fragmentation"
@@ -96,6 +97,15 @@ func CheckCodeSamples(config configuration.Configuration) {
 // config — a configuration for embedding.
 func EmbedCodeSamples(config configuration.Configuration) {
 	fragmentation.WriteFragmentFiles(config)
+	embedding.EmbedAll(config)
+}
+
+// Analyzes code fragments in documentation files.
+//
+// config — a configuration for embedding.
+func AnalyzeCodeSamples(config configuration.Configuration) {
+	fragmentation.WriteFragmentFiles(config)
+	analyzing.AnalyzeAll(config)
 	embedding.EmbedAll(config)
 }
 

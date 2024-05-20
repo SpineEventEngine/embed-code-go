@@ -43,14 +43,14 @@ import (
 //
 // file_contains_embedding - a flag indicating whether the file contains an embedding instruction.
 type ParsingContext struct {
-	embedding               *embedding_instruction.EmbeddingInstruction
-	source                  []string
-	markdownFile            string
-	lineIndex               int
-	result                  []string
-	codeFenceStarted        bool
-	codeFenceIndentation    int
-	file_contains_embedding bool
+	Embedding               *embedding_instruction.EmbeddingInstruction
+	Source                  []string
+	MarkdownFile            string
+	LineIndex               int
+	Result                  []string
+	CodeFenceStarted        bool
+	CodeFenceIndentation    int
+	File_contains_embedding bool
 }
 
 //
@@ -61,10 +61,10 @@ type ParsingContext struct {
 // with initial values for markdownFile, source, lineIndex, and result.
 func NewParsingContext(markdownFile string) ParsingContext {
 	return ParsingContext{
-		markdownFile: markdownFile,
-		source:       readLines(markdownFile),
-		lineIndex:    0,
-		result:       make([]string, 0),
+		MarkdownFile: markdownFile,
+		Source:       readLines(markdownFile),
+		LineIndex:    0,
+		Result:       make([]string, 0),
 	}
 }
 
@@ -74,24 +74,24 @@ func NewParsingContext(markdownFile string) ParsingContext {
 
 // Returns the line of source code at the current ParsingContext.lineIndex.
 func (pc ParsingContext) CurrentLine() string {
-	return pc.source[pc.lineIndex]
+	return pc.Source[pc.LineIndex]
 }
 
 // Increments ParsingContext.lineIndex field by 1.
 func (pc *ParsingContext) ToNextLine() {
-	pc.lineIndex++
+	pc.LineIndex++
 }
 
 // Reports whether the end of the source code file has been reached.
 func (pc ParsingContext) ReachedEOF() bool {
-	return pc.lineIndex >= len(pc.source)
+	return pc.LineIndex >= len(pc.Source)
 }
 
 // Reports whether the content of the code file has changed
 // compared to the embedding of the markdown file.
 func (pc ParsingContext) IsContentChanged() bool {
-	for i := 0; i < pc.lineIndex; i++ {
-		if pc.source[i] != pc.result[i] {
+	for i := 0; i < pc.LineIndex; i++ {
+		if pc.Source[i] != pc.Result[i] {
 			return true
 		}
 	}
@@ -100,7 +100,7 @@ func (pc ParsingContext) IsContentChanged() bool {
 
 // Reports whether the doc file contains an embedding.
 func (pc ParsingContext) IsContainsEmbedding() bool {
-	return pc.file_contains_embedding
+	return pc.File_contains_embedding
 }
 
 // Sets an embedding to ParsingContext.
@@ -108,20 +108,20 @@ func (pc ParsingContext) IsContainsEmbedding() bool {
 // Also sets file_contains_embedding flag.
 func (pc *ParsingContext) SetEmbedding(embedding *embedding_instruction.EmbeddingInstruction) {
 	if embedding != nil {
-		pc.file_contains_embedding = true
+		pc.File_contains_embedding = true
 	}
-	pc.embedding = embedding
+	pc.Embedding = embedding
 }
 
 // Returns the result lines of the ParsingContext.
 func (pc ParsingContext) GetResult() []string {
-	return pc.result
+	return pc.Result
 }
 
 // Returns a string representation of ParsingContext.
 func (pc ParsingContext) String() string {
 	return fmt.Sprintf("ParsingContext[embedding=`%s`, file=`%s`, line=`%d`]",
-		pc.embedding, pc.markdownFile, pc.lineIndex)
+		pc.Embedding, pc.MarkdownFile, pc.LineIndex)
 }
 
 //

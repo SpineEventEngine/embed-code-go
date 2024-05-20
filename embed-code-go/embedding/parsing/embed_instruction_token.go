@@ -41,7 +41,7 @@ type EmbedInstructionToken struct{}
 func (e EmbedInstructionToken) Recognize(context ParsingContext) bool {
 	line := context.CurrentLine()
 	isStatement := strings.HasPrefix(strings.TrimSpace(line), Statement)
-	if context.embedding == nil && !context.ReachedEOF() && isStatement {
+	if context.Embedding == nil && !context.ReachedEOF() && isStatement {
 		return true
 	}
 	return false
@@ -63,13 +63,13 @@ func (e EmbedInstructionToken) Accept(context *ParsingContext, config configurat
 			context.SetEmbedding(&instruction)
 		}
 
-		context.result = append(context.result, context.CurrentLine())
+		context.Result = append(context.Result, context.CurrentLine())
 		context.ToNextLine()
-		if context.embedding != nil {
+		if context.Embedding != nil {
 			break
 		}
 	}
-	if context.embedding == nil {
+	if context.Embedding == nil {
 		panic(fmt.Sprintf("failed to parse an embedding instruction. Context: %v", context))
 	}
 }
