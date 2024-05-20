@@ -46,6 +46,6 @@ func (r RegularLine) Recognize(context ParsingContext) bool {
 // config — a configuration of the embedding.
 func (r RegularLine) Accept(context *ParsingContext, config configuration.Configuration) {
 	line := context.CurrentLine()
-	context.result = append(context.result, line)
+	context.Result = append(context.Result, line)
 	context.ToNextLine()
 }

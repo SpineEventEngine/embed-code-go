@@ -40,8 +40,8 @@ type CodeFenceEnd struct{}
 // context — a context of the parsing process.
 func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 	if !context.ReachedEOF() {
-		indentation := strings.Repeat(" ", context.codeFenceIndentation)
-		return context.codeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
+		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
+		return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
 	}
 	return false
 }
@@ -55,10 +55,10 @@ func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Configuration) {
 	line := context.CurrentLine()
 	renderSample(context)
-	context.result = append(context.result, line)
+	context.Result = append(context.Result, line)
 	context.SetEmbedding(nil)
-	context.codeFenceStarted = false
-	context.codeFenceIndentation = 0
+	context.CodeFenceStarted = false
+	context.CodeFenceIndentation = 0
 	context.ToNextLine()
 }
 
@@ -67,8 +67,8 @@ func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Confi
 //
 
 func renderSample(context *ParsingContext) {
-	for _, line := range context.embedding.Content() {
-		indentation := strings.Repeat(" ", context.codeFenceIndentation)
-		context.result = append(context.result, indentation+line)
+	for _, line := range context.Embedding.Content() {
+		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
+		context.Result = append(context.Result, indentation+line)
 	}
 }

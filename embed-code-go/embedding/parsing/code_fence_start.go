@@ -53,9 +53,9 @@ func (c CodeFenceStart) Recognize(context ParsingContext) bool {
 // config — a configuration of the embedding.
 func (c CodeFenceStart) Accept(context *ParsingContext, config configuration.Configuration) {
 	line := context.CurrentLine()
-	context.result = append(context.result, line)
-	context.codeFenceStarted = true
+	context.Result = append(context.Result, line)
+	context.CodeFenceStarted = true
 	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
-	context.codeFenceIndentation = leadingSpaces
+	context.CodeFenceIndentation = leadingSpaces
 	context.ToNextLine()
 }

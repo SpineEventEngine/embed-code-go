@@ -21,6 +21,7 @@ package embedding
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/parsing"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -72,7 +73,7 @@ func NewEmbeddingProcessorWithTransitions(docFile string,
 // Public methods
 //
 
-// Constructs embedding and modifys the doc file if embedding is needed.
+// Constructs embedding and modifies the doc file if embedding is needed.
 func (ep EmbeddingProcessor) Embed() {
 	context := ep.constructEmbedding()
 
@@ -82,6 +83,25 @@ func (ep EmbeddingProcessor) Embed() {
 			panic(err)
 		}
 	}
+}
+
+type EmbeddingConstructionProblems struct {
+	ProblematicParsingContexts []parsing.ParsingContext
+}
+
+func (ep EmbeddingProcessor) EmbedWithError() (parsing.ParsingContext, error) {
+	context, err := ep.constructEmbeddingWithError()
+	if err != nil {
+		return context, err
+	}
+
+	if context.IsContainsEmbedding() && context.IsContentChanged() {
+		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.GetResult(), "\n")), filePermission)
+		if err != nil {
+			return context, err
+		}
+	}
+	return context, nil
 }
 
 // Reports whether the embedding of the target markdown is up-to-date with the code file.
@@ -123,6 +143,43 @@ func (ep EmbeddingProcessor) constructEmbedding() parsing.ParsingContext {
 	}
 
 	return context
+}
+
+func (ep EmbeddingProcessor) constructEmbeddingWithError() (context parsing.ParsingContext, err error) {
+	context = parsing.NewParsingContext(ep.DocFile)
+
+	defer func() {
+		r := recover()
+		if r != nil {
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+			case error:
+				err = x
+			default:
+				err = errors.New("Unknown panic")
+			}
+		}
+	}()
+
+	currentState := "START"
+	for currentState != "FINISH" {
+		accepted := false
+		for _, nextState := range parsing.Transitions[currentState] {
+			transition := parsing.StateToTransition[nextState]
+			if transition.Recognize(context) {
+				currentState = nextState
+				transition.Accept(&context, ep.Config)
+				accepted = true
+				break
+			}
+		}
+		if !accepted {
+			panic(fmt.Sprintf("failed to parse the doc file `%s`. Context: %+v", ep.DocFile, context))
+		}
+	}
+
+	return
 }
 
 //
