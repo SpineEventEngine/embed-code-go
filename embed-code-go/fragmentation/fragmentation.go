@@ -181,6 +181,7 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 	return nil
 }
 
+// Deletes Configuration.FragmentsDir if it exists.
 func CleanFragmentFiles(config configuration.Configuration) {
 	if _, err := os.Stat(config.FragmentsDir); os.IsNotExist(err) {
 		return
