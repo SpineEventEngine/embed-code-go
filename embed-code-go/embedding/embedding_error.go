@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 )
 
-// Describes an error which occurs if outdated files are found during the checking.
+// Describes an error which occurs if something goes wrong during embedding.
 type EmbeddingError struct {
 	Context       parsing.ParsingContext
 	OriginalError error
