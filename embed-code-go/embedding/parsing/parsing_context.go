@@ -27,21 +27,21 @@ import (
 
 // Represents the context for parsing a file containing code embeddings.
 //
-// embedding - a pointer to the embedding instruction.
+// Embedding - a pointer to the embedding instruction.
 //
-// source - a list of strings representing the original markdown file.
+// Source - a list of strings representing the original markdown file.
 //
-// markdownFile - a path to the markdown file.
+// MarkdownFile - a path to the markdown file.
 //
-// lineIndex - an index of the current line in the markdown file.
+// LineIndex - an index of the current line in the markdown file.
 //
-// result - a list of strings representing the markdown file updated with embedding.
+// Result - a list of strings representing the markdown file updated with embedding.
 //
-// codeFenceStarted - a flag indicating whether a code fence has been started.
+// CodeFenceStarted - a flag indicating whether a code fence has been started.
 //
-// codeFenceIndentation - an indentation of the markdown's code fences.
+// CodeFenceIndentation - an indentation of the markdown's code fences.
 //
-// file_contains_embedding - a flag indicating whether the file contains an embedding instruction.
+// FileContainsEmbedding - a flag indicating whether the file contains an embedding instruction.
 type ParsingContext struct {
 	Embedding             *embedding_instruction.EmbeddingInstruction
 	Source                []string
