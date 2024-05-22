@@ -30,19 +30,19 @@ type EmbeddingError struct {
 	OriginalError error
 }
 
-func (embeddingErr EmbeddingError) Error() string {
-	relativeMarkdownPath, err := filepath.Rel(
-		embeddingErr.Context.Embedding.Configuration.DocumentationRoot,
-		embeddingErr.Context.MarkdownFile)
+func (err EmbeddingError) Error() string {
+	relativeMarkdownPath, filepathErr := filepath.Rel(
+		err.Context.Embedding.Configuration.DocumentationRoot,
+		err.Context.MarkdownFile)
 
-	if err != nil {
-		panic(embeddingErr)
+	if filepathErr != nil {
+		panic(err)
 	}
 
 	return fmt.Sprintf("error: %s | %s — %s | %s",
 		relativeMarkdownPath,
-		embeddingErr.Context.Embedding.CodeFile,
-		embeddingErr.Context.Embedding.Fragment,
-		embeddingErr.OriginalError.Error())
+		err.Context.Embedding.CodeFile,
+		err.Context.Embedding.Fragment,
+		err.OriginalError.Error())
 
 }
