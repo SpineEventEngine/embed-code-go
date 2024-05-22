@@ -52,23 +52,33 @@ func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
-func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Configuration) {
+func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Configuration) error {
 	line := context.CurrentLine()
-	renderSample(context)
+	err := renderSample(context)
+	if err != nil {
+		return err
+	}
+
 	context.Result = append(context.Result, line)
 	context.SetEmbedding(nil)
 	context.CodeFenceStarted = false
 	context.CodeFenceIndentation = 0
 	context.ToNextLine()
+	return nil
 }
 
 //
 // Private methods
 //
 
-func renderSample(context *ParsingContext) {
-	for _, line := range context.Embedding.Content() {
+func renderSample(context *ParsingContext) error {
+	content, err := context.Embedding.Content()
+	if err != nil {
+		return err
+	}
+	for _, line := range content {
 		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
 		context.Result = append(context.Result, indentation+line)
 	}
+	return nil
 }

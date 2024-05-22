@@ -41,8 +41,9 @@ func (b BlankLine) Recognize(context ParsingContext) bool {
 // Processes a blank line of a markdown.
 //
 // Appends the current line of the context to the result, and moves to the next line.
-func (b BlankLine) Accept(context *ParsingContext, config configuration.Configuration) {
+func (b BlankLine) Accept(context *ParsingContext, config configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()
+	return nil
 }

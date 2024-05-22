@@ -120,7 +120,8 @@ func (suite *EmbeddingInstructionTestSuite) TestReadFragmentDir() {
 	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
-	lines := instruction.Content()
+	lines, err := instruction.Content()
+	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 
 	suite.Len(lines, 28)
 	suite.Equal("public class Hello {", lines[22])
@@ -161,7 +162,8 @@ func (suite *EmbeddingInstructionTestSuite) TestExtractByGlob() {
 	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
-	lines := instruction.Content()
+	lines, err := instruction.Content()
+	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 
 	suite.Len(lines, 4)
 	suite.Equal("public class Hello {", lines[0])
@@ -178,7 +180,8 @@ func (suite *EmbeddingInstructionTestSuite) TestMinIndentation() {
 	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
-	lines := instruction.Content()
+	lines, err := instruction.Content()
+	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 
 	suite.Len(lines, 3)
 	suite.Equal("public static void main(String[] args) {", lines[0])
@@ -194,7 +197,8 @@ func (suite *EmbeddingInstructionTestSuite) TestStartWithoutEnd() {
 	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
-	lines := instruction.Content()
+	lines, err := instruction.Content()
+	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 
 	suite.Len(lines, 6)
 	suite.Equal("}", lines[5])
@@ -209,7 +213,8 @@ func (suite *EmbeddingInstructionTestSuite) TestEndWithoutStart() {
 	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
-	lines := instruction.Content()
+	lines, err := instruction.Content()
+	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 
 	suite.Len(lines, 21)
 	suite.Equal("/*", lines[0])
@@ -226,7 +231,8 @@ func (suite *EmbeddingInstructionTestSuite) TestOneLine() {
 	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
-	lines := instruction.Content()
+	lines, err := instruction.Content()
+	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 
 	suite.Len(lines, 1)
 	suite.Equal("public static void main(String[] args) {", lines[0])
@@ -274,7 +280,8 @@ func (suite *EmbeddingInstructionTestSuite) TestImplyAsterisk() {
 	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
-	lines := instruction.Content()
+	lines, err := instruction.Content()
+	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 
 	suite.Len(lines, 2)
 	suite.Regexp("^public static void main", lines[0])
@@ -291,7 +298,8 @@ func (suite *EmbeddingInstructionTestSuite) TestExplicitLineStart() {
 	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
-	lines := instruction.Content()
+	lines, err := instruction.Content()
+	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 
 	suite.Len(lines, 4)
 	suite.Equal("foo — this line starts with it", lines[0])
@@ -308,7 +316,8 @@ func (suite *EmbeddingInstructionTestSuite) TestExplicitLineEnd() {
 	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 
-	lines := instruction.Content()
+	lines, err := instruction.Content()
+	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 
 	suite.Len(lines, 6)
 	suite.Equal("This line ends with foo", lines[0])

@@ -53,7 +53,7 @@ func (e EmbedInstructionToken) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
-func (e EmbedInstructionToken) Accept(context *ParsingContext, config configuration.Configuration) {
+func (e EmbedInstructionToken) Accept(context *ParsingContext, config configuration.Configuration) error {
 	instructionBody := []string{}
 	for !context.ReachedEOF() {
 		instructionBody = append(instructionBody, context.CurrentLine())
@@ -70,6 +70,7 @@ func (e EmbedInstructionToken) Accept(context *ParsingContext, config configurat
 		}
 	}
 	if context.Embedding == nil {
-		panic(fmt.Sprintf("failed to parse an embedding instruction. Context: %v", context))
+		return fmt.Errorf("failed to parse an embedding instruction. Context: %v", context)
 	}
+	return nil
 }
