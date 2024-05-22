@@ -106,7 +106,7 @@ func EmbedCodeSamples(config configuration.Configuration) {
 func AnalyzeCodeSamples(config configuration.Configuration) {
 	fragmentation.WriteFragmentFiles(config)
 	analyzing.AnalyzeAll(config)
-	embedding.EmbedAll(config)
+	fragmentation.CleanFragmentFiles(config)
 }
 
 // Reads user-specified args from the command line.
