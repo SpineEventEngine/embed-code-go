@@ -21,7 +21,6 @@ package embedding
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/parsing"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -74,39 +73,27 @@ func NewEmbeddingProcessorWithTransitions(docFile string,
 //
 
 // Constructs embedding and modifies the doc file if embedding is needed.
-func (ep EmbeddingProcessor) Embed() {
-	context := ep.constructEmbedding()
-
-	if context.IsContainsEmbedding() && context.IsContentChanged() {
-		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.GetResult(), "\n")), filePermission)
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
-type EmbeddingConstructionProblems struct {
-	ProblematicParsingContexts []parsing.ParsingContext
-}
-
-func (ep EmbeddingProcessor) EmbedWithError() (parsing.ParsingContext, error) {
-	context, err := ep.constructEmbeddingWithError()
+func (ep EmbeddingProcessor) Embed() error {
+	context, err := ep.constructEmbedding()
 	if err != nil {
-		return context, err
+		return EmbeddingError{Context: context, OriginalError: err}
 	}
 
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.GetResult(), "\n")), filePermission)
 		if err != nil {
-			return context, err
+			return EmbeddingError{Context: context, OriginalError: err}
 		}
 	}
-	return context, nil
+	return nil
 }
 
 // Reports whether the embedding of the target markdown is up-to-date with the code file.
 func (ep EmbeddingProcessor) IsUpToDate() bool {
-	context := ep.constructEmbedding()
+	context, err := ep.constructEmbedding()
+	if err != nil {
+		panic(err)
+	}
 	return !context.IsContentChanged()
 }
 
@@ -122,7 +109,7 @@ func (ep EmbeddingProcessor) IsUpToDate() bool {
 // it updates the current state and accepts the transition.
 // If no transition is accepted, it panics with a message
 // indicating the failure to parse the document file.
-func (ep EmbeddingProcessor) constructEmbedding() parsing.ParsingContext {
+func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error) {
 	context := parsing.NewParsingContext(ep.DocFile)
 
 	currentState := "START"
@@ -132,54 +119,20 @@ func (ep EmbeddingProcessor) constructEmbedding() parsing.ParsingContext {
 			transition := parsing.StateToTransition[nextState]
 			if transition.Recognize(context) {
 				currentState = nextState
-				transition.Accept(&context, ep.Config)
+				err := transition.Accept(&context, ep.Config)
+				if err != nil {
+					return context, err
+				}
 				accepted = true
 				break
 			}
 		}
 		if !accepted {
-			panic(fmt.Sprintf("failed to parse the doc file `%s`. Context: %+v", ep.DocFile, context))
+			return context, fmt.Errorf(fmt.Sprintf("failed to parse the doc file `%s`. Context: %+v", ep.DocFile, context))
 		}
 	}
 
-	return context
-}
-
-func (ep EmbeddingProcessor) constructEmbeddingWithError() (context parsing.ParsingContext, err error) {
-	context = parsing.NewParsingContext(ep.DocFile)
-
-	defer func() {
-		r := recover()
-		if r != nil {
-			switch x := r.(type) {
-			case string:
-				err = errors.New(x)
-			case error:
-				err = x
-			default:
-				err = errors.New("Unknown panic")
-			}
-		}
-	}()
-
-	currentState := "START"
-	for currentState != "FINISH" {
-		accepted := false
-		for _, nextState := range parsing.Transitions[currentState] {
-			transition := parsing.StateToTransition[nextState]
-			if transition.Recognize(context) {
-				currentState = nextState
-				transition.Accept(&context, ep.Config)
-				accepted = true
-				break
-			}
-		}
-		if !accepted {
-			panic(fmt.Sprintf("failed to parse the doc file `%s`. Context: %+v", ep.DocFile, context))
-		}
-	}
-
-	return
+	return context, nil
 }
 
 //
@@ -200,7 +153,10 @@ func EmbedAll(config configuration.Configuration) {
 		documentationFiles, _ := doublestar.FilepathGlob(globString)
 		for _, documentationFile := range documentationFiles {
 			processor := NewEmbeddingProcessor(documentationFile, config)
-			processor.Embed()
+			err := processor.Embed()
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }
