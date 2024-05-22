@@ -71,7 +71,8 @@ func (suite *EmbeddingTestSuite) TestNotUpToDate() {
 func (suite *EmbeddingTestSuite) TestUpToDate() {
 	docPath := fmt.Sprintf("%s/whole-file-fragment.md", suite.config.DocumentationRoot)
 	processor := embedding.NewEmbeddingProcessor(docPath, suite.config)
-	processor.Embed()
+	err := processor.Embed()
+	suite.Require().NoError(err, "There was unexpected error during embedding.")
 
 	isUpToDate := processor.IsUpToDate()
 	suite.True(isUpToDate)
@@ -97,16 +98,15 @@ func (suite *EmbeddingTestSuite) TestFalseTransitions() {
 	}
 
 	falseProcessor := embedding.NewEmbeddingProcessorWithTransitions(docPath, suite.config, falseTransitions)
-
-	suite.Require().Panics(func() {
-		falseProcessor.Embed()
-	})
+	err := falseProcessor.Embed()
+	suite.Require().Error(err, "There must be an error during the embedding with the false transitions.")
 }
 
 func (suite *EmbeddingTestSuite) TestMultiLinedTag() {
 	docPath := fmt.Sprintf("%s/multi-lined-tag.md", suite.config.DocumentationRoot)
 	processor := embedding.NewEmbeddingProcessor(docPath, suite.config)
-	processor.Embed()
+	err := processor.Embed()
+	suite.Require().NoError(err, "There was unexpected error during embedding.")
 
 	isUpToDate := processor.IsUpToDate()
 	suite.True(isUpToDate)
