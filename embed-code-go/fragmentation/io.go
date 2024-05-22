@@ -64,3 +64,18 @@ func ReadLines(filePath string) []string {
 	}
 	return lines
 }
+
+func WriteLinesToFile(filepath string, lines []string) {
+	file, err := os.Create(filepath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	for _, s := range lines {
+		_, err := file.WriteString(s + "\n")
+		if err != nil {
+			panic(err)
+		}
+	}
+}
