@@ -31,8 +31,9 @@ const (
 
 // The entry point for embed-code.
 //
-// There are two modes, which are chosen by 'mode' arg. If it is set to 'check',
+// There are three modes, which are chosen by 'mode' arg. If it is set to 'check',
 // then the checking for up-to-date is performed. If it is set to 'embed', the embedding is performed.
+// If it is set to 'analyze', the analyzing is performed.
 //
 // Embedding is the process that consists of the following steps:
 //   - the code fragments are extracted from the code files;
