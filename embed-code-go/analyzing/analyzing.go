@@ -4,10 +4,13 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/fragmentation"
+	"fmt"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
+
+const analyticsDir = "./build/analytics"
 
 func AnalyzeAll(config configuration.Configuration) {
 	var problemFiles []string
@@ -24,5 +27,5 @@ func AnalyzeAll(config configuration.Configuration) {
 			}
 		}
 	}
-	fragmentation.WriteLinesToFile("problem-files.txt", problemFiles)
+	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, "problem-files.txt"), problemFiles)
 }
