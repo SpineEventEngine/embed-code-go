@@ -43,14 +43,14 @@ import (
 //
 // file_contains_embedding - a flag indicating whether the file contains an embedding instruction.
 type ParsingContext struct {
-	Embedding               *embedding_instruction.EmbeddingInstruction
-	Source                  []string
-	MarkdownFile            string
-	LineIndex               int
-	Result                  []string
-	CodeFenceStarted        bool
-	CodeFenceIndentation    int
-	File_contains_embedding bool
+	Embedding             *embedding_instruction.EmbeddingInstruction
+	Source                []string
+	MarkdownFile          string
+	LineIndex             int
+	Result                []string
+	CodeFenceStarted      bool
+	CodeFenceIndentation  int
+	FileContainsEmbedding bool
 }
 
 //
@@ -100,7 +100,7 @@ func (pc ParsingContext) IsContentChanged() bool {
 
 // Reports whether the doc file contains an embedding.
 func (pc ParsingContext) IsContainsEmbedding() bool {
-	return pc.File_contains_embedding
+	return pc.FileContainsEmbedding
 }
 
 // Sets an embedding to ParsingContext.
@@ -108,7 +108,7 @@ func (pc ParsingContext) IsContainsEmbedding() bool {
 // Also sets file_contains_embedding flag.
 func (pc *ParsingContext) SetEmbedding(embedding *embedding_instruction.EmbeddingInstruction) {
 	if embedding != nil {
-		pc.File_contains_embedding = true
+		pc.FileContainsEmbedding = true
 	}
 	pc.Embedding = embedding
 }
