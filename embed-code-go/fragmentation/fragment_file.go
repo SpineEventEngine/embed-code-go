@@ -90,18 +90,18 @@ func (fragmentFile FragmentFile) Write(text string) {
 // Reads content of the file.
 //
 // Returns contents of the file as a list of strings, or raises an error if it doesn't exists.
-func (fragmentFile FragmentFile) Content() []string {
+func (fragmentFile FragmentFile) Content() ([]string, error) {
 	path := fragmentFile.absolutePath()
 	isPathFileExits, err := IsFileExists(path)
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	if isPathFileExits {
-		return ReadLines(path)
+		return ReadLines(path), nil
 	} else {
-		panic(fmt.Sprintf("file %s doesn't exist", path))
+		return nil, fmt.Errorf("file %s doesn't exist", path)
 	}
 }
 
