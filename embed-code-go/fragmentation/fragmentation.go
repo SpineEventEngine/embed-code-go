@@ -181,6 +181,17 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 	return nil
 }
 
+func CleanFragmentFiles(config configuration.Configuration) {
+	if _, err := os.Stat(config.FragmentsDir); os.IsNotExist(err) {
+		return
+	}
+
+	err := os.RemoveAll(config.FragmentsDir)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // Returns true if the file stored at filePath:
 //   - exists
 //   - is a file (not a dir)
