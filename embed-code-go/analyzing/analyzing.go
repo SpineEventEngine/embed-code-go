@@ -15,6 +15,11 @@ const analyticsDir = "./build/analytics"
 const analyticsFile = "problem-files.txt"
 const permission = 0644
 
+// Analyzes all documentation files.
+//
+// If any error occurs during embedding, it is written to the analytics file with all the needed information.
+//
+// config — a configuration for embedding.
 func AnalyzeAll(config configuration.Configuration) {
 	var problemFiles []string
 	documentationRoot := config.DocumentationRoot
