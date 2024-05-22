@@ -41,5 +41,6 @@ func (f Finish) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
-func (f Finish) Accept(context *ParsingContext, config configuration.Configuration) {
+func (f Finish) Accept(context *ParsingContext, config configuration.Configuration) error {
+	return nil
 }

@@ -44,8 +44,9 @@ func (r RegularLine) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
-func (r RegularLine) Accept(context *ParsingContext, config configuration.Configuration) {
+func (r RegularLine) Accept(context *ParsingContext, config configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()
+	return nil
 }

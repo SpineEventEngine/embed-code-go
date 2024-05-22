@@ -118,7 +118,7 @@ func FromXML(line string, config configuration.Configuration) (EmbeddingInstruct
 //
 
 // Reads and returns the lines for specified fragment from the code.
-func (e EmbeddingInstruction) Content() []string {
+func (e EmbeddingInstruction) Content() ([]string, error) {
 	fragmentName := e.Fragment
 	if fragmentName == "" {
 		fragmentName = fragmentation.DefaultFragmentName
@@ -129,7 +129,11 @@ func (e EmbeddingInstruction) Content() []string {
 		Configuration: e.Configuration,
 	}
 	if e.StartPattern != nil || e.EndPattern != nil {
-		return e.matchingLines(file.Content())
+		fileContent, err := file.Content()
+		if err != nil {
+			return nil, err
+		}
+		return e.matchingLines(fileContent), nil
 	}
 	return file.Content()
 }

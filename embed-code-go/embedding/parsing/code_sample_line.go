@@ -44,6 +44,7 @@ func (c CodeSampleLine) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
-func (c CodeSampleLine) Accept(context *ParsingContext, config configuration.Configuration) {
+func (c CodeSampleLine) Accept(context *ParsingContext, config configuration.Configuration) error {
 	context.ToNextLine()
+	return nil
 }

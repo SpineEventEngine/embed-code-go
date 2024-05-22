@@ -51,11 +51,12 @@ func (c CodeFenceStart) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
-func (c CodeFenceStart) Accept(context *ParsingContext, config configuration.Configuration) {
+func (c CodeFenceStart) Accept(context *ParsingContext, config configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.CodeFenceStarted = true
 	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
 	context.CodeFenceIndentation = leadingSpaces
 	context.ToNextLine()
+	return nil
 }
