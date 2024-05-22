@@ -12,6 +12,7 @@ import (
 )
 
 const analyticsDir = "./build/analytics"
+const analyticsFile = "problem-files.txt"
 const permission = 0644
 
 func AnalyzeAll(config configuration.Configuration) {
@@ -31,5 +32,5 @@ func AnalyzeAll(config configuration.Configuration) {
 	}
 
 	os.MkdirAll(analyticsDir, permission)
-	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, "problem-files.txt"), problemFiles)
+	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, analyticsFile), problemFiles)
 }
