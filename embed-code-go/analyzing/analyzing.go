@@ -5,12 +5,14 @@ import (
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/fragmentation"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
 
 const analyticsDir = "./build/analytics"
+const permission = 0644
 
 func AnalyzeAll(config configuration.Configuration) {
 	var problemFiles []string
@@ -27,5 +29,7 @@ func AnalyzeAll(config configuration.Configuration) {
 			}
 		}
 	}
+
+	os.MkdirAll(analyticsDir, permission)
 	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, "problem-files.txt"), problemFiles)
 }
