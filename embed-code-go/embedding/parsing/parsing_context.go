@@ -25,6 +25,14 @@ import (
 	"os"
 )
 
+type EmbeddingInParsingContext struct {
+	Embedding            embedding_instruction.EmbeddingInstruction
+	SourceStartLineIndex int
+	SourceEndLineIndex   int
+	ResultStartLineIndex int
+	ResultEndLineIndex   int
+}
+
 // Represents the context for parsing a file containing code embeddings.
 //
 // Embedding - a pointer to the embedding instruction.
@@ -51,6 +59,8 @@ type ParsingContext struct {
 	CodeFenceStarted      bool
 	CodeFenceIndentation  int
 	FileContainsEmbedding bool
+	Embeddings            []EmbeddingInParsingContext
+	EmbeddingsNotFound    []embedding_instruction.EmbeddingInstruction
 }
 
 //
@@ -98,9 +108,29 @@ func (pc ParsingContext) IsContentChanged() bool {
 	return false
 }
 
+// Returns a list of changed embeddings.
+func (pc ParsingContext) FindChangedEmbeddings() []embedding_instruction.EmbeddingInstruction {
+	changedEmbeddings := make([]embedding_instruction.EmbeddingInstruction, 0)
+	for _, embedding := range pc.Embeddings {
+		sourceContent := pc.readEmbeddingSource(embedding)
+		resultContent := pc.readEmbeddingResult(embedding)
+		if !isStringSlicesEqual(sourceContent, resultContent) {
+			changedEmbeddings = append(changedEmbeddings, embedding.Embedding)
+		}
+	}
+	return changedEmbeddings
+}
+
 // Reports whether the doc file contains an embedding.
 func (pc ParsingContext) IsContainsEmbedding() bool {
 	return pc.FileContainsEmbedding
+}
+
+func (pc *ParsingContext) ResolveEmbeddingNotFound() {
+	currentEmbedding := pc.Embeddings[len(pc.Embeddings)-1]
+	source := pc.readEmbeddingSource(currentEmbedding)
+	pc.Result = append(pc.Result, source...)
+	pc.EmbeddingsNotFound = append(pc.EmbeddingsNotFound, currentEmbedding.Embedding)
 }
 
 // Sets an embedding to ParsingContext.
@@ -109,6 +139,14 @@ func (pc ParsingContext) IsContainsEmbedding() bool {
 func (pc *ParsingContext) SetEmbedding(embedding *embedding_instruction.EmbeddingInstruction) {
 	if embedding != nil {
 		pc.FileContainsEmbedding = true
+		pc.Embeddings = append(pc.Embeddings, EmbeddingInParsingContext{
+			Embedding:            *embedding,
+			SourceStartLineIndex: pc.LineIndex + 2,   // +2 for instruction and code fence.
+			ResultStartLineIndex: len(pc.Result) + 2, // +2 for instruction and code fence.
+		})
+	} else {
+		pc.Embeddings[len(pc.Embeddings)-1].SourceEndLineIndex = pc.LineIndex
+		pc.Embeddings[len(pc.Embeddings)-1].ResultEndLineIndex = len(pc.Result)
 	}
 	pc.Embedding = embedding
 }
@@ -122,6 +160,22 @@ func (pc ParsingContext) GetResult() []string {
 func (pc ParsingContext) String() string {
 	return fmt.Sprintf("ParsingContext[embedding=`%s`, file=`%s`, line=`%d`]",
 		pc.Embedding, pc.MarkdownFile, pc.LineIndex)
+}
+
+//
+// Private methods
+//
+
+func (pc ParsingContext) readEmbeddingSource(
+	embeddingInParsingContext EmbeddingInParsingContext) []string {
+
+	return pc.Source[embeddingInParsingContext.SourceStartLineIndex : embeddingInParsingContext.SourceEndLineIndex+1]
+}
+
+func (pc ParsingContext) readEmbeddingResult(
+	embeddingInParsingContext EmbeddingInParsingContext) []string {
+
+	return pc.Result[embeddingInParsingContext.ResultStartLineIndex : embeddingInParsingContext.ResultEndLineIndex+1]
 }
 
 //
@@ -145,4 +199,16 @@ func readLines(filepath string) []string {
 		panic(err)
 	}
 	return lines
+}
+
+func isStringSlicesEqual(first, second []string) bool {
+	if len(first) != len(second) {
+		return false
+	}
+	for i := range first {
+		if first[i] != second[i] {
+			return false
+		}
+	}
+	return true
 }
