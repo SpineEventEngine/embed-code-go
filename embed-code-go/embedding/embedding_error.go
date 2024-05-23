@@ -21,28 +21,21 @@ package embedding
 import (
 	"embed-code/embed-code-go/embedding/parsing"
 	"fmt"
-	"path/filepath"
 )
 
 // Describes an error which occurs if something goes wrong during embedding.
 type EmbeddingError struct {
-	Context       parsing.ParsingContext
-	OriginalError error
+	Context parsing.ParsingContext
 }
 
 func (err EmbeddingError) Error() string {
-	relativeMarkdownPath, filepathErr := filepath.Rel(
-		err.Context.Embedding.Configuration.DocumentationRoot,
-		err.Context.MarkdownFile)
+	errorString := fmt.Sprintf("error for file %s, missing embeddings: \n", err.Context.MarkdownFile)
 
-	if filepathErr != nil {
-		panic(err)
+	for _, emb := range err.Context.EmbeddingsNotFound {
+		errorString += fmt.Sprintf(
+			"%s — %s\n",
+			emb.CodeFile,
+			emb.Fragment)
 	}
-
-	return fmt.Sprintf("error: %s | %s — %s | %s",
-		relativeMarkdownPath,
-		err.Context.Embedding.CodeFile,
-		err.Context.Embedding.Fragment,
-		err.OriginalError.Error())
-
+	return errorString
 }
