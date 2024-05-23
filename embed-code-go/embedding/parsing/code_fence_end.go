@@ -55,16 +55,16 @@ func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Configuration) error {
 	line := context.CurrentLine()
 	err := renderSample(context)
-	if err != nil {
-		return err
-	}
-
-	context.Result = append(context.Result, line)
 	context.SetEmbedding(nil)
+	if err == nil {
+		context.Result = append(context.Result, line)
+	} else {
+		context.ResolveEmbeddingNotFound()
+	}
 	context.CodeFenceStarted = false
 	context.CodeFenceIndentation = 0
 	context.ToNextLine()
-	return nil
+	return err
 }
 
 //
