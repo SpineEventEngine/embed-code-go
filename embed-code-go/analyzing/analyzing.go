@@ -12,7 +12,8 @@ import (
 )
 
 const analyticsDir = "./build/analytics"
-const analyticsFile = "problem-files.txt"
+const embeddingsNotFoundFile = "embeddings-not-found-files.txt"
+const embeddingChangedFiles = "embeddings-changed-files.txt"
 const permission = 0644
 
 // Analyzes all documentation files.
@@ -22,6 +23,7 @@ const permission = 0644
 // config — a configuration for embedding.
 func AnalyzeAll(config configuration.Configuration) {
 	var problemFiles []string
+	var foundEmbeddingChangedFiles []string
 	documentationRoot := config.DocumentationRoot
 	docPatterns := config.DocIncludes
 	for _, pattern := range docPatterns {
@@ -29,13 +31,21 @@ func AnalyzeAll(config configuration.Configuration) {
 		documentationFiles, _ := doublestar.FilepathGlob(globString)
 		for _, documentationFile := range documentationFiles {
 			processor := embedding.NewEmbeddingProcessor(documentationFile, config)
-			err := processor.Embed()
+			changedEmbeddings, err := processor.FindChangedEmbeddings()
 			if err != nil {
 				problemFiles = append(problemFiles, err.Error())
+			}
+			if len(changedEmbeddings) > 0 {
+				docRelPath := fragmentation.BuildDocRelativePath(documentationFile, config)
+				for _, changedEmbedding := range changedEmbeddings {
+					line := fmt.Sprintf("%s : %s", docRelPath, changedEmbedding.String())
+					foundEmbeddingChangedFiles = append(foundEmbeddingChangedFiles, line)
+				}
 			}
 		}
 	}
 
 	os.MkdirAll(analyticsDir, permission)
-	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, analyticsFile), problemFiles)
+	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemFiles)
+	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFiles), foundEmbeddingChangedFiles)
 }
