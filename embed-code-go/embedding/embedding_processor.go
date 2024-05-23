@@ -21,6 +21,8 @@ package embedding
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/parsing"
+	"embed-code/embed-code-go/embedding_instruction"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -76,16 +78,27 @@ func NewEmbeddingProcessorWithTransitions(docFile string,
 func (ep EmbeddingProcessor) Embed() error {
 	context, err := ep.constructEmbedding()
 	if err != nil {
-		return EmbeddingError{Context: context, OriginalError: err}
+		return EmbeddingError{Context: context}
 	}
 
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.GetResult(), "\n")), filePermission)
 		if err != nil {
-			return EmbeddingError{Context: context, OriginalError: err}
+			return EmbeddingError{Context: context}
 		}
 	}
 	return nil
+}
+
+// Constructs embedding and modifies the doc file if embedding is needed.
+func (ep EmbeddingProcessor) FindChangedEmbeddings() ([]embedding_instruction.EmbeddingInstruction, error) {
+	context, err := ep.constructEmbedding()
+	changedEmbeddings := context.FindChangedEmbeddings()
+	if err != nil {
+		return changedEmbeddings, EmbeddingError{Context: context}
+	} else {
+		return changedEmbeddings, nil
+	}
 }
 
 // Reports whether the embedding of the target markdown is up-to-date with the code file.
@@ -111,6 +124,9 @@ func (ep EmbeddingProcessor) IsUpToDate() bool {
 // indicating the failure to parse the document file.
 func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error) {
 	context := parsing.NewParsingContext(ep.DocFile)
+	isErrorFaced := false
+	errorStr := fmt.Sprintf("an error was occurred during embedding construction for doc file `%s`", ep.DocFile)
+	var constructEmbeddingError = errors.New(errorStr)
 
 	currentState := "START"
 	for currentState != "FINISH" {
@@ -121,18 +137,23 @@ func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error
 				currentState = nextState
 				err := transition.Accept(&context, ep.Config)
 				if err != nil {
-					return context, err
+					isErrorFaced = true
 				}
 				accepted = true
 				break
 			}
 		}
 		if !accepted {
-			return context, fmt.Errorf(fmt.Sprintf("failed to parse the doc file `%s`. Context: %+v", ep.DocFile, context))
+			return context, constructEmbeddingError
 		}
 	}
 
-	return context, nil
+	var err error = nil
+	if isErrorFaced {
+		err = constructEmbeddingError
+	}
+
+	return context, err
 }
 
 //
