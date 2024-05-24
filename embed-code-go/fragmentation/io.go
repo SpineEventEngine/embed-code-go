@@ -67,6 +67,7 @@ func ReadLines(filePath string) []string {
 	return lines
 }
 
+// Writes lines to the file at given filePath.
 func WriteLinesToFile(filepath string, lines []string) {
 	file, err := os.Create(filepath)
 	if err != nil {
