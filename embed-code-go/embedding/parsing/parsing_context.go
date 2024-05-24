@@ -135,7 +135,7 @@ func (pc *ParsingContext) ResolveEmbeddingNotFound() {
 
 // Sets an embedding to ParsingContext.
 //
-// Also sets file_contains_embedding flag.
+// Also sets FileContainsEmbedding flag.
 func (pc *ParsingContext) SetEmbedding(embedding *embedding_instruction.EmbeddingInstruction) {
 	if embedding != nil {
 		pc.FileContainsEmbedding = true
