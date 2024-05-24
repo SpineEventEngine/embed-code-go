@@ -126,6 +126,7 @@ func (pc ParsingContext) IsContainsEmbedding() bool {
 	return pc.FileContainsEmbedding
 }
 
+// Writes the source content of the markdown file if embedding is not found.
 func (pc *ParsingContext) ResolveEmbeddingNotFound() {
 	currentEmbedding := pc.Embeddings[len(pc.Embeddings)-1]
 	source := pc.readEmbeddingSource(currentEmbedding)
