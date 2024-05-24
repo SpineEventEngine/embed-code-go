@@ -90,7 +90,7 @@ func (ep EmbeddingProcessor) Embed() error {
 	return nil
 }
 
-// Constructs embedding and modifies the doc file if embedding is needed.
+// Returns the list of EmbeddingInstruction that are changed in the markdown file.
 func (ep EmbeddingProcessor) FindChangedEmbeddings() ([]embedding_instruction.EmbeddingInstruction, error) {
 	context, err := ep.constructEmbedding()
 	changedEmbeddings := context.FindChangedEmbeddings()
