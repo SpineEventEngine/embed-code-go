@@ -13,7 +13,7 @@ import (
 
 const analyticsDir = "./build/analytics"
 const embeddingsNotFoundFile = "embeddings-not-found-files.txt"
-const embeddingChangedFiles = "embeddings-changed-files.txt"
+const embeddingChangedFile = "embeddings-changed-files.txt"
 const permission = 0644
 
 // Analyzes all documentation files.
@@ -22,30 +22,52 @@ const permission = 0644
 //
 // config — a configuration for embedding.
 func AnalyzeAll(config configuration.Configuration) {
-	var problemFiles []string
-	var foundEmbeddingChangedFiles []string
+	docFiles := findDocumentationFiles(config)
+	changedFiles, problemFiles := findChangedAndProblematicFiles(config, docFiles)
+
+	os.MkdirAll(analyticsDir, permission)
+	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFile), changedFiles)
+	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemFiles)
+
+}
+
+// Finds all documentation files for given config.
+func findDocumentationFiles(config configuration.Configuration) []string {
 	documentationRoot := config.DocumentationRoot
 	docPatterns := config.DocIncludes
+	var documentationFiles []string
 	for _, pattern := range docPatterns {
 		globString := strings.Join([]string{documentationRoot, pattern}, "/")
-		documentationFiles, _ := doublestar.FilepathGlob(globString)
-		for _, documentationFile := range documentationFiles {
-			processor := embedding.NewEmbeddingProcessor(documentationFile, config)
-			changedEmbeddings, err := processor.FindChangedEmbeddings()
-			if err != nil {
-				problemFiles = append(problemFiles, err.Error())
-			}
-			if len(changedEmbeddings) > 0 {
-				docRelPath := fragmentation.BuildDocRelativePath(documentationFile, config)
-				for _, changedEmbedding := range changedEmbeddings {
-					line := fmt.Sprintf("%s : %s", docRelPath, changedEmbedding.String())
-					foundEmbeddingChangedFiles = append(foundEmbeddingChangedFiles, line)
-				}
+		matches, err := doublestar.FilepathGlob(globString)
+		if err != nil {
+			panic(err)
+		}
+		documentationFiles = append(documentationFiles, matches...)
+	}
+	return documentationFiles
+}
+
+// Returns a list of documentation files that are not up-to-date with their code files.
+// Also returns a list of files which cause an error.
+func findChangedAndProblematicFiles(
+	config configuration.Configuration,
+	docFiles []string) (
+	changedFiles []string,
+	problemFiles []string) {
+
+	for _, docFile := range docFiles {
+		processor := embedding.NewEmbeddingProcessor(docFile, config)
+		changedEmbeddings, err := processor.FindChangedEmbeddings()
+		if err != nil {
+			problemFiles = append(problemFiles, err.Error())
+		}
+		if len(changedEmbeddings) > 0 {
+			docRelPath := fragmentation.BuildDocRelativePath(docFile, config)
+			for _, changedEmbedding := range changedEmbeddings {
+				line := fmt.Sprintf("%s : %s", docRelPath, changedEmbedding.String())
+				changedFiles = append(changedFiles, line)
 			}
 		}
 	}
-
-	os.MkdirAll(analyticsDir, permission)
-	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemFiles)
-	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFiles), foundEmbeddingChangedFiles)
+	return
 }
