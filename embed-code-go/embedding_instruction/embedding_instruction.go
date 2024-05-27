@@ -62,6 +62,8 @@ type EmbeddingInstruction struct {
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
 //
 // config — a Configuration with all embed-code settings.
+//
+// Returns an error if the instruction is wrong.
 func NewEmbeddingInstruction(attributes map[string]string, config configuration.Configuration) (EmbeddingInstruction, error) {
 	codeFile := attributes["file"]
 	fragment := attributes["fragment"]
@@ -105,6 +107,8 @@ func NewEmbeddingInstruction(attributes map[string]string, config configuration.
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
 //
 // config — a Configuration with all embed-code settings.
+//
+// Returns an error if the paring of XML instruction failed.
 func FromXML(line string, config configuration.Configuration) (EmbeddingInstruction, error) {
 	fields, err := ParseXMLLine(line)
 	if err != nil {
@@ -118,6 +122,8 @@ func FromXML(line string, config configuration.Configuration) (EmbeddingInstruct
 //
 
 // Reads and returns the lines for specified fragment from the code.
+//
+// Returns an error if there was an error during reading the content.
 func (e EmbeddingInstruction) Content() ([]string, error) {
 	fragmentName := e.Fragment
 	if fragmentName == "" {

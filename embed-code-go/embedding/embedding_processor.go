@@ -75,6 +75,8 @@ func NewEmbeddingProcessorWithTransitions(docFile string,
 //
 
 // Constructs embedding and modifies the doc file if embedding is needed.
+//
+// If any problems faced, an error is returned.
 func (ep EmbeddingProcessor) Embed() error {
 	context, err := ep.constructEmbedding()
 	if err != nil {
@@ -91,6 +93,8 @@ func (ep EmbeddingProcessor) Embed() error {
 }
 
 // Returns the list of EmbeddingInstruction that are changed in the markdown file.
+//
+// If any problems during the embedding construction faced, an error is returned.
 func (ep EmbeddingProcessor) FindChangedEmbeddings() ([]embedding_instruction.EmbeddingInstruction, error) {
 	context, err := ep.constructEmbedding()
 	changedEmbeddings := context.FindChangedEmbeddings()
