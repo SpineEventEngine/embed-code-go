@@ -99,7 +99,7 @@ func (suite *EmbeddingTestSuite) TestFalseTransitions() {
 
 	falseProcessor := embedding.NewEmbeddingProcessorWithTransitions(docPath, suite.config, falseTransitions)
 	err := falseProcessor.Embed()
-	suite.Require().Error(err, "There must be an error during the embedding with the false transitions.")
+	suite.Require().Error(err, "The error was expected during the embedding with the false transitions, but there wasn't one.")
 }
 
 func (suite *EmbeddingTestSuite) TestMultiLinedTag() {
