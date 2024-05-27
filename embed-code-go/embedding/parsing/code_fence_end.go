@@ -52,6 +52,8 @@ func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
+//
+// Returns an error if the rendering was not successful.
 func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Configuration) error {
 	line := context.CurrentLine()
 	err := renderSample(context)
@@ -71,6 +73,11 @@ func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Confi
 // Private methods
 //
 
+// Renders the sample content of the embedding.
+//
+// context — a context of the parsing process.
+//
+// Returns an error if the reading of the embedding's content was not successful.
 func renderSample(context *ParsingContext) error {
 	content, err := context.Embedding.Content()
 	if err != nil {

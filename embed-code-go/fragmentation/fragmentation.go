@@ -100,6 +100,7 @@ func NewFragmentation(
 // Splits the file into fragments.
 //
 // Returns a refined content of the file to be cut into fragments, and the Fragments.
+// Also returns an error if the fragmentation couldn't be done.
 func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment, error) {
 	fragmentBuilders := make(map[string]*FragmentBuilder)
 	var contentToRender []string
@@ -133,6 +134,8 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 //
 // Keeps the original directory structure relative to the sources root dir.
 // That is, `SRC/src/main` becomes `OUT/src/main`.
+//
+// Returns an error if the fragmentation couldn't be done.
 func (fragmentation Fragmentation) WriteFragments() error {
 	allLines, fragments, err := fragmentation.Fragmentize()
 	if err != nil {
@@ -162,6 +165,8 @@ func (fragmentation Fragmentation) WriteFragments() error {
 // That is, `SRC/src/main` becomes `OUT/src/main`.
 //
 // configuration — a configuration for embedding.
+//
+// Returns an error if any of the fragments couldn't be written.
 func WriteFragmentFiles(configuration configuration.Configuration) error {
 	includes := configuration.CodeIncludes
 	codeRoot := configuration.CodeRoot

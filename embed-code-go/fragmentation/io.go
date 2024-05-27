@@ -37,6 +37,8 @@ func EnsureDirExists(dirPath string) {
 }
 
 // Reports whether file exists at given filePath.
+//
+// Returns an error if any faced.
 func IsFileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
