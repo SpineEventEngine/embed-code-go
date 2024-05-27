@@ -127,7 +127,6 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 	fragments[DefaultFragmentName] = CreateDefaultFragment()
 
 	return contentToRender, fragments, nil
-
 }
 
 // Serializes fragments to the output directory.
