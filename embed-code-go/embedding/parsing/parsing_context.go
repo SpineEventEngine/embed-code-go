@@ -25,6 +25,19 @@ import (
 	"os"
 )
 
+// Represents an embedding in the parsing context.
+//
+// Contains the information about the position of it in the source and result markdown files.
+//
+// Embedding - an EmbeddingInstruction, containing all the needed embedding information.
+//
+// SourceStartLineIndex - an index of the start line in the original markdown file.
+//
+// SourceEndLineIndex - an index of the end line in the original markdown file.
+//
+// ResultStartLineIndex - an index of the start line in the result markdown file.
+//
+// ResultEndLineIndex - an index of the end line in the result markdown file.
 type EmbeddingInParsingContext struct {
 	Embedding            embedding_instruction.EmbeddingInstruction
 	SourceStartLineIndex int
