@@ -117,11 +117,13 @@ func (ep EmbeddingProcessor) IsUpToDate() bool {
 // Creates and returns new ParsingContext based on
 // EmbeddingProcessor.DocFile and EmbeddingProcessor.Config.
 //
+// If any problems faced, an error is returned.
+//
 // Processes an embedding by iterating through different states based on transitions
 // until it reaches the finish state. If a transition is recognized,
 // it updates the current state and accepts the transition.
-// If no transition is accepted, it panics with a message
-// indicating the failure to parse the document file.
+// If no transition is accepted, the error indicating the failure to parse the document file
+// is returned.
 func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error) {
 	context := parsing.NewParsingContext(ep.DocFile)
 	isErrorFaced := false
