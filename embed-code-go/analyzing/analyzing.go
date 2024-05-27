@@ -28,7 +28,6 @@ func AnalyzeAll(config configuration.Configuration) {
 	os.MkdirAll(analyticsDir, permission)
 	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFile), changedEmbeddings)
 	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemEmbeddings)
-
 }
 
 // Finds all documentation files for given config.

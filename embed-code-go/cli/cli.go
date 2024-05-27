@@ -135,7 +135,6 @@ func ReadArgs() Args {
 		ConfigFilePath: *configFilePath,
 		Mode:           *mode,
 	}
-
 }
 
 // Checks the validity of provided userArgs and returns an error message if any of the validation rules are broken.
