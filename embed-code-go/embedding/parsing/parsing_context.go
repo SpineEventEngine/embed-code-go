@@ -27,7 +27,7 @@ import (
 
 // Represents an embedding in the parsing context.
 //
-// Contains the information about the position of it in the source and result markdown files.
+// Contains the information about the position of it in the source and the resulting Markdown files.
 //
 // Embedding - an EmbeddingInstruction, containing all the needed embedding information.
 //
