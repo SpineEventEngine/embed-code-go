@@ -23,11 +23,11 @@ const permission = 0644
 // config — a configuration for embedding.
 func AnalyzeAll(config configuration.Configuration) {
 	docFiles := findDocumentationFiles(config)
-	changedFiles, problemFiles := findChangedAndProblematicFiles(config, docFiles)
+	changedEmbeddings, problemEmbeddings := extractAnalyticsForDocs(config, docFiles)
 
 	os.MkdirAll(analyticsDir, permission)
-	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFile), changedFiles)
-	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemFiles)
+	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFile), changedEmbeddings)
+	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemEmbeddings)
 
 }
 
@@ -47,25 +47,25 @@ func findDocumentationFiles(config configuration.Configuration) []string {
 	return documentationFiles
 }
 
-// Returns a list of documentation files that are not up-to-date with their code files.
-// Also returns a list of files which cause an error.
-func findChangedAndProblematicFiles(
+// Returns a list of embeddings that are not up-to-date with their code files.
+// Also returns a list of embeddings which cause an error.
+func extractAnalyticsForDocs(
 	config configuration.Configuration,
 	docFiles []string) (
-	changedFiles []string,
-	problemFiles []string) {
+	changedEmbeddingsLines []string,
+	problemEmbeddingsLines []string) {
 
 	for _, docFile := range docFiles {
 		processor := embedding.NewEmbeddingProcessor(docFile, config)
 		changedEmbeddings, err := processor.FindChangedEmbeddings()
 		if err != nil {
-			problemFiles = append(problemFiles, err.Error())
+			problemEmbeddingsLines = append(problemEmbeddingsLines, err.Error())
 		}
 		if len(changedEmbeddings) > 0 {
 			docRelPath := fragmentation.BuildDocRelativePath(docFile, config)
 			for _, changedEmbedding := range changedEmbeddings {
 				line := fmt.Sprintf("%s : %s", docRelPath, changedEmbedding.String())
-				changedFiles = append(changedFiles, line)
+				changedEmbeddingsLines = append(changedEmbeddingsLines, line)
 			}
 		}
 	}
