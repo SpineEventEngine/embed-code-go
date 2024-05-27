@@ -45,7 +45,7 @@ func (c CodeSampleLine) Recognize(context ParsingContext) bool {
 //
 // config — a configuration of the embedding.
 //
-// Error is not returned here, it is returned by another realizations of this interface.
+// This implementation never returns an error.
 func (c CodeSampleLine) Accept(context *ParsingContext, config configuration.Configuration) error {
 	context.ToNextLine()
 	return nil
