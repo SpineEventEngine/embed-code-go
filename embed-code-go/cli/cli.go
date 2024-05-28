@@ -19,6 +19,7 @@
 package cli
 
 import (
+	"embed-code/embed-code-go/analyzing"
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/fragmentation"
@@ -99,6 +100,15 @@ func EmbedCodeSamples(config configuration.Configuration) {
 	embedding.EmbedAll(config)
 }
 
+// Analyzes code fragments in documentation files.
+//
+// config — a configuration for embedding.
+func AnalyzeCodeSamples(config configuration.Configuration) {
+	fragmentation.WriteFragmentFiles(config)
+	analyzing.AnalyzeAll(config)
+	fragmentation.CleanFragmentFiles(config)
+}
+
 // Reads user-specified args from the command line.
 //
 // Returns an Args struct filled with the corresponding args.
@@ -125,7 +135,6 @@ func ReadArgs() Args {
 		ConfigFilePath: *configFilePath,
 		Mode:           *mode,
 	}
-
 }
 
 // Checks the validity of provided userArgs and returns an error message if any of the validation rules are broken.

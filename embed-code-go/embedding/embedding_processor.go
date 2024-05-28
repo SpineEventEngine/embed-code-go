@@ -21,6 +21,8 @@ package embedding
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/parsing"
+	"embed-code/embed-code-go/embedding_instruction"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -72,21 +74,43 @@ func NewEmbeddingProcessorWithTransitions(docFile string,
 // Public methods
 //
 
-// Constructs embedding and modifys the doc file if embedding is needed.
-func (ep EmbeddingProcessor) Embed() {
-	context := ep.constructEmbedding()
+// Constructs embedding and modifies the doc file if embedding is needed.
+//
+// If any problems faced, an error is returned.
+func (ep EmbeddingProcessor) Embed() error {
+	context, err := ep.constructEmbedding()
+	if err != nil {
+		return EmbeddingError{Context: context}
+	}
 
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		err := os.WriteFile(ep.DocFile, []byte(strings.Join(context.GetResult(), "\n")), filePermission)
 		if err != nil {
-			panic(err)
+			return EmbeddingError{Context: context}
 		}
+	}
+	return nil
+}
+
+// Returns the list of EmbeddingInstruction that are changed in the markdown file.
+//
+// If any problems during the embedding construction faced, an error is returned.
+func (ep EmbeddingProcessor) FindChangedEmbeddings() ([]embedding_instruction.EmbeddingInstruction, error) {
+	context, err := ep.constructEmbedding()
+	changedEmbeddings := context.FindChangedEmbeddings()
+	if err != nil {
+		return changedEmbeddings, EmbeddingError{Context: context}
+	} else {
+		return changedEmbeddings, nil
 	}
 }
 
 // Reports whether the embedding of the target markdown is up-to-date with the code file.
 func (ep EmbeddingProcessor) IsUpToDate() bool {
-	context := ep.constructEmbedding()
+	context, err := ep.constructEmbedding()
+	if err != nil {
+		panic(err)
+	}
 	return !context.IsContentChanged()
 }
 
@@ -97,13 +121,18 @@ func (ep EmbeddingProcessor) IsUpToDate() bool {
 // Creates and returns new ParsingContext based on
 // EmbeddingProcessor.DocFile and EmbeddingProcessor.Config.
 //
+// If any problems faced, an error is returned.
+//
 // Processes an embedding by iterating through different states based on transitions
 // until it reaches the finish state. If a transition is recognized,
 // it updates the current state and accepts the transition.
-// If no transition is accepted, it panics with a message
-// indicating the failure to parse the document file.
-func (ep EmbeddingProcessor) constructEmbedding() parsing.ParsingContext {
+// If no transition is accepted, the error indicating the failure to parse the document file
+// is returned.
+func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error) {
 	context := parsing.NewParsingContext(ep.DocFile)
+	isErrorFaced := false
+	errorStr := fmt.Sprintf("an error was occurred during embedding construction for doc file `%s`", ep.DocFile)
+	var constructEmbeddingError = errors.New(errorStr)
 
 	currentState := "START"
 	for currentState != "FINISH" {
@@ -112,17 +141,25 @@ func (ep EmbeddingProcessor) constructEmbedding() parsing.ParsingContext {
 			transition := parsing.StateToTransition[nextState]
 			if transition.Recognize(context) {
 				currentState = nextState
-				transition.Accept(&context, ep.Config)
+				err := transition.Accept(&context, ep.Config)
+				if err != nil {
+					isErrorFaced = true
+				}
 				accepted = true
 				break
 			}
 		}
 		if !accepted {
-			panic(fmt.Sprintf("failed to parse the doc file `%s`. Context: %+v", ep.DocFile, context))
+			return context, constructEmbeddingError
 		}
 	}
 
-	return context
+	var err error = nil
+	if isErrorFaced {
+		err = constructEmbeddingError
+	}
+
+	return context, err
 }
 
 //
@@ -143,7 +180,10 @@ func EmbedAll(config configuration.Configuration) {
 		documentationFiles, _ := doublestar.FilepathGlob(globString)
 		for _, documentationFile := range documentationFiles {
 			processor := NewEmbeddingProcessor(documentationFile, config)
-			processor.Embed()
+			err := processor.Embed()
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }

@@ -36,7 +36,7 @@ type CodeSampleLine struct{}
 //
 // context — a context of the parsing process.
 func (c CodeSampleLine) Recognize(context ParsingContext) bool {
-	return !context.ReachedEOF() && context.codeFenceStarted
+	return !context.ReachedEOF() && context.CodeFenceStarted
 }
 
 // Moves to the next line.
@@ -44,6 +44,9 @@ func (c CodeSampleLine) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
-func (c CodeSampleLine) Accept(context *ParsingContext, config configuration.Configuration) {
+//
+// This implementation never returns an error.
+func (c CodeSampleLine) Accept(context *ParsingContext, config configuration.Configuration) error {
 	context.ToNextLine()
+	return nil
 }

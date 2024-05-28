@@ -11,11 +11,12 @@ Key features:
 
 # Running
 
-Embed-code-go can be run in two modes:
-1. Embedding - in this mode, all documentation files are scanned for `<embed-code>` tags, and the corresponding embeddings are performed. Embedding results are written to the given documentation files.
-2. Checking for being up-to-date - in this mode, all documentation files are checked for being up-to-date. All the embeddings under `<embed-code>` tags are compared with the corresponding code fragments. If the code is completely equals to the corresponding embeddings, the documentation files are up-to-date. If the check fails, an error message with the corresponding files is provided.
+Embed-code-go can be run in three modes:
+1. Embedding — in this mode, all documentation files are scanned for `<embed-code>` tags, and the corresponding embeddings are performed. Embedding results are written to the given documentation files.
+2. Checking for being up-to-date — in this mode, all documentation files are checked for being up-to-date. All the embeddings under `<embed-code>` tags are compared with the corresponding code fragments. If the code is completely equals to the corresponding embeddings, the documentation files are up-to-date. If the check fails, an error message with the corresponding files is provided.
+3. Analyzing — in this mode, all embeddings are checked for having corresponding code fragments. All information about problems found is written to the `build/analytics/problem-files.txt` file.
 
-The mode is selected by the mandatory `mode` argument. If it is set to `check`, the checking for up-to-date is performed. If it is set to `embed`, the embedding is performed.
+The mode is selected by the mandatory `mode` argument. If it is set to `check`, the checking for up-to-date is performed. If it is set to `embed`, the embedding is performed. If it is set to `analyze`, the analyzing is performed.
 
 The tool can be executed as a binary file or as a Go file. In the latter case, the user must have Go [installed](#installation). The binary files are stored in the `./bin` directory.
 
@@ -43,7 +44,7 @@ go run ./embed_code.go [arguments]
 
 ### Arguments
 The available arguments are:
-  * `-mode`: mandatory, `check` to checking for code embeddings to be up-to-date; `embed` to start the embedding process;
+  * `-mode`: mandatory, `check` to checking for code embeddings to be up-to-date; `embed` to start the embedding process; `analyze` to run analyzing;
   * `-code_root`: optional, path to the root directory containing code files;
   * `-docs_root`: optional, path to the root directory containing documentation files;
   * `-config_file_path`: optional, path to a YAML configuration file that contains the code_root and docs_root fields;

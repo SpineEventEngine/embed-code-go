@@ -16,33 +16,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package parsing
+package embedding
 
 import (
-	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding/parsing"
+	"fmt"
 )
 
-// Represents the end of the file.
-type Finish struct{}
-
-//
-// Public methods
-//
-
-// Reports whether the current line satisfies the transition.
-//
-// context — a context of the parsing process.
-func (f Finish) Recognize(context ParsingContext) bool {
-	return context.ReachedEOF()
+// Describes an error which occurs if something goes wrong during embedding.
+type EmbeddingError struct {
+	Context parsing.ParsingContext
 }
 
-// Accepts finish, there's no need to do anything.
-//
-// context — a context of the parsing process.
-//
-// config — a configuration of the embedding.
-//
-// This implementation never returns an error.
-func (f Finish) Accept(context *ParsingContext, config configuration.Configuration) error {
-	return nil
+func (err EmbeddingError) Error() string {
+	errorString := fmt.Sprintf("error for file %s, missing embeddings: \n", err.Context.MarkdownFile)
+
+	for _, emb := range err.Context.EmbeddingsNotFound {
+		errorString += fmt.Sprintf(
+			"%s — %s\n",
+			emb.CodeFile,
+			emb.Fragment)
+	}
+	return errorString
 }
