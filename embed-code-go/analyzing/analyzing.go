@@ -56,9 +56,12 @@ func extractAnalyticsForDocs(
 	for _, docFile := range docFiles {
 		processor := embedding.NewEmbeddingProcessor(docFile, config)
 		changedEmbeddings, err := processor.FindChangedEmbeddings()
+
+		// If there is an error during embedding, it is written to the analytics file.
 		if err != nil {
 			problemEmbeddingsLines = append(problemEmbeddingsLines, err.Error())
 		}
+		// Even if error occurs, there might be embeddings that are changed.
 		if len(changedEmbeddings) > 0 {
 			docRelPath := fragmentation.BuildDocRelativePath(docFile, config)
 			for _, changedEmbedding := range changedEmbeddings {
