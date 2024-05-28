@@ -50,9 +50,8 @@ func findDocumentationFiles(config configuration.Configuration) []string {
 // Also returns a list of embeddings which cause an error.
 func extractAnalyticsForDocs(
 	config configuration.Configuration,
-	docFiles []string) (
-	changedEmbeddingsLines []string,
-	problemEmbeddingsLines []string) {
+	docFiles []string,
+) (changedEmbeddingsLines []string, problemEmbeddingsLines []string) {
 
 	for _, docFile := range docFiles {
 		processor := embedding.NewEmbeddingProcessor(docFile, config)
