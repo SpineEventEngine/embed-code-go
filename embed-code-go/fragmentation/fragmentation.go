@@ -100,6 +100,7 @@ func NewFragmentation(
 // Splits the file into fragments.
 //
 // Returns a refined content of the file to be cut into fragments, and the Fragments.
+// Also returns an error if the fragmentation couldn't be done.
 func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment, error) {
 	fragmentBuilders := make(map[string]*FragmentBuilder)
 	var contentToRender []string
@@ -126,13 +127,14 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 	fragments[DefaultFragmentName] = CreateDefaultFragment()
 
 	return contentToRender, fragments, nil
-
 }
 
 // Serializes fragments to the output directory.
 //
 // Keeps the original directory structure relative to the sources root dir.
 // That is, `SRC/src/main` becomes `OUT/src/main`.
+//
+// Returns an error if the fragmentation couldn't be done.
 func (fragmentation Fragmentation) WriteFragments() error {
 	allLines, fragments, err := fragmentation.Fragmentize()
 	if err != nil {
@@ -162,6 +164,8 @@ func (fragmentation Fragmentation) WriteFragments() error {
 // That is, `SRC/src/main` becomes `OUT/src/main`.
 //
 // configuration — a configuration for embedding.
+//
+// Returns an error if any of the fragments couldn't be written.
 func WriteFragmentFiles(configuration configuration.Configuration) error {
 	includes := configuration.CodeIncludes
 	codeRoot := configuration.CodeRoot
@@ -179,6 +183,18 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 		}
 	}
 	return nil
+}
+
+// Deletes Configuration.FragmentsDir if it exists.
+func CleanFragmentFiles(config configuration.Configuration) {
+	if _, err := os.Stat(config.FragmentsDir); os.IsNotExist(err) {
+		return
+	}
+
+	err := os.RemoveAll(config.FragmentsDir)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Returns true if the file stored at filePath:

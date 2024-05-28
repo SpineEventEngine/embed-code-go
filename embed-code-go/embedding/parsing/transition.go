@@ -34,7 +34,9 @@ type Transition interface {
 	// context — a context of the parsing process.
 	//
 	// config — a configuration of the embedding.
-	Accept(context *ParsingContext, config configuration.Configuration)
+	//
+	// Returns an error if any occurs.
+	Accept(context *ParsingContext, config configuration.Configuration) error
 
 	// Reports whether the current line satisfies the transition.
 	//

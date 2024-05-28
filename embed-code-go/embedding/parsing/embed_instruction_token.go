@@ -41,7 +41,7 @@ type EmbedInstructionToken struct{}
 func (e EmbedInstructionToken) Recognize(context ParsingContext) bool {
 	line := context.CurrentLine()
 	isStatement := strings.HasPrefix(strings.TrimSpace(line), Statement)
-	if context.embedding == nil && !context.ReachedEOF() && isStatement {
+	if context.Embedding == nil && !context.ReachedEOF() && isStatement {
 		return true
 	}
 	return false
@@ -53,7 +53,9 @@ func (e EmbedInstructionToken) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
-func (e EmbedInstructionToken) Accept(context *ParsingContext, config configuration.Configuration) {
+//
+// An error is returned if the building of the embedding instruction fails.
+func (e EmbedInstructionToken) Accept(context *ParsingContext, config configuration.Configuration) error {
 	instructionBody := []string{}
 	for !context.ReachedEOF() {
 		instructionBody = append(instructionBody, context.CurrentLine())
@@ -63,13 +65,14 @@ func (e EmbedInstructionToken) Accept(context *ParsingContext, config configurat
 			context.SetEmbedding(&instruction)
 		}
 
-		context.result = append(context.result, context.CurrentLine())
+		context.Result = append(context.Result, context.CurrentLine())
 		context.ToNextLine()
-		if context.embedding != nil {
+		if context.Embedding != nil {
 			break
 		}
 	}
-	if context.embedding == nil {
-		panic(fmt.Sprintf("failed to parse an embedding instruction. Context: %v", context))
+	if context.Embedding == nil {
+		return fmt.Errorf("failed to parse an embedding instruction. Context: %v", context)
 	}
+	return nil
 }

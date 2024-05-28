@@ -73,6 +73,8 @@ func CopyDirRecursive(source_dir_path string, target_dir_path string) {
 }
 
 // Copies file from source_file_path to target_file_path.
+//
+// Returns an error if any faced.
 func CopyFile(source_file_path string, target_file_path string) (err error) {
 	sourceFile, err := os.Open(source_file_path)
 	if err != nil {

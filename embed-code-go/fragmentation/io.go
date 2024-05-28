@@ -20,7 +20,9 @@ package fragmentation
 
 import (
 	"bufio"
+	"embed-code/embed-code-go/configuration"
 	"os"
+	"path/filepath"
 )
 
 // Creates dir at given dirPath if it doesn't exist.
@@ -35,6 +37,8 @@ func EnsureDirExists(dirPath string) {
 }
 
 // Reports whether file exists at given filePath.
+//
+// Returns an error if any faced.
 func IsFileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
@@ -63,4 +67,29 @@ func ReadLines(filePath string) []string {
 		lines = append(lines, string(line))
 	}
 	return lines
+}
+
+// Writes lines to the file at given filePath.
+func WriteLinesToFile(filepath string, lines []string) {
+	file, err := os.Create(filepath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	for _, s := range lines {
+		_, err := file.WriteString(s + "\n")
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+// Builds a relative path for documentation file with a given config
+func BuildDocRelativePath(absolutePath string, config configuration.Configuration) string {
+	absolutePath, err := filepath.Rel(config.DocumentationRoot, absolutePath)
+	if err != nil {
+		panic(err)
+	}
+	return absolutePath
 }

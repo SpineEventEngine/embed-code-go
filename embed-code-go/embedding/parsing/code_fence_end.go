@@ -40,8 +40,8 @@ type CodeFenceEnd struct{}
 // context — a context of the parsing process.
 func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 	if !context.ReachedEOF() {
-		indentation := strings.Repeat(" ", context.codeFenceIndentation)
-		return context.codeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
+		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
+		return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
 	}
 	return false
 }
@@ -52,23 +52,40 @@ func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
-func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Configuration) {
+//
+// Returns an error if the rendering was not successful.
+func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Configuration) error {
 	line := context.CurrentLine()
-	renderSample(context)
-	context.result = append(context.result, line)
+	err := renderSample(context)
 	context.SetEmbedding(nil)
-	context.codeFenceStarted = false
-	context.codeFenceIndentation = 0
+	if err == nil {
+		context.Result = append(context.Result, line)
+	} else {
+		context.ResolveEmbeddingNotFound()
+	}
+	context.CodeFenceStarted = false
+	context.CodeFenceIndentation = 0
 	context.ToNextLine()
+	return err
 }
 
 //
 // Private methods
 //
 
-func renderSample(context *ParsingContext) {
-	for _, line := range context.embedding.Content() {
-		indentation := strings.Repeat(" ", context.codeFenceIndentation)
-		context.result = append(context.result, indentation+line)
+// Renders the sample content of the embedding.
+//
+// context — a context of the parsing process.
+//
+// Returns an error if the reading of the embedding's content was not successful.
+func renderSample(context *ParsingContext) error {
+	content, err := context.Embedding.Content()
+	if err != nil {
+		return err
 	}
+	for _, line := range content {
+		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
+		context.Result = append(context.Result, indentation+line)
+	}
+	return nil
 }
