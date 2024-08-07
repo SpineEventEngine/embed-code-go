@@ -136,13 +136,12 @@ func (fragment Fragment) text(lines []string, configuration configuration.Config
 	partitionsTexts := calculatePartitionsTexts(lines, fragment.Partitions)
 
 	text := ""
-	separatorIndentation := ""
 	for index, partitionText := range partitionsTexts {
 		partitionIndentation := indent.MaxCommonIndentation(partitionText)
 		cutIndentLines := indent.CutIndent(partitionText, partitionIndentation)
 
 		if index != 0 {
-			separatorIndentation = calculateSeparatorIndent(cutIndentLines)
+			separatorIndentation := calculateSeparatorIndent(cutIndentLines)
 			text += separatorIndentation + configuration.Separator + "\n"
 		}
 
