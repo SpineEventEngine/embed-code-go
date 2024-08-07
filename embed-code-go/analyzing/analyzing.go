@@ -14,7 +14,7 @@ import (
 const analyticsDir = "./build/analytics"
 const embeddingsNotFoundFile = "embeddings-not-found-files.txt"
 const embeddingChangedFile = "embeddings-changed-files.txt"
-const permission = 0644
+const permission = 0755
 
 // Analyzes all documentation files.
 //

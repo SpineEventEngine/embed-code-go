@@ -30,8 +30,8 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-// Represents read and write permissions for the owner of the file, and read-only permissions for group and others.
-const filePermission = 0644
+// Represents read, write, and execute permissions for owner, while allowing the group and others to read and execute it.
+const filePermission = 0755
 
 // The EmbeddingProcessor entity processes a single documentation file and embeds code snippets
 // into it based on the provided configuration.
