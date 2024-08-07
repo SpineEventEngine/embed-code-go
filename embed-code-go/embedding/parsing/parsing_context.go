@@ -19,10 +19,10 @@
 package parsing
 
 import (
-	"bufio"
 	"embed-code/embed-code-go/embedding_instruction"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // Represents an embedding in the parsing context.
@@ -198,20 +198,13 @@ func (pc ParsingContext) readEmbeddingResult(
 
 // Returns the content of a file placed at filepath as a list of strings.
 func readLines(filepath string) []string {
-	file, err := os.Open(filepath)
+	bytes, err := os.ReadFile(filepath) // just pass the file name
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
-
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		panic(err)
-	}
+	str := string(bytes)
+	str = strings.ReplaceAll(str, "\r\n", "\n")
+	lines := strings.Split(str, "\n")
 	return lines
 }
 
