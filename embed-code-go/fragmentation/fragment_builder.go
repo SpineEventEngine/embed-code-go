@@ -49,7 +49,8 @@ func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 		lastAddedPartition := fragmentBuilder.Partitions[len(fragmentBuilder.Partitions)-1]
 		if lastAddedPartition.EndPosition == nil {
 			panic(
-				fmt.Sprintf("error: for the file %s, the last added partition has no end position",
+				fmt.Sprintf("error: for the fragment \"%s\" of the file \"%s\", the last added partition has no end position",
+					fragmentBuilder.Name,
 					fragmentBuilder.CodeFilePath))
 		}
 	}
