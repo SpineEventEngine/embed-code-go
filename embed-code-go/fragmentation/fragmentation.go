@@ -256,7 +256,9 @@ func (fragmentation Fragmentation) parseLine(
 			if fragment, exists := fragmentBuilders[fragmentName]; exists {
 				fragment.AddEndPosition(cursor - 1)
 			} else {
-				return nil, nil, fmt.Errorf("cannot end the fragment `%s` as it wasn't started", fragmentName)
+				return nil, nil, fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
+					fragmentName,
+					fragmentation.CodeFile)
 			}
 		}
 	} else {
