@@ -128,7 +128,6 @@ func calculateSeparatorIndent(lines []string) string {
 //
 // configuration — a configuration for embedding.
 func (fragment Fragment) text(lines []string, configuration configuration.Configuration) string {
-
 	if fragment.isDefault() {
 		return strings.Join(lines, "\n")
 	}
