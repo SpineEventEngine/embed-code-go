@@ -151,7 +151,7 @@ func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error
 		}
 		if !accepted {
 			currentState = "REGULAR_LINE"
-			context.ResolveEmbeddingNotAccepted()
+			context.ResolveUnacceptedEmbedding()
 			isErrorFaced = true
 		}
 	}
