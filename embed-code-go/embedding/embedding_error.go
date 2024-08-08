@@ -29,13 +29,28 @@ type EmbeddingError struct {
 }
 
 func (err EmbeddingError) Error() string {
-	errorString := fmt.Sprintf("error for file %s, missing embeddings: \n", err.Context.MarkdownFile)
+	errorString := fmt.Sprintf("embedding error for file `%s`.", err.Context.MarkdownFile)
 
-	for _, emb := range err.Context.EmbeddingsNotFound {
-		errorString += fmt.Sprintf(
-			"%s — %s\n",
-			emb.CodeFile,
-			emb.Fragment)
+	if len(err.Context.EmbeddingsNotFound) > 0 {
+		embeddingsNotFoundStr := "\nMissing embeddings: \n"
+		for _, emb := range err.Context.EmbeddingsNotFound {
+			embeddingsNotFoundStr += fmt.Sprintf(
+				"%s — %s\n",
+				emb.CodeFile,
+				emb.Fragment)
+		}
+		errorString += embeddingsNotFoundStr
+	}
+
+	if len(err.Context.EmbeddingsNotAccepted) > 0 {
+		embeddingsNotAcceptedStr := "\nEmbeddings not accepted: \n"
+		for _, emb := range err.Context.EmbeddingsNotAccepted {
+			embeddingsNotAcceptedStr += fmt.Sprintf(
+				"%s — %s\n",
+				emb.CodeFile,
+				emb.Fragment)
+		}
+		errorString += embeddingsNotAcceptedStr
 	}
 	return errorString
 }

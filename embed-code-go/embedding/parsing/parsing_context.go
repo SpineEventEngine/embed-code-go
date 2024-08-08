@@ -74,6 +74,7 @@ type ParsingContext struct {
 	FileContainsEmbedding bool
 	Embeddings            []EmbeddingInParsingContext
 	EmbeddingsNotFound    []embedding_instruction.EmbeddingInstruction
+	EmbeddingsNotAccepted []embedding_instruction.EmbeddingInstruction
 }
 
 //
@@ -147,10 +148,11 @@ func (pc *ParsingContext) ResolveEmbeddingNotFound() {
 	pc.EmbeddingsNotFound = append(pc.EmbeddingsNotFound, currentEmbedding.Embedding)
 }
 
-// Writes the source content of the markdown file if embedding is not found.
+// Writes the source content of the markdown file if embedding is not accepted.
 func (pc *ParsingContext) ResolveEmbeddingNotAccepted() {
 	currentEmbedding := pc.Embeddings[len(pc.Embeddings)-1]
-	pc.EmbeddingsNotFound = append(pc.EmbeddingsNotFound, currentEmbedding.Embedding)
+	pc.EmbeddingsNotAccepted = append(pc.EmbeddingsNotAccepted, currentEmbedding.Embedding)
+	pc.Embeddings = pc.Embeddings[:len(pc.Embeddings)-1]
 	pc.SetEmbedding(nil)
 }
 
