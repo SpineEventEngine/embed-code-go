@@ -68,7 +68,7 @@ type EmbeddingInParsingContext struct {
 //
 // EmbeddingsNotFound - a list of embedding instructions that are not found in the code.
 //
-// EmbeddingsNotAccepted - a list of embedding instructions that are not accepted by the parser.
+// UnacceptedEmbeddings - a list of embedding instructions that are not accepted by the parser.
 type ParsingContext struct {
 	Embedding             *embedding_instruction.EmbeddingInstruction
 	Source                []string
@@ -80,7 +80,7 @@ type ParsingContext struct {
 	FileContainsEmbedding bool
 	Embeddings            []EmbeddingInParsingContext
 	EmbeddingsNotFound    []embedding_instruction.EmbeddingInstruction
-	EmbeddingsNotAccepted []embedding_instruction.EmbeddingInstruction
+	UnacceptedEmbeddings  []embedding_instruction.EmbeddingInstruction
 }
 
 //
@@ -157,9 +157,9 @@ func (pc *ParsingContext) ResolveEmbeddingNotFound() {
 // Deletes embedding from the list of embeddings if it is not accepted.
 //
 // Also appends it to the list of such embeddings for logging.
-func (pc *ParsingContext) ResolveEmbeddingNotAccepted() {
+func (pc *ParsingContext) ResolveUnacceptedEmbedding() {
 	currentEmbedding := pc.Embeddings[len(pc.Embeddings)-1]
-	pc.EmbeddingsNotAccepted = append(pc.EmbeddingsNotAccepted, currentEmbedding.Embedding)
+	pc.UnacceptedEmbeddings = append(pc.UnacceptedEmbeddings, currentEmbedding.Embedding)
 	pc.Embeddings = pc.Embeddings[:len(pc.Embeddings)-1]
 	pc.SetEmbedding(nil)
 }
