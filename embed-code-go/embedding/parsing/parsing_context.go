@@ -207,7 +207,7 @@ func (pc ParsingContext) readEmbeddingResult(
 
 // Returns the content of a file placed at filepath as a list of strings.
 func readLines(filepath string) []string {
-	bytes, err := os.ReadFile(filepath) // just pass the file name
+	bytes, err := os.ReadFile(filepath)
 	if err != nil {
 		panic(err)
 	}
