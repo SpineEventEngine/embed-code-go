@@ -22,7 +22,7 @@ import (
 	"embed-code/embed-code-go/embedding_instruction"
 	"fmt"
 	"os"
-	"strings"
+	"regexp"
 )
 
 // Represents an embedding in the parsing context.
@@ -148,7 +148,7 @@ func (pc *ParsingContext) ResolveEmbeddingNotFound() {
 	pc.EmbeddingsNotFound = append(pc.EmbeddingsNotFound, currentEmbedding.Embedding)
 }
 
-// Deletes embedding from the list of embeddings if it is not accepted. 
+// Deletes embedding from the list of embeddings if it is not accepted.
 //
 // Also appends it to the list of such embeddings for logging.
 func (pc *ParsingContext) ResolveEmbeddingNotAccepted() {
@@ -214,8 +214,7 @@ func readLines(filepath string) []string {
 		panic(err)
 	}
 	str := string(bytes)
-	str = strings.ReplaceAll(str, "\r\n", "\n")
-	lines := strings.Split(str, "\n")
+	lines := regexp.MustCompile("\r?\n").Split(str, -1)
 	return lines
 }
 
