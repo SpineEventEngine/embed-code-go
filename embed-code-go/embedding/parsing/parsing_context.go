@@ -63,6 +63,12 @@ type EmbeddingInParsingContext struct {
 // CodeFenceIndentation - an indentation of the markdown's code fences.
 //
 // FileContainsEmbedding - a flag indicating whether the file contains an embedding instruction.
+//
+// Embeddings - a list of embedding instructions found in the markdown file.
+//
+// EmbeddingsNotFound - a list of embedding instructions that are not found in the code.
+//
+// EmbeddingsNotAccepted - a list of embedding instructions that are not accepted by the parser.
 type ParsingContext struct {
 	Embedding             *embedding_instruction.EmbeddingInstruction
 	Source                []string
