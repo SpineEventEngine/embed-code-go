@@ -29,8 +29,8 @@ import "fmt"
 // Name — a name of a Fragment.
 type FragmentBuilder struct {
 	CodeFilePath string
-	Partitions []Partition
-	Name string
+	Partitions   []Partition
+	Name         string
 }
 
 //
@@ -48,7 +48,10 @@ func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 	if len(fragmentBuilder.Partitions) > 0 {
 		lastAddedPartition := fragmentBuilder.Partitions[len(fragmentBuilder.Partitions)-1]
 		if lastAddedPartition.EndPosition == nil {
-			panic("error: the last added partition has no end position")
+			panic(
+				fmt.Sprintf("error: for the fragment \"%s\" of the file \"%s\", the last added partition has no end position",
+					fragmentBuilder.Name,
+					fragmentBuilder.CodeFilePath))
 		}
 	}
 

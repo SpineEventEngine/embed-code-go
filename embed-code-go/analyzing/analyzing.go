@@ -14,7 +14,9 @@ import (
 const analyticsDir = "./build/analytics"
 const embeddingsNotFoundFile = "embeddings-not-found-files.txt"
 const embeddingChangedFile = "embeddings-changed-files.txt"
-const permission = 0644
+
+// Represents read and write permissions for the owner of the file, and read-only permissions for group and others.
+const permission = 0755
 
 // Analyzes all documentation files.
 //

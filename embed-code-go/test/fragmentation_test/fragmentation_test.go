@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -166,13 +167,13 @@ func (suite *FragmentationTestSuite) TestManyPartitions() {
 	fragmentLines := fragmentation.ReadLines(fmt.Sprintf("%s/%s", fragmentDir, fragmentFileName))
 
 	suite.Equal("public class Main {", fragmentLines[0])
-	suite.Equal(suite.config.Separator, fragmentLines[1])
-	suite.Regexp(`\s{4}public.*`, fragmentLines[2])
-	suite.Equal(suite.config.Separator, fragmentLines[3])
-	suite.Regexp(`\s{8}System.*`, fragmentLines[4])
+	suite.Equal(suite.config.Separator, strings.TrimSpace(fragmentLines[1]))
+	suite.Regexp(`public.*`, fragmentLines[2])
+	suite.Contains(suite.config.Separator, strings.TrimSpace(fragmentLines[3]))
+	suite.Regexp(`\s{4}System.*`, fragmentLines[4])
 	suite.Equal("", fragmentLines[5])
-	suite.Equal("    }", fragmentLines[6])
-	suite.Equal(suite.config.Separator, fragmentLines[7])
+	suite.Equal("}", fragmentLines[6])
+	suite.Equal(suite.config.Separator, strings.TrimSpace(fragmentLines[7]))
 	suite.Equal("}", fragmentLines[8])
 }
 

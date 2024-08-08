@@ -35,6 +35,7 @@ func buildConfig() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = "./test/.docs"
 	config.CodeRoot = "./test/resources/code"
+	config.CodeIncludes = []string{"**/Hello.java", "**/Hello.kt"}
 	return config
 }
 
