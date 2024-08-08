@@ -82,7 +82,7 @@ func (fragment Fragment) WriteTo(
 // lines — a list with every line of the file.
 //
 // partitions — a list with partitions to select lines from.
-func calculatePartitionLines(lines []string, partitions []Partition) [][]string {
+func calculatePartitionsTexts(lines []string, partitions []Partition) [][]string {
 	partitionLines := [][]string{}
 	for _, part := range partitions {
 		partitionText := part.Select(lines)
@@ -110,6 +110,16 @@ func calculateCommonIndentation(partitionLines [][]string) int {
 // Private methods
 //
 
+// Returns string indent for separator.
+func calculateSeparatorIndent(lines []string) string {
+	if len(lines) > 0 {
+		firstLine := lines[0]
+		leadingSpaces := len(firstLine) - len(strings.TrimLeft(firstLine, " "))
+		return strings.Repeat(" ", leadingSpaces)
+	}
+	return ""
+}
+
 // Obtains the text for the fragment.
 //
 // The each partition of the fragment is separated with the Configuration.Separator.
@@ -118,20 +128,22 @@ func calculateCommonIndentation(partitionLines [][]string) int {
 //
 // configuration — a configuration for embedding.
 func (fragment Fragment) text(lines []string, configuration configuration.Configuration) string {
-
 	if fragment.isDefault() {
 		return strings.Join(lines, "\n")
 	}
 
-	partitionLines := calculatePartitionLines(lines, fragment.Partitions)
-	commonIndentation := calculateCommonIndentation(partitionLines)
+	partitionsTexts := calculatePartitionsTexts(lines, fragment.Partitions)
 
 	text := ""
-	for index, line := range partitionLines {
+	for index, partitionText := range partitionsTexts {
+		partitionIndentation := indent.MaxCommonIndentation(partitionText)
+		cutIndentLines := indent.CutIndent(partitionText, partitionIndentation)
+
 		if index != 0 {
-			text += configuration.Separator + "\n"
+			separatorIndentation := calculateSeparatorIndent(cutIndentLines)
+			text += separatorIndentation + configuration.Separator + "\n"
 		}
-		cutIndentLines := indent.CutIndent(line, commonIndentation)
+
 		text += strings.Join(cutIndentLines, "\n") + "\n"
 	}
 	return text

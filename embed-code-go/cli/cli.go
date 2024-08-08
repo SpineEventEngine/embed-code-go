@@ -88,7 +88,10 @@ type ConfigFields struct {
 //
 // config — a configuration for checking code samples.
 func CheckCodeSamples(config configuration.Configuration) {
-	fragmentation.WriteFragmentFiles(config)
+	err := fragmentation.WriteFragmentFiles(config)
+	if err != nil {
+		panic(err)
+	}
 	embedding.CheckUpToDate(config)
 }
 
@@ -96,7 +99,10 @@ func CheckCodeSamples(config configuration.Configuration) {
 //
 // config — a configuration for embedding.
 func EmbedCodeSamples(config configuration.Configuration) {
-	fragmentation.WriteFragmentFiles(config)
+	err := fragmentation.WriteFragmentFiles(config)
+	if err != nil {
+		panic(err)
+	}
 	embedding.EmbedAll(config)
 }
 
@@ -104,7 +110,10 @@ func EmbedCodeSamples(config configuration.Configuration) {
 //
 // config — a configuration for embedding.
 func AnalyzeCodeSamples(config configuration.Configuration) {
-	fragmentation.WriteFragmentFiles(config)
+	err := fragmentation.WriteFragmentFiles(config)
+	if err != nil {
+		panic(err)
+	}
 	analyzing.AnalyzeAll(config)
 	fragmentation.CleanFragmentFiles(config)
 }

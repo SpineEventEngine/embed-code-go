@@ -19,10 +19,10 @@
 package parsing
 
 import (
-	"bufio"
 	"embed-code/embed-code-go/embedding_instruction"
 	"fmt"
 	"os"
+	"regexp"
 )
 
 // Represents an embedding in the parsing context.
@@ -63,6 +63,12 @@ type EmbeddingInParsingContext struct {
 // CodeFenceIndentation - an indentation of the markdown's code fences.
 //
 // FileContainsEmbedding - a flag indicating whether the file contains an embedding instruction.
+//
+// Embeddings - a list of embedding instructions found in the markdown file.
+//
+// EmbeddingsNotFound - a list of embedding instructions that are not found in the code.
+//
+// UnacceptedEmbeddings - a list of embedding instructions that are not accepted by the parser.
 type ParsingContext struct {
 	Embedding             *embedding_instruction.EmbeddingInstruction
 	Source                []string
@@ -74,6 +80,7 @@ type ParsingContext struct {
 	FileContainsEmbedding bool
 	Embeddings            []EmbeddingInParsingContext
 	EmbeddingsNotFound    []embedding_instruction.EmbeddingInstruction
+	UnacceptedEmbeddings  []embedding_instruction.EmbeddingInstruction
 }
 
 //
@@ -147,6 +154,16 @@ func (pc *ParsingContext) ResolveEmbeddingNotFound() {
 	pc.EmbeddingsNotFound = append(pc.EmbeddingsNotFound, currentEmbedding.Embedding)
 }
 
+// Deletes embedding from the list of embeddings if it is not accepted.
+//
+// Also appends it to the list of such embeddings for logging.
+func (pc *ParsingContext) ResolveUnacceptedEmbedding() {
+	currentEmbedding := pc.Embeddings[len(pc.Embeddings)-1]
+	pc.UnacceptedEmbeddings = append(pc.UnacceptedEmbeddings, currentEmbedding.Embedding)
+	pc.Embeddings = pc.Embeddings[:len(pc.Embeddings)-1]
+	pc.SetEmbedding(nil)
+}
+
 // Sets an embedding to ParsingContext.
 //
 // Also sets FileContainsEmbedding flag.
@@ -198,20 +215,12 @@ func (pc ParsingContext) readEmbeddingResult(
 
 // Returns the content of a file placed at filepath as a list of strings.
 func readLines(filepath string) []string {
-	file, err := os.Open(filepath)
+	bytes, err := os.ReadFile(filepath)
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
-
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		panic(err)
-	}
+	str := string(bytes)
+	lines := regexp.MustCompile("\r?\n").Split(str, -1)
 	return lines
 }
 
