@@ -148,7 +148,9 @@ func (pc *ParsingContext) ResolveEmbeddingNotFound() {
 	pc.EmbeddingsNotFound = append(pc.EmbeddingsNotFound, currentEmbedding.Embedding)
 }
 
-// Writes the source content of the markdown file if embedding is not accepted.
+// Deletes embedding from the list of embeddings if it is not accepted. 
+//
+// Also appends it to the list of such embeddings for logging.
 func (pc *ParsingContext) ResolveEmbeddingNotAccepted() {
 	currentEmbedding := pc.Embeddings[len(pc.Embeddings)-1]
 	pc.EmbeddingsNotAccepted = append(pc.EmbeddingsNotAccepted, currentEmbedding.Embedding)
