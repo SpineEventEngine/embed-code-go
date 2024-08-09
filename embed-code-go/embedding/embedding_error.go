@@ -42,15 +42,15 @@ func (err EmbeddingError) Error() string {
 		errorString += embeddingsNotFoundStr
 	}
 
-	if len(err.Context.EmbeddingsNotAccepted) > 0 {
-		embeddingsNotAcceptedStr := "\nEmbeddings not accepted: \n"
-		for _, emb := range err.Context.EmbeddingsNotAccepted {
-			embeddingsNotAcceptedStr += fmt.Sprintf(
+	if len(err.Context.UnacceptedEmbeddings) > 0 {
+		unacceptedEmbbeddingsStr := "\nUnaccepted embeddings: \n"
+		for _, emb := range err.Context.UnacceptedEmbeddings {
+			unacceptedEmbbeddingsStr += fmt.Sprintf(
 				"%s — %s\n",
 				emb.CodeFile,
 				emb.Fragment)
 		}
-		errorString += embeddingsNotAcceptedStr
+		errorString += unacceptedEmbbeddingsStr
 	}
 	return errorString
 }
