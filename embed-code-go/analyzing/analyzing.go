@@ -55,7 +55,6 @@ func extractAnalyticsForDocs(
 	config configuration.Configuration,
 	docFiles []string,
 ) (changedEmbeddingsLines []string, problemEmbeddingsLines []string) {
-
 	for _, docFile := range docFiles {
 		processor := embedding.NewEmbeddingProcessor(docFile, config)
 		changedEmbeddings, err := processor.FindChangedEmbeddings()

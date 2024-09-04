@@ -44,7 +44,6 @@ type FragmentBuilder struct {
 //
 // startPosition — starting position of the fragment.
 func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
-
 	if len(fragmentBuilder.Partitions) > 0 {
 		lastAddedPartition := fragmentBuilder.Partitions[len(fragmentBuilder.Partitions)-1]
 		if lastAddedPartition.EndPosition == nil {

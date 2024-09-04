@@ -72,7 +72,6 @@ const (
 //   - fragments_dir — a path to a directory with code fragments. Default value is "./build/fragments";
 //   - separator — a string which is used as a separator between code fragments. Default value is "...".
 func main() {
-
 	userArgs := cli.ReadArgs()
 
 	validationMessage := cli.Validate(userArgs)
