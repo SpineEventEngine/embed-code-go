@@ -1,7 +1,6 @@
+# This file holds the configs for the linters, and it should be placed in the current working directory.
 run:
-  concurrency: 4
   timeout: 5m
-  issues-exit-code: 2
   tests: true
   modules-download-mode: readonly
   allow-parallel-runners: true
@@ -9,6 +8,7 @@ run:
   go: '1.22.1'
 linters:
   enable:
+    # Reference doc with available linters and description for the linters below: https://golangci-lint.run/usage/linters/
     # Default
     - errcheck
     - gosimple
