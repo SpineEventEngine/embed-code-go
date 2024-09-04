@@ -5,7 +5,6 @@ run:
   tests: false
   modules-download-mode: readonly
   allow-parallel-runners: true
-  allow-serial-runners: true
   go: '1.22.1'
 linters:
   enable:
@@ -77,3 +76,10 @@ linters:
     # (configuration, embedding) which will be done separately.
     - gochecknoglobals
   fast: false
+issues:
+  # Default values allow for the showing of only 50 issues.
+  # Setting it to 0 disables the default config and shows all issues at once.
+  max-issues-per-linter: 0
+  # Default values allow showing only 3 repeating issues.
+  # Setting it to 0 disables the default config and shows all repeating issues at once.
+  max-same-issues: 0
