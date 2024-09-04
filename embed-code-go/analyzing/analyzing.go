@@ -51,10 +51,9 @@ func findDocumentationFiles(config configuration.Configuration) []string {
 
 // Returns a list of embeddings that are not up-to-date with their code files.
 // Also returns a list of embeddings which cause an error.
-func extractAnalyticsForDocs(
-	config configuration.Configuration,
-	docFiles []string,
-) (changedEmbeddingsLines []string, problemEmbeddingsLines []string) {
+func extractAnalyticsForDocs(config configuration.Configuration, docFiles []string) ([]string, []string) {
+	var changedEmbeddingsLines, problemEmbeddingsLines []string
+
 	for _, docFile := range docFiles {
 		processor := embedding.NewEmbeddingProcessor(docFile, config)
 		changedEmbeddings, err := processor.FindChangedEmbeddings()
@@ -73,5 +72,5 @@ func extractAnalyticsForDocs(
 		}
 	}
 
-	return
+	return changedEmbeddingsLines, problemEmbeddingsLines
 }
