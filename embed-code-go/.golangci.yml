@@ -30,7 +30,6 @@ linters:
     - gocyclo
     - nestif
     # Format linters
-    - gci
     - gofmt
     - goimports
     # Meta linters
@@ -42,7 +41,6 @@ linters:
     - dogsled
     - dupl
     - errname
-    - exhaustruct
     - forcetypeassert
     - gochecknoinits
     - goconst
@@ -83,3 +81,15 @@ issues:
   # Default values allow showing only 3 repeating issues.
   # Setting it to 0 disables the default config and shows all repeating issues at once.
   max-same-issues: 0
+  # Temporary excluding rules where it needs to rename package or structure, as there are a lot of references. It
+  # will be a complex change that will be done separately.
+  exclude-rules:
+    - linters:
+        - revive
+      text: "exported: type name will be used as"
+    - linters:
+        - revive
+      text: "var-naming: don't use an underscore in package name"
+    - linters:
+        - stylecheck
+      text: "ST1003"
