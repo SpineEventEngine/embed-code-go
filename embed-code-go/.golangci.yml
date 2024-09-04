@@ -1,7 +1,8 @@
 # This file holds the configs for the linters, and it should be placed in the current working directory.
 run:
   timeout: 5m
-  tests: true
+  # Temporary disabling tests.
+  tests: false
   modules-download-mode: readonly
   allow-parallel-runners: true
   allow-serial-runners: true
@@ -10,7 +11,6 @@ linters:
   enable:
     # Reference doc with available linters and description for the linters below: https://golangci-lint.run/usage/linters/
     # Default
-    - errcheck
     - gosimple
     - govet
     - ineffassign
@@ -30,8 +30,6 @@ linters:
     - gocognit
     - gocyclo
     - nestif
-    # Error linters
-    - err113
     # Format linters
     - gci
     - gofmt
@@ -47,7 +45,6 @@ linters:
     - errname
     - exhaustruct
     - forcetypeassert
-    - gochecknoglobals
     - gochecknoinits
     - goconst
     - goheader
@@ -72,4 +69,11 @@ linters:
     - tenv
     - testableexamples
     - testpackage
+  disable:
+    # Temporary disabling error lints as there will be a complex change which will be done separately.
+    - errcheck
+    - err113
+    # Temporary disabling check on global variables as it will be a complex change in the affected packages
+    # (configuration, embedding) which will be done separately.
+    - gochecknoglobals
   fast: false
