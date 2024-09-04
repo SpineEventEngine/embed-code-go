@@ -97,7 +97,7 @@ func CopyFile(sourceFilePath string, targetFilePath string) (err error) {
 		return
 	}
 
-	readWritePermission := 666
+	var readWritePermission uint32 = 0666
 	err = os.Chmod(targetFilePath, os.FileMode(readWritePermission))
 
 	return
