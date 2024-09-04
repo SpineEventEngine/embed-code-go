@@ -55,7 +55,7 @@ func (c CodeFenceStart) Recognize(context ParsingContext) bool {
 // config — a configuration of the embedding.
 //
 // This implementation never returns an error.
-func (c CodeFenceStart) Accept(context *ParsingContext, config configuration.Configuration) error {
+func (c CodeFenceStart) Accept(context *ParsingContext, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.CodeFenceStarted = true

@@ -91,7 +91,7 @@ func lookup(line string, prefix string) []string {
 		}
 
 		return unquotedFragmentNames
-	} else {
-		return []string{}
 	}
+
+	return []string{}
 }

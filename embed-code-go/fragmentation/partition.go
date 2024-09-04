@@ -42,7 +42,7 @@ type Partition struct {
 func (partition Partition) Select(lines []string) []string {
 	if partition.EndPosition == nil {
 		return lines[*partition.StartPosition:]
-	} else {
-		return lines[*partition.StartPosition : *partition.EndPosition+1]
 	}
+
+	return lines[*partition.StartPosition : *partition.EndPosition+1]
 }
