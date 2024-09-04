@@ -129,6 +129,7 @@ func (fragmentFile FragmentFile) absolutePath() string {
 	} else {
 		withoutExtension := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
 		filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.calculateFragmentHash())
+
 		return filepath.Join(fragmentsAbsDir, filename+fileExtension)
 	}
 }
@@ -141,5 +142,6 @@ func (fragmentFile FragmentFile) calculateFragmentHash() string {
 	hash := sha1.New()
 	hash.Write([]byte(fragmentFile.FragmentName))
 	sha1_hash := hex.EncodeToString(hash.Sum(nil))[:8]
+
 	return sha1_hash
 }

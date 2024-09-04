@@ -115,6 +115,7 @@ func FromXML(line string, config configuration.Configuration) (EmbeddingInstruct
 	if err != nil {
 		return EmbeddingInstruction{}, err
 	}
+
 	return NewEmbeddingInstruction(fields, config)
 }
 
@@ -140,8 +141,10 @@ func (e EmbeddingInstruction) Content() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return e.matchingLines(fileContent), nil
 	}
+
 	return file.Content()
 }
 
@@ -169,6 +172,7 @@ func (e EmbeddingInstruction) matchingLines(lines []string) []string {
 	}
 	requiredLines := lines[startPosition : endPosition+1]
 	indentation := indent.MaxCommonIndentation(requiredLines)
+
 	return indent.CutIndent(requiredLines, indentation)
 }
 

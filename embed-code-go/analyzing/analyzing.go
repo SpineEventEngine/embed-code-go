@@ -45,6 +45,7 @@ func findDocumentationFiles(config configuration.Configuration) []string {
 		}
 		documentationFiles = append(documentationFiles, matches...)
 	}
+
 	return documentationFiles
 }
 
@@ -72,5 +73,6 @@ func extractAnalyticsForDocs(
 			}
 		}
 	}
+
 	return
 }

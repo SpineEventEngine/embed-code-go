@@ -45,6 +45,7 @@ func IsFileExists(filePath string) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	}
+
 	return err == nil, err
 }
 
@@ -67,6 +68,7 @@ func ReadLines(filePath string) []string {
 		}
 		lines = append(lines, string(line))
 	}
+
 	return lines
 }
 
@@ -92,5 +94,6 @@ func BuildDocRelativePath(absolutePath string, config configuration.Configuratio
 	if err != nil {
 		panic(err)
 	}
+
 	return absolutePath
 }

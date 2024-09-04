@@ -53,5 +53,6 @@ func (err EmbeddingError) Error() string {
 		}
 		errorString += unacceptedEmbbeddingsStr
 	}
+
 	return errorString
 }

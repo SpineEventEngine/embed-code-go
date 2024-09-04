@@ -89,6 +89,7 @@ func calculatePartitionsTexts(lines []string, partitions []Partition) [][]string
 		partitionText := part.Select(lines)
 		partitionLines = append(partitionLines, partitionText)
 	}
+
 	return partitionLines
 }
 
@@ -104,6 +105,7 @@ func calculateCommonIndentation(partitionLines [][]string) int {
 			commonIndentation = indentation
 		}
 	}
+
 	return commonIndentation
 }
 
@@ -116,8 +118,10 @@ func calculateSeparatorIndent(lines []string) string {
 	if len(lines) > 0 {
 		firstLine := lines[0]
 		leadingSpaces := len(firstLine) - len(strings.TrimLeft(firstLine, " "))
+
 		return strings.Repeat(" ", leadingSpaces)
 	}
+
 	return ""
 }
 
@@ -147,6 +151,7 @@ func (fragment Fragment) text(lines []string, configuration configuration.Config
 
 		text += strings.Join(cutIndentLines, "\n") + "\n"
 	}
+
 	return text
 }
 

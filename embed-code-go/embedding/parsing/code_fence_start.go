@@ -40,6 +40,7 @@ func (c CodeFenceStart) Recognize(context ParsingContext) bool {
 	if !context.ReachedEOF() {
 		return strings.HasPrefix(strings.TrimSpace(context.CurrentLine()), "```")
 	}
+
 	return false
 }
 
@@ -61,5 +62,6 @@ func (c CodeFenceStart) Accept(context *ParsingContext, config configuration.Con
 	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
 	context.CodeFenceIndentation = leadingSpaces
 	context.ToNextLine()
+
 	return nil
 }

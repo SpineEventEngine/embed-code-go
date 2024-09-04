@@ -50,5 +50,6 @@ func (r RegularLine) Accept(context *ParsingContext, config configuration.Config
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()
+
 	return nil
 }

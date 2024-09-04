@@ -79,6 +79,7 @@ func main() {
 	if validationMessage != "" {
 		fmt.Println("Validation error:")
 		fmt.Println(validationMessage)
+
 		return
 	}
 
@@ -87,6 +88,7 @@ func main() {
 		if validationMessage != "" {
 			fmt.Println("Configuration file validation error:")
 			fmt.Println(validationMessage)
+
 			return
 		}
 		userArgs = cli.FillArgsFromConfigFile(userArgs)

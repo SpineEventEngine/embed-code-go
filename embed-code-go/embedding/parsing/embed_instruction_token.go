@@ -44,6 +44,7 @@ func (e EmbedInstructionToken) Recognize(context ParsingContext) bool {
 	if context.Embedding == nil && !context.ReachedEOF() && isStatement {
 		return true
 	}
+
 	return false
 }
 
@@ -74,5 +75,6 @@ func (e EmbedInstructionToken) Accept(context *ParsingContext, config configurat
 	if context.Embedding == nil {
 		return fmt.Errorf("failed to parse an embedding instruction. Context: %v", context)
 	}
+
 	return nil
 }

@@ -66,6 +66,7 @@ func unquoteName(quotedName string) string {
 	r, _ := regexp.Compile("\"(.*)\"")
 	nameQuoted := r.FindString(quotedName)
 	nameCleaned, _ := strconv.Unquote(nameQuoted)
+
 	return nameCleaned
 }
 
@@ -88,6 +89,7 @@ func lookup(line string, prefix string) []string {
 			unquotedFragmentName := unquoteName(quotedFragmentName)
 			unquotedFragmentNames = append(unquotedFragmentNames, unquotedFragmentName)
 		}
+
 		return unquotedFragmentNames
 	} else {
 		return []string{}

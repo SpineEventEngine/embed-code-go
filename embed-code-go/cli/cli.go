@@ -195,6 +195,7 @@ func ValidateConfigFile(configFilePath string) string {
 	if configFields.CodeRoot == "" || configFields.DocsRoot == "" {
 		return "Config must include both code_root and docs_root fields."
 	}
+
 	return validationMessage
 }
 
@@ -220,6 +221,7 @@ func FillArgsFromConfigFile(args Args) Args {
 	if configFields.Separator != "" {
 		args.Separator = configFields.Separator
 	}
+
 	return args
 }
 
@@ -244,6 +246,7 @@ func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
 	if userArgs.Separator != "" {
 		embedCodeConfig.Separator = userArgs.Separator
 	}
+
 	return embedCodeConfig
 }
 
@@ -260,6 +263,7 @@ func parseListArgument(listArgument string) []string {
 			parsedArgs = append(parsedArgs, trimmed)
 		}
 	}
+
 	return parsedArgs
 }
 
