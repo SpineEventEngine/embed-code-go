@@ -19,7 +19,7 @@
 package fragmentation
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -84,7 +84,8 @@ func NewFragmentFileFromAbsolute(
 func (fragmentFile FragmentFile) Write(text string) {
 	byteStr := []byte(text)
 	filePath := fragmentFile.absolutePath()
-	os.WriteFile(filePath, byteStr, 0777)
+	var writePermission uint32 = 0600
+	os.WriteFile(filePath, byteStr, os.FileMode(writePermission))
 }
 
 // Reads content of the file.
@@ -137,7 +138,7 @@ func (fragmentFile FragmentFile) absolutePath() string {
 // Since fragments which have the same name unite into one
 // fragment with multiple partitions, the name of a fragment is unique.
 func (fragmentFile FragmentFile) calculateFragmentHash() string {
-	hash := sha1.New()
+	hash := sha256.New()
 	hash.Write([]byte(fragmentFile.FragmentName))
 	sha1Hash := hex.EncodeToString(hash.Sum(nil))[:8]
 
