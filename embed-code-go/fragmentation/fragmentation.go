@@ -147,6 +147,7 @@ func (fragmentation Fragmentation) WriteFragments() error {
 		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name, fragmentation.Configuration)
 		fragment.WriteTo(fragmentFile, allLines, fragmentation.Configuration)
 	}
+
 	return nil
 }
 
@@ -182,6 +183,7 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -264,6 +266,7 @@ func (fragmentation Fragmentation) parseLine(
 	} else {
 		contentToRender = append(contentToRender, line)
 	}
+
 	return contentToRender, fragmentBuilders, nil
 }
 
@@ -280,5 +283,6 @@ func (fragmentation Fragmentation) targetDirectory() string {
 		panic(fmt.Sprintf("error calculating relative path: %v", err))
 	}
 	subTree := filepath.Dir(relativeFile)
+
 	return filepath.Join(fragmentsDir, subTree)
 }

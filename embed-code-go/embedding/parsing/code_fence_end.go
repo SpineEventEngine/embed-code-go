@@ -42,8 +42,10 @@ type CodeFenceEnd struct{}
 func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 	if !context.ReachedEOF() {
 		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
+
 		return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
 	}
+
 	return false
 }
 
@@ -67,6 +69,7 @@ func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Confi
 	context.CodeFenceStarted = false
 	context.CodeFenceIndentation = 0
 	context.ToNextLine()
+
 	return err
 }
 
@@ -88,5 +91,6 @@ func renderSample(context *ParsingContext) error {
 		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
 		context.Result = append(context.Result, indentation+line)
 	}
+
 	return nil
 }

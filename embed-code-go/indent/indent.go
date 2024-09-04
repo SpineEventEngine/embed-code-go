@@ -65,5 +65,6 @@ func CutIndent(lines []string, redundantSpaces int) []string {
 			linesChanged[i] = line[redundantSpaces:]
 		}
 	}
+
 	return linesChanged
 }

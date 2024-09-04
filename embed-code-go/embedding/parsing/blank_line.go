@@ -36,6 +36,7 @@ func (b BlankLine) Recognize(context ParsingContext) bool {
 	if !context.ReachedEOF() && strings.TrimSpace(context.CurrentLine()) == "" {
 		return !context.CodeFenceStarted && context.Embedding != nil
 	}
+
 	return false
 }
 
@@ -48,5 +49,6 @@ func (b BlankLine) Accept(context *ParsingContext, config configuration.Configur
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()
+
 	return nil
 }

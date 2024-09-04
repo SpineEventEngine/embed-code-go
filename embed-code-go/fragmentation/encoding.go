@@ -54,5 +54,6 @@ func IsEncodedAsText(filePath string) bool {
 
 	isUTF8Encoded := areUTF8Encoded(content)
 	isASCIIEncoded := areASCIIEncoded(content)
+
 	return isUTF8Encoded || isASCIIEncoded
 }

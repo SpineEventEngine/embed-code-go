@@ -89,6 +89,7 @@ func (ep EmbeddingProcessor) Embed() error {
 			return EmbeddingError{Context: context}
 		}
 	}
+
 	return nil
 }
 
@@ -111,6 +112,7 @@ func (ep EmbeddingProcessor) IsUpToDate() bool {
 	if err != nil {
 		panic(err)
 	}
+
 	return !context.IsContentChanged()
 }
 
@@ -146,6 +148,7 @@ func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error
 					isErrorFaced = true
 				}
 				accepted = true
+
 				break
 			}
 		}

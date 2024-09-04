@@ -48,5 +48,6 @@ func (c CodeSampleLine) Recognize(context ParsingContext) bool {
 // This implementation never returns an error.
 func (c CodeSampleLine) Accept(context *ParsingContext, config configuration.Configuration) error {
 	context.ToNextLine()
+
 	return nil
 }

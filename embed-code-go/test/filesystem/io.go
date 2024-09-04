@@ -98,5 +98,6 @@ func CopyFile(source_file_path string, target_file_path string) (err error) {
 	}
 
 	err = os.Chmod(target_file_path, os.FileMode(0666))
+
 	return
 }

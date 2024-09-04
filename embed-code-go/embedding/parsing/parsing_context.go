@@ -126,6 +126,7 @@ func (pc ParsingContext) IsContentChanged() bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -139,6 +140,7 @@ func (pc ParsingContext) FindChangedEmbeddings() []embedding_instruction.Embeddi
 			changedEmbeddings = append(changedEmbeddings, embedding.Embedding)
 		}
 	}
+
 	return changedEmbeddings
 }
 
@@ -222,6 +224,7 @@ func readLines(filepath string) []string {
 	}
 	str := string(bytes)
 	lines := regexp.MustCompile("\r?\n").Split(str, -1)
+
 	return lines
 }
 
@@ -234,5 +237,6 @@ func isStringSlicesEqual(first, second []string) bool {
 			return false
 		}
 	}
+
 	return true
 }
