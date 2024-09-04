@@ -130,7 +130,6 @@ func (fragmentFile FragmentFile) absolutePath() string {
 	filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.calculateFragmentHash())
 
 	return filepath.Join(fragmentsAbsDir, filename+fileExtension)
-
 }
 
 // Calculates and returns a hash string for FragmentFile.

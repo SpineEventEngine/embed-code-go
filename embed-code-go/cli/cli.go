@@ -28,6 +28,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/fragmentation"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -149,6 +150,8 @@ func ReadArgs() Args {
 // If everything is ok, returns an empty string.
 //
 // userArgs — a struct with user-provided args.
+// Temporary disabling cyclop as this function is planned to be refactored.
+// nolint:cyclop
 func Validate(userArgs Args) string {
 	isModeSet := userArgs.Mode != ""
 	isRootsSet := userArgs.CodeRoot != "" && userArgs.DocsRoot != ""

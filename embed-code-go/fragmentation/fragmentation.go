@@ -42,6 +42,7 @@ import (
 	"path/filepath"
 
 	"embed-code/embed-code-go/configuration"
+
 	"github.com/bmatcuk/doublestar/v4"
 )
 
@@ -233,6 +234,8 @@ func ShouldFragmentize(filePath string) bool {
 // positions of it's items updated.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
+// Temporary disabling gocritic and nestif as this function is planned to be refactored.
+// nolint:gocritic
 func (fragmentation Fragmentation) parseLine(
 	line string, contentToRender []string,
 	fragmentBuilders map[string]*FragmentBuilder,
@@ -242,6 +245,7 @@ func (fragmentation Fragmentation) parseLine(
 	fragmentStarts := FindFragmentOpenings(line)
 	fragmentEnds := FindFragmentEndings(line)
 
+	// nolint:nestif
 	if len(fragmentStarts) > 0 {
 		for _, fragmentName := range fragmentStarts {
 			fragment, exists := fragmentBuilders[fragmentName]

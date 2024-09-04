@@ -39,7 +39,8 @@ const (
 // Embedding is the process that consists of the following steps:
 //   - the code fragments are extracted from the code files;
 //   - the docs files are scanned for <embed-code> tags;
-//   - for each tag, the code fragments are embedded into the docs. The embedding is parametrized with the tag attributes.
+//   - for each tag, the code fragments are embedded into the docs. The embedding is parametrized with
+//     the tag attributes.
 //
 // Checking for up-to-date is the process that consists of the following steps:
 //   - the code fragments are extracted from the code files;
@@ -95,12 +96,13 @@ func main() {
 
 	config := cli.BuildEmbedCodeConfiguration(userArgs)
 
-	if userArgs.Mode == ModeCheck {
+	switch userArgs.Mode {
+	case ModeCheck:
 		cli.CheckCodeSamples(config)
-	} else if userArgs.Mode == ModeEmbed {
+	case ModeEmbed:
 		cli.EmbedCodeSamples(config)
 		cli.CheckCodeSamples(config)
-	} else if userArgs.Mode == ModeAnalyze {
+	case ModeAnalyze:
 		cli.AnalyzeCodeSamples(config)
 	}
 }
