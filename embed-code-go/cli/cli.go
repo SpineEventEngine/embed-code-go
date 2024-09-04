@@ -229,7 +229,6 @@ func FillArgsFromConfigFile(args Args) Args {
 //
 // userArgs — a struct with user-provided args.
 func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
-
 	embedCodeConfig := configuration.NewConfiguration()
 	embedCodeConfig.CodeRoot = userArgs.CodeRoot
 	embedCodeConfig.DocumentationRoot = userArgs.DocsRoot

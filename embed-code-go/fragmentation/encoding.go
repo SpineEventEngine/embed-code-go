@@ -45,7 +45,6 @@ func areASCIIEncoded(bytes []byte) bool {
 //
 // If file encoded in ASCII or UTF-8, it is meant to be a text file.
 func IsEncodedAsText(filePath string) bool {
-
 	// Read the entire file into memory.
 	content, err := os.ReadFile(filePath)
 	if err != nil {

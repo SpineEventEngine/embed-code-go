@@ -71,7 +71,6 @@ func NewFragmentation(
 	codeFileRelative string,
 	config configuration.Configuration,
 ) Fragmentation {
-
 	fragmentation := Fragmentation{}
 
 	sourcesRootRelative := config.CodeRoot

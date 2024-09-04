@@ -58,7 +58,6 @@ func NewFragmentFileFromAbsolute(
 	fragmentName string,
 	configuration configuration.Configuration,
 ) FragmentFile {
-
 	absoluteCodeRoot, err := filepath.Abs(configuration.CodeRoot)
 	if err != nil {
 		panic(err)
@@ -117,7 +116,6 @@ func (fragmentFile FragmentFile) String() string {
 
 // Obtains the absolute path to this fragment file.
 func (fragmentFile FragmentFile) absolutePath() string {
-
 	fileExtension := filepath.Ext(fragmentFile.CodeFile)
 	fragmentsAbsDir, err := filepath.Abs(fragmentFile.Configuration.FragmentsDir)
 	if err != nil {

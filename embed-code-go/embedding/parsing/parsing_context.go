@@ -202,13 +202,11 @@ func (pc ParsingContext) String() string {
 
 func (pc ParsingContext) readEmbeddingSource(
 	embeddingInParsingContext EmbeddingInParsingContext) []string {
-
 	return pc.Source[embeddingInParsingContext.SourceStartLineIndex : embeddingInParsingContext.SourceEndLineIndex+1]
 }
 
 func (pc ParsingContext) readEmbeddingResult(
 	embeddingInParsingContext EmbeddingInParsingContext) []string {
-
 	return pc.Result[embeddingInParsingContext.ResultStartLineIndex : embeddingInParsingContext.ResultEndLineIndex+1]
 }
 
