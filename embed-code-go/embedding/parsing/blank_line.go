@@ -45,7 +45,7 @@ func (b BlankLine) Recognize(context ParsingContext) bool {
 // Appends the current line of the context to the result, and moves to the next line.
 //
 // This implementation never returns an error.
-func (b BlankLine) Accept(context *ParsingContext, config configuration.Configuration) error {
+func (b BlankLine) Accept(context *ParsingContext, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()

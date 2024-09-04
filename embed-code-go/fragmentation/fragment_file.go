@@ -100,9 +100,9 @@ func (fragmentFile FragmentFile) Content() ([]string, error) {
 
 	if isPathFileExits {
 		return ReadLines(path), nil
-	} else {
-		return nil, fmt.Errorf("file %s doesn't exist", path)
 	}
+
+	return nil, fmt.Errorf("file %s doesn't exist", path)
 }
 
 // Returns string representation of FragmentFile.
@@ -124,12 +124,13 @@ func (fragmentFile FragmentFile) absolutePath() string {
 
 	if fragmentFile.FragmentName == DefaultFragmentName {
 		return filepath.Join(fragmentsAbsDir, fragmentFile.CodeFile)
-	} else {
-		withoutExtension := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
-		filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.calculateFragmentHash())
-
-		return filepath.Join(fragmentsAbsDir, filename+fileExtension)
 	}
+
+	withoutExtension := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
+	filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.calculateFragmentHash())
+
+	return filepath.Join(fragmentsAbsDir, filename+fileExtension)
+
 }
 
 // Calculates and returns a hash string for FragmentFile.
@@ -139,7 +140,7 @@ func (fragmentFile FragmentFile) absolutePath() string {
 func (fragmentFile FragmentFile) calculateFragmentHash() string {
 	hash := sha1.New()
 	hash.Write([]byte(fragmentFile.FragmentName))
-	sha1_hash := hex.EncodeToString(hash.Sum(nil))[:8]
+	sha1Hash := hex.EncodeToString(hash.Sum(nil))[:8]
 
-	return sha1_hash
+	return sha1Hash
 }

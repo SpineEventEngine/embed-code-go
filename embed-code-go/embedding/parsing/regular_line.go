@@ -34,7 +34,7 @@ type RegularLine struct{}
 // Every line can be considered as a regular line.
 //
 // context — a context of the parsing process.
-func (r RegularLine) Recognize(context ParsingContext) bool {
+func (r RegularLine) Recognize(_ ParsingContext) bool {
 	return true
 }
 
@@ -46,7 +46,7 @@ func (r RegularLine) Recognize(context ParsingContext) bool {
 // config — a configuration of the embedding.
 //
 // This implementation never returns an error.
-func (r RegularLine) Accept(context *ParsingContext, config configuration.Configuration) error {
+func (r RegularLine) Accept(context *ParsingContext, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()

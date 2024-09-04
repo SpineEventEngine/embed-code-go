@@ -159,7 +159,7 @@ func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error
 		}
 	}
 
-	var err error = nil
+	var err error
 	if isErrorFaced {
 		err = constructEmbeddingError
 	}

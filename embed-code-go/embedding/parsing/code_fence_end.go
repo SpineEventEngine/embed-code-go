@@ -57,7 +57,7 @@ func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 // config — a configuration of the embedding.
 //
 // Returns an error if the rendering was not successful.
-func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Configuration) error {
+func (c CodeFenceEnd) Accept(context *ParsingContext, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	err := renderSample(context)
 	context.SetEmbedding(nil)
