@@ -32,8 +32,9 @@ func areUTF8Encoded(bytes []byte) bool {
 //
 // If all the characters fall within the ASCII range (0 to 127), it’s likely an ASCII-encoded file.
 func areASCIIEncoded(bytes []byte) bool {
+	lastAsciiChar := byte(127)
 	for _, char := range bytes {
-		if char > 127 {
+		if char > lastAsciiChar {
 			return false
 		}
 	}
