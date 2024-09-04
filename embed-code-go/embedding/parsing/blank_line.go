@@ -19,8 +19,9 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/configuration"
 	"strings"
+
+	"embed-code/embed-code-go/configuration"
 )
 
 // Represents a blank line of a markdown.

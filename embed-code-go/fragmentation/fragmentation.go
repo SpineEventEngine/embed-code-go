@@ -37,11 +37,11 @@ package fragmentation
 
 import (
 	"bufio"
-	"embed-code/embed-code-go/configuration"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"embed-code/embed-code-go/configuration"
 	"github.com/bmatcuk/doublestar/v4"
 )
 

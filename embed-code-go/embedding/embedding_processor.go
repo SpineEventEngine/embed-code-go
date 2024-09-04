@@ -19,14 +19,14 @@
 package embedding
 
 import (
-	"embed-code/embed-code-go/configuration"
-	"embed-code/embed-code-go/embedding/parsing"
-	"embed-code/embed-code-go/embedding_instruction"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding/parsing"
+	"embed-code/embed-code-go/embedding_instruction"
 	"github.com/bmatcuk/doublestar/v4"
 )
 

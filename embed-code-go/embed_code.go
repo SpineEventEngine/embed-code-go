@@ -19,8 +19,9 @@
 package main
 
 import (
-	"embed-code/embed-code-go/cli"
 	"fmt"
+
+	"embed-code/embed-code-go/cli"
 )
 
 const (

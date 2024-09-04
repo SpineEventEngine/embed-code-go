@@ -19,10 +19,11 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/embedding_instruction"
 	"fmt"
 	"os"
 	"regexp"
+
+	"embed-code/embed-code-go/embedding_instruction"
 )
 
 // Represents an embedding in the parsing context.

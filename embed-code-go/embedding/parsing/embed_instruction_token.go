@@ -19,11 +19,11 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/configuration"
-
-	"embed-code/embed-code-go/embedding_instruction"
 	"fmt"
 	"strings"
+
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding_instruction"
 )
 
 // Represents an embedding instruction token of a markdown.
