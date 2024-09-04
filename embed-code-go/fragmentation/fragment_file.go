@@ -20,12 +20,13 @@ package fragmentation
 
 import (
 	"crypto/sha1"
-	"embed-code/embed-code-go/configuration"
 	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"embed-code/embed-code-go/configuration"
 )
 
 // A file storing a single fragment from the file.

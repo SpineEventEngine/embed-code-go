@@ -19,10 +19,11 @@
 package embedding_instruction
 
 import (
+	"fmt"
+
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/fragmentation"
 	"embed-code/embed-code-go/indent"
-	"fmt"
 )
 
 // Specifies the code fragment to embed into a Markdown file, and the embedding parameters.

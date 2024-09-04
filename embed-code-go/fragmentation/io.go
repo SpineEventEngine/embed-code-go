@@ -20,9 +20,10 @@ package fragmentation
 
 import (
 	"bufio"
-	"embed-code/embed-code-go/configuration"
 	"os"
 	"path/filepath"
+
+	"embed-code/embed-code-go/configuration"
 )
 
 // Creates dir at given dirPath if it doesn't exist.

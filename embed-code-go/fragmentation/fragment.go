@@ -19,10 +19,11 @@
 package fragmentation
 
 import (
-	"embed-code/embed-code-go/configuration"
-	"embed-code/embed-code-go/indent"
 	"math"
 	"strings"
+
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/indent"
 )
 
 const (

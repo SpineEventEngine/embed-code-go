@@ -19,16 +19,15 @@
 package cli
 
 import (
+	"flag"
+	"fmt"
+	"os"
+	"strings"
+
 	"embed-code/embed-code-go/analyzing"
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/fragmentation"
-	"flag"
-	"fmt"
-	"strings"
-
-	"os"
-
 	"gopkg.in/yaml.v3"
 )
 
