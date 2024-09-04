@@ -19,7 +19,6 @@
 package fragmentation
 
 import (
-	"math"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
@@ -91,22 +90,6 @@ func calculatePartitionsTexts(lines []string, partitions []Partition) [][]string
 	}
 
 	return partitionLines
-}
-
-// Calculates and returns common indentation on which it is possible to trim the lines
-// without any harm.
-//
-// partitionLines — a list which contains corresponding lines for every parition.
-func calculateCommonIndentation(partitionLines [][]string) int {
-	commonIndentation := math.MaxInt32
-	for _, partitionText := range partitionLines {
-		indentation := indent.MaxCommonIndentation(partitionText)
-		if indentation < commonIndentation {
-			commonIndentation = indentation
-		}
-	}
-
-	return commonIndentation
 }
 
 //
