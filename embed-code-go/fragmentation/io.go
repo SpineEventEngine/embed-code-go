@@ -88,7 +88,7 @@ func WriteLinesToFile(filepath string, lines []string) {
 	}
 }
 
-// Builds a relative path for documentation file with a given config
+// Builds a relative path for documentation file with a given config.
 func BuildDocRelativePath(absolutePath string, config configuration.Configuration) string {
 	absolutePath, err := filepath.Rel(config.DocumentationRoot, absolutePath)
 	if err != nil {
