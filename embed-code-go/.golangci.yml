@@ -1,0 +1,77 @@
+run:
+  concurrency: 4
+  timeout: 5m
+  issues-exit-code: 2
+  tests: false
+  build-tags:
+    - mytag
+  modules-download-mode: readonly
+  allow-parallel-runners: true
+  allow-serial-runners: true
+  go: '1.22.1'
+linters:
+  enable:
+    # Default
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # Bug linters
+    - errorlint
+    - gosec
+    - gosmopolitan
+    - nilerr
+    - testifylint
+    # Comment linters
+    - godot
+    # Complexity linters
+    - cyclop
+    - funlen
+    - gocognit
+    - gocyclo
+    - nestif
+    # Error linters
+    - err113
+    # Format linters
+    - gci
+    - gofmt
+    - goimports
+    # Meta linters
+    - gocritic
+    - revive
+    - staticcheck
+    # Style linters
+    - copyloopvar
+    - dogsled
+    - dupl
+    - errname
+    - exhaustruct
+    - forcetypeassert
+    - gochecknoglobals
+    - gochecknoinits
+    - goconst
+    - goheader
+    - inamedparam
+    - ireturn
+    - lll
+    - makezero
+    - misspell
+    - mnd
+    - nilnil
+    - nlreturn
+    - nonamedreturns
+    - stylecheck
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - varnamelen
+    - wastedassign
+    - whitespace
+    # Test linters
+    - ginkgolinter
+    - tenv
+    - testableexamples
+    - testpackage
+  fast: false
