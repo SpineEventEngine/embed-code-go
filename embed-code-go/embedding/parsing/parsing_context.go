@@ -171,12 +171,13 @@ func (pc *ParsingContext) ResolveUnacceptedEmbedding() {
 //
 // Also sets FileContainsEmbedding flag.
 func (pc *ParsingContext) SetEmbedding(embedding *embedding_instruction.EmbeddingInstruction) {
+	indexIncrease := 2 // +2 for instruction and code fence.
 	if embedding != nil {
 		pc.FileContainsEmbedding = true
 		pc.Embeddings = append(pc.Embeddings, EmbeddingInParsingContext{
 			Embedding:            *embedding,
-			SourceStartLineIndex: pc.LineIndex + 2,   // +2 for instruction and code fence.
-			ResultStartLineIndex: len(pc.Result) + 2, // +2 for instruction and code fence.
+			SourceStartLineIndex: pc.LineIndex + indexIncrease,
+			ResultStartLineIndex: len(pc.Result) + indexIncrease,
 		})
 	} else {
 		pc.Embeddings[len(pc.Embeddings)-1].SourceEndLineIndex = pc.LineIndex
