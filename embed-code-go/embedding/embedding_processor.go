@@ -27,10 +27,12 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/parsing"
 	"embed-code/embed-code-go/embedding_instruction"
+
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-// Represents read, write, and execute permissions for owner, while allowing the group and others to read and execute it.
+// Represents read, write, and execute permissions for owner, while allowing the group and others
+// to read and execute it.
 const filePermission = 0755
 
 // The EmbeddingProcessor entity processes a single documentation file and embeds code snippets
@@ -101,9 +103,9 @@ func (ep EmbeddingProcessor) FindChangedEmbeddings() ([]embedding_instruction.Em
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
 		return changedEmbeddings, EmbeddingError{Context: context}
-	} else {
-		return changedEmbeddings, nil
 	}
+
+	return changedEmbeddings, nil
 }
 
 // Reports whether the embedding of the target markdown is up-to-date with the code file.

@@ -65,7 +65,8 @@ type EmbeddingInstruction struct {
 // config — a Configuration with all embed-code settings.
 //
 // Returns an error if the instruction is wrong.
-func NewEmbeddingInstruction(attributes map[string]string, config configuration.Configuration) (EmbeddingInstruction, error) {
+func NewEmbeddingInstruction(
+	attributes map[string]string, config configuration.Configuration) (EmbeddingInstruction, error) {
 	codeFile := attributes["file"]
 	fragment := attributes["fragment"]
 	startValue := attributes["start"]
@@ -99,7 +100,8 @@ func NewEmbeddingInstruction(attributes map[string]string, config configuration.
 //
 // line — a line which contains '<embed-code>' XML tag.
 // For example: '<embed-code file="org/example/Hello.java" fragment="Hello class"/>'.
-// The line can also contain closing tag: '<embed-code file=\"org/example/Hello.java\" fragment=\"Hello class\"></embed-code>'.
+// The line can also contain closing tag:
+// '<embed-code file=\"org/example/Hello.java\" fragment=\"Hello class\"></embed-code>'.
 // The following parameters are currently supported:
 //   - file — a mandatory relative path to the file with the code;
 //   - fragment — an optional name of the particular fragment in the code. If no fragment is specified,

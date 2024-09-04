@@ -63,7 +63,7 @@ func FindFragmentEndings(line string) []string {
 
 // Returns the unquoted name from given quotedName.
 func unquoteName(quotedName string) string {
-	r, _ := regexp.Compile("\"(.*)\"")
+	r := regexp.MustCompile("\"(.*)\"")
 	nameQuoted := r.FindString(quotedName)
 	nameCleaned, _ := strconv.Unquote(nameQuoted)
 
