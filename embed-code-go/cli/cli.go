@@ -74,7 +74,7 @@ type Args struct {
 
 // Needed for yaml.Unmarshal to parse into.
 type ConfigFields struct {
-	CodeRoot     string `yaml:"code_root"`
+	CodeRoot     string `yaml:"code-path"`
 	DocsRoot     string `yaml:"docs_root"`
 	CodeIncludes string `yaml:"code_includes"`
 	DocIncludes  string `yaml:"doc_includes"`
@@ -124,7 +124,7 @@ func AnalyzeCodeSamples(config configuration.Configuration) {
 //
 // Returns an Args struct filled with the corresponding args.
 func ReadArgs() Args {
-	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
+	codeRoot := flag.String("code-path", "", "a path to a root directory with code files")
 	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
 	codeIncludes := flag.String("code_includes", "",
 		"a comma-separated string of glob patterns for code files to include")
@@ -172,13 +172,13 @@ func ValidateArgs(userArgs Args) error {
 		return errors.New("mode must be set")
 	}
 	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
-		return errors.New("config path cannot be set when code_root, docs_root or optional params are set")
+		return errors.New("config path cannot be set when code-path, docs_root or optional params are set")
 	}
 	if isOneOfRootsSet && !isRootsSet {
-		return errors.New("if one of code_root and docs_root is set, the another one must be set as well")
+		return errors.New("if one of code-path and docs_root is set, the another one must be set as well")
 	}
 	if !(isRootsSet || isConfigSet) {
-		return errors.New("embed code should be used with either config_file_path or both code_root and docs_root being set")
+		return errors.New("embed code should be used with either config_file_path or both code-path and docs_root being set")
 	}
 
 	return nil
@@ -202,7 +202,7 @@ func ValidateConfigFile(configFilePath string) string {
 	}
 	configFields := readConfigFields(configFilePath)
 	if configFields.CodeRoot == "" || configFields.DocsRoot == "" {
-		return "Config must include both code_root and docs_root fields."
+		return "Config must include both code-path and docs_root fields."
 	}
 
 	return validationMessage

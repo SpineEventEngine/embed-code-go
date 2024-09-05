@@ -99,7 +99,7 @@ func (suite *CLITestSuite) TestDocsRootMissed() {
 		Mode:     "embed",
 	}
 	validation_message := cli.ValidateArgs(args)
-	suite.Equal("If one of code_root and docs_root is set, the another one must be set as well.",
+	suite.Equal("If one of code-path and docs_root is set, the another one must be set as well.",
 		validation_message)
 }
 
@@ -111,7 +111,7 @@ func (suite *CLITestSuite) TestConfigAndRootDirsSet() {
 		ConfigFilePath: "config.yaml",
 	}
 	validation_message := cli.ValidateArgs(args)
-	suite.Equal("Config path cannot be set when code_root, docs_root or optional params are set.",
+	suite.Equal("Config path cannot be set when code-path, docs_root or optional params are set.",
 		validation_message)
 }
 
@@ -148,7 +148,7 @@ func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
 	suite.Equal("", validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)
-	suite.Equal("Config must include both code_root and docs_root fields.", config_file_validation_message)
+	suite.Equal("Config must include both code-path and docs_root fields.", config_file_validation_message)
 }
 
 func TestCLITestSuite(t *testing.T) {
