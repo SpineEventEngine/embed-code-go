@@ -19,10 +19,10 @@
 package fragmentation
 
 import (
+	"strings"
+
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/indent"
-	"math"
-	"strings"
 )
 
 const (
@@ -88,22 +88,8 @@ func calculatePartitionsTexts(lines []string, partitions []Partition) [][]string
 		partitionText := part.Select(lines)
 		partitionLines = append(partitionLines, partitionText)
 	}
-	return partitionLines
-}
 
-// Calculates and returns common indentation on which it is possible to trim the lines
-// without any harm.
-//
-// partitionLines — a list which contains corresponding lines for every parition.
-func calculateCommonIndentation(partitionLines [][]string) int {
-	commonIndentation := math.MaxInt32
-	for _, partitionText := range partitionLines {
-		indentation := indent.MaxCommonIndentation(partitionText)
-		if indentation < commonIndentation {
-			commonIndentation = indentation
-		}
-	}
-	return commonIndentation
+	return partitionLines
 }
 
 //
@@ -115,8 +101,10 @@ func calculateSeparatorIndent(lines []string) string {
 	if len(lines) > 0 {
 		firstLine := lines[0]
 		leadingSpaces := len(firstLine) - len(strings.TrimLeft(firstLine, " "))
+
 		return strings.Repeat(" ", leadingSpaces)
 	}
+
 	return ""
 }
 
@@ -146,6 +134,7 @@ func (fragment Fragment) text(lines []string, configuration configuration.Config
 
 		text += strings.Join(cutIndentLines, "\n") + "\n"
 	}
+
 	return text
 }
 

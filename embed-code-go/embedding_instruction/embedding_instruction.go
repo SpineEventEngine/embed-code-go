@@ -19,25 +19,27 @@
 package embedding_instruction
 
 import (
+	"fmt"
+
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/fragmentation"
 	"embed-code/embed-code-go/indent"
-	"fmt"
 )
 
 // Specifies the code fragment to embed into a Markdown file, and the embedding parameters.
 //
 // Takes form of an XML processing instruction <embed-code file="..." fragment="..."/>.
 //
-// CodeFile — a path to a code file to embed. The path is relative to
-// Configuration.CodeRoot dir.
+// CodeFile — a path to a code file to embed. The path is relative to Configuration.CodeRoot dir.
 //
 // Fragment — name of the particular fragment in the code. If Fragment is empty,
 // the whole file is embedded.
 //
-// StartPattern — an optional glob-like pattern. If specified, lines before the matching one are excluded.
+// StartPattern — an optional glob-like pattern. If specified, lines before the matching one
+// are excluded.
 //
-// EndPattern — an optional glob-like pattern. If specified, lines after the matching one are excluded.
+// EndPattern — an optional glob-like pattern. If specified, lines after the matching one
+// are excluded.
 //
 // Configuration — a Configuration with all embed-code settings.
 type EmbeddingInstruction struct {
@@ -56,22 +58,25 @@ type EmbeddingInstruction struct {
 //
 // attributes — a map with string-typed both keys and values. Possible keys are:
 //   - file — a mandatory relative path to the file with the code;
-//   - fragment — an optional name of the particular fragment in the code. If no fragment is specified,
-//     the whole file is embedded;
-//   - start — an optional glob-like pattern. If specified, lines before the matching one are excluded;
+//   - fragment — an optional name of the particular fragment in the code. If no fragment
+//     is specified, the whole file is embedded;
+//   - start — an optional glob-like pattern. If specified, lines before the matching one
+//     are excluded;
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
 //
 // config — a Configuration with all embed-code settings.
 //
 // Returns an error if the instruction is wrong.
-func NewEmbeddingInstruction(attributes map[string]string, config configuration.Configuration) (EmbeddingInstruction, error) {
+func NewEmbeddingInstruction(
+	attributes map[string]string, config configuration.Configuration) (EmbeddingInstruction, error) {
 	codeFile := attributes["file"]
 	fragment := attributes["fragment"]
 	startValue := attributes["start"]
 	endValue := attributes["end"]
 
 	if fragment != "" && (startValue != "" || endValue != "") {
-		return EmbeddingInstruction{}, fmt.Errorf("<embed-code> must NOT specify both a fragment name and start/end patterns")
+		return EmbeddingInstruction{},
+			fmt.Errorf("<embed-code> must NOT specify both a fragment name and start/end patterns")
 	}
 	var end *Pattern
 	var start *Pattern
@@ -98,12 +103,14 @@ func NewEmbeddingInstruction(attributes map[string]string, config configuration.
 //
 // line — a line which contains '<embed-code>' XML tag.
 // For example: '<embed-code file="org/example/Hello.java" fragment="Hello class"/>'.
-// The line can also contain closing tag: '<embed-code file=\"org/example/Hello.java\" fragment=\"Hello class\"></embed-code>'.
+// The line can also contain closing tag:
+// '<embed-code file=\"org/example/Hello.java\" fragment=\"Hello class\"></embed-code>'.
 // The following parameters are currently supported:
 //   - file — a mandatory relative path to the file with the code;
-//   - fragment — an optional name of the particular fragment in the code. If no fragment is specified,
-//     the whole file is embedded;
-//   - start — an optional glob-like pattern. If specified, lines before the matching one are excluded;
+//   - fragment — an optional name of the particular fragment in the code. If no fragment
+//     is specified, the whole file is embedded;
+//   - start — an optional glob-like pattern. If specified, lines before the matching one
+//     are excluded;
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
 //
 // config — a Configuration with all embed-code settings.
@@ -114,6 +121,7 @@ func FromXML(line string, config configuration.Configuration) (EmbeddingInstruct
 	if err != nil {
 		return EmbeddingInstruction{}, err
 	}
+
 	return NewEmbeddingInstruction(fields, config)
 }
 
@@ -139,8 +147,10 @@ func (e EmbeddingInstruction) Content() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return e.matchingLines(fileContent), nil
 	}
+
 	return file.Content()
 }
 
@@ -168,6 +178,7 @@ func (e EmbeddingInstruction) matchingLines(lines []string) []string {
 	}
 	requiredLines := lines[startPosition : endPosition+1]
 	indentation := indent.MaxCommonIndentation(requiredLines)
+
 	return indent.CutIndent(requiredLines, indentation)
 }
 

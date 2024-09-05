@@ -44,12 +44,12 @@ type FragmentBuilder struct {
 //
 // startPosition — starting position of the fragment.
 func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
-
 	if len(fragmentBuilder.Partitions) > 0 {
 		lastAddedPartition := fragmentBuilder.Partitions[len(fragmentBuilder.Partitions)-1]
 		if lastAddedPartition.EndPosition == nil {
 			panic(
-				fmt.Sprintf("error: for the fragment \"%s\" of the file \"%s\", the last added partition has no end position",
+				fmt.Sprintf("error: for the fragment \"%s\" of the file \"%s\", "+
+					"the last added partition has no end position",
 					fragmentBuilder.Name,
 					fragmentBuilder.CodeFilePath))
 		}

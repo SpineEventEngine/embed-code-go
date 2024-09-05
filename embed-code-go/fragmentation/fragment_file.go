@@ -19,13 +19,14 @@
 package fragmentation
 
 import (
-	"crypto/sha1"
-	"embed-code/embed-code-go/configuration"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"embed-code/embed-code-go/configuration"
 )
 
 // A file storing a single fragment from the file.
@@ -57,7 +58,6 @@ func NewFragmentFileFromAbsolute(
 	fragmentName string,
 	configuration configuration.Configuration,
 ) FragmentFile {
-
 	absoluteCodeRoot, err := filepath.Abs(configuration.CodeRoot)
 	if err != nil {
 		panic(err)
@@ -84,7 +84,8 @@ func NewFragmentFileFromAbsolute(
 func (fragmentFile FragmentFile) Write(text string) {
 	byteStr := []byte(text)
 	filePath := fragmentFile.absolutePath()
-	os.WriteFile(filePath, byteStr, 0777)
+	var writePermission uint32 = 0600
+	os.WriteFile(filePath, byteStr, os.FileMode(writePermission))
 }
 
 // Reads content of the file.
@@ -100,9 +101,9 @@ func (fragmentFile FragmentFile) Content() ([]string, error) {
 
 	if isPathFileExits {
 		return ReadLines(path), nil
-	} else {
-		return nil, fmt.Errorf("file %s doesn't exist", path)
 	}
+
+	return nil, fmt.Errorf("file %s doesn't exist", path)
 }
 
 // Returns string representation of FragmentFile.
@@ -116,7 +117,6 @@ func (fragmentFile FragmentFile) String() string {
 
 // Obtains the absolute path to this fragment file.
 func (fragmentFile FragmentFile) absolutePath() string {
-
 	fileExtension := filepath.Ext(fragmentFile.CodeFile)
 	fragmentsAbsDir, err := filepath.Abs(fragmentFile.Configuration.FragmentsDir)
 	if err != nil {
@@ -125,11 +125,12 @@ func (fragmentFile FragmentFile) absolutePath() string {
 
 	if fragmentFile.FragmentName == DefaultFragmentName {
 		return filepath.Join(fragmentsAbsDir, fragmentFile.CodeFile)
-	} else {
-		withoutExtension := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
-		filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.calculateFragmentHash())
-		return filepath.Join(fragmentsAbsDir, filename+fileExtension)
 	}
+
+	withoutExtension := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
+	filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.calculateFragmentHash())
+
+	return filepath.Join(fragmentsAbsDir, filename+fileExtension)
 }
 
 // Calculates and returns a hash string for FragmentFile.
@@ -137,8 +138,9 @@ func (fragmentFile FragmentFile) absolutePath() string {
 // Since fragments which have the same name unite into one
 // fragment with multiple partitions, the name of a fragment is unique.
 func (fragmentFile FragmentFile) calculateFragmentHash() string {
-	hash := sha1.New()
+	hash := sha256.New()
 	hash.Write([]byte(fragmentFile.FragmentName))
-	sha1_hash := hex.EncodeToString(hash.Sum(nil))[:8]
-	return sha1_hash
+	sha1Hash := hex.EncodeToString(hash.Sum(nil))[:8]
+
+	return sha1Hash
 }

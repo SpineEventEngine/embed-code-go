@@ -79,6 +79,7 @@ func NewPattern(glob string) Pattern {
 	if endOfLine {
 		pattern = pattern[:len(pattern)-1]
 	}
+
 	return Pattern{
 		sourceGlob: glob,
 		pattern:    pattern,
@@ -94,6 +95,7 @@ func NewPattern(glob string) Pattern {
 // line — a line to check the match for.
 func (p Pattern) Match(line string) bool {
 	g := glob.MustCompile(p.pattern)
+
 	return g.Match(line)
 }
 

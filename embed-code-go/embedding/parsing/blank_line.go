@@ -19,8 +19,9 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/configuration"
 	"strings"
+
+	"embed-code/embed-code-go/configuration"
 )
 
 // Represents a blank line of a markdown.
@@ -35,6 +36,7 @@ func (b BlankLine) Recognize(context ParsingContext) bool {
 	if !context.ReachedEOF() && strings.TrimSpace(context.CurrentLine()) == "" {
 		return !context.CodeFenceStarted && context.Embedding != nil
 	}
+
 	return false
 }
 
@@ -43,9 +45,10 @@ func (b BlankLine) Recognize(context ParsingContext) bool {
 // Appends the current line of the context to the result, and moves to the next line.
 //
 // This implementation never returns an error.
-func (b BlankLine) Accept(context *ParsingContext, config configuration.Configuration) error {
+func (b BlankLine) Accept(context *ParsingContext, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()
+
 	return nil
 }

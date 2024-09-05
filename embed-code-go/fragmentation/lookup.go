@@ -63,9 +63,10 @@ func FindFragmentEndings(line string) []string {
 
 // Returns the unquoted name from given quotedName.
 func unquoteName(quotedName string) string {
-	r, _ := regexp.Compile("\"(.*)\"")
+	r := regexp.MustCompile("\"(.*)\"")
 	nameQuoted := r.FindString(quotedName)
 	nameCleaned, _ := strconv.Unquote(nameQuoted)
+
 	return nameCleaned
 }
 
@@ -81,15 +82,17 @@ func unquoteName(quotedName string) string {
 // Returns the list of the names found.
 func lookup(line string, prefix string) []string {
 	if strings.Contains(line, prefix) {
-		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1 // 1 for trailing space after the prefix.
+		// 1 for trailing space after the prefix.
+		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1
 		unquotedFragmentNames := []string{}
 		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {
 			quotedFragmentName := strings.Trim(fragmentName, "\n\t ")
 			unquotedFragmentName := unquoteName(quotedFragmentName)
 			unquotedFragmentNames = append(unquotedFragmentNames, unquotedFragmentName)
 		}
+
 		return unquotedFragmentNames
-	} else {
-		return []string{}
 	}
+
+	return []string{}
 }

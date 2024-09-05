@@ -19,18 +19,20 @@
 package embedding
 
 import (
-	"embed-code/embed-code-go/configuration"
-	"embed-code/embed-code-go/embedding/parsing"
-	"embed-code/embed-code-go/embedding_instruction"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding/parsing"
+	"embed-code/embed-code-go/embedding_instruction"
+
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-// Represents read, write, and execute permissions for owner, while allowing the group and others to read and execute it.
+// Represents read, write, and execute permissions for owner, while allowing the group and others
+// to read and execute it.
 const filePermission = 0755
 
 // The EmbeddingProcessor entity processes a single documentation file and embeds code snippets
@@ -89,20 +91,22 @@ func (ep EmbeddingProcessor) Embed() error {
 			return EmbeddingError{Context: context}
 		}
 	}
+
 	return nil
 }
 
 // Returns the list of EmbeddingInstruction that are changed in the markdown file.
 //
 // If any problems during the embedding construction faced, an error is returned.
-func (ep EmbeddingProcessor) FindChangedEmbeddings() ([]embedding_instruction.EmbeddingInstruction, error) {
+func (ep EmbeddingProcessor) FindChangedEmbeddings() (
+	[]embedding_instruction.EmbeddingInstruction, error) {
 	context, err := ep.constructEmbedding()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
 		return changedEmbeddings, EmbeddingError{Context: context}
-	} else {
-		return changedEmbeddings, nil
 	}
+
+	return changedEmbeddings, nil
 }
 
 // Reports whether the embedding of the target markdown is up-to-date with the code file.
@@ -111,6 +115,7 @@ func (ep EmbeddingProcessor) IsUpToDate() bool {
 	if err != nil {
 		panic(err)
 	}
+
 	return !context.IsContentChanged()
 }
 
@@ -131,7 +136,8 @@ func (ep EmbeddingProcessor) IsUpToDate() bool {
 func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error) {
 	context := parsing.NewParsingContext(ep.DocFile)
 	isErrorFaced := false
-	errorStr := fmt.Sprintf("an error was occurred during embedding construction for doc file `%s`", ep.DocFile)
+	errorStr := fmt.Sprintf(
+		"an error was occurred during embedding construction for doc file `%s`", ep.DocFile)
 	var constructEmbeddingError = errors.New(errorStr)
 
 	currentState := "START"
@@ -146,6 +152,7 @@ func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error
 					isErrorFaced = true
 				}
 				accepted = true
+
 				break
 			}
 		}
@@ -156,7 +163,7 @@ func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error
 		}
 	}
 
-	var err error = nil
+	var err error
 	if isErrorFaced {
 		err = constructEmbeddingError
 	}

@@ -19,8 +19,9 @@
 package embedding
 
 import (
-	"embed-code/embed-code-go/embedding/parsing"
 	"fmt"
+
+	"embed-code/embed-code-go/embedding/parsing"
 )
 
 // Describes an error which occurs if something goes wrong during embedding.
@@ -52,5 +53,6 @@ func (err EmbeddingError) Error() string {
 		}
 		errorString += unacceptedEmbbeddingsStr
 	}
+
 	return errorString
 }

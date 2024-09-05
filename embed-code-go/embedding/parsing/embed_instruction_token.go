@@ -19,11 +19,11 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/configuration"
-
-	"embed-code/embed-code-go/embedding_instruction"
 	"fmt"
 	"strings"
+
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding_instruction"
 )
 
 // Represents an embedding instruction token of a markdown.
@@ -44,6 +44,7 @@ func (e EmbedInstructionToken) Recognize(context ParsingContext) bool {
 	if context.Embedding == nil && !context.ReachedEOF() && isStatement {
 		return true
 	}
+
 	return false
 }
 
@@ -55,8 +56,9 @@ func (e EmbedInstructionToken) Recognize(context ParsingContext) bool {
 // config — a configuration of the embedding.
 //
 // An error is returned if the building of the embedding instruction fails.
-func (e EmbedInstructionToken) Accept(context *ParsingContext, config configuration.Configuration) error {
-	instructionBody := []string{}
+func (e EmbedInstructionToken) Accept(context *ParsingContext,
+	config configuration.Configuration) error {
+	var instructionBody []string
 	for !context.ReachedEOF() {
 		instructionBody = append(instructionBody, context.CurrentLine())
 
@@ -74,5 +76,6 @@ func (e EmbedInstructionToken) Accept(context *ParsingContext, config configurat
 	if context.Embedding == nil {
 		return fmt.Errorf("failed to parse an embedding instruction. Context: %v", context)
 	}
+
 	return nil
 }

@@ -19,10 +19,11 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/embedding_instruction"
 	"fmt"
 	"os"
 	"regexp"
+
+	"embed-code/embed-code-go/embedding_instruction"
 )
 
 // Represents an embedding in the parsing context.
@@ -125,6 +126,7 @@ func (pc ParsingContext) IsContentChanged() bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -138,6 +140,7 @@ func (pc ParsingContext) FindChangedEmbeddings() []embedding_instruction.Embeddi
 			changedEmbeddings = append(changedEmbeddings, embedding.Embedding)
 		}
 	}
+
 	return changedEmbeddings
 }
 
@@ -168,12 +171,14 @@ func (pc *ParsingContext) ResolveUnacceptedEmbedding() {
 //
 // Also sets FileContainsEmbedding flag.
 func (pc *ParsingContext) SetEmbedding(embedding *embedding_instruction.EmbeddingInstruction) {
+	// TODO:2024-09-05:olena-zmiiova: https://github.com/SpineEventEngine/embed-code/issues/48
+	indexIncrease := 2 // +2 for instruction and code fence.
 	if embedding != nil {
 		pc.FileContainsEmbedding = true
 		pc.Embeddings = append(pc.Embeddings, EmbeddingInParsingContext{
 			Embedding:            *embedding,
-			SourceStartLineIndex: pc.LineIndex + 2,   // +2 for instruction and code fence.
-			ResultStartLineIndex: len(pc.Result) + 2, // +2 for instruction and code fence.
+			SourceStartLineIndex: pc.LineIndex + indexIncrease,
+			ResultStartLineIndex: len(pc.Result) + indexIncrease,
 		})
 	} else {
 		pc.Embeddings[len(pc.Embeddings)-1].SourceEndLineIndex = pc.LineIndex
@@ -197,16 +202,12 @@ func (pc ParsingContext) String() string {
 // Private methods
 //
 
-func (pc ParsingContext) readEmbeddingSource(
-	embeddingInParsingContext EmbeddingInParsingContext) []string {
-
-	return pc.Source[embeddingInParsingContext.SourceStartLineIndex : embeddingInParsingContext.SourceEndLineIndex+1]
+func (pc ParsingContext) readEmbeddingSource(context EmbeddingInParsingContext) []string {
+	return pc.Source[context.SourceStartLineIndex : context.SourceEndLineIndex+1]
 }
 
-func (pc ParsingContext) readEmbeddingResult(
-	embeddingInParsingContext EmbeddingInParsingContext) []string {
-
-	return pc.Result[embeddingInParsingContext.ResultStartLineIndex : embeddingInParsingContext.ResultEndLineIndex+1]
+func (pc ParsingContext) readEmbeddingResult(context EmbeddingInParsingContext) []string {
+	return pc.Result[context.ResultStartLineIndex : context.ResultEndLineIndex+1]
 }
 
 //
@@ -221,6 +222,7 @@ func readLines(filepath string) []string {
 	}
 	str := string(bytes)
 	lines := regexp.MustCompile("\r?\n").Split(str, -1)
+
 	return lines
 }
 
@@ -233,5 +235,6 @@ func isStringSlicesEqual(first, second []string) bool {
 			return false
 		}
 	}
+
 	return true
 }

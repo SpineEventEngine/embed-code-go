@@ -32,8 +32,9 @@ func areUTF8Encoded(bytes []byte) bool {
 //
 // If all the characters fall within the ASCII range (0 to 127), it’s likely an ASCII-encoded file.
 func areASCIIEncoded(bytes []byte) bool {
+	lastASCIIChar := 127
 	for _, char := range bytes {
-		if char > 127 {
+		if char > byte(lastASCIIChar) {
 			return false
 		}
 	}
@@ -45,7 +46,6 @@ func areASCIIEncoded(bytes []byte) bool {
 //
 // If file encoded in ASCII or UTF-8, it is meant to be a text file.
 func IsEncodedAsText(filePath string) bool {
-
 	// Read the entire file into memory.
 	content, err := os.ReadFile(filePath)
 	if err != nil {
@@ -54,5 +54,6 @@ func IsEncodedAsText(filePath string) bool {
 
 	isUTF8Encoded := areUTF8Encoded(content)
 	isASCIIEncoded := areASCIIEncoded(content)
+
 	return isUTF8Encoded || isASCIIEncoded
 }

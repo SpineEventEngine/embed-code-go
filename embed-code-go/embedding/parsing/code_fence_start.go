@@ -19,8 +19,9 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/configuration"
 	"strings"
+
+	"embed-code/embed-code-go/configuration"
 )
 
 // Represents the start of a code fence.
@@ -39,6 +40,7 @@ func (c CodeFenceStart) Recognize(context ParsingContext) bool {
 	if !context.ReachedEOF() {
 		return strings.HasPrefix(strings.TrimSpace(context.CurrentLine()), "```")
 	}
+
 	return false
 }
 
@@ -53,12 +55,13 @@ func (c CodeFenceStart) Recognize(context ParsingContext) bool {
 // config — a configuration of the embedding.
 //
 // This implementation never returns an error.
-func (c CodeFenceStart) Accept(context *ParsingContext, config configuration.Configuration) error {
+func (c CodeFenceStart) Accept(context *ParsingContext, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.CodeFenceStarted = true
 	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
 	context.CodeFenceIndentation = leadingSpaces
 	context.ToNextLine()
+
 	return nil
 }
