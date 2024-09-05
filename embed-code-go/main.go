@@ -54,7 +54,7 @@ const (
 // Embed code also needs root directories to be set.
 // There are two options to set them:
 //   - code-path and docs-path args, in this case roots are read directly from provided paths;
-//   - config_file_path arg, in this case roots are read from the given config file.
+//   - config-path arg, in this case roots are read from the given config file.
 //
 // If both options are missed, the embedding fails.
 // If both options are set, the embedding fails as well.
@@ -64,18 +64,18 @@ const (
 // All possible args:
 //   - code-path — a path to a root directory with code files;
 //   - docs-path — a path to a root directory with docs files;
-//   - config_file_path — a path to a yaml configuration file;
+//   - config-path — a path to a yaml configuration file;
 //   - mode — string which represents the mode of embed-code execution. if it is set to 'check',
 //     then the checking for up-to-date is performed. If it is set to 'embed', the embedding
 //     is performed.
 //     If it is set to 'analyze', the analyzing is performed;
-//   - code_includes — a comma-separated string of glob patterns for code files to include.
+//   - code-includes — a comma-separated string of glob patterns for code files to include.
 //     For example:
 //     "**/*.java,**/*.gradle". Default value is "**/*.*";
-//   - doc_includes — a comma-separated string of glob patterns for docs files to include.
+//   - doc-includes — a comma-separated string of glob patterns for docs files to include.
 //     For example:
 //     "docs/**/*.md,guides/*.html". Default value is "**/*.md,**/*.html";
-//   - fragments_dir — a path to a directory with code fragments. Default value is
+//   - fragments-path — a path to a directory with code fragments. Default value is
 //     "./build/fragments";
 //   - separator — a string which is used as a separator between code fragments. Default value
 //     is "...".
