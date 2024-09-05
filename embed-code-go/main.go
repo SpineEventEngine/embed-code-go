@@ -53,17 +53,17 @@ const (
 //
 // Embed code also needs root directories to be set.
 // There are two options to set them:
-//   - code-path and docs_root args, in this case roots are read directly from provided paths;
+//   - code-path and docs-path args, in this case roots are read directly from provided paths;
 //   - config_file_path arg, in this case roots are read from the given config file.
 //
 // If both options are missed, the embedding fails.
 // If both options are set, the embedding fails as well.
-// If config file is not exists or does not contain 'code-path' and 'docs_root' fields, the
+// If config file is not exists or does not contain 'code-path' and 'docs-path' fields, the
 // embedding fails.
 //
 // All possible args:
 //   - code-path — a path to a root directory with code files;
-//   - docs_root — a path to a root directory with docs files;
+//   - docs-path — a path to a root directory with docs files;
 //   - config_file_path — a path to a yaml configuration file;
 //   - mode — string which represents the mode of embed-code execution. if it is set to 'check',
 //     then the checking for up-to-date is performed. If it is set to 'embed', the embedding
