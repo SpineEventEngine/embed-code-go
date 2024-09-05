@@ -45,9 +45,9 @@ func MaxCommonIndentation(lines []string) int {
 
 	if indent == math.MaxInt32 {
 		return 0
-	} else {
-		return indent
 	}
+
+	return indent
 }
 
 // Reduces indentation to given redundantSpaces amount.
@@ -65,5 +65,6 @@ func CutIndent(lines []string, redundantSpaces int) []string {
 			linesChanged[i] = line[redundantSpaces:]
 		}
 	}
+
 	return linesChanged
 }

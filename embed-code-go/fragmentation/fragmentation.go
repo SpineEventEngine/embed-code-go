@@ -37,10 +37,11 @@ package fragmentation
 
 import (
 	"bufio"
-	"embed-code/embed-code-go/configuration"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"embed-code/embed-code-go/configuration"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -71,7 +72,6 @@ func NewFragmentation(
 	codeFileRelative string,
 	config configuration.Configuration,
 ) Fragmentation {
-
 	fragmentation := Fragmentation{}
 
 	sourcesRootRelative := config.CodeRoot
@@ -114,7 +114,8 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		contentToRender, fragmentBuilders, err = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
+		contentToRender, fragmentBuilders, err =
+			fragmentation.parseLine(line, contentToRender, fragmentBuilders)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -144,9 +145,11 @@ func (fragmentation Fragmentation) WriteFragments() error {
 	EnsureDirExists(fragmentation.targetDirectory())
 
 	for _, fragment := range fragments {
-		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name, fragmentation.Configuration)
+		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name,
+			fragmentation.Configuration)
 		fragment.WriteTo(fragmentFile, allLines, fragmentation.Configuration)
 	}
+
 	return nil
 }
 
@@ -182,6 +185,7 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -232,6 +236,9 @@ func ShouldFragmentize(filePath string) bool {
 // positions of it's items updated.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
+// TODO:2024-09-05:olena-zmiiova: Temporary disabling gocritic and nestif as this function is
+// planned to be refactored. See https://github.com/SpineEventEngine/embed-code/issues/47
+// nolint:gocritic
 func (fragmentation Fragmentation) parseLine(
 	line string, contentToRender []string,
 	fragmentBuilders map[string]*FragmentBuilder,
@@ -241,6 +248,7 @@ func (fragmentation Fragmentation) parseLine(
 	fragmentStarts := FindFragmentOpenings(line)
 	fragmentEnds := FindFragmentEndings(line)
 
+	// nolint:nestif
 	if len(fragmentStarts) > 0 {
 		for _, fragmentName := range fragmentStarts {
 			fragment, exists := fragmentBuilders[fragmentName]
@@ -256,14 +264,15 @@ func (fragmentation Fragmentation) parseLine(
 			if fragment, exists := fragmentBuilders[fragmentName]; exists {
 				fragment.AddEndPosition(cursor - 1)
 			} else {
-				return nil, nil, fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
-					fragmentName,
-					fragmentation.CodeFile)
+				return nil, nil,
+					fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
+						fragmentName, fragmentation.CodeFile)
 			}
 		}
 	} else {
 		contentToRender = append(contentToRender, line)
 	}
+
 	return contentToRender, fragmentBuilders, nil
 }
 
@@ -280,5 +289,6 @@ func (fragmentation Fragmentation) targetDirectory() string {
 		panic(fmt.Sprintf("error calculating relative path: %v", err))
 	}
 	subTree := filepath.Dir(relativeFile)
+
 	return filepath.Join(fragmentsDir, subTree)
 }

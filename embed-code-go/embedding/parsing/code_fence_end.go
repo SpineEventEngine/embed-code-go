@@ -19,8 +19,9 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/configuration"
 	"strings"
+
+	"embed-code/embed-code-go/configuration"
 )
 
 //
@@ -41,8 +42,10 @@ type CodeFenceEnd struct{}
 func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 	if !context.ReachedEOF() {
 		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
+
 		return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
 	}
+
 	return false
 }
 
@@ -54,7 +57,7 @@ func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
 // config — a configuration of the embedding.
 //
 // Returns an error if the rendering was not successful.
-func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Configuration) error {
+func (c CodeFenceEnd) Accept(context *ParsingContext, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	err := renderSample(context)
 	context.SetEmbedding(nil)
@@ -66,6 +69,7 @@ func (c CodeFenceEnd) Accept(context *ParsingContext, config configuration.Confi
 	context.CodeFenceStarted = false
 	context.CodeFenceIndentation = 0
 	context.ToNextLine()
+
 	return err
 }
 
@@ -87,5 +91,6 @@ func renderSample(context *ParsingContext) error {
 		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
 		context.Result = append(context.Result, indentation+line)
 	}
+
 	return nil
 }

@@ -48,7 +48,8 @@ func ParseXMLLine(xmlLine string) (map[string]string, error) {
 	}
 
 	if root.XMLName.Local != xmlStringHeader {
-		return map[string]string{}, fmt.Errorf("the provided line's header is not 'embed-code':\n%s", xmlLine)
+		return map[string]string{},
+			fmt.Errorf("the provided line's header is not 'embed-code':\n%s", xmlLine)
 	}
 
 	attributes := make(map[string]string)
