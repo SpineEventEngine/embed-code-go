@@ -236,7 +236,8 @@ func ShouldFragmentize(filePath string) bool {
 // positions of it's items updated.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
-// Temporary disabling gocritic and nestif as this function is planned to be refactored.
+// TODO:2024-09-05:olena-zmiiova: Temporary disabling gocritic and nestif as this function is
+// planned to be refactored. See https://github.com/SpineEventEngine/embed-code/issues/47
 // nolint:gocritic
 func (fragmentation Fragmentation) parseLine(
 	line string, contentToRender []string,

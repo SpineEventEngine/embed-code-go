@@ -155,7 +155,9 @@ func ReadArgs() Args {
 // rules are broken. If everything is ok, returns an empty string.
 //
 // userArgs — a struct with user-provided args.
-// Temporary disabling cyclop as this function is planned to be refactored.
+//
+// TODO:2024-09-05:olena-zmiiova: Temporary disabling cyclop as this function is planned to
+// be refactored. See https://github.com/SpineEventEngine/embed-code/issues/46
 // nolint:cyclop
 func Validate(userArgs Args) string {
 	isModeSet := userArgs.Mode != ""
