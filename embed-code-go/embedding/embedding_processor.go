@@ -98,7 +98,8 @@ func (ep EmbeddingProcessor) Embed() error {
 // Returns the list of EmbeddingInstruction that are changed in the markdown file.
 //
 // If any problems during the embedding construction faced, an error is returned.
-func (ep EmbeddingProcessor) FindChangedEmbeddings() ([]embedding_instruction.EmbeddingInstruction, error) {
+func (ep EmbeddingProcessor) FindChangedEmbeddings() (
+	[]embedding_instruction.EmbeddingInstruction, error) {
 	context, err := ep.constructEmbedding()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
@@ -135,7 +136,8 @@ func (ep EmbeddingProcessor) IsUpToDate() bool {
 func (ep EmbeddingProcessor) constructEmbedding() (parsing.ParsingContext, error) {
 	context := parsing.NewParsingContext(ep.DocFile)
 	isErrorFaced := false
-	errorStr := fmt.Sprintf("an error was occurred during embedding construction for doc file `%s`", ep.DocFile)
+	errorStr := fmt.Sprintf(
+		"an error was occurred during embedding construction for doc file `%s`", ep.DocFile)
 	var constructEmbeddingError = errors.New(errorStr)
 
 	currentState := "START"
