@@ -1,0 +1,98 @@
+# This file holds the configs for the linters, and it should be placed in the current working directory.
+run:
+  timeout: 5m
+  # Temporary disabling tests.
+  tests: false
+  modules-download-mode: readonly
+  allow-parallel-runners: true
+  go: '1.22.1'
+linters:
+  enable:
+    # Reference doc with available linters and description for the linters below: https://golangci-lint.run/usage/linters/
+    # Default
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # Bug linters
+    - errorlint
+    - gosec
+    - gosmopolitan
+    - nilerr
+    - testifylint
+    # Comment linters
+    - godot
+    # Complexity linters
+    - cyclop
+    - funlen
+    - gocognit
+    - gocyclo
+    - nestif
+    # Format linters
+    - gofmt
+    - goimports
+    # Meta linters
+    - gocritic
+    - revive
+    - staticcheck
+    # Style linters
+    - copyloopvar
+    - dogsled
+    - dupl
+    - errname
+    - forcetypeassert
+    - gochecknoinits
+    - goconst
+    - goheader
+    - inamedparam
+    - ireturn
+    - lll
+    - makezero
+    - misspell
+    - mnd
+    - nilnil
+    - nlreturn
+    - nonamedreturns
+    - stylecheck
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - varnamelen
+    - wastedassign
+    - whitespace
+    # Test linters
+    - ginkgolinter
+    - tenv
+    - testableexamples
+    - testpackage
+  disable:
+    # Temporary disabling error lints as there will be a complex change which will be done separately.
+    - errcheck
+    - err113
+    # Temporary disabling check on global variables as it will be a complex change in the affected packages
+    # (configuration, embedding) which will be done separately.
+    - gochecknoglobals
+  fast: false
+issues:
+  # Default values allow for the showing of only 50 issues.
+  # Setting it to 0 disables the default config and shows all issues at once.
+  max-issues-per-linter: 0
+  # Default values allow showing only 3 repeating issues.
+  # Setting it to 0 disables the default config and shows all repeating issues at once.
+  max-same-issues: 0
+  # Temporary excluding rules where it needs to rename package or structure, as there are a lot of references. It
+  # will be a complex change that will be done separately.
+  exclude-rules:
+    - linters:
+        - revive
+      text: "exported: type name will be used as"
+    - linters:
+        - revive
+      text: "var-naming: don't use an underscore in package name"
+    - linters:
+        - stylecheck
+      text: "ST1003"
+linters-settings:
+  lll:
+    line-length: 100
