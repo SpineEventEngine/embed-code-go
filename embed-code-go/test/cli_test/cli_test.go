@@ -27,7 +27,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -63,15 +62,15 @@ func (suite *CLITestSuite) TearDownTest() {
 }
 
 func (suite *CLITestSuite) TestEmbedding() {
-	suite.Panics(assert.PanicTestFunc(func() {
+	suite.Panics(func() {
 		cli.CheckCodeSamples(suite.config)
-	}))
+	})
 
 	cli.EmbedCodeSamples(suite.config)
 
-	suite.NotPanics(assert.PanicTestFunc(func() {
+	suite.NotPanics(func() {
 		cli.CheckCodeSamples(suite.config)
-	}))
+	})
 }
 
 func (suite *CLITestSuite) TestRequiredArgsFilled() {
@@ -81,7 +80,7 @@ func (suite *CLITestSuite) TestRequiredArgsFilled() {
 		Mode:     "embed",
 	}
 	validation_message := cli.ValidateArgs(args)
-	suite.Equal("", validation_message)
+	suite.Equal(nil, validation_message)
 }
 
 func (suite *CLITestSuite) TestModeMissed() {
@@ -89,8 +88,8 @@ func (suite *CLITestSuite) TestModeMissed() {
 		DocsRoot: "docs",
 		CodeRoot: "code",
 	}
-	validation_message := cli.ValidateArgs(args)
-	suite.Equal("Mode must be set.", validation_message)
+	validation_message := cli.ValidateArgs(args).Error()
+	suite.Equal("mode must be set", validation_message)
 }
 
 func (suite *CLITestSuite) TestDocsRootMissed() {
@@ -98,8 +97,8 @@ func (suite *CLITestSuite) TestDocsRootMissed() {
 		CodeRoot: "code",
 		Mode:     "embed",
 	}
-	validation_message := cli.ValidateArgs(args)
-	suite.Equal("If one of code-path and docs-path is set, the another one must be set as well.",
+	validation_message := cli.ValidateArgs(args).Error()
+	suite.Equal("if one of code-path and docs-path is set, the another one must be set as well",
 		validation_message)
 }
 
@@ -110,8 +109,8 @@ func (suite *CLITestSuite) TestConfigAndRootDirsSet() {
 		Mode:           "embed",
 		ConfigFilePath: "config.yaml",
 	}
-	validation_message := cli.ValidateArgs(args)
-	suite.Equal("Config path cannot be set when code-path, docs-path or optional params are set.",
+	validation_message := cli.ValidateArgs(args).Error()
+	suite.Equal("config path cannot be set when code-path, docs-path or optional params are set",
 		validation_message)
 }
 
@@ -121,7 +120,7 @@ func (suite *CLITestSuite) TestCorrectConfigFile() {
 		ConfigFilePath: "./test/resources/config_files/correct_config.yml",
 	}
 	validation_message := cli.ValidateArgs(args)
-	suite.Equal("", validation_message)
+	suite.Equal(nil, validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)
 	suite.Equal("", config_file_validation_message)
@@ -133,7 +132,7 @@ func (suite *CLITestSuite) TestConfigFileNotExist() {
 		ConfigFilePath: "/some/path/to/config.yaml",
 	}
 	validation_message := cli.ValidateArgs(args)
-	suite.Equal("", validation_message)
+	suite.Equal(nil, validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)
 	suite.Equal(fmt.Sprintf("The file %s is not exists.", args.ConfigFilePath), config_file_validation_message)
@@ -142,10 +141,10 @@ func (suite *CLITestSuite) TestConfigFileNotExist() {
 func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
 	args := cli.Args{
 		Mode:           "embed",
-		ConfigFilePath: "./test/resources/config_files/config_without_docs-path.yml",
+		ConfigFilePath: "./test/resources/config_files/config_without_docs_root.yml",
 	}
 	validation_message := cli.ValidateArgs(args)
-	suite.Equal("", validation_message)
+	suite.Equal(nil, validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)
 	suite.Equal("Config must include both code-path and docs-path fields.", config_file_validation_message)
