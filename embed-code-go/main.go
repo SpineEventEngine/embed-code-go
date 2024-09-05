@@ -90,8 +90,8 @@ func main() {
 		return
 	}
 
-	if userArgs.ConfigFilePath != "" {
-		validationMessage := cli.ValidateConfigFile(userArgs.ConfigFilePath)
+	if userArgs.ConfigPath != "" {
+		validationMessage := cli.ValidateConfigFile(userArgs.ConfigPath)
 		if validationMessage != "" {
 			fmt.Println("Configuration file validation error:")
 			fmt.Println(validationMessage)
