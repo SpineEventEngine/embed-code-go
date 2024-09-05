@@ -171,6 +171,7 @@ func (pc *ParsingContext) ResolveUnacceptedEmbedding() {
 //
 // Also sets FileContainsEmbedding flag.
 func (pc *ParsingContext) SetEmbedding(embedding *embedding_instruction.EmbeddingInstruction) {
+	// TODO:2024-09-05:olena-zmiiova: https://github.com/SpineEventEngine/embed-code/issues/48
 	indexIncrease := 2 // +2 for instruction and code fence.
 	if embedding != nil {
 		pc.FileContainsEmbedding = true
