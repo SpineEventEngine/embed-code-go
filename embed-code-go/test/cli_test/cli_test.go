@@ -74,7 +74,7 @@ func (suite *CLITestSuite) TestEmbedding() {
 }
 
 func (suite *CLITestSuite) TestRequiredArgsFilled() {
-	args := cli.Args{
+	args := cli.Config{
 		DocsPath: "docs",
 		CodePath: "code",
 		Mode:     "embed",
@@ -84,7 +84,7 @@ func (suite *CLITestSuite) TestRequiredArgsFilled() {
 }
 
 func (suite *CLITestSuite) TestModeMissed() {
-	args := cli.Args{
+	args := cli.Config{
 		DocsPath: "docs",
 		CodePath: "code",
 	}
@@ -93,7 +93,7 @@ func (suite *CLITestSuite) TestModeMissed() {
 }
 
 func (suite *CLITestSuite) TestDocsRootMissed() {
-	args := cli.Args{
+	args := cli.Config{
 		CodePath: "code",
 		Mode:     "embed",
 	}
@@ -103,7 +103,7 @@ func (suite *CLITestSuite) TestDocsRootMissed() {
 }
 
 func (suite *CLITestSuite) TestConfigAndRootDirsSet() {
-	args := cli.Args{
+	args := cli.Config{
 		CodePath:   "code",
 		DocsPath:   "docs",
 		Mode:       "embed",
@@ -115,7 +115,7 @@ func (suite *CLITestSuite) TestConfigAndRootDirsSet() {
 }
 
 func (suite *CLITestSuite) TestCorrectConfigFile() {
-	args := cli.Args{
+	args := cli.Config{
 		Mode:       "embed",
 		ConfigPath: "./test/resources/config_files/correct_config.yml",
 	}
@@ -127,7 +127,7 @@ func (suite *CLITestSuite) TestCorrectConfigFile() {
 }
 
 func (suite *CLITestSuite) TestConfigFileNotExist() {
-	args := cli.Args{
+	args := cli.Config{
 		Mode:       "embed",
 		ConfigPath: "/some/path/to/config.yaml",
 	}
@@ -139,7 +139,7 @@ func (suite *CLITestSuite) TestConfigFileNotExist() {
 }
 
 func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
-	args := cli.Args{
+	args := cli.Config{
 		Mode:       "embed",
 		ConfigPath: "./test/resources/config_files/config_without_docs_root.yml",
 	}

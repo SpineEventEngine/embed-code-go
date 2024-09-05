@@ -33,7 +33,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// User-specified embed-code Args.
+// User-specified embed-code Config.
 //
 // СodeRoot — a path to a root directory with code files.
 //
@@ -61,25 +61,15 @@ import (
 // ConfigPath — a path to a yaml configuration file which contains the roots.
 //
 // Mode — defines the mode of embed-code execution.
-type Args struct {
-	CodePath      string
-	DocsPath      string
-	CodeIncludes  string
-	DocIncludes   string
-	FragmentsPath string
-	Separator     string
-	ConfigPath    string
-	Mode          string
-}
-
-// Needed for yaml.Unmarshal to parse into.
-type ConfigFields struct {
+type Config struct {
 	CodePath      string `yaml:"code-path"`
 	DocsPath      string `yaml:"docs-path"`
 	CodeIncludes  string `yaml:"code-includes"`
 	DocIncludes   string `yaml:"doc-includes"`
 	FragmentsPath string `yaml:"fragments-path"`
 	Separator     string `yaml:"separator"`
+	ConfigPath    string
+	Mode          string
 }
 
 //
@@ -122,8 +112,8 @@ func AnalyzeCodeSamples(config configuration.Configuration) {
 
 // Reads user-specified args from the command line.
 //
-// Returns an Args struct filled with the corresponding args.
-func ReadArgs() Args {
+// Returns an Config struct filled with the corresponding args.
+func ReadArgs() Config {
 	codePath := flag.String("code-path", "", "a path to a root directory with code files")
 	docsPath := flag.String("docs-path", "", "a path to a root directory with docs files")
 	codeIncludes := flag.String("code-includes", "**/*.*",
@@ -140,7 +130,7 @@ func ReadArgs() Args {
 
 	flag.Parse()
 
-	return Args{
+	return Config{
 		CodePath:      *codePath,
 		DocsPath:      *docsPath,
 		CodeIncludes:  *codeIncludes,
@@ -160,7 +150,7 @@ func ReadArgs() Args {
 // TODO:2024-09-05:olena-zmiiova: Temporary disabling cyclop as this function is planned to
 // be refactored. See https://github.com/SpineEventEngine/embed-code/issues/46
 // nolint:cyclop
-func ValidateArgs(userArgs Args) error {
+func ValidateArgs(userArgs Config) error {
 	isModeSet := userArgs.Mode != ""
 	isRootsSet := userArgs.CodePath != "" && userArgs.DocsPath != ""
 	isOneOfRootsSet := userArgs.CodePath != "" || userArgs.DocsPath != ""
@@ -210,10 +200,10 @@ func ValidateConfigFile(path string) string {
 
 // Fills args with the values read from config file.
 //
-// args — an Args struct with user-provided args.
+// args — an Config struct with user-provided args.
 //
-// Returns filled Args.
-func FillArgsFromConfigFile(args Args) Args {
+// Returns filled Config.
+func FillArgsFromConfigFile(args Config) Config {
 	configFields := readConfigFields(args.ConfigPath)
 	args.CodePath = configFields.CodePath
 	args.DocsPath = configFields.DocsPath
@@ -237,7 +227,7 @@ func FillArgsFromConfigFile(args Args) Args {
 // Generates and returns a configuration based on provided userArgs.
 //
 // userArgs — a struct with user-provided args.
-func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
+func BuildEmbedCodeConfiguration(userArgs Config) configuration.Configuration {
 	embedCodeConfig := configuration.NewConfiguration()
 	embedCodeConfig.CodeRoot = userArgs.CodePath
 	embedCodeConfig.DocumentationRoot = userArgs.DocsPath
@@ -280,13 +270,13 @@ func parseListArgument(listArgument string) []string {
 // configFilePath — a path to a yaml configuration file.
 //
 // Returns a filled ConfigFields struct.
-func readConfigFields(configFilePath string) ConfigFields {
+func readConfigFields(configFilePath string) Config {
 	content, err := os.ReadFile(configFilePath)
 	if err != nil {
 		panic(err)
 	}
 
-	configFields := ConfigFields{}
+	configFields := Config{}
 	err = yaml.Unmarshal(content, &configFields)
 	if err != nil {
 		panic(err)
