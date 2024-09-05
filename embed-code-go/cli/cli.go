@@ -75,7 +75,7 @@ type Args struct {
 // Needed for yaml.Unmarshal to parse into.
 type ConfigFields struct {
 	CodeRoot     string `yaml:"code-path"`
-	DocsRoot     string `yaml:"docs_root"`
+	DocsRoot     string `yaml:"docs-path"`
 	CodeIncludes string `yaml:"code_includes"`
 	DocIncludes  string `yaml:"doc_includes"`
 	FragmentsDir string `yaml:"fragments_dir"`
@@ -125,7 +125,7 @@ func AnalyzeCodeSamples(config configuration.Configuration) {
 // Returns an Args struct filled with the corresponding args.
 func ReadArgs() Args {
 	codeRoot := flag.String("code-path", "", "a path to a root directory with code files")
-	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
+	docsRoot := flag.String("docs-path", "", "a path to a root directory with docs files")
 	codeIncludes := flag.String("code_includes", "",
 		"a comma-separated string of glob patterns for code files to include")
 	docIncludes := flag.String("doc_includes", "",
@@ -172,13 +172,13 @@ func ValidateArgs(userArgs Args) error {
 		return errors.New("mode must be set")
 	}
 	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
-		return errors.New("config path cannot be set when code-path, docs_root or optional params are set")
+		return errors.New("config path cannot be set when code-path, docs-path or optional params are set")
 	}
 	if isOneOfRootsSet && !isRootsSet {
-		return errors.New("if one of code-path and docs_root is set, the another one must be set as well")
+		return errors.New("if one of code-path and docs-path is set, the another one must be set as well")
 	}
 	if !(isRootsSet || isConfigSet) {
-		return errors.New("embed code should be used with either config_file_path or both code-path and docs_root being set")
+		return errors.New("embed code should be used with either config_file_path or both code-path and docs-path being set")
 	}
 
 	return nil
@@ -202,7 +202,7 @@ func ValidateConfigFile(configFilePath string) string {
 	}
 	configFields := readConfigFields(configFilePath)
 	if configFields.CodeRoot == "" || configFields.DocsRoot == "" {
-		return "Config must include both code-path and docs_root fields."
+		return "Config must include both code-path and docs-path fields."
 	}
 
 	return validationMessage
