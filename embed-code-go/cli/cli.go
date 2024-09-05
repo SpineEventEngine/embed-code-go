@@ -37,7 +37,7 @@ import (
 //
 // СodeRoot — a path to a root directory with code files.
 //
-// DocsRoot — a path to a root directory with docs files.
+// DocsPath — a path to a root directory with docs files.
 //
 // CodeIncludes — a string with comma-separated patterns for filtering the code files
 // to be considered.
@@ -52,34 +52,34 @@ import (
 // For example, "docs/**/*.md,guides/*.html".
 // The default value is "**/*.md,**/*.html".
 //
-// FragmentsDir — a directory where fragmented code is stored. A temporary directory that should
+// FragmentsPath — a directory where fragmented code is stored. A temporary directory that should
 // not be tracked in VCS. The default value is: "./build/fragments".
 //
 // Separator — a string that's inserted between multiple partitions of a single fragment.
 // The default value is "...".
 //
-// ConfigFilePath — a path to a yaml configuration file which contains the roots.
+// ConfigPath — a path to a yaml configuration file which contains the roots.
 //
 // Mode — defines the mode of embed-code execution.
 type Args struct {
-	CodeRoot       string
-	DocsRoot       string
-	CodeIncludes   string
-	DocIncludes    string
-	FragmentsDir   string
-	Separator      string
-	ConfigFilePath string
-	Mode           string
+	CodePath      string
+	DocsPath      string
+	CodeIncludes  string
+	DocIncludes   string
+	FragmentsPath string
+	Separator     string
+	ConfigPath    string
+	Mode          string
 }
 
 // Needed for yaml.Unmarshal to parse into.
 type ConfigFields struct {
-	CodeRoot     string `yaml:"code-path"`
-	DocsRoot     string `yaml:"docs-path"`
-	CodeIncludes string `yaml:"code-includes"`
-	DocIncludes  string `yaml:"doc-includes"`
-	FragmentsDir string `yaml:"fragments-path"`
-	Separator    string `yaml:"separator"`
+	CodePath      string `yaml:"code-path"`
+	DocsPath      string `yaml:"docs-path"`
+	CodeIncludes  string `yaml:"code-includes"`
+	DocIncludes   string `yaml:"doc-includes"`
+	FragmentsPath string `yaml:"fragments-path"`
+	Separator     string `yaml:"separator"`
 }
 
 //
@@ -124,31 +124,31 @@ func AnalyzeCodeSamples(config configuration.Configuration) {
 //
 // Returns an Args struct filled with the corresponding args.
 func ReadArgs() Args {
-	codeRoot := flag.String("code-path", "", "a path to a root directory with code files")
-	docsRoot := flag.String("docs-path", "", "a path to a root directory with docs files")
+	codePath := flag.String("code-path", "", "a path to a root directory with code files")
+	docsPath := flag.String("docs-path", "", "a path to a root directory with docs files")
 	codeIncludes := flag.String("code-includes", "**/*.*",
 		"a comma-separated string of glob patterns for code files to include")
 	docIncludes := flag.String("doc-includes", "**/*.md,**/*.html",
 		"a comma-separated string of glob patterns for docs files to include")
-	fragmentsDir := flag.String("fragments-path", "./build/fragments",
+	fragmentsPath := flag.String("fragments-path", "./build/fragments",
 		"a path to a directory where fragmented code is stored")
 	separator := flag.String("separator", "...",
 		"a string that's inserted between multiple partitions of a single fragment")
-	configFilePath := flag.String("config-path", "", "a path to a yaml configuration file")
+	configPath := flag.String("config-path", "", "a path to a yaml configuration file")
 	mode := flag.String("mode", "",
 		"a mode of embed-code execution, which can be 'check' or 'embed'")
 
 	flag.Parse()
 
 	return Args{
-		CodeRoot:       *codeRoot,
-		DocsRoot:       *docsRoot,
-		CodeIncludes:   *codeIncludes,
-		DocIncludes:    *docIncludes,
-		FragmentsDir:   *fragmentsDir,
-		Separator:      *separator,
-		ConfigFilePath: *configFilePath,
-		Mode:           *mode,
+		CodePath:      *codePath,
+		DocsPath:      *docsPath,
+		CodeIncludes:  *codeIncludes,
+		DocIncludes:   *docIncludes,
+		FragmentsPath: *fragmentsPath,
+		Separator:     *separator,
+		ConfigPath:    *configPath,
+		Mode:          *mode,
 	}
 }
 
@@ -162,11 +162,11 @@ func ReadArgs() Args {
 // nolint:cyclop
 func ValidateArgs(userArgs Args) error {
 	isModeSet := userArgs.Mode != ""
-	isRootsSet := userArgs.CodeRoot != "" && userArgs.DocsRoot != ""
-	isOneOfRootsSet := userArgs.CodeRoot != "" || userArgs.DocsRoot != ""
-	isConfigSet := userArgs.ConfigFilePath != ""
+	isRootsSet := userArgs.CodePath != "" && userArgs.DocsPath != ""
+	isOneOfRootsSet := userArgs.CodePath != "" || userArgs.DocsPath != ""
+	isConfigSet := userArgs.ConfigPath != ""
 	isOptionalParamsSet := userArgs.CodeIncludes != "" || userArgs.DocIncludes != "" ||
-		userArgs.FragmentsDir != "" || userArgs.Separator != ""
+		userArgs.FragmentsPath != "" || userArgs.Separator != ""
 
 	if !isModeSet {
 		return errors.New("mode must be set")
@@ -187,21 +187,21 @@ func ValidateArgs(userArgs Args) error {
 // Performs several checks to ensure that the necessary configuration values are present.
 // Also checks for the existence of the config file.
 //
-// configFilePath — a path to a yaml configuration file.
+// path — a path to a yaml configuration file.
 //
 // Returns validation message. If everything is ok, returns an empty string.
-func ValidateConfigFile(configFilePath string) string {
+func ValidateConfigFile(path string) string {
 	validationMessage := ""
 
-	stat, err := os.Stat(configFilePath)
+	stat, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		return fmt.Sprintf("The file %s is not exists.", configFilePath)
+		return fmt.Sprintf("The file %s is not exists.", path)
 	}
 	if stat.IsDir() {
-		return fmt.Sprintf("%s is a dir, not a file.", configFilePath)
+		return fmt.Sprintf("%s is a dir, not a file.", path)
 	}
-	configFields := readConfigFields(configFilePath)
-	if configFields.CodeRoot == "" || configFields.DocsRoot == "" {
+	configFields := readConfigFields(path)
+	if configFields.CodePath == "" || configFields.DocsPath == "" {
 		return "Config must include both code-path and docs-path fields."
 	}
 
@@ -214,9 +214,9 @@ func ValidateConfigFile(configFilePath string) string {
 //
 // Returns filled Args.
 func FillArgsFromConfigFile(args Args) Args {
-	configFields := readConfigFields(args.ConfigFilePath)
-	args.CodeRoot = configFields.CodeRoot
-	args.DocsRoot = configFields.DocsRoot
+	configFields := readConfigFields(args.ConfigPath)
+	args.CodePath = configFields.CodePath
+	args.DocsPath = configFields.DocsPath
 
 	if configFields.CodeIncludes != "" {
 		args.CodeIncludes = configFields.CodeIncludes
@@ -224,8 +224,8 @@ func FillArgsFromConfigFile(args Args) Args {
 	if configFields.DocIncludes != "" {
 		args.DocIncludes = configFields.DocIncludes
 	}
-	if configFields.FragmentsDir != "" {
-		args.FragmentsDir = configFields.FragmentsDir
+	if configFields.FragmentsPath != "" {
+		args.FragmentsPath = configFields.FragmentsPath
 	}
 	if configFields.Separator != "" {
 		args.Separator = configFields.Separator
@@ -239,8 +239,8 @@ func FillArgsFromConfigFile(args Args) Args {
 // userArgs — a struct with user-provided args.
 func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
 	embedCodeConfig := configuration.NewConfiguration()
-	embedCodeConfig.CodeRoot = userArgs.CodeRoot
-	embedCodeConfig.DocumentationRoot = userArgs.DocsRoot
+	embedCodeConfig.CodeRoot = userArgs.CodePath
+	embedCodeConfig.DocumentationRoot = userArgs.DocsPath
 
 	if userArgs.CodeIncludes != "" {
 		embedCodeConfig.CodeIncludes = parseListArgument(userArgs.CodeIncludes)
@@ -248,8 +248,8 @@ func BuildEmbedCodeConfiguration(userArgs Args) configuration.Configuration {
 	if userArgs.DocIncludes != "" {
 		embedCodeConfig.DocIncludes = parseListArgument(userArgs.DocIncludes)
 	}
-	if userArgs.FragmentsDir != "" {
-		embedCodeConfig.FragmentsDir = userArgs.FragmentsDir
+	if userArgs.FragmentsPath != "" {
+		embedCodeConfig.FragmentsDir = userArgs.FragmentsPath
 	}
 	if userArgs.Separator != "" {
 		embedCodeConfig.Separator = userArgs.Separator
