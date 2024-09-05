@@ -20,10 +20,11 @@ package fragmentation
 
 // A code fragment partition.
 //
-// A fragment may consist of a few partitions, collected from different points in the code file. In
-// the resulting doc file, the partitions are joined by the Configuration.Separator.
+// A fragment may consist of a few partitions, collected from different points in the code file.
+// In the resulting doc file, the partitions are joined by the Configuration.Separator.
 // StartPosition and EndPosition are both pointers, because it's the way to make them nil-able.
-// Otherwise, the default value for them is 0, which is wrong, because 0 is in the scope of possible values for them.
+// Otherwise, the default value for them is 0, which is wrong, because 0 is in the scope of
+// possible values for them.
 //
 // StartPosition — an index from which the scope of partition exists.
 //

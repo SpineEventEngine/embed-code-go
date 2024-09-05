@@ -114,7 +114,8 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		contentToRender, fragmentBuilders, err = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
+		contentToRender, fragmentBuilders, err =
+			fragmentation.parseLine(line, contentToRender, fragmentBuilders)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -144,7 +145,8 @@ func (fragmentation Fragmentation) WriteFragments() error {
 	EnsureDirExists(fragmentation.targetDirectory())
 
 	for _, fragment := range fragments {
-		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name, fragmentation.Configuration)
+		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name,
+			fragmentation.Configuration)
 		fragment.WriteTo(fragmentFile, allLines, fragmentation.Configuration)
 	}
 
@@ -261,9 +263,9 @@ func (fragmentation Fragmentation) parseLine(
 			if fragment, exists := fragmentBuilders[fragmentName]; exists {
 				fragment.AddEndPosition(cursor - 1)
 			} else {
-				return nil, nil, fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
-					fragmentName,
-					fragmentation.CodeFile)
+				return nil, nil,
+					fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
+						fragmentName, fragmentation.CodeFile)
 			}
 		}
 	} else {

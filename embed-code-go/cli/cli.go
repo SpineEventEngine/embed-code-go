@@ -38,7 +38,8 @@ import (
 //
 // DocsRoot — a path to a root directory with docs files.
 //
-// CodeIncludes — a string with comma-separated patterns for filtering the code files to be considered.
+// CodeIncludes — a string with comma-separated patterns for filtering the code files
+// to be considered.
 // Directories are never matched by these patterns.
 // For example, "**/*.java,**/*.gradle".
 // The default value is "**/*.*".
@@ -50,8 +51,8 @@ import (
 // For example, "docs/**/*.md,guides/*.html".
 // The default value is "**/*.md,**/*.html".
 //
-// FragmentsDir — a directory where fragmented code is stored. A temporary directory that should not be
-// tracked in VCS. The default value is: "./build/fragments".
+// FragmentsDir — a directory where fragmented code is stored. A temporary directory that should
+// not be tracked in VCS. The default value is: "./build/fragments".
 //
 // Separator — a string that's inserted between multiple partitions of a single fragment.
 // The default value is "...".
@@ -124,10 +125,14 @@ func AnalyzeCodeSamples(config configuration.Configuration) {
 func ReadArgs() Args {
 	codeRoot := flag.String("code_root", "", "a path to a root directory with code files")
 	docsRoot := flag.String("docs_root", "", "a path to a root directory with docs files")
-	codeIncludes := flag.String("code_includes", "", "a comma-separated string of glob patterns for code files to include")
-	docIncludes := flag.String("doc_includes", "", "a comma-separated string of glob patterns for docs files to include")
-	fragmentsDir := flag.String("fragments_dir", "", "a path to a directory where fragmented code is stored")
-	separator := flag.String("separator", "", "a string that's inserted between multiple partitions of a single fragment")
+	codeIncludes := flag.String("code_includes", "",
+		"a comma-separated string of glob patterns for code files to include")
+	docIncludes := flag.String("doc_includes", "",
+		"a comma-separated string of glob patterns for docs files to include")
+	fragmentsDir := flag.String("fragments_dir", "",
+		"a path to a directory where fragmented code is stored")
+	separator := flag.String("separator", "",
+		"a string that's inserted between multiple partitions of a single fragment")
 	configFilePath := flag.String("config_file_path", "", "a path to a yaml configuration file")
 	mode := flag.String("mode", "",
 		"a mode of embed-code execution, which can be 'check' or 'embed'")
@@ -146,8 +151,8 @@ func ReadArgs() Args {
 	}
 }
 
-// Checks the validity of provided userArgs and returns an error message if any of the validation rules are broken.
-// If everything is ok, returns an empty string.
+// Checks the validity of provided userArgs and returns an error message if any of the validation
+// rules are broken. If everything is ok, returns an empty string.
 //
 // userArgs — a struct with user-provided args.
 // Temporary disabling cyclop as this function is planned to be refactored.
@@ -172,7 +177,8 @@ func Validate(userArgs Args) string {
 		return "If one of code_root and docs_root is set, the another one must be set as well."
 	}
 	if !(isRootsSet || isConfigSet) {
-		return "Embed code should be used with either config_file_path or both code_root and docs_root being set."
+		return "Embed code should be used with either config_file_path or both code_root and " +
+			"docs_root being set."
 	}
 
 	return validationMessage
