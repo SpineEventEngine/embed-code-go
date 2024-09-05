@@ -201,14 +201,12 @@ func (pc ParsingContext) String() string {
 // Private methods
 //
 
-func (pc ParsingContext) readEmbeddingSource(
-	embeddingInParsingContext EmbeddingInParsingContext) []string {
-	return pc.Source[embeddingInParsingContext.SourceStartLineIndex : embeddingInParsingContext.SourceEndLineIndex+1]
+func (pc ParsingContext) readEmbeddingSource(context EmbeddingInParsingContext) []string {
+	return pc.Source[context.SourceStartLineIndex : context.SourceEndLineIndex+1]
 }
 
-func (pc ParsingContext) readEmbeddingResult(
-	embeddingInParsingContext EmbeddingInParsingContext) []string {
-	return pc.Result[embeddingInParsingContext.ResultStartLineIndex : embeddingInParsingContext.ResultEndLineIndex+1]
+func (pc ParsingContext) readEmbeddingResult(context EmbeddingInParsingContext) []string {
+	return pc.Result[context.ResultStartLineIndex : context.ResultEndLineIndex+1]
 }
 
 //
