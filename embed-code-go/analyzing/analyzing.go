@@ -16,12 +16,14 @@ const analyticsDir = "./build/analytics"
 const embeddingsNotFoundFile = "embeddings-not-found-files.txt"
 const embeddingChangedFile = "embeddings-changed-files.txt"
 
-// Represents read and write permissions for the owner of the file, and read-only permissions for group and others.
+// Represents read and write permissions for the owner of the file, and read-only permissions
+// for group and others.
 const permission = 0755
 
 // Analyzes all documentation files.
 //
-// If any error occurs during embedding, it is written to the analytics file with all the needed information.
+// If any error occurs during embedding, it is written to the analytics file with all
+// the needed information.
 //
 // config — a configuration for embedding.
 func AnalyzeAll(config configuration.Configuration) {
@@ -29,8 +31,10 @@ func AnalyzeAll(config configuration.Configuration) {
 	changedEmbeddings, problemEmbeddings := extractAnalyticsForDocs(config, docFiles)
 
 	os.MkdirAll(analyticsDir, permission)
-	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFile), changedEmbeddings)
-	fragmentation.WriteLinesToFile(fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemEmbeddings)
+	fragmentation.WriteLinesToFile(
+		fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFile), changedEmbeddings)
+	fragmentation.WriteLinesToFile(
+		fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemEmbeddings)
 }
 
 // Finds all documentation files for given config.
@@ -52,7 +56,8 @@ func findDocumentationFiles(config configuration.Configuration) []string {
 
 // Returns a list of embeddings that are not up-to-date with their code files.
 // Also returns a list of embeddings which cause an error.
-func extractAnalyticsForDocs(config configuration.Configuration, docFiles []string) ([]string, []string) {
+func extractAnalyticsForDocs(
+	config configuration.Configuration, docFiles []string) ([]string, []string) {
 	var changedEmbeddingsLines, problemEmbeddingsLines []string
 
 	for _, docFile := range docFiles {
