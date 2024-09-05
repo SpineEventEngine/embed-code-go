@@ -19,6 +19,7 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -159,7 +160,7 @@ func ReadArgs() Args {
 // TODO:2024-09-05:olena-zmiiova: Temporary disabling cyclop as this function is planned to
 // be refactored. See https://github.com/SpineEventEngine/embed-code/issues/46
 // nolint:cyclop
-func Validate(userArgs Args) string {
+func ValidateArgs(userArgs Args) error {
 	isModeSet := userArgs.Mode != ""
 	isRootsSet := userArgs.CodeRoot != "" && userArgs.DocsRoot != ""
 	isOneOfRootsSet := userArgs.CodeRoot != "" || userArgs.DocsRoot != ""
@@ -167,23 +168,20 @@ func Validate(userArgs Args) string {
 	isOptionalParamsSet := userArgs.CodeIncludes != "" || userArgs.DocIncludes != "" ||
 		userArgs.FragmentsDir != "" || userArgs.Separator != ""
 
-	validationMessage := ""
-
 	if !isModeSet {
-		return "Mode must be set."
+		return errors.New("mode must be set")
 	}
 	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
-		return "Config path cannot be set when code_root, docs_root or optional params are set."
+		return errors.New("config path cannot be set when code_root, docs_root or optional params are set")
 	}
 	if isOneOfRootsSet && !isRootsSet {
-		return "If one of code_root and docs_root is set, the another one must be set as well."
+		return errors.New("if one of code_root and docs_root is set, the another one must be set as well")
 	}
 	if !(isRootsSet || isConfigSet) {
-		return "Embed code should be used with either config_file_path or both code_root and " +
-			"docs_root being set."
+		return errors.New("embed code should be used with either config_file_path or both code_root and docs_root being set")
 	}
 
-	return validationMessage
+	return nil
 }
 
 // Performs several checks to ensure that the necessary configuration values are present.

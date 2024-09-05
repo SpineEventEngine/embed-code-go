@@ -80,7 +80,7 @@ func (suite *CLITestSuite) TestRequiredArgsFilled() {
 		CodeRoot: "code",
 		Mode:     "embed",
 	}
-	validation_message := cli.Validate(args)
+	validation_message := cli.ValidateArgs(args)
 	suite.Equal("", validation_message)
 }
 
@@ -89,7 +89,7 @@ func (suite *CLITestSuite) TestModeMissed() {
 		DocsRoot: "docs",
 		CodeRoot: "code",
 	}
-	validation_message := cli.Validate(args)
+	validation_message := cli.ValidateArgs(args)
 	suite.Equal("Mode must be set.", validation_message)
 }
 
@@ -98,7 +98,7 @@ func (suite *CLITestSuite) TestDocsRootMissed() {
 		CodeRoot: "code",
 		Mode:     "embed",
 	}
-	validation_message := cli.Validate(args)
+	validation_message := cli.ValidateArgs(args)
 	suite.Equal("If one of code_root and docs_root is set, the another one must be set as well.",
 		validation_message)
 }
@@ -110,7 +110,7 @@ func (suite *CLITestSuite) TestConfigAndRootDirsSet() {
 		Mode:           "embed",
 		ConfigFilePath: "config.yaml",
 	}
-	validation_message := cli.Validate(args)
+	validation_message := cli.ValidateArgs(args)
 	suite.Equal("Config path cannot be set when code_root, docs_root or optional params are set.",
 		validation_message)
 }
@@ -120,7 +120,7 @@ func (suite *CLITestSuite) TestCorrectConfigFile() {
 		Mode:           "embed",
 		ConfigFilePath: "./test/resources/config_files/correct_config.yml",
 	}
-	validation_message := cli.Validate(args)
+	validation_message := cli.ValidateArgs(args)
 	suite.Equal("", validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)
@@ -132,7 +132,7 @@ func (suite *CLITestSuite) TestConfigFileNotExist() {
 		Mode:           "embed",
 		ConfigFilePath: "/some/path/to/config.yaml",
 	}
-	validation_message := cli.Validate(args)
+	validation_message := cli.ValidateArgs(args)
 	suite.Equal("", validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)
@@ -144,7 +144,7 @@ func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
 		Mode:           "embed",
 		ConfigFilePath: "./test/resources/config_files/config_without_docs_root.yml",
 	}
-	validation_message := cli.Validate(args)
+	validation_message := cli.ValidateArgs(args)
 	suite.Equal("", validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigFilePath)

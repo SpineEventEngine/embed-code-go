@@ -82,10 +82,10 @@ const (
 func main() {
 	userArgs := cli.ReadArgs()
 
-	validationMessage := cli.Validate(userArgs)
-	if validationMessage != "" {
+	validationErr := cli.ValidateArgs(userArgs)
+	if validationErr != nil {
 		fmt.Println("Validation error:")
-		fmt.Println(validationMessage)
+		fmt.Println(validationErr.Error())
 
 		return
 	}
