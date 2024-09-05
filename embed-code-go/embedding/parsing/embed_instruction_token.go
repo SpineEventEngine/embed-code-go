@@ -56,8 +56,9 @@ func (e EmbedInstructionToken) Recognize(context ParsingContext) bool {
 // config — a configuration of the embedding.
 //
 // An error is returned if the building of the embedding instruction fails.
-func (e EmbedInstructionToken) Accept(context *ParsingContext, config configuration.Configuration) error {
-	instructionBody := []string{}
+func (e EmbedInstructionToken) Accept(context *ParsingContext,
+	config configuration.Configuration) error {
+	var instructionBody []string
 	for !context.ReachedEOF() {
 		instructionBody = append(instructionBody, context.CurrentLine())
 

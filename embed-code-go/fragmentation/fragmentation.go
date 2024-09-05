@@ -114,7 +114,8 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		contentToRender, fragmentBuilders, err = fragmentation.parseLine(line, contentToRender, fragmentBuilders)
+		contentToRender, fragmentBuilders, err =
+			fragmentation.parseLine(line, contentToRender, fragmentBuilders)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -144,7 +145,8 @@ func (fragmentation Fragmentation) WriteFragments() error {
 	EnsureDirExists(fragmentation.targetDirectory())
 
 	for _, fragment := range fragments {
-		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name, fragmentation.Configuration)
+		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name,
+			fragmentation.Configuration)
 		fragment.WriteTo(fragmentFile, allLines, fragmentation.Configuration)
 	}
 
@@ -234,7 +236,8 @@ func ShouldFragmentize(filePath string) bool {
 // positions of it's items updated.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
-// Temporary disabling gocritic and nestif as this function is planned to be refactored.
+// TODO:2024-09-05:olena-zmiiova: Temporary disabling gocritic and nestif as this function is
+// planned to be refactored. See https://github.com/SpineEventEngine/embed-code/issues/47
 // nolint:gocritic
 func (fragmentation Fragmentation) parseLine(
 	line string, contentToRender []string,
@@ -261,9 +264,9 @@ func (fragmentation Fragmentation) parseLine(
 			if fragment, exists := fragmentBuilders[fragmentName]; exists {
 				fragment.AddEndPosition(cursor - 1)
 			} else {
-				return nil, nil, fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
-					fragmentName,
-					fragmentation.CodeFile)
+				return nil, nil,
+					fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
+						fragmentName, fragmentation.CodeFile)
 			}
 		}
 	} else {

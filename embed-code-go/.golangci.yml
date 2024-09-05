@@ -93,3 +93,6 @@ issues:
     - linters:
         - stylecheck
       text: "ST1003"
+linters-settings:
+  lll:
+    line-length: 100
