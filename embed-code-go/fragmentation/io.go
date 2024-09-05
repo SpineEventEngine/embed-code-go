@@ -30,7 +30,7 @@ import (
 // Does nothing if exists.
 func EnsureDirExists(dirPath string) {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		var readWriteExecPermission uint32 = 777
+		var readWriteExecPermission uint32 = 0777
 		err := os.MkdirAll(dirPath, os.FileMode(readWriteExecPermission))
 		if err != nil {
 			panic(err)
