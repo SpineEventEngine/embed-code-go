@@ -76,9 +76,9 @@ type Args struct {
 type ConfigFields struct {
 	CodeRoot     string `yaml:"code-path"`
 	DocsRoot     string `yaml:"docs-path"`
-	CodeIncludes string `yaml:"code_includes"`
-	DocIncludes  string `yaml:"doc_includes"`
-	FragmentsDir string `yaml:"fragments_dir"`
+	CodeIncludes string `yaml:"code-includes"`
+	DocIncludes  string `yaml:"doc-includes"`
+	FragmentsDir string `yaml:"fragments-path"`
 	Separator    string `yaml:"separator"`
 }
 
@@ -126,15 +126,15 @@ func AnalyzeCodeSamples(config configuration.Configuration) {
 func ReadArgs() Args {
 	codeRoot := flag.String("code-path", "", "a path to a root directory with code files")
 	docsRoot := flag.String("docs-path", "", "a path to a root directory with docs files")
-	codeIncludes := flag.String("code_includes", "",
+	codeIncludes := flag.String("code-includes", "**/*.*",
 		"a comma-separated string of glob patterns for code files to include")
-	docIncludes := flag.String("doc_includes", "",
+	docIncludes := flag.String("doc-includes", "**/*.md,**/*.html",
 		"a comma-separated string of glob patterns for docs files to include")
-	fragmentsDir := flag.String("fragments_dir", "",
+	fragmentsDir := flag.String("fragments-path", "./build/fragments",
 		"a path to a directory where fragmented code is stored")
-	separator := flag.String("separator", "",
+	separator := flag.String("separator", "...",
 		"a string that's inserted between multiple partitions of a single fragment")
-	configFilePath := flag.String("config_file_path", "", "a path to a yaml configuration file")
+	configFilePath := flag.String("config-path", "", "a path to a yaml configuration file")
 	mode := flag.String("mode", "",
 		"a mode of embed-code execution, which can be 'check' or 'embed'")
 
@@ -178,7 +178,7 @@ func ValidateArgs(userArgs Args) error {
 		return errors.New("if one of code-path and docs-path is set, the another one must be set as well")
 	}
 	if !(isRootsSet || isConfigSet) {
-		return errors.New("embed code should be used with either config_file_path or both code-path and docs-path being set")
+		return errors.New("embed code should be used with either config-path or both code-path and docs-path being set")
 	}
 
 	return nil
