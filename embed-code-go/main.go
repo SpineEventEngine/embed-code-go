@@ -24,12 +24,6 @@ import (
 	"embed-code/embed-code-go/cli"
 )
 
-const (
-	ModeCheck   = "check"
-	ModeEmbed   = "embed"
-	ModeAnalyze = "analyze"
-)
-
 // The entry point for embed-code.
 //
 // There are three modes, which are chosen by 'mode' arg. If it is set to 'check',
@@ -82,7 +76,7 @@ const (
 func main() {
 	userArgs := cli.ReadArgs()
 
-	validationErr := cli.ValidateArgs(userArgs)
+	validationErr := cli.ValidateConfig(userArgs)
 	if validationErr != nil {
 		fmt.Println("Validation error:")
 		fmt.Println(validationErr.Error())
@@ -104,12 +98,12 @@ func main() {
 	config := cli.BuildEmbedCodeConfiguration(userArgs)
 
 	switch userArgs.Mode {
-	case ModeCheck:
+	case cli.ModeCheck:
 		cli.CheckCodeSamples(config)
-	case ModeEmbed:
+	case cli.ModeEmbed:
 		cli.EmbedCodeSamples(config)
 		cli.CheckCodeSamples(config)
-	case ModeAnalyze:
+	case cli.ModeAnalyze:
 		cli.AnalyzeCodeSamples(config)
 	}
 }
