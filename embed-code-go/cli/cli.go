@@ -23,6 +23,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"embed-code/embed-code-go/analyzing"
@@ -71,6 +72,12 @@ type Config struct {
 	ConfigPath    string
 	Mode          string
 }
+
+const (
+	ModeCheck   = "check"
+	ModeEmbed   = "embed"
+	ModeAnalyze = "analyze"
+)
 
 //
 // Public functions
@@ -146,32 +153,13 @@ func ReadArgs() Config {
 // rules are broken. If everything is ok, returns an empty string.
 //
 // userArgs — a struct with user-provided args.
-//
-// TODO:2024-09-05:olena-zmiiova: Temporary disabling cyclop as this function is planned to
-// be refactored. See https://github.com/SpineEventEngine/embed-code/issues/46
-// nolint:cyclop
-func ValidateArgs(userArgs Config) error {
-	isModeSet := userArgs.Mode != ""
-	isRootsSet := userArgs.CodePath != "" && userArgs.DocsPath != ""
-	isOneOfRootsSet := userArgs.CodePath != "" || userArgs.DocsPath != ""
-	isConfigSet := userArgs.ConfigPath != ""
-	isOptionalParamsSet := userArgs.CodeIncludes != "" || userArgs.DocIncludes != "" ||
-		userArgs.FragmentsPath != "" || userArgs.Separator != ""
-
-	if !isModeSet {
-		return errors.New("mode must be set")
-	}
-	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
-		return errors.New("config path cannot be set when code-path, docs-path or optional params are set")
-	}
-	if isOneOfRootsSet && !isRootsSet {
-		return errors.New("if one of code-path and docs-path is set, the another one must be set as well")
-	}
-	if !(isRootsSet || isConfigSet) {
-		return errors.New("embed code should be used with either config-path or both code-path and docs-path being set")
+func ValidateConfig(config Config) error {
+	err := validateMode(config.Mode)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	return validateIfConfigSetWithFileOrArgs(config)
 }
 
 // Performs several checks to ensure that the necessary configuration values are present.
@@ -283,4 +271,55 @@ func readConfigFields(configFilePath string) Config {
 	}
 
 	return configFields
+}
+
+func validateMode(mode string) error {
+	isModeSet := isNotEmptyString(mode)
+	if !isModeSet {
+		return errors.New("mode must be set")
+	}
+
+	validModes := []string{ModeEmbed, ModeAnalyze, ModeCheck}
+	isValidMode := slices.Contains(validModes, mode)
+
+	if !isValidMode {
+		return fmt.Errorf("invalid value for mode. it must be one of — %s, %s or %s", ModeEmbed, ModeCheck, ModeAnalyze)
+	}
+
+	return nil
+}
+
+func validateIfConfigSetWithFileOrArgs(config Config) error {
+	isConfigSet := isNotEmptyString(config.ConfigPath)
+	isCodePathSet := isNotEmptyString(config.CodePath)
+	isDocsPathSet := isNotEmptyString(config.DocsPath)
+
+	isRootsSet := isCodePathSet && isDocsPathSet
+	isOneOfRootsSet := isCodePathSet || isDocsPathSet
+	isOptionalParamsSet := validateIfOptionalParamsAreSet(config)
+
+	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
+		return errors.New("config path cannot be set when code-path, docs-path or optional params are set")
+	}
+	if isOneOfRootsSet && !isRootsSet {
+		return errors.New("if one of code-path and docs-path is set, the another one must be set as well")
+	}
+	if !(isRootsSet || isConfigSet) {
+		return errors.New("embed code should be used with either config-path or both code-path and docs-path being set")
+	}
+
+	return nil
+}
+
+func validateIfOptionalParamsAreSet(config Config) bool {
+	isCodeIncludesSet := isNotEmptyString(config.CodeIncludes)
+	isDocIncludesSet := isNotEmptyString(config.DocIncludes)
+	isSeparatorSet := isNotEmptyString(config.Separator)
+	isFragmentPathSet := isNotEmptyString(config.FragmentsPath)
+
+	return isCodeIncludesSet || isDocIncludesSet || isFragmentPathSet || isSeparatorSet
+}
+
+func isNotEmptyString(s string) bool {
+	return strings.TrimSpace(s) != ""
 }
