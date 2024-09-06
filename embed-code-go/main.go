@@ -76,19 +76,19 @@ import (
 func main() {
 	userArgs := cli.ReadArgs()
 
-	validationErr := cli.ValidateConfig(userArgs)
-	if validationErr != nil {
+	err := cli.ValidateConfig(userArgs)
+	if err != nil {
 		fmt.Println("Validation error:")
-		fmt.Println(validationErr.Error())
+		fmt.Println(err.Error())
 
 		return
 	}
 
 	if userArgs.ConfigPath != "" {
-		validationMessage := cli.ValidateConfigFile(userArgs.ConfigPath)
-		if validationMessage != "" {
+		err = cli.ValidateConfigFile(userArgs.ConfigPath)
+		if err != nil {
 			fmt.Println("Configuration file validation error:")
-			fmt.Println(validationMessage)
+			fmt.Println(err.Error())
 
 			return
 		}

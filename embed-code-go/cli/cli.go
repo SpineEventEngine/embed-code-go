@@ -168,22 +168,20 @@ func ValidateConfig(config Config) error {
 // path — a path to a yaml configuration file.
 //
 // Returns validation message. If everything is ok, returns an empty string.
-func ValidateConfigFile(path string) string {
-	validationMessage := ""
-
+func ValidateConfigFile(path string) error {
 	stat, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		return fmt.Sprintf("The file %s is not exists.", path)
+		return fmt.Errorf("the file %s is not exists", path)
 	}
 	if stat.IsDir() {
-		return fmt.Sprintf("%s is a dir, not a file.", path)
+		return fmt.Errorf("%s is a dir, not a file", path)
 	}
 	configFields := readConfigFields(path)
-	if configFields.CodePath == "" || configFields.DocsPath == "" {
-		return "Config must include both code-path and docs-path fields."
+	if isEmpty(configFields.CodePath) || isEmpty(configFields.DocsPath) {
+		return errors.New("config must include both code-path and docs-path fields")
 	}
 
-	return validationMessage
+	return nil
 }
 
 // Fills args with the values read from config file.
@@ -196,16 +194,16 @@ func FillArgsFromConfigFile(args Config) Config {
 	args.CodePath = configFields.CodePath
 	args.DocsPath = configFields.DocsPath
 
-	if configFields.CodeIncludes != "" {
+	if isNotEmpty(configFields.CodeIncludes) {
 		args.CodeIncludes = configFields.CodeIncludes
 	}
-	if configFields.DocIncludes != "" {
+	if isNotEmpty(configFields.DocIncludes) {
 		args.DocIncludes = configFields.DocIncludes
 	}
-	if configFields.FragmentsPath != "" {
+	if isNotEmpty(configFields.FragmentsPath) {
 		args.FragmentsPath = configFields.FragmentsPath
 	}
-	if configFields.Separator != "" {
+	if isNotEmpty(configFields.Separator) {
 		args.Separator = configFields.Separator
 	}
 
@@ -220,16 +218,16 @@ func BuildEmbedCodeConfiguration(userArgs Config) configuration.Configuration {
 	embedCodeConfig.CodeRoot = userArgs.CodePath
 	embedCodeConfig.DocumentationRoot = userArgs.DocsPath
 
-	if userArgs.CodeIncludes != "" {
+	if isNotEmpty(userArgs.CodeIncludes) {
 		embedCodeConfig.CodeIncludes = parseListArgument(userArgs.CodeIncludes)
 	}
-	if userArgs.DocIncludes != "" {
+	if isNotEmpty(userArgs.DocIncludes) {
 		embedCodeConfig.DocIncludes = parseListArgument(userArgs.DocIncludes)
 	}
-	if userArgs.FragmentsPath != "" {
+	if isNotEmpty(userArgs.FragmentsPath) {
 		embedCodeConfig.FragmentsDir = userArgs.FragmentsPath
 	}
-	if userArgs.Separator != "" {
+	if isNotEmpty(userArgs.Separator) {
 		embedCodeConfig.Separator = userArgs.Separator
 	}
 
@@ -274,7 +272,7 @@ func readConfigFields(configFilePath string) Config {
 }
 
 func validateMode(mode string) error {
-	isModeSet := isNotEmptyString(mode)
+	isModeSet := isNotEmpty(mode)
 	if !isModeSet {
 		return errors.New("mode must be set")
 	}
@@ -290,9 +288,9 @@ func validateMode(mode string) error {
 }
 
 func validateIfConfigSetWithFileOrArgs(config Config) error {
-	isConfigSet := isNotEmptyString(config.ConfigPath)
-	isCodePathSet := isNotEmptyString(config.CodePath)
-	isDocsPathSet := isNotEmptyString(config.DocsPath)
+	isConfigSet := isNotEmpty(config.ConfigPath)
+	isCodePathSet := isNotEmpty(config.CodePath)
+	isDocsPathSet := isNotEmpty(config.DocsPath)
 
 	isRootsSet := isCodePathSet && isDocsPathSet
 	isOneOfRootsSet := isCodePathSet || isDocsPathSet
@@ -312,14 +310,18 @@ func validateIfConfigSetWithFileOrArgs(config Config) error {
 }
 
 func validateIfOptionalParamsAreSet(config Config) bool {
-	isCodeIncludesSet := isNotEmptyString(config.CodeIncludes)
-	isDocIncludesSet := isNotEmptyString(config.DocIncludes)
-	isSeparatorSet := isNotEmptyString(config.Separator)
-	isFragmentPathSet := isNotEmptyString(config.FragmentsPath)
+	isCodeIncludesSet := isNotEmpty(config.CodeIncludes)
+	isDocIncludesSet := isNotEmpty(config.DocIncludes)
+	isSeparatorSet := isNotEmpty(config.Separator)
+	isFragmentPathSet := isNotEmpty(config.FragmentsPath)
 
 	return isCodeIncludesSet || isDocIncludesSet || isFragmentPathSet || isSeparatorSet
 }
 
-func isNotEmptyString(s string) bool {
-	return strings.TrimSpace(s) != ""
+func isEmpty(s string) bool {
+	return strings.TrimSpace(s) == ""
+}
+
+func isNotEmpty(s string) bool {
+	return !isEmpty(s)
 }
