@@ -281,7 +281,8 @@ func validateMode(mode string) error {
 	isValidMode := slices.Contains(validModes, mode)
 
 	if !isValidMode {
-		return fmt.Errorf("invalid value for mode. it must be one of — %s, %s or %s", ModeEmbed, ModeCheck, ModeAnalyze)
+		return fmt.Errorf("invalid value for mode. it must be one of — %s, %s or %s",
+			ModeEmbed, ModeCheck, ModeAnalyze)
 	}
 
 	return nil
@@ -297,13 +298,16 @@ func validateIfConfigSetWithFileOrArgs(config Config) error {
 	isOptionalParamsSet := validateIfOptionalParamsAreSet(config)
 
 	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
-		return errors.New("config path cannot be set when code-path, docs-path or optional params are set")
+		return errors.New(
+			"config path cannot be set when code-path, docs-path or optional params are set")
 	}
 	if isOneOfRootsSet && !isRootsSet {
-		return errors.New("if one of code-path and docs-path is set, the another one must be set as well")
+		return errors.New(
+			"if one of code-path and docs-path is set, the another one must be set as well")
 	}
 	if !(isRootsSet || isConfigSet) {
-		return errors.New("embed code should be used with either config-path or both code-path and docs-path being set")
+		return errors.New("embed code should be used with either config-path or both " +
+			"code-path and docs-path being set")
 	}
 
 	return nil
