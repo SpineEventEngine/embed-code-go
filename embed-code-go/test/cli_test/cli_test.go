@@ -123,7 +123,7 @@ func (suite *CLITestSuite) TestCorrectConfigFile() {
 	suite.Equal(nil, validation_message)
 
 	config_file_validation_message := cli.ValidateConfigFile(args.ConfigPath)
-	suite.Equal("", config_file_validation_message)
+	suite.Equal(nil, config_file_validation_message)
 }
 
 func (suite *CLITestSuite) TestConfigFileNotExist() {
@@ -134,8 +134,8 @@ func (suite *CLITestSuite) TestConfigFileNotExist() {
 	validation_message := cli.ValidateConfig(args)
 	suite.Equal(nil, validation_message)
 
-	config_file_validation_message := cli.ValidateConfigFile(args.ConfigPath)
-	suite.Equal(fmt.Sprintf("The file %s is not exists.", args.ConfigPath), config_file_validation_message)
+	config_file_validation_message := cli.ValidateConfigFile(args.ConfigPath).Error()
+	suite.Equal(fmt.Sprintf("the file %s is not exists", args.ConfigPath), config_file_validation_message)
 }
 
 func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
@@ -146,8 +146,8 @@ func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
 	validation_message := cli.ValidateConfig(args)
 	suite.Equal(nil, validation_message)
 
-	config_file_validation_message := cli.ValidateConfigFile(args.ConfigPath)
-	suite.Equal("Config must include both code-path and docs-path fields.", config_file_validation_message)
+	config_file_validation_message := cli.ValidateConfigFile(args.ConfigPath).Error()
+	suite.Equal("config must include both code-path and docs-path fields", config_file_validation_message)
 }
 
 func TestCLITestSuite(t *testing.T) {
