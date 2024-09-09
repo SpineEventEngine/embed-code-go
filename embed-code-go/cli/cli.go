@@ -312,13 +312,24 @@ func validateIfConfigSetWithFileOrArgs(config Config) error {
 	if err != nil {
 		return err
 	}
-
-	isRootsSet := isCodePathSet && isDocsPathSet
-	isOneOfRootsSet := isCodePathSet || isDocsPathSet
 	isOptionalParamsSet, err := validateIfOptionalParamsAreSet(config)
 	if err != nil {
 		return err
 	}
+
+	err = validateParamsCombinations(isConfigSet, isCodePathSet, isDocsPathSet, isOptionalParamsSet)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Validates if config path and arguments are not conflicting.
+func validateParamsCombinations(
+	isConfigSet bool, isCodePathSet bool, isDocsPathSet bool, isOptionalParamsSet bool) error {
+	isRootsSet := isCodePathSet && isDocsPathSet
+	isOneOfRootsSet := isCodePathSet || isDocsPathSet
 
 	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
 		return errors.New(
@@ -362,6 +373,7 @@ func validatePathIfSet(path string) (bool, error) {
 		if !exists {
 			return true, errors.New("config file is not exist")
 		}
+
 		return true, nil
 	}
 
@@ -395,6 +407,7 @@ func isDirExist(path string) (bool, error) {
 		if info.IsDir() {
 			return true, nil
 		}
+
 		return false, fmt.Errorf("%s is a file, the directory was expected", path)
 	}
 
@@ -410,6 +423,7 @@ func validateIfPathExists(path string) (bool, os.FileInfo, error) {
 		if os.IsNotExist(err) {
 			return false, nil, fmt.Errorf("the path %s is not exist", path)
 		}
+
 		return false, nil, err
 	}
 

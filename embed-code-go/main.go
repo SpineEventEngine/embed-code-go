@@ -19,7 +19,7 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
 
 	"embed-code/embed-code-go/cli"
 )
@@ -74,12 +74,12 @@ import (
 //   - separator — a string which is used as a separator between code fragments. Default value
 //     is "...".
 func main() {
+	slog.Info("starting application, reading args...")
 	userArgs := cli.ReadArgs()
 
 	err := cli.ValidateConfig(userArgs)
 	if err != nil {
-		fmt.Println("the provided config is not valid:")
-		fmt.Println(err.Error())
+		slog.Error("user arguments are not valid.", "error", err)
 
 		return
 	}
@@ -87,15 +87,13 @@ func main() {
 	if userArgs.ConfigPath != "" {
 		err = cli.ValidateConfigFile(userArgs.ConfigPath)
 		if err != nil {
-			fmt.Println("the provided config file is not valid:")
-			fmt.Println(err.Error())
+			slog.Error("the provided config file is not valid.", "error", err)
 
 			return
 		}
 		userArgs, err = cli.FillArgsFromConfigFile(userArgs)
 		if err != nil {
-			fmt.Println("received an issue while reading config file:")
-			fmt.Println(err.Error())
+			slog.Error("received an issue while reading config file: ", "error", err)
 
 			return
 		}
@@ -107,16 +105,15 @@ func main() {
 	case cli.ModeCheck:
 		cli.CheckCodeSamples(config)
 
-		fmt.Println("the documentation files are up-to-date with code files.")
+		slog.Info("the documentation files are up-to-date with code files.")
 	case cli.ModeEmbed:
 		cli.EmbedCodeSamples(config)
 		cli.CheckCodeSamples(config)
 
-		fmt.Println("the code fragments are successfully embedded.")
+		slog.Info("the code fragments are successfully embedded.")
 	case cli.ModeAnalyze:
 		cli.AnalyzeCodeSamples(config)
 
-		fmt.Println("analysis is completed, analytics files can be found in " +
-			"/build/analytics folder")
+		slog.Info("analysis is completed, analytics files can be found in /build/analytics folder")
 	}
 }
