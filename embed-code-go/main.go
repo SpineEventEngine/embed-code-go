@@ -92,7 +92,13 @@ func main() {
 
 			return
 		}
-		userArgs = cli.FillArgsFromConfigFile(userArgs)
+		userArgs, err = cli.FillArgsFromConfigFile(userArgs)
+		if err != nil {
+			fmt.Println("Configuration file validation error:")
+			fmt.Println(err.Error())
+
+			return
+		}
 	}
 
 	config := cli.BuildEmbedCodeConfiguration(userArgs)

@@ -169,13 +169,14 @@ func ValidateConfig(config Config) error {
 //
 // Returns validation message. If everything is ok, returns an empty string.
 func ValidateConfigFile(path string) error {
-	stat, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return fmt.Errorf("the file %s is not exists", path)
+	exists, err := isFileExist(path)
+	if err != nil {
+		return err
 	}
-	if stat.IsDir() {
-		return fmt.Errorf("%s is a dir, not a file", path)
+	if !exists {
+		return errors.New("config file is not exist")
 	}
+
 	configFields := readConfigFields(path)
 	if isEmpty(configFields.CodePath) || isEmpty(configFields.DocsPath) {
 		return errors.New("config must include both code-path and docs-path fields")
@@ -189,7 +190,15 @@ func ValidateConfigFile(path string) error {
 // args — an Config struct with user-provided args.
 //
 // Returns filled Config.
-func FillArgsFromConfigFile(args Config) Config {
+func FillArgsFromConfigFile(args Config) (Config, error) {
+	exists, err := isFileExist(args.ConfigPath)
+	if err != nil {
+		return Config{}, err
+	}
+	if !exists {
+		return Config{}, errors.New("config file is not exist")
+	}
+
 	configFields := readConfigFields(args.ConfigPath)
 	args.CodePath = configFields.CodePath
 	args.DocsPath = configFields.DocsPath
@@ -207,7 +216,7 @@ func FillArgsFromConfigFile(args Config) Config {
 		args.Separator = configFields.Separator
 	}
 
-	return args
+	return args, nil
 }
 
 // Generates and returns a configuration based on provided userArgs.
@@ -289,9 +298,18 @@ func validateMode(mode string) error {
 }
 
 func validateIfConfigSetWithFileOrArgs(config Config) error {
-	isConfigSet := isNotEmpty(config.ConfigPath)
-	isCodePathSet := isNotEmpty(config.CodePath)
-	isDocsPathSet := isNotEmpty(config.DocsPath)
+	isConfigSet, err := validatePathIfSet(config.ConfigPath)
+	if err != nil {
+		return err
+	}
+	isCodePathSet, err := validatePathIfSet(config.CodePath)
+	if err != nil {
+		return err
+	}
+	isDocsPathSet, err := validatePathIfSet(config.DocsPath)
+	if err != nil {
+		return err
+	}
 
 	isRootsSet := isCodePathSet && isDocsPathSet
 	isOneOfRootsSet := isCodePathSet || isDocsPathSet
@@ -322,10 +340,72 @@ func validateIfOptionalParamsAreSet(config Config) bool {
 	return isCodeIncludesSet || isDocIncludesSet || isFragmentPathSet || isSeparatorSet
 }
 
-func isEmpty(s string) bool {
-	return strings.TrimSpace(s) == ""
+// Reports whether path is set or not. If it is set, checks if such path exists.
+func validatePathIfSet(path string) (bool, error) {
+	isPathSet := isNotEmpty(path)
+	if isPathSet {
+		exists, err := isDirExist(path)
+		if err != nil {
+			// Since the path is set, returning true even we have an error.
+			return true, err
+		}
+		if !exists {
+			return true, errors.New("config file is not exist")
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func isFileExist(filePath string) (bool, error) {
+	exists, info, err := validateIfPathExists(filePath)
+	if err != nil {
+		return false, err
+	}
+	if exists {
+		if info.IsDir() {
+			return false, fmt.Errorf("%s is a directory, the file was expected", filePath)
+		}
+
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func isDirExist(path string) (bool, error) {
+	exists, info, err := validateIfPathExists(path)
+	if err != nil {
+		return false, err
+	}
+	if exists {
+		if info.IsDir() {
+			return true, nil
+		}
+		return false, fmt.Errorf("%s is a file, the directory was expected", path)
+	}
+
+	return false, nil
+}
+
+func validateIfPathExists(path string) (bool, os.FileInfo, error) {
+	info, err := os.Stat(path)
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil, fmt.Errorf("the path %s is not exist", path)
+		}
+		return false, nil, err
+	}
+
+	return true, info, nil
 }
 
 func isNotEmpty(s string) bool {
 	return !isEmpty(s)
+}
+
+func isEmpty(s string) bool {
+	return strings.TrimSpace(s) == ""
 }
