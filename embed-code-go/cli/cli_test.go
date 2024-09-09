@@ -24,9 +24,8 @@ import (
 	. "embed-code/embed-code-go/cli"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"path/filepath"
-
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -38,17 +37,19 @@ func TestCli(t *testing.T) {
 var _ = Describe("CLI package", func() {
 	var config Config
 
-	BeforeEach(func() {
-		currentDir, _ := os.Getwd()
-		parentDir := filepath.Dir(currentDir)
+	It("should set default values when they are not provided", func() {
+		defaultConfig := ReadArgs()
 
-		config = Config{
-			DocsPath: parentDir + "/test/resources/docs",
-			CodePath: parentDir + "/test/resources/code",
-		}
+		Expect(defaultConfig.CodeIncludes).Should(Equal("**/*.*"))
+		Expect(defaultConfig.DocIncludes).Should(Equal("**/*.md,**/*.html"))
+		Expect(defaultConfig.FragmentsPath).Should(Equal("./build/fragments"))
+		Expect(defaultConfig.Separator).Should(Equal("..."))
 	})
 
 	Context("should pass validation", func() {
+		BeforeEach(func() {
+			config = validConfig()
+		})
 
 		DescribeTable("when all required args are set",
 			func(mode string) {
@@ -58,7 +59,48 @@ var _ = Describe("CLI package", func() {
 
 			Entry("with check mode", ModeCheck),
 			Entry("with analyze mode", ModeAnalyze),
-			Entry("with embed mode", ModeEmbed))
+			Entry("with embed mode", ModeEmbed),
+		)
+
+		It("when correct config file is set", func() {
+			currentDir, _ := os.Getwd()
+			parentDir := filepath.Dir(currentDir)
+
+			config = Config{
+				Mode:       "embed",
+				ConfigPath: parentDir + "/test/resources/config_files/correct_config.yml",
+			}
+
+			Expect(ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
+			Expect(ValidateConfigFile(config.ConfigPath)).Error().ShouldNot(HaveOccurred())
+		})
+	})
+
+	Context("should not pass validation", func() {
+
+		DescribeTable("when mode is invalid",
+			func(mode string) {
+				config = validConfig()
+				config.Mode = mode
+				Expect(ValidateConfig(config)).Error().Should(HaveOccurred())
+			},
+
+			Entry("with random mode", "justarandomstring"),
+			Entry("with numeric mode", "123123123123"),
+			Entry("with symbols mode", "!@#$%^&*()"),
+			Entry("with empty mode", "         "),
+		)
+
 	})
 
 })
+
+func validConfig() Config {
+	currentDir, _ := os.Getwd()
+	parentDir := filepath.Dir(currentDir)
+
+	return Config{
+		DocsPath: parentDir + "/test/resources/docs",
+		CodePath: parentDir + "/test/resources/code",
+	}
+}
