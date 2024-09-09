@@ -78,7 +78,7 @@ func main() {
 
 	err := cli.ValidateConfig(userArgs)
 	if err != nil {
-		fmt.Println("Validation error:")
+		fmt.Println("the provided config is not valid:")
 		fmt.Println(err.Error())
 
 		return
@@ -87,14 +87,14 @@ func main() {
 	if userArgs.ConfigPath != "" {
 		err = cli.ValidateConfigFile(userArgs.ConfigPath)
 		if err != nil {
-			fmt.Println("Configuration file validation error:")
+			fmt.Println("the provided config file is not valid:")
 			fmt.Println(err.Error())
 
 			return
 		}
 		userArgs, err = cli.FillArgsFromConfigFile(userArgs)
 		if err != nil {
-			fmt.Println("Configuration file validation error:")
+			fmt.Println("received an issue while reading config file:")
 			fmt.Println(err.Error())
 
 			return
@@ -106,10 +106,17 @@ func main() {
 	switch userArgs.Mode {
 	case cli.ModeCheck:
 		cli.CheckCodeSamples(config)
+
+		fmt.Println("the documentation files are up-to-date with code files.")
 	case cli.ModeEmbed:
 		cli.EmbedCodeSamples(config)
 		cli.CheckCodeSamples(config)
+
+		fmt.Println("the code fragments are successfully embedded.")
 	case cli.ModeAnalyze:
 		cli.AnalyzeCodeSamples(config)
+
+		fmt.Println("analysis is completed, analytics files can be found in " +
+			"/build/analytics folder")
 	}
 }
