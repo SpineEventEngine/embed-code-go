@@ -22,6 +22,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"slices"
 	"strings"
@@ -87,6 +88,7 @@ const (
 //
 // config — a configuration for checking code samples.
 func CheckCodeSamples(config configuration.Configuration) {
+	slog.Info("")
 	err := fragmentation.WriteFragmentFiles(config)
 	if err != nil {
 		panic(err)
@@ -300,10 +302,7 @@ func validateMode(mode string) error {
 
 // Validates if config is set correctly and does not have mutually exclusive params set.
 func validateIfConfigSetWithFileOrArgs(config Config) error {
-	isConfigSet, err := validatePathIfSet(config.ConfigPath)
-	if err != nil {
-		return err
-	}
+	isConfigSet := isNotEmpty(config.ConfigPath)
 	isCodePathSet, err := validatePathIfSet(config.CodePath)
 	if err != nil {
 		return err

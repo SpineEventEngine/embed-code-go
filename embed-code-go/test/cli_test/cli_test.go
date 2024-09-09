@@ -74,56 +74,61 @@ func (suite *CLITestSuite) TestEmbedding() {
 }
 
 func (suite *CLITestSuite) TestRequiredArgsFilled() {
+	currentDir, _ := os.Getwd()
 	args := cli.Config{
-		DocsPath: "docs",
-		CodePath: "code",
+		DocsPath: currentDir + "/test/resources/docs",
+		CodePath: currentDir + "/test/resources/code",
 		Mode:     "embed",
 	}
-	validation_message := cli.ValidateConfig(args)
-	suite.Equal(nil, validation_message)
+	validationMessage := cli.ValidateConfig(args)
+	suite.Equal(nil, validationMessage)
 }
 
 func (suite *CLITestSuite) TestModeMissed() {
+	currentDir, _ := os.Getwd()
 	args := cli.Config{
-		DocsPath: "docs",
-		CodePath: "code",
+		DocsPath: currentDir + "/test/resources/docs",
+		CodePath: currentDir + "/test/resources/code",
 	}
-	validation_message := cli.ValidateConfig(args).Error()
-	suite.Equal("mode must be set", validation_message)
+	validationMessage := cli.ValidateConfig(args).Error()
+	suite.Equal("mode must be set", validationMessage)
 }
 
 func (suite *CLITestSuite) TestDocsRootMissed() {
+	currentDir, _ := os.Getwd()
 	args := cli.Config{
-		CodePath: "code",
+		CodePath: currentDir + "/test/resources/code",
 		Mode:     "embed",
 	}
-	validation_message := cli.ValidateConfig(args).Error()
+	validationMessage := cli.ValidateConfig(args).Error()
 	suite.Equal("if one of code-path and docs-path is set, the another one must be set as well",
-		validation_message)
+		validationMessage)
 }
 
 func (suite *CLITestSuite) TestConfigAndRootDirsSet() {
+	currentDir, _ := os.Getwd()
 	args := cli.Config{
-		CodePath:   "code",
-		DocsPath:   "docs",
+		CodePath:   currentDir + "/test/resources/code",
+		DocsPath:   currentDir + "/test/resources/docs",
 		Mode:       "embed",
-		ConfigPath: "config.yaml",
+		ConfigPath: currentDir + "/test/resources/config_files/correct_config.yml",
 	}
-	validation_message := cli.ValidateConfig(args).Error()
+	validationMessage := cli.ValidateConfig(args).Error()
 	suite.Equal("config path cannot be set when code-path, docs-path or optional params are set",
-		validation_message)
+		validationMessage)
 }
 
 func (suite *CLITestSuite) TestCorrectConfigFile() {
+	currentDir, _ := os.Getwd()
 	args := cli.Config{
 		Mode:       "embed",
-		ConfigPath: "./test/resources/config_files/correct_config.yml",
+		ConfigPath: currentDir + "/test/resources/config_files/correct_config.yml",
 	}
-	validation_message := cli.ValidateConfig(args)
-	suite.Equal(nil, validation_message)
+	validationMessage := cli.ValidateConfig(args)
+	suite.Equal(nil, validationMessage)
 
-	config_file_validation_message := cli.ValidateConfigFile(args.ConfigPath)
-	suite.Equal(nil, config_file_validation_message)
+	configFileValidationMessage := cli.ValidateConfigFile(args.ConfigPath)
+	suite.Equal(nil, configFileValidationMessage)
 }
 
 func (suite *CLITestSuite) TestConfigFileNotExist() {
@@ -131,11 +136,11 @@ func (suite *CLITestSuite) TestConfigFileNotExist() {
 		Mode:       "embed",
 		ConfigPath: "/some/path/to/config.yaml",
 	}
-	validation_message := cli.ValidateConfig(args)
-	suite.Equal(nil, validation_message)
+	validationMessage := cli.ValidateConfig(args)
+	suite.Equal(nil, validationMessage)
 
-	config_file_validation_message := cli.ValidateConfigFile(args.ConfigPath).Error()
-	suite.Equal(fmt.Sprintf("the file %s is not exists", args.ConfigPath), config_file_validation_message)
+	configFileValidationMessage := cli.ValidateConfigFile(args.ConfigPath).Error()
+	suite.Equal(fmt.Sprintf("the path %s is not exist", args.ConfigPath), configFileValidationMessage)
 }
 
 func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
@@ -143,11 +148,11 @@ func (suite *CLITestSuite) TestConfigFileWithoutDocsRoot() {
 		Mode:       "embed",
 		ConfigPath: "./test/resources/config_files/config_without_docs_root.yml",
 	}
-	validation_message := cli.ValidateConfig(args)
-	suite.Equal(nil, validation_message)
+	validationMessage := cli.ValidateConfig(args)
+	suite.Equal(nil, validationMessage)
 
-	config_file_validation_message := cli.ValidateConfigFile(args.ConfigPath).Error()
-	suite.Equal("config must include both code-path and docs-path fields", config_file_validation_message)
+	configFileValidationMessage := cli.ValidateConfigFile(args.ConfigPath).Error()
+	suite.Equal("config must include both code-path and docs-path fields", configFileValidationMessage)
 }
 
 func TestCLITestSuite(t *testing.T) {
