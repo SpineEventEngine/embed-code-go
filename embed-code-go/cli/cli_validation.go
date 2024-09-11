@@ -71,6 +71,7 @@ func ValidateConfigFile(userConfig Config) error {
 	if exists {
 		return nil
 	}
+
 	return errors.New("expected to use config file, but it does not exist")
 }
 
