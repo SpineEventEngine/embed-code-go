@@ -56,7 +56,7 @@ func ValidateConfigFile(userConfig Config) error {
 	// Configs should be read from file, verifying if they are not set already.
 	isCodePathSet := isNotEmpty(userConfig.CodePath)
 	isDocsPathSet := isNotEmpty(userConfig.DocsPath)
-	areOptionalParamsSet := validateIfOptionalParamsAreSet(userConfig)
+	areOptionalParamsSet := validateOptionalParamsSet(userConfig)
 	isOneOfRootsSet := isCodePathSet || isDocsPathSet
 
 	if isOneOfRootsSet || areOptionalParamsSet {
@@ -94,15 +94,15 @@ func validateMode(mode string) error {
 
 // Validates if config is set correctly and does not have mutually exclusive params set.
 func validateConfig(config Config) error {
-	isCodePathSet, err := validatePathIfSet(config.CodePath)
+	isCodePathSet, err := validatePathSet(config.CodePath)
 	if err != nil {
 		return err
 	}
-	isDocsPathSet, err := validatePathIfSet(config.DocsPath)
+	isDocsPathSet, err := validatePathSet(config.DocsPath)
 	if err != nil {
 		return err
 	}
-	_, err = validatePathIfSet(config.FragmentsPath)
+	_, err = validatePathSet(config.FragmentsPath)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func validateConfig(config Config) error {
 
 // Reports whether at least one of optional configs is set — code-includes, doc-includes, separator
 // or fragments-path.
-func validateIfOptionalParamsAreSet(config Config) bool {
+func validateOptionalParamsSet(config Config) bool {
 	isCodeIncludesSet := isNotEmpty(config.CodeIncludes)
 	isDocIncludesSet := isNotEmpty(config.DocIncludes)
 	isSeparatorSet := isNotEmpty(config.Separator)
@@ -129,7 +129,7 @@ func validateIfOptionalParamsAreSet(config Config) bool {
 }
 
 // Reports whether path is set or not. If it is set, checks if such path exists in a file system.
-func validatePathIfSet(path string) (bool, error) {
+func validatePathSet(path string) (bool, error) {
 	isPathSet := isNotEmpty(path)
 	if isPathSet {
 		exists, err := isDirExist(path)
@@ -149,7 +149,7 @@ func validatePathIfSet(path string) (bool, error) {
 
 // Reports whether the given path to a file exists in the file system.
 func isFileExist(filePath string) (bool, error) {
-	exists, info, err := validateIfPathExists(filePath)
+	exists, info, err := validatePathExists(filePath)
 	if err != nil {
 		return false, err
 	}
@@ -164,9 +164,25 @@ func isFileExist(filePath string) (bool, error) {
 	return false, nil
 }
 
+// Reports whether the given path is valid and exist in the file system. Also returns a FileInfo if
+// the path exists.
+func validatePathExists(path string) (bool, os.FileInfo, error) {
+	info, err := os.Stat(path)
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil, fmt.Errorf("the path %s is not exist", path)
+		}
+
+		return false, nil, err
+	}
+
+	return true, info, nil
+}
+
 // Reports whether the given directory exists in the file system.
 func isDirExist(path string) (bool, error) {
-	exists, info, err := validateIfPathExists(path)
+	exists, info, err := validatePathExists(path)
 	if err != nil {
 		return false, err
 	}
@@ -179,22 +195,6 @@ func isDirExist(path string) (bool, error) {
 	}
 
 	return false, nil
-}
-
-// Reports whether the given path is valid and exist in the file system. Also returns a FileInfo if
-// the path exists.
-func validateIfPathExists(path string) (bool, os.FileInfo, error) {
-	info, err := os.Stat(path)
-
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil, fmt.Errorf("the path %s is not exist", path)
-		}
-
-		return false, nil, err
-	}
-
-	return true, info, nil
 }
 
 // Reports whether the given string is not empty.
