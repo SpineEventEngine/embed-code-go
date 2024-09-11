@@ -67,7 +67,7 @@ func validatePathExists(path string) (bool, os.FileInfo, error) {
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			return false, nil, fmt.Errorf("the path %s is not exist", path)
+			return false, nil, nil
 		}
 
 		return false, nil, err
