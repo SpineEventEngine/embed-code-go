@@ -92,6 +92,11 @@ issues:
     - linters:
         - stylecheck
       text: "ST1003"
+    # As we use external test libs, tests will be hard to read if we have package reference everywhere.
+    - linters:
+        - revive
+      text: "dot-imports: should not use dot imports"
+      path: _test\.go
   # Excluding test folder as tests are in progress of moving to the source files.
   exclude-dirs:
     - test/
