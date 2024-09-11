@@ -65,7 +65,8 @@ var _ = Describe("CLI package", func() {
 		)
 
 		It("should pass validation when correct config file is set", func() {
-			config = Config{
+			config := Config{
+				Mode:       ModeCheck,
 				ConfigPath: configFilePath(),
 			}
 
