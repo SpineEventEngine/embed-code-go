@@ -22,6 +22,7 @@ package cli_test
 
 import (
 	. "embed-code/embed-code-go/cli"
+	"fmt"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"os"
@@ -35,7 +36,6 @@ func TestCli(t *testing.T) {
 }
 
 var _ = Describe("CLI package", func() {
-	var config Config
 
 	It("should set default values when they are not provided", func() {
 		defaultConfig := ReadArgs()
@@ -46,12 +46,14 @@ var _ = Describe("CLI package", func() {
 		Expect(defaultConfig.Separator).Should(Equal("..."))
 	})
 
-	Context("should pass validation", func() {
+	Context("with valid config", func() {
+		var config Config
+
 		BeforeEach(func() {
-			config = validConfig()
+			config = baseCliConfig()
 		})
 
-		DescribeTable("when all required args are set",
+		DescribeTable("should pass validation when all required args are set",
 			func(mode string) {
 				config.Mode = mode
 				Expect(ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
@@ -62,13 +64,9 @@ var _ = Describe("CLI package", func() {
 			Entry("with embed mode", ModeEmbed),
 		)
 
-		It("when correct config file is set", func() {
-			currentDir, _ := os.Getwd()
-			parentDir := filepath.Dir(currentDir)
-
+		It("should pass validation when correct config file is set", func() {
 			config = Config{
-				Mode:       "embed",
-				ConfigPath: parentDir + "/test/resources/config_files/correct_config.yml",
+				ConfigPath: configFilePath(),
 			}
 
 			Expect(ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
@@ -76,11 +74,11 @@ var _ = Describe("CLI package", func() {
 		})
 	})
 
-	Context("should not pass validation", func() {
+	Context("with invalid config", func() {
 
-		DescribeTable("when mode is invalid",
+		DescribeTable("should fail validation when mode is invalid",
 			func(mode string) {
-				config = validConfig()
+				config := baseCliConfig()
 				config.Mode = mode
 				Expect(ValidateConfig(config)).Error().Should(HaveOccurred())
 			},
@@ -91,16 +89,66 @@ var _ = Describe("CLI package", func() {
 			Entry("with empty mode", "         "),
 		)
 
+		It("should fail validation when config file is not exist", func() {
+			invalidConfig := Config{
+				Mode:       ModeEmbed,
+				ConfigPath: "/some/path/to/config.yaml",
+			}
+
+			Expect(ValidateConfigFile(invalidConfig.ConfigPath)).Error().Should(HaveOccurred())
+			Expect(ValidateConfigFile(invalidConfig.ConfigPath).Error()).Should(Equal(
+				fmt.Sprintf("the path %s is not exist", invalidConfig.ConfigPath)))
+		})
+
+		It("should fail validation when mode is not set", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.Mode = ""
+
+			Expect(ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(ValidateConfig(invalidConfig).Error()).Should(Equal("mode must be set"))
+		})
+
+		It("should fail validation when docs path is missed", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.DocsPath = ""
+
+			Expect(ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"if one of code-path and docs-path is set, the another one must be set as well"))
+		})
+
+		It("should fail validation when config, code and docs paths are set at the same time", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.ConfigPath = configFilePath()
+
+			Expect(ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"config path cannot be set when code-path, docs-path or optional params are set"))
+		})
+
 	})
 
 })
 
-func validConfig() Config {
-	currentDir, _ := os.Getwd()
+func baseCliConfig() Config {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
 	parentDir := filepath.Dir(currentDir)
 
 	return Config{
+		Mode:     ModeCheck,
 		DocsPath: parentDir + "/test/resources/docs",
 		CodePath: parentDir + "/test/resources/code",
 	}
+}
+
+func configFilePath() string {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	parentDir := filepath.Dir(currentDir)
+	return parentDir + "/test/resources/config_files/correct_config.yml"
 }
