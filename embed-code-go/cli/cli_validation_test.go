@@ -22,7 +22,6 @@ package cli_test
 
 import (
 	"embed-code/embed-code-go/cli"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -98,8 +97,8 @@ var _ = Describe("CLI validation", func() {
 			}
 
 			Expect(cli.ValidateConfigFile(invalidConfig)).Error().Should(HaveOccurred())
-			Expect(cli.ValidateConfigFile(invalidConfig).Error()).Should(Equal(
-				fmt.Sprintf("the path %s is not exist", invalidConfig.ConfigPath)))
+			Expect(cli.ValidateConfigFile(invalidConfig).Error()).Should(
+				Equal("expected to use config file, but it does not exist"))
 		})
 
 		It("should fail validation when mode is not set", func() {
