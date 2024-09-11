@@ -1,8 +1,7 @@
 # This file holds the configs for the linters, and it should be placed in the current working directory.
 run:
   timeout: 5m
-  # Temporary disabling tests.
-  tests: false
+  tests: true
   modules-download-mode: readonly
   allow-parallel-runners: true
   go: '1.22.1'
@@ -93,6 +92,14 @@ issues:
     - linters:
         - stylecheck
       text: "ST1003"
+    # As we use external test libs, tests will be hard to read if we have package reference everywhere.
+    - linters:
+        - revive
+      text: "dot-imports: should not use dot imports"
+      path: _test\.go
+  # Excluding test folder as tests are in progress of moving to the source files.
+  exclude-dirs:
+    - test/
 linters-settings:
   lll:
     line-length: 100
