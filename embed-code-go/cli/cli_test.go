@@ -21,24 +21,24 @@
 package cli_test
 
 import (
-	. "embed-code/embed-code-go/cli"
+	"embed-code/embed-code-go/cli"
 	"fmt"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"os"
 	"path/filepath"
 	"testing"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 func TestCli(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Data Suite")
 }
 
-var _ = Describe("CLI package", func() {
+var _ = Describe("CLI validation", func() {
 
 	It("should set default values when they are not provided", func() {
-		defaultConfig := ReadArgs()
+		defaultConfig := cli.ReadArgs()
 
 		Expect(defaultConfig.CodeIncludes).Should(Equal("**/*.*"))
 		Expect(defaultConfig.DocIncludes).Should(Equal("**/*.md,**/*.html"))
@@ -47,7 +47,7 @@ var _ = Describe("CLI package", func() {
 	})
 
 	Context("with valid config", func() {
-		var config Config
+		var config cli.Config
 
 		BeforeEach(func() {
 			config = baseCliConfig()
@@ -56,22 +56,22 @@ var _ = Describe("CLI package", func() {
 		DescribeTable("should pass validation when all required args are set",
 			func(mode string) {
 				config.Mode = mode
-				Expect(ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
+				Expect(cli.ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
 			},
 
-			Entry("with check mode", ModeCheck),
-			Entry("with analyze mode", ModeAnalyze),
-			Entry("with embed mode", ModeEmbed),
+			Entry("with check mode", cli.ModeCheck),
+			Entry("with analyze mode", cli.ModeAnalyze),
+			Entry("with embed mode", cli.ModeEmbed),
 		)
 
 		It("should pass validation when correct config file is set", func() {
-			config := Config{
-				Mode:       ModeCheck,
+			config := cli.Config{
+				Mode:       cli.ModeCheck,
 				ConfigPath: configFilePath(),
 			}
 
-			Expect(ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
-			Expect(ValidateConfigFile(config.ConfigPath)).Error().ShouldNot(HaveOccurred())
+			Expect(cli.ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
+			Expect(cli.ValidateConfigFile(config.ConfigPath)).Error().ShouldNot(HaveOccurred())
 		})
 	})
 
@@ -81,7 +81,7 @@ var _ = Describe("CLI package", func() {
 			func(mode string) {
 				config := baseCliConfig()
 				config.Mode = mode
-				Expect(ValidateConfig(config)).Error().Should(HaveOccurred())
+				Expect(cli.ValidateConfig(config)).Error().Should(HaveOccurred())
 			},
 
 			Entry("with random mode", "justarandomstring"),
@@ -91,13 +91,13 @@ var _ = Describe("CLI package", func() {
 		)
 
 		It("should fail validation when config file is not exist", func() {
-			invalidConfig := Config{
-				Mode:       ModeEmbed,
+			invalidConfig := cli.Config{
+				Mode:       cli.ModeEmbed,
 				ConfigPath: "/some/path/to/config.yaml",
 			}
 
-			Expect(ValidateConfigFile(invalidConfig.ConfigPath)).Error().Should(HaveOccurred())
-			Expect(ValidateConfigFile(invalidConfig.ConfigPath).Error()).Should(Equal(
+			Expect(cli.ValidateConfigFile(invalidConfig.ConfigPath)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfigFile(invalidConfig.ConfigPath).Error()).Should(Equal(
 				fmt.Sprintf("the path %s is not exist", invalidConfig.ConfigPath)))
 		})
 
@@ -105,16 +105,16 @@ var _ = Describe("CLI package", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.Mode = ""
 
-			Expect(ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
-			Expect(ValidateConfig(invalidConfig).Error()).Should(Equal("mode must be set"))
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal("mode must be set"))
 		})
 
 		It("should fail validation when docs path is missed", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.DocsPath = ""
 
-			Expect(ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
-			Expect(ValidateConfig(invalidConfig).Error()).Should(Equal(
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
 				"if one of code-path and docs-path is set, the another one must be set as well"))
 		})
 
@@ -122,8 +122,8 @@ var _ = Describe("CLI package", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.ConfigPath = configFilePath()
 
-			Expect(ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
-			Expect(ValidateConfig(invalidConfig).Error()).Should(Equal(
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
 				"config path cannot be set when code-path, docs-path or optional params are set"))
 		})
 
@@ -131,15 +131,15 @@ var _ = Describe("CLI package", func() {
 
 })
 
-func baseCliConfig() Config {
+func baseCliConfig() cli.Config {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 	parentDir := filepath.Dir(currentDir)
 
-	return Config{
-		Mode:     ModeCheck,
+	return cli.Config{
+		Mode:     cli.ModeCheck,
 		DocsPath: parentDir + "/test/resources/docs",
 		CodePath: parentDir + "/test/resources/code",
 	}
@@ -151,5 +151,6 @@ func configFilePath() string {
 		panic(err)
 	}
 	parentDir := filepath.Dir(currentDir)
+
 	return parentDir + "/test/resources/config_files/correct_config.yml"
 }
