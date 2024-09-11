@@ -29,7 +29,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// A file storing a single fragment from the file.
+// FragmentFile is a file storing a single fragment from the file.
 //
 // CodeFile — a relative path to a code file. The path is relative to Configuration.CodeRoot.
 //
@@ -42,9 +42,7 @@ type FragmentFile struct {
 	Configuration configuration.Configuration
 }
 
-// Iniitalizers
-
-// Composes a FragmentFile for the given fragment in given codeFile.
+// NewFragmentFileFromAbsolute composes a FragmentFile for the given fragment in given codeFile.
 //
 // codeFile — an absolute path to a code file.
 //
@@ -53,12 +51,10 @@ type FragmentFile struct {
 // configuration — configuration for embedding.
 //
 // Returns composed fragment.
-func NewFragmentFileFromAbsolute(
-	codeFile string,
-	fragmentName string,
-	configuration configuration.Configuration,
-) FragmentFile {
-	absoluteCodeRoot, err := filepath.Abs(configuration.CodeRoot)
+func NewFragmentFileFromAbsolute(codeFile string, fragmentName string,
+	config configuration.Configuration) FragmentFile {
+
+	absoluteCodeRoot, err := filepath.Abs(config.CodeRoot)
 	if err != nil {
 		panic(err)
 	}
@@ -70,13 +66,9 @@ func NewFragmentFileFromAbsolute(
 	return FragmentFile{
 		CodeFile:      relativeCodeFile,
 		FragmentName:  fragmentName,
-		Configuration: configuration,
+		Configuration: config,
 	}
 }
-
-//
-// Public methods
-//
 
 // Writes text to the file.
 //
@@ -88,7 +80,7 @@ func (fragmentFile FragmentFile) Write(text string) {
 	os.WriteFile(filePath, byteStr, os.FileMode(writePermission))
 }
 
-// Reads content of the file.
+// Content reads content of the file.
 //
 // Returns contents of the file as a list of strings, or returns an error if it doesn't exists.
 func (fragmentFile FragmentFile) Content() ([]string, error) {
@@ -110,10 +102,6 @@ func (fragmentFile FragmentFile) Content() ([]string, error) {
 func (fragmentFile FragmentFile) String() string {
 	return fragmentFile.absolutePath()
 }
-
-//
-// Private methods
-//
 
 // Obtains the absolute path to this fragment file.
 func (fragmentFile FragmentFile) absolutePath() string {

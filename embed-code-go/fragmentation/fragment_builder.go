@@ -20,7 +20,7 @@ package fragmentation
 
 import "fmt"
 
-// A single fragment builder.
+// FragmentBuilder is a single fragment builder.
 //
 // CodeFilePath — a path to a file to fragment.
 //
@@ -33,11 +33,7 @@ type FragmentBuilder struct {
 	Name         string
 }
 
-//
-// Public methods
-//
-
-// Adds a new partition with given startPosition.
+// AddStartPosition adds a new partition with given startPosition.
 //
 // AddEndPosition is need to be called when the end of the fragment is reached,
 // or else it will be considered that the end of partition is in the end of the file.
@@ -59,8 +55,7 @@ func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
 	fragmentBuilder.Partitions = append(fragmentBuilder.Partitions, partition)
 }
 
-// Completes previously created fragment partition with its endPosition.
-//
+// AddEndPosition completes previously created fragment partition with its endPosition.
 // It should be called after AddStartPosition.
 //
 // endPosition — end position of the fragment.
@@ -78,8 +73,8 @@ func (fragmentBuilder *FragmentBuilder) AddEndPosition(endPosition int) {
 	lastAddedPartition.EndPosition = &endPosition
 }
 
-// Creates and returns new Fragment with the previously added and filled Partitions.
-func (fragmentBuilder FragmentBuilder) Build() Fragment {
+// Build creates and returns new Fragment with the previously added and filled Partitions.
+func (fragmentBuilder *FragmentBuilder) Build() Fragment {
 	return Fragment{
 		Name:       fragmentBuilder.Name,
 		Partitions: fragmentBuilder.Partitions,

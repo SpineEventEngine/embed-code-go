@@ -29,11 +29,7 @@ const (
 	FragmentEnd   = "#enddocfragment"
 )
 
-//
-// Public functions
-//
-
-// Finds all the names for the fragment's openings using the opening prefix.
+// FindFragmentOpenings finds all the names for the fragment's openings using the opening prefix.
 //
 // For example, FindFragmentOpenings("// #docfragment \"main\",\"sub-main\"\n")
 // returns ["main", "sub-main"]
@@ -45,7 +41,7 @@ func FindFragmentOpenings(line string) []string {
 	return lookup(line, FragmentStart)
 }
 
-// Finds all the names for the fragment's endings using the ending prefix.
+// FindFragmentEndings finds all the names for the fragment's endings using the ending prefix.
 //
 // For example, FindFragmentEndings("// #enddocfragment \"main\",\"sub-main\"\n")
 // returns ["main", "sub-main"]
@@ -56,10 +52,6 @@ func FindFragmentOpenings(line string) []string {
 func FindFragmentEndings(line string) []string {
 	return lookup(line, FragmentEnd)
 }
-
-//
-// Private functions
-//
 
 // Returns the unquoted name from given quotedName.
 func unquoteName(quotedName string) string {
