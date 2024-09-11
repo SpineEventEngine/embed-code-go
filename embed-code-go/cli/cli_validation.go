@@ -28,6 +28,11 @@ import (
 	"strings"
 )
 
+// IsUsingConfigFile reports whether user configs are set with file.
+func IsUsingConfigFile(config Config) bool {
+	return isNotEmpty(config.ConfigPath)
+}
+
 // ValidateConfig checks the validity of provided config and returns an error if any of the
 // validation rules are broken. If everything is ok, returns nil.
 //
@@ -44,24 +49,29 @@ func ValidateConfig(config Config) error {
 // ValidateConfigFile performs several checks to ensure that the necessary configuration values are
 // present. Also checks for the existence of the config file.
 //
-// path — a path to a yaml configuration file.
+// userConfig — is a config given from cli.
 //
 // Returns an error with a validation message. If everything is ok, returns nil.
-func ValidateConfigFile(path string) error {
-	exists, err := isFileExist(path)
+func ValidateConfigFile(userConfig Config) error {
+	// Configs should be read from file, verifying if they are not set already.
+	isCodePathSet := isNotEmpty(userConfig.CodePath)
+	isDocsPathSet := isNotEmpty(userConfig.DocsPath)
+	areOptionalParamsSet := validateIfOptionalParamsAreSet(userConfig)
+	isOneOfRootsSet := isCodePathSet || isDocsPathSet
+
+	if isOneOfRootsSet || areOptionalParamsSet {
+		return errors.New(
+			"config path cannot be set when code-path, docs-path or optional params are set")
+	}
+
+	exists, err := isFileExist(userConfig.ConfigPath)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return errors.New("config file is not exist")
+	if exists {
+		return nil
 	}
-
-	configFields := readConfigFields(path)
-	if isEmpty(configFields.CodePath) || isEmpty(configFields.DocsPath) {
-		return errors.New("config must include both code-path and docs-path fields")
-	}
-
-	return nil
+	return errors.New("expected to use config file, but it does not exist")
 }
 
 // Validates if mode is set to check, embed, or analyze.
@@ -84,7 +94,6 @@ func validateMode(mode string) error {
 
 // Validates if config is set correctly and does not have mutually exclusive params set.
 func validateConfig(config Config) error {
-	isConfigSet := isNotEmpty(config.ConfigPath)
 	isCodePathSet, err := validatePathIfSet(config.CodePath)
 	if err != nil {
 		return err
@@ -93,36 +102,16 @@ func validateConfig(config Config) error {
 	if err != nil {
 		return err
 	}
-	isOptionalParamsSet, err := validateIfOptionalParamsAreSet(config)
+	_, err = validatePathIfSet(config.FragmentsPath)
 	if err != nil {
 		return err
 	}
 
-	err = validateParamsCombinations(isConfigSet, isCodePathSet, isDocsPathSet, isOptionalParamsSet)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Validates if config path and arguments are not conflicting.
-func validateParamsCombinations(
-	isConfigSet bool, isCodePathSet bool, isDocsPathSet bool, isOptionalParamsSet bool) error {
 	isRootsSet := isCodePathSet && isDocsPathSet
 	isOneOfRootsSet := isCodePathSet || isDocsPathSet
 
-	if isConfigSet && (isOneOfRootsSet || isOptionalParamsSet) {
-		return errors.New(
-			"config path cannot be set when code-path, docs-path or optional params are set")
-	}
 	if isOneOfRootsSet && !isRootsSet {
-		return errors.New(
-			"if one of code-path and docs-path is set, the another one must be set as well")
-	}
-	if !(isRootsSet || isConfigSet) {
-		return errors.New("embed code should be used with either config-path or both " +
-			"code-path and docs-path being set")
+		return errors.New("code-path and docs-path mush be both set")
 	}
 
 	return nil
@@ -130,16 +119,13 @@ func validateParamsCombinations(
 
 // Reports whether at least one of optional configs is set — code-includes, doc-includes, separator
 // or fragments-path.
-func validateIfOptionalParamsAreSet(config Config) (bool, error) {
+func validateIfOptionalParamsAreSet(config Config) bool {
 	isCodeIncludesSet := isNotEmpty(config.CodeIncludes)
 	isDocIncludesSet := isNotEmpty(config.DocIncludes)
 	isSeparatorSet := isNotEmpty(config.Separator)
-	isFragmentPathSet, err := validatePathIfSet(config.FragmentsPath)
-	if err != nil {
-		return false, err
-	}
+	isFragmentPathSet := isNotEmpty(config.FragmentsPath)
 
-	return isCodeIncludesSet || isDocIncludesSet || isFragmentPathSet || isSeparatorSet, nil
+	return isCodeIncludesSet || isDocIncludesSet || isFragmentPathSet || isSeparatorSet
 }
 
 // Reports whether path is set or not. If it is set, checks if such path exists in a file system.

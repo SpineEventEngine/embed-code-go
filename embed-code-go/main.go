@@ -77,15 +77,8 @@ func main() {
 	slog.Info("starting application, reading args...")
 	userArgs := cli.ReadArgs()
 
-	err := cli.ValidateConfig(userArgs)
-	if err != nil {
-		slog.Error("user arguments are not valid.", "error", err)
-
-		return
-	}
-
-	if userArgs.ConfigPath != "" {
-		err = cli.ValidateConfigFile(userArgs.ConfigPath)
+	if cli.IsUsingConfigFile(userArgs) {
+		err := cli.ValidateConfigFile(userArgs)
 		if err != nil {
 			slog.Error("the provided config file is not valid.", "error", err)
 
@@ -97,6 +90,12 @@ func main() {
 
 			return
 		}
+	}
+	err := cli.ValidateConfig(userArgs)
+	if err != nil {
+		slog.Error("user arguments are not valid.", "error", err)
+
+		return
 	}
 
 	config := cli.BuildEmbedCodeConfiguration(userArgs)

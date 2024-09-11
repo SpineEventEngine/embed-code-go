@@ -19,7 +19,6 @@
 package cli
 
 import (
-	"errors"
 	"flag"
 	"os"
 	"strings"
@@ -153,14 +152,6 @@ func ReadArgs() Config {
 //
 // Returns filled Config.
 func FillArgsFromConfigFile(args Config) (Config, error) {
-	exists, err := isFileExist(args.ConfigPath)
-	if err != nil {
-		return Config{}, err
-	}
-	if !exists {
-		return Config{}, errors.New("config file is not exist")
-	}
-
 	configFields := readConfigFields(args.ConfigPath)
 	args.CodePath = configFields.CodePath
 	args.DocsPath = configFields.DocsPath
