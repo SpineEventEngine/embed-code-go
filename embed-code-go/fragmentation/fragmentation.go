@@ -16,7 +16,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Splits the given file into fragments.
+// Package fragmentation splits the given file into fragments.
 //
 // The fragments are named parts of the file that are surrounded by "fragment brackets":
 //
@@ -46,7 +46,8 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-// Splits the given file into fragments and writes them into corresponding output files.
+// Fragmentation splits the given file into fragments and writes them into corresponding
+// output files.
 //
 // Configuration — a configuration for embedding.
 //
@@ -59,19 +60,12 @@ type Fragmentation struct {
 	CodeFile      string
 }
 
-//
-// Initializers
-//
-
-// Builds Fragmentation from given codeFileRelative and config.
+// NewFragmentation builds Fragmentation from given codeFileRelative and config.
 //
 // codeFileRelative — a relative path to a code file to fragment.
 //
 // config — a configuration for embedding.
-func NewFragmentation(
-	codeFileRelative string,
-	config configuration.Configuration,
-) Fragmentation {
+func NewFragmentation(codeFileRelative string, config configuration.Configuration) Fragmentation {
 	fragmentation := Fragmentation{}
 
 	sourcesRootRelative := config.CodeRoot
@@ -93,11 +87,7 @@ func NewFragmentation(
 	return fragmentation
 }
 
-//
-// Public methods
-//
-
-// Splits the file into fragments.
+// Fragmentize splits the file into fragments.
 //
 // Returns a refined content of the file to be cut into fragments, and the Fragments.
 // Also returns an error if the fragmentation couldn't be done.
@@ -130,7 +120,7 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 	return contentToRender, fragments, nil
 }
 
-// Serializes fragments to the output directory.
+// WriteFragments serializes fragments to the output directory.
 //
 // Keeps the original directory structure relative to the sources root dir.
 // That is, `SRC/src/main` becomes `OUT/src/main`.
@@ -153,17 +143,13 @@ func (fragmentation Fragmentation) WriteFragments() error {
 	return nil
 }
 
+// WriteFragmentFiles writes each fragment into a corresponding file.
 //
-// Static functions
+// Searches for code files with patterns defined in configuration and fragmentizes them with
+// creating fragmented files as a result.
 //
-
-// Writes each fragment into a corresponding file.
-//
-// Searches for code files with patterns defined in configuration
-// and fragmentizes them with creating fragmented files as a result.
-//
-// All fragments are placed inside Configuration.FragmentsDir with
-// keeping the original directory structure relative to the sources root dir.
+// All fragments are placed inside Configuration.FragmentsDir with keeping the original directory
+// structure relative to the sources root dir.
 // That is, `SRC/src/main` becomes `OUT/src/main`.
 //
 // configuration — a configuration for embedding.
@@ -189,7 +175,7 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 	return nil
 }
 
-// Deletes Configuration.FragmentsDir if it exists.
+// CleanFragmentFiles deletes Configuration.FragmentsDir if it exists.
 func CleanFragmentFiles(config configuration.Configuration) {
 	if _, err := os.Stat(config.FragmentsDir); os.IsNotExist(err) {
 		return
@@ -201,7 +187,7 @@ func CleanFragmentFiles(config configuration.Configuration) {
 	}
 }
 
-// Returns true if the file stored at filePath:
+// ShouldFragmentize reports whether if the file stored at filePath:
 //   - exists
 //   - is a file (not a dir)
 //   - is textual-encoded.
@@ -219,10 +205,6 @@ func ShouldFragmentize(filePath string) bool {
 	return false
 }
 
-//
-// Private methods
-//
-
 // Parses a single line of input and performs the following actions:
 //   - identifies fragment start and end markers within given line;
 //   - updates fragmentBuilders based on the markers;
@@ -236,9 +218,6 @@ func ShouldFragmentize(filePath string) bool {
 // positions of it's items updated.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
-// TODO:2024-09-05:olena-zmiiova: Temporary disabling gocritic and nestif as this function is
-// planned to be refactored. See https://github.com/SpineEventEngine/embed-code/issues/47
-// nolint:gocritic
 func (fragmentation Fragmentation) parseLine(
 	line string, contentToRender []string,
 	fragmentBuilders map[string]*FragmentBuilder,
@@ -248,7 +227,6 @@ func (fragmentation Fragmentation) parseLine(
 	fragmentStarts := FindFragmentOpenings(line)
 	fragmentEnds := FindFragmentEndings(line)
 
-	// nolint:nestif
 	if len(fragmentStarts) > 0 {
 		for _, fragmentName := range fragmentStarts {
 			fragment, exists := fragmentBuilders[fragmentName]

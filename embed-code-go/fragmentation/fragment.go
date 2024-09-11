@@ -29,7 +29,7 @@ const (
 	DefaultFragmentName = "_default"
 )
 
-// A single fragment in a file.
+// Fragment is a single fragment in a file.
 //
 // Name — a name of a Fragment.
 //
@@ -39,11 +39,7 @@ type Fragment struct {
 	Partitions []Partition
 }
 
-//
-// Initializers
-//
-
-// Creates and returns Fragment with DefaultFragmentName.
+// CreateDefaultFragment creates and returns Fragment with DefaultFragmentName.
 func CreateDefaultFragment() Fragment {
 	return Fragment{
 		Name:       DefaultFragmentName,
@@ -51,11 +47,7 @@ func CreateDefaultFragment() Fragment {
 	}
 }
 
-//
-// Public methods
-//
-
-// Takes given lines, unites them into a text and writes it into given file.
+// WriteTo Takes given lines, unites them into a text and writes it into given file.
 //
 // file — a FragmentFile to write the lines to.
 //
@@ -64,18 +56,10 @@ func CreateDefaultFragment() Fragment {
 // configuration — a Configuration with all embed-code settings.
 //
 // Creates the file if not exists and overwrites if exists.
-func (fragment Fragment) WriteTo(
-	file FragmentFile,
-	lines []string,
-	configuration configuration.Configuration,
-) {
-	text := fragment.text(lines, configuration)
+func (fragment Fragment) WriteTo(file FragmentFile, lines []string, config configuration.Configuration) {
+	text := fragment.text(lines, config)
 	file.Write(text)
 }
-
-//
-// Static functions
-//
 
 // Calculates and returns a list which contains corresponding lines for every partition.
 //
@@ -92,10 +76,6 @@ func calculatePartitionsTexts(lines []string, partitions []Partition) [][]string
 	return partitionLines
 }
 
-//
-// Private methods
-//
-
 // Returns string indent for separator.
 func calculateSeparatorIndent(lines []string) string {
 	if len(lines) > 0 {
@@ -110,7 +90,7 @@ func calculateSeparatorIndent(lines []string) string {
 
 // Obtains the text for the fragment.
 //
-// The each partition of the fragment is separated with the Configuration.Separator.
+// The partition of the fragment is separated with the Configuration.Separator.
 //
 // lines — a list with every line of the file.
 //

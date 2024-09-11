@@ -23,6 +23,22 @@ import (
 	"unicode/utf8"
 )
 
+// IsEncodedAsText reports whether the file stored at filePath is encoded as a text.
+//
+// If file encoded in ASCII or UTF-8, it is meant to be a text file.
+func IsEncodedAsText(filePath string) bool {
+	// Read the entire file into memory.
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	isUTF8Encoded := areUTF8Encoded(content)
+	isASCIIEncoded := areASCIIEncoded(content)
+
+	return isUTF8Encoded || isASCIIEncoded
+}
+
 // Reports whether given bytes are UTF8-encoded.
 func areUTF8Encoded(bytes []byte) bool {
 	return utf8.Valid(bytes)
@@ -40,20 +56,4 @@ func areASCIIEncoded(bytes []byte) bool {
 	}
 
 	return true
-}
-
-// Reports whether the file stored at filePath is encoded as a text.
-//
-// If file encoded in ASCII or UTF-8, it is meant to be a text file.
-func IsEncodedAsText(filePath string) bool {
-	// Read the entire file into memory.
-	content, err := os.ReadFile(filePath)
-	if err != nil {
-		panic(err)
-	}
-
-	isUTF8Encoded := areUTF8Encoded(content)
-	isASCIIEncoded := areASCIIEncoded(content)
-
-	return isUTF8Encoded || isASCIIEncoded
 }

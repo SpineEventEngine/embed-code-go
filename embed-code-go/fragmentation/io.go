@@ -26,7 +26,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// Creates dir at given dirPath if it doesn't exist.
+// EnsureDirExists creates dir at given dirPath if it doesn't exist.
 // Does nothing if exists.
 func EnsureDirExists(dirPath string) {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
@@ -38,7 +38,7 @@ func EnsureDirExists(dirPath string) {
 	}
 }
 
-// Reports whether file exists at given filePath.
+// IsFileExists reports whether file exists at given filePath.
 //
 // Returns an error if any faced.
 func IsFileExists(filePath string) (bool, error) {
@@ -50,7 +50,7 @@ func IsFileExists(filePath string) (bool, error) {
 	return err == nil, err
 }
 
-// Reads and returns all lines from the file at given filePath.
+// ReadLines reads and returns all lines from the file at given filePath.
 func ReadLines(filePath string) []string {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -73,7 +73,7 @@ func ReadLines(filePath string) []string {
 	return lines
 }
 
-// Writes lines to the file at given filePath.
+// WriteLinesToFile writes lines to the file at given filePath.
 func WriteLinesToFile(filepath string, lines []string) {
 	file, err := os.Create(filepath)
 	if err != nil {
@@ -89,7 +89,7 @@ func WriteLinesToFile(filepath string, lines []string) {
 	}
 }
 
-// Builds a relative path for documentation file with a given config.
+// BuildDocRelativePath Builds a relative path for documentation file with a given config.
 func BuildDocRelativePath(absolutePath string, config configuration.Configuration) string {
 	absolutePath, err := filepath.Rel(config.DocumentationRoot, absolutePath)
 	if err != nil {

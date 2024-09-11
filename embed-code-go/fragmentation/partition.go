@@ -18,7 +18,7 @@
 
 package fragmentation
 
-// A code fragment partition.
+// Partition a code fragment partition.
 //
 // A fragment may consist of a few partitions, collected from different points in the code file.
 // In the resulting doc file, the partitions are joined by the Configuration.Separator.
@@ -34,11 +34,7 @@ type Partition struct {
 	EndPosition   *int
 }
 
-//
-// Public methods
-//
-
-// Returns the partition-related lines from given lines.
+// Select returns the partition-related lines from given lines.
 // If EndPosition is nil, returns all the lines started from StartPosition.
 func (partition Partition) Select(lines []string) []string {
 	if partition.EndPosition == nil {
