@@ -33,6 +33,7 @@ import (
 
 func TestCli(t *testing.T) {
 	RegisterFailHandler(Fail)
+	RunSpecs(t, "Data Suite")
 }
 
 var _ = Describe("CLI validation", func() {
@@ -71,7 +72,7 @@ var _ = Describe("CLI validation", func() {
 			}
 
 			Expect(cli.ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
-			Expect(cli.ValidateConfigFile(config.ConfigPath)).Error().ShouldNot(HaveOccurred())
+			Expect(cli.ValidateConfigFile(config)).Error().ShouldNot(HaveOccurred())
 		})
 	})
 
@@ -96,8 +97,8 @@ var _ = Describe("CLI validation", func() {
 				ConfigPath: "/some/path/to/config.yaml",
 			}
 
-			Expect(cli.ValidateConfigFile(invalidConfig.ConfigPath)).Error().Should(HaveOccurred())
-			Expect(cli.ValidateConfigFile(invalidConfig.ConfigPath).Error()).Should(Equal(
+			Expect(cli.ValidateConfigFile(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfigFile(invalidConfig).Error()).Should(Equal(
 				fmt.Sprintf("the path %s is not exist", invalidConfig.ConfigPath)))
 		})
 
@@ -115,15 +116,15 @@ var _ = Describe("CLI validation", func() {
 
 			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
 			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
-				"if one of code-path and docs-path is set, the another one must be set as well"))
+				"code-path and docs-path mush be both set"))
 		})
 
 		It("should fail validation when config, code and docs paths are set at the same time", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.ConfigPath = configFilePath()
 
-			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
-			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+			Expect(cli.ValidateConfigFile(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfigFile(invalidConfig).Error()).Should(Equal(
 				"config path cannot be set when code-path, docs-path or optional params are set"))
 		})
 
