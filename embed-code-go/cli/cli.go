@@ -31,9 +31,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// User-specified embed-code Config.
+// Config — user-specified embed-code configurations.
 //
-// СodeRoot — a path to a root directory with code files.
+// CodePath — a path to a root directory with code files.
 //
 // DocsPath — a path to a root directory with docs files.
 //
@@ -76,11 +76,8 @@ const (
 	ModeAnalyze = "analyze"
 )
 
-//
-// Public functions
-//
-
-// Checks documentation to be up-to-date with code files. Raises UnexpectedDiffError if not.
+// CheckCodeSamples checks documentation to be up-to-date with code files. Raises
+// UnexpectedDiffError if not.
 //
 // config — a configuration for checking code samples.
 func CheckCodeSamples(config configuration.Configuration) {
@@ -91,7 +88,7 @@ func CheckCodeSamples(config configuration.Configuration) {
 	embedding.CheckUpToDate(config)
 }
 
-// Embeds code fragments in documentation files.
+// EmbedCodeSamples embeds code fragments in documentation files.
 //
 // config — a configuration for embedding.
 func EmbedCodeSamples(config configuration.Configuration) {
@@ -102,7 +99,7 @@ func EmbedCodeSamples(config configuration.Configuration) {
 	embedding.EmbedAll(config)
 }
 
-// Analyzes code fragments in documentation files.
+// AnalyzeCodeSamples analyzes code fragments in documentation files.
 //
 // config — a configuration for embedding.
 func AnalyzeCodeSamples(config configuration.Configuration) {
@@ -114,9 +111,9 @@ func AnalyzeCodeSamples(config configuration.Configuration) {
 	fragmentation.CleanFragmentFiles(config)
 }
 
-// Reads user-specified args from the command line.
+// ReadArgs reads user-specified args from the command line.
 //
-// Returns an Config struct filled with the corresponding args.
+// Returns Config struct filled with the corresponding args.
 func ReadArgs() Config {
 	codePath := flag.String("code-path", "", "a path to a root directory with code files")
 	docsPath := flag.String("docs-path", "", "a path to a root directory with docs files")
@@ -146,9 +143,9 @@ func ReadArgs() Config {
 	}
 }
 
-// Fills args with the values read from config file.
+// FillArgsFromConfigFile fills config with the values read from config file.
 //
-// args — an Config struct with user-provided args.
+// args — Config struct with user-provided args.
 //
 // Returns filled Config.
 func FillArgsFromConfigFile(args Config) (Config, error) {
@@ -172,9 +169,9 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	return args, nil
 }
 
-// Generates and returns a configuration based on provided userArgs.
+// BuildEmbedCodeConfiguration generates and returns a configuration based on provided userArgs.
 //
-// userArgs — a struct with user-provided args.
+// userArgs — a Config with user-provided args.
 func BuildEmbedCodeConfiguration(userArgs Config) configuration.Configuration {
 	embedCodeConfig := configuration.NewConfiguration()
 	embedCodeConfig.CodeRoot = userArgs.CodePath
@@ -195,10 +192,6 @@ func BuildEmbedCodeConfiguration(userArgs Config) configuration.Configuration {
 
 	return embedCodeConfig
 }
-
-//
-// Private functions
-//
 
 // Returns a list of strings from given comma-separated string listArgument.
 func parseListArgument(listArgument string) []string {

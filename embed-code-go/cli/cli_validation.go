@@ -21,9 +21,9 @@
 package cli
 
 import (
+	"embed-code/embed-code-go/files"
 	"errors"
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 )
@@ -64,7 +64,7 @@ func ValidateConfigFile(userConfig Config) error {
 			"config path cannot be set when code-path, docs-path or optional params are set")
 	}
 
-	exists, err := isFileExist(userConfig.ConfigPath)
+	exists, err := files.IsFileExist(userConfig.ConfigPath)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func validateOptionalParamsSet(config Config) bool {
 func validatePathSet(path string) (bool, error) {
 	isPathSet := isNotEmpty(path)
 	if isPathSet {
-		exists, err := isDirExist(path)
+		exists, err := files.IsDirExist(path)
 		if err != nil {
 			// Since the path is set, returning true even we have an error.
 			return true, err
@@ -143,56 +143,6 @@ func validatePathSet(path string) (bool, error) {
 		}
 
 		return true, nil
-	}
-
-	return false, nil
-}
-
-// Reports whether the given path to a file exists in the file system.
-func isFileExist(filePath string) (bool, error) {
-	exists, info, err := validatePathExists(filePath)
-	if err != nil {
-		return false, err
-	}
-	if exists {
-		if info.IsDir() {
-			return false, fmt.Errorf("%s is a directory, the file was expected", filePath)
-		}
-
-		return true, nil
-	}
-
-	return false, nil
-}
-
-// Reports whether the given path is valid and exist in the file system. Also returns a FileInfo if
-// the path exists.
-func validatePathExists(path string) (bool, os.FileInfo, error) {
-	info, err := os.Stat(path)
-
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil, fmt.Errorf("the path %s is not exist", path)
-		}
-
-		return false, nil, err
-	}
-
-	return true, info, nil
-}
-
-// Reports whether the given directory exists in the file system.
-func isDirExist(path string) (bool, error) {
-	exists, info, err := validatePathExists(path)
-	if err != nil {
-		return false, err
-	}
-	if exists {
-		if info.IsDir() {
-			return true, nil
-		}
-
-		return false, fmt.Errorf("%s is a file, the directory was expected", path)
 	}
 
 	return false, nil
