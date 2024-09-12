@@ -115,7 +115,7 @@ var _ = Describe("CLI validation", func() {
 
 			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
 			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
-				"code-path and docs-path mush be both set"))
+				"code-path and docs-path must both be set"))
 		})
 
 		It("should fail validation when config, code and docs paths are set at the same time", func() {
