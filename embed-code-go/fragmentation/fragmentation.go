@@ -42,7 +42,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"embed-code/embed-code-go/configuration"
+	config "embed-code/embed-code-go/configuration"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -56,9 +56,10 @@ import (
 //
 // CodeFile — a full path of a file to fragment.
 type Fragmentation struct {
-	Configuration configuration.Configuration
-	SourcesRoot   string
-	CodeFile      string
+	Configuration    config.Configuration
+	SourcesRoot      string
+	CodeFile         string
+	fragmentBuilders map[string]*FragmentBuilder
 }
 
 // NewFragmentation builds Fragmentation from given codeFileRelative and config.
@@ -66,7 +67,7 @@ type Fragmentation struct {
 // codeFileRelative — a relative path to a code file to fragment.
 //
 // config — a configuration for embedding.
-func NewFragmentation(codeFileRelative string, config configuration.Configuration) Fragmentation {
+func NewFragmentation(codeFileRelative string, config config.Configuration) Fragmentation {
 	fragmentation := Fragmentation{}
 
 	sourcesRootRelative := config.CodeRoot
@@ -84,6 +85,7 @@ func NewFragmentation(codeFileRelative string, config configuration.Configuratio
 	}
 
 	fragmentation.Configuration = config
+	fragmentation.fragmentBuilders = make(map[string]*FragmentBuilder)
 
 	return fragmentation
 }
@@ -93,7 +95,6 @@ func NewFragmentation(codeFileRelative string, config configuration.Configuratio
 // Returns a refined content of the file to be cut into fragments, and the Fragments.
 // Also returns an error if the fragmentation couldn't be done.
 func (f Fragmentation) Fragmentize() ([]string, map[string]Fragment, error) {
-	fragmentBuilders := make(map[string]*FragmentBuilder)
 	var contentToRender []string
 
 	file, err := os.Open(f.CodeFile)
@@ -111,15 +112,14 @@ func (f Fragmentation) Fragmentize() ([]string, map[string]Fragment, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		contentToRender, fragmentBuilders, err =
-			f.parseLine(line, contentToRender, fragmentBuilders)
+		contentToRender, err = f.parseLine(line, contentToRender)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	fragments := make(map[string]Fragment)
-	for k, v := range fragmentBuilders {
+	for k, v := range f.fragmentBuilders {
 		fragments[k] = v.Build()
 	}
 	fragments[DefaultFragmentName] = CreateDefaultFragment()
@@ -145,8 +145,7 @@ func (f Fragmentation) WriteFragments() error {
 	}
 
 	for _, fragment := range fragments {
-		fragmentFile := NewFragmentFileFromAbsolute(f.CodeFile, fragment.Name,
-			f.Configuration)
+		fragmentFile := NewFragmentFileFromAbsolute(f.CodeFile, fragment.Name, f.Configuration)
 		fragment.WriteTo(fragmentFile, allLines, f.Configuration)
 	}
 
@@ -165,19 +164,16 @@ func (f Fragmentation) WriteFragments() error {
 // configuration — a configuration for embedding.
 //
 // Returns an error if any of the fragments couldn't be written.
-func WriteFragmentFiles(configuration configuration.Configuration) error {
+func WriteFragmentFiles(configuration config.Configuration) error {
 	includes := configuration.CodeIncludes
 	codeRoot := configuration.CodeRoot
 	for _, rule := range includes {
 		pattern := fmt.Sprintf("%s/%s", codeRoot, rule)
 		codeFiles, _ := doublestar.FilepathGlob(pattern)
 		for _, codeFile := range codeFiles {
-			if ShouldFragmentize(codeFile) {
-				fragmentation := NewFragmentation(codeFile, configuration)
-				err := fragmentation.WriteFragments()
-				if err != nil {
-					return err
-				}
+			err := writeFragments(configuration, codeFile)
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -186,22 +182,36 @@ func WriteFragmentFiles(configuration configuration.Configuration) error {
 }
 
 // CleanFragmentFiles deletes Configuration.FragmentsDir if it exists.
-func CleanFragmentFiles(config configuration.Configuration) {
-	if _, err := os.Stat(config.FragmentsDir); os.IsNotExist(err) {
-		return
+func CleanFragmentFiles(config config.Configuration) {
+	exists, err := files.IsDirExist(config.FragmentsDir)
+	if err != nil {
+		panic(err)
 	}
-
-	err := os.RemoveAll(config.FragmentsDir)
+	if !exists {
+		panic(fmt.Errorf("%s directory is not exist", config.FragmentsDir))
+	}
+	err = os.RemoveAll(config.FragmentsDir)
 	if err != nil {
 		panic(err)
 	}
 }
 
-// ShouldFragmentize reports whether if the file stored at filePath:
+func writeFragments(configuration config.Configuration, codeFile string) error {
+	if shouldFragmentize(codeFile) {
+		fragmentation := NewFragmentation(codeFile, configuration)
+		err := fragmentation.WriteFragments()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// shouldFragmentize reports whether if the file stored at filePath:
 //   - exists
 //   - is a file (not a dir)
 //   - is textual-encoded.
-func ShouldFragmentize(filePath string) bool {
+func shouldFragmentize(filePath string) bool {
 	info, err := os.Stat(filePath)
 	if err != nil {
 		panic(err)
@@ -228,43 +238,53 @@ func ShouldFragmentize(filePath string) bool {
 // positions of it's items updated.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
-func (f Fragmentation) parseLine(
-	line string, contentToRender []string,
-	fragmentBuilders map[string]*FragmentBuilder,
-) ([]string, map[string]*FragmentBuilder, error) {
+func (f Fragmentation) parseLine(line string, contentToRender []string) ([]string, error) {
 	cursor := len(contentToRender)
 
-	fragmentStarts := FindFragmentOpenings(line)
-	fragmentEnds := FindFragmentEndings(line)
+	docFragments := FindDocFragments(line)
+	endDocFragments := FindEndDocFragments(line)
 
-	if len(fragmentStarts) > 0 {
-		for _, fragmentName := range fragmentStarts {
-			fragment, exists := fragmentBuilders[fragmentName]
-			if !exists {
-				builder := FragmentBuilder{
-					CodeFilePath: f.CodeFile,
-					Name:         fragmentName,
-				}
-				fragmentBuilders[fragmentName] = &builder
-				fragment = fragmentBuilders[fragmentName]
-			}
-			fragment.AddStartPosition(cursor)
+	switch {
+	case len(docFragments) > 0:
+		f.parseDocFragments(docFragments, cursor)
+	case len(endDocFragments) > 0:
+		err := f.parseEndDocFragments(endDocFragments, cursor)
+		if err != nil {
+			return nil, err
 		}
-	} else if len(fragmentEnds) > 0 {
-		for _, fragmentName := range fragmentEnds {
-			if fragment, exists := fragmentBuilders[fragmentName]; exists {
-				fragment.AddEndPosition(cursor - 1)
-			} else {
-				return nil, nil,
-					fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
-						fragmentName, f.CodeFile)
-			}
-		}
-	} else {
+	default:
 		contentToRender = append(contentToRender, line)
 	}
 
-	return contentToRender, fragmentBuilders, nil
+	return contentToRender, nil
+}
+
+func (f Fragmentation) parseDocFragments(docFragments []string, cursor int) {
+	for _, fragmentName := range docFragments {
+		fragment, exists := f.fragmentBuilders[fragmentName]
+		if !exists {
+			builder := FragmentBuilder{
+				CodeFilePath: f.CodeFile,
+				Name:         fragmentName,
+			}
+			f.fragmentBuilders[fragmentName] = &builder
+			fragment = f.fragmentBuilders[fragmentName]
+		}
+		fragment.AddStartPosition(cursor)
+	}
+}
+
+func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int) error {
+	for _, fragmentName := range endDocFragments {
+		if fragment, exists := f.fragmentBuilders[fragmentName]; exists {
+			fragment.AddEndPosition(cursor - 1)
+		} else {
+			return fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
+				fragmentName, f.CodeFile)
+		}
+	}
+
+	return nil
 }
 
 // Calculates the target directory path based on the

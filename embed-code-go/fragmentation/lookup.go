@@ -29,27 +29,27 @@ const (
 	FragmentEnd   = "#enddocfragment"
 )
 
-// FindFragmentOpenings finds all the names for the fragment's openings using the opening prefix.
+// FindDocFragments finds all the names for the fragment's openings using the opening prefix.
 //
-// For example, FindFragmentOpenings("// #docfragment \"main\",\"sub-main\"\n")
+// For example, FindDocFragments("// #docfragment \"main\",\"sub-main\"\n")
 // returns ["main", "sub-main"]
 //
 // line — a line to search in.
 //
 // Returns the list of the names found.
-func FindFragmentOpenings(line string) []string {
+func FindDocFragments(line string) []string {
 	return lookup(line, FragmentStart)
 }
 
-// FindFragmentEndings finds all the names for the fragment's endings using the ending prefix.
+// FindEndDocFragments finds all the names for the fragment's endings using the ending prefix.
 //
-// For example, FindFragmentEndings("// #enddocfragment \"main\",\"sub-main\"\n")
+// For example, FindEndDocFragments("// #enddocfragment \"main\",\"sub-main\"\n")
 // returns ["main", "sub-main"]
 //
 // line — a line to search in.
 //
 // Returns the list of the names found.
-func FindFragmentEndings(line string) []string {
+func FindEndDocFragments(line string) []string {
 	return lookup(line, FragmentEnd)
 }
 
