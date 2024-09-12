@@ -25,9 +25,7 @@ import (
 	"embed-code/embed-code-go/indent"
 )
 
-const (
-	DefaultFragmentName = "_default"
-)
+const DefaultFragmentName = "_default"
 
 // Fragment is a single fragment in a file.
 //
@@ -67,7 +65,7 @@ func (fragment Fragment) WriteTo(file FragmentFile, lines []string, config confi
 //
 // partitions — a list with partitions to select lines from.
 func calculatePartitionsTexts(lines []string, partitions []Partition) [][]string {
-	partitionLines := [][]string{}
+	var partitionLines [][]string
 	for _, part := range partitions {
 		partitionText := part.Select(lines)
 		partitionLines = append(partitionLines, partitionText)
