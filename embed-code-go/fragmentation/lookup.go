@@ -53,15 +53,6 @@ func FindEndDocFragments(line string) []string {
 	return lookup(line, FragmentEnd)
 }
 
-// Returns the unquoted name from given quotedName.
-func unquoteName(quotedName string) string {
-	r := regexp.MustCompile("\"(.*)\"")
-	nameQuoted := r.FindString(quotedName)
-	nameCleaned, _ := strconv.Unquote(nameQuoted)
-
-	return nameCleaned
-}
-
 // Looks up for fragments' names from given line.
 //
 // For example, lookup("// #enddocfragment \"main\",\"sub-main\"\n", "#enddocfragment")
@@ -73,18 +64,28 @@ func unquoteName(quotedName string) string {
 //
 // Returns the list of the names found.
 func lookup(line string, prefix string) []string {
+	var unquotedFragmentNames []string
 	if strings.Contains(line, prefix) {
 		// 1 for trailing space after the prefix.
 		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1
-		var unquotedFragmentNames []string
 		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {
 			quotedFragmentName := strings.Trim(fragmentName, "\n\t ")
 			unquotedFragmentName := unquoteName(quotedFragmentName)
 			unquotedFragmentNames = append(unquotedFragmentNames, unquotedFragmentName)
 		}
-
-		return unquotedFragmentNames
 	}
 
-	return []string{}
+	return unquotedFragmentNames
+}
+
+// Returns the unquoted name from given quotedName.
+func unquoteName(quotedName string) string {
+	r := regexp.MustCompile("\"(.*)\"")
+	nameQuoted := r.FindString(quotedName)
+	nameCleaned, err := strconv.Unquote(nameQuoted)
+	if err != nil {
+		panic(err)
+	}
+
+	return nameCleaned
 }

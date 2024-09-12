@@ -75,7 +75,7 @@ func (f Fragment) text(lines []string, config config.Configuration) string {
 		return strings.Join(lines, "\n")
 	}
 
-	partitionsTexts := obtainPartitionsTexts(lines, f.Partitions)
+	partitionsTexts := f.obtainPartitionTexts(lines)
 
 	text := ""
 	for index, partitionText := range partitionsTexts {
@@ -93,6 +93,21 @@ func (f Fragment) text(lines []string, config config.Configuration) string {
 	return text
 }
 
+// Calculates and returns a list which contains corresponding lines for every partition.
+//
+// lines — a list with every line of the file.
+//
+// partitions — a list with partitions to select lines from.
+func (f Fragment) obtainPartitionTexts(lines []string) [][]string {
+	var partitionLines [][]string
+	for _, part := range f.Partitions {
+		partitionText := part.Select(lines)
+		partitionLines = append(partitionLines, partitionText)
+	}
+
+	return partitionLines
+}
+
 // Returns string indent for separator.
 func separatorIndent(lines []string) string {
 	if len(lines) > 0 {
@@ -103,19 +118,4 @@ func separatorIndent(lines []string) string {
 	}
 
 	return ""
-}
-
-// Calculates and returns a list which contains corresponding lines for every partition.
-//
-// lines — a list with every line of the file.
-//
-// partitions — a list with partitions to select lines from.
-func obtainPartitionsTexts(lines []string, partitions []Partition) [][]string {
-	var partitionLines [][]string
-	for _, part := range partitions {
-		partitionText := part.Select(lines)
-		partitionLines = append(partitionLines, partitionText)
-	}
-
-	return partitionLines
 }
