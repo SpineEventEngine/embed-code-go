@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/files"
 )
 
 // FragmentFile is a file storing a single fragment from the file.
@@ -85,14 +86,14 @@ func (fragmentFile FragmentFile) Write(text string) {
 // Returns contents of the file as a list of strings, or returns an error if it doesn't exists.
 func (fragmentFile FragmentFile) Content() ([]string, error) {
 	path := fragmentFile.absolutePath()
-	isPathFileExits, err := IsFileExists(path)
+	isPathFileExits, err := files.IsFileExist(path)
 
 	if err != nil {
 		return nil, err
 	}
 
 	if isPathFileExits {
-		return ReadLines(path), nil
+		return files.ReadFile(path)
 	}
 
 	return nil, fmt.Errorf("file %s doesn't exist", path)

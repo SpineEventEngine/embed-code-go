@@ -20,6 +20,7 @@ package fragmentation_test
 
 import (
 	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/files"
 	"embed-code/embed-code-go/fragmentation"
 	"embed-code/embed-code-go/test/filesystem"
 	"fmt"
@@ -164,7 +165,7 @@ func (suite *FragmentationTestSuite) TestManyPartitions() {
 		}
 	}
 
-	fragmentLines := fragmentation.ReadLines(fmt.Sprintf("%s/%s", fragmentDir, fragmentFileName))
+	fragmentLines, _ := files.ReadFile(fmt.Sprintf("%s/%s", fragmentDir, fragmentFileName))
 
 	suite.Equal("public class Main {", fragmentLines[0])
 	suite.Equal(suite.config.Separator, strings.TrimSpace(fragmentLines[1]))
