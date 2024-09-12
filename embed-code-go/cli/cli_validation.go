@@ -49,7 +49,7 @@ func ValidateConfig(config Config) error {
 // ValidateConfigFile performs several checks to ensure that the necessary configuration values are
 // present. Also checks for the existence of the config file.
 //
-// userConfig — is a config given from cli.
+// userConfig — is a config given from CLI.
 //
 // Returns an error with a validation message. If everything is ok, returns nil.
 func ValidateConfigFile(userConfig Config) error {
@@ -112,7 +112,7 @@ func validateConfig(config Config) error {
 	isOneOfRootsSet := isCodePathSet || isDocsPathSet
 
 	if isOneOfRootsSet && !isRootsSet {
-		return errors.New("code-path and docs-path mush be both set")
+		return errors.New("code-path and docs-path must both be set")
 	}
 
 	return nil
