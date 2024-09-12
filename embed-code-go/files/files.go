@@ -29,7 +29,10 @@ import (
 	"path/filepath"
 )
 
-const readWriteExecPermission uint32 = 0777
+const (
+	ReadWriteExecPermission uint32 = 0777
+	WritePermission         uint32 = 0600
+)
 
 // WriteLinesToFile writes lines to the file at given filePath.
 func WriteLinesToFile(filepath string, lines []string) {
@@ -96,7 +99,7 @@ func EnsureDirExists(path string) error {
 		return err
 	}
 	if !exist {
-		err = os.MkdirAll(path, os.FileMode(readWriteExecPermission))
+		err = os.MkdirAll(path, os.FileMode(ReadWriteExecPermission))
 		if err != nil {
 			return err
 		}

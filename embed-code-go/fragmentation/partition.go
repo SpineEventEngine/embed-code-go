@@ -30,16 +30,16 @@ package fragmentation
 //
 // EndPosition — an index on which the scope of partition ends.
 type Partition struct {
-	StartPosition *int
-	EndPosition   *int
+	StartPosition int
+	EndPosition   int
 }
 
 // Select returns the partition-related lines from given lines.
 // If EndPosition is nil, returns all the lines started from StartPosition.
-func (partition Partition) Select(lines []string) []string {
-	if partition.EndPosition == nil {
-		return lines[*partition.StartPosition:]
+func (p Partition) Select(lines []string) []string {
+	if p.EndPosition == 0 {
+		return lines[p.StartPosition:]
 	}
 
-	return lines[*partition.StartPosition : *partition.EndPosition+1]
+	return lines[p.StartPosition : p.EndPosition+1]
 }
