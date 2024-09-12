@@ -37,26 +37,26 @@ Make sure you have Go [installed](#installation). Our version is `1.22.1`.
 
 #### Running
 
-To run the `embed_code.go` file, the following command can be used:
+To run the `main.go` file, the following command can be used:
 ```
-go run ./embed_code.go [arguments]
+go run ./main.go [arguments]
 ```
 
 ### Arguments
 The available arguments are:
   * `-mode`: mandatory, `check` to checking for code embeddings to be up-to-date; `embed` to start the embedding process; `analyze` to run analyzing;
-  * `-code_root`: optional, path to the root directory containing code files;
-  * `-docs_root`: optional, path to the root directory containing documentation files;
-  * `-config_file_path`: optional, path to a YAML configuration file that contains the code_root and docs_root fields;
-  * `-code_includes`: optional, a comma-separated string of glob patterns for code files to include. For example: `"**/*.java,**/*.gradle"`. Default value is `"**/*.*"`;
-  * `-doc_includes`: optional, a comma-separated string of glob patterns for docs files to include. For example: `"docs/**/*.md,guides/*.html"`. Default value is `"**/*.md,**/*.html"`;
-  * `-fragments_dir`: optional, a path to a directory with code fragments. Default value is `./build/fragments`;
+  * `-code-path`: optional, path to the root directory containing code files;
+  * `-docs-path`: optional, path to the root directory containing documentation files;
+  * `-config-path`: optional, path to a YAML configuration file that contains the code_root and docs_root fields;
+  * `-code-includes`: optional, a comma-separated string of glob patterns for code files to include. For example: `"**/*.java,**/*.gradle"`. Default value is `"**/*.*"`;
+  * `-doc-includes`: optional, a comma-separated string of glob patterns for docs files to include. For example: `"docs/**/*.md,guides/*.html"`. Default value is `"**/*.md,**/*.html"`;
+  * `-fragments-path`: optional, a path to a directory with code fragments. Default value is `./build/fragments`;
   * `-separator`: optional, a string which is used as a separator between code fragments. Default value is `...`.
  
-Even though the `code_root`, `docs_root`, and `config_file_path` arguments are optional, Embed-code still requires the root directories for code and documentation to be set. This can be done in one of two ways:
+Even though the `code-path`, `docs-path`, and `config-path` arguments are optional, Embed-code still requires the root directories for code and documentation to be set. This can be done in one of two ways:
 
-1. Provide the `code_root` and `docs_root` arguments, in this case the roots are read directly from the provided paths.
-2. Provide the `config_file_path` argument, in this case the roots are read from the given configuration file.
+1. Provide the `code-path` and `docs-path` arguments, in this case the roots are read directly from the provided paths.
+2. Provide the `config-path` argument, in this case the roots are read from the given configuration file.
 
 If neither of these options is provided, the embedding process will fail. If both options are set, the embedding will also fail.
 
@@ -65,18 +65,18 @@ If neither of these options is provided, the embedding process will fail. If bot
 Optional settings can be defined in the configuration file. The file is a YAML file with the following structure:
 
 ```yaml
-code_root: path/to/code/root
-docs_root: path/to/docs/root
-code_includes: "**/*.java,**/*.gradle"
+code-path: path/to/code/root
+docs-path: path/to/docs/root
+code-includes: "**/*.java,**/*.gradle"
 ```
 
 The available arguments for the config file are:
-  * `code_root`: mandatory;
-  * `docs_root`: mandatory;
-  * `config_file_path`: optional;
-  * `code_includes`: optional;
-  * `doc_includes`: optional;
-  * `fragments_dir`: optional;
+  * `code-path`: mandatory;
+  * `docs-path`: mandatory;
+  * `config-path`: optional;
+  * `code-includes`: optional;
+  * `doc-includes`: optional;
+  * `fragments-path`: optional;
   * `separator`: optional.
 
 These settings have the same role as the command-line arguments.
@@ -183,12 +183,12 @@ of the pattern. To match the literal `^` symbol at the start of the line, prepen
 The pre-compiled binary executables are stored in the `./bin` directory. However, it is also possible to compile the file manually.
 To compile the file, ensure that the Go is [installed](#installation).
 
-Open terminal and navigate to the directory where `embed_code.go` is located. Then, use the following command to compile the file: 
+Open terminal and navigate to the directory where `main.go` is located. Then, use the following command to compile the file: 
 ```
-go build embed_code.go
+go build main.go
 ```
 
-There may be issues when running `go build` outside of the directory containing `embed_code.go`, even if the path is specified correctly.
+There may be issues when running `go build` outside of the directory containing `main.go`, even if the path is specified correctly.
 
 This command will create an executable file named `embed_code` (or `embed_code.exe` on Windows) in the same directory.
 For further information, please refer to the [docs](https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies).
