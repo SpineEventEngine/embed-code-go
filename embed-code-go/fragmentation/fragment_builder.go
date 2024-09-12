@@ -39,44 +39,53 @@ type FragmentBuilder struct {
 // or else it will be considered that the end of partition is in the end of the file.
 //
 // startPosition — starting position of the fragment.
-func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
-	if len(fragmentBuilder.Partitions) > 0 {
-		lastAddedPartition := fragmentBuilder.Partitions[len(fragmentBuilder.Partitions)-1]
-		if lastAddedPartition.EndPosition == nil {
+func (b *FragmentBuilder) AddStartPosition(startPosition int) {
+	if !b.isPartitionsEmpty() {
+		lastPartition := b.lastAddedPartition()
+		if lastPartition.EndPosition == 0 {
 			panic(
 				fmt.Sprintf("error: for the fragment \"%s\" of the file \"%s\", "+
 					"the last added partition has no end position",
-					fragmentBuilder.Name,
-					fragmentBuilder.CodeFilePath))
+					b.Name,
+					b.CodeFilePath))
 		}
 	}
 
-	partition := Partition{StartPosition: &startPosition}
-	fragmentBuilder.Partitions = append(fragmentBuilder.Partitions, partition)
+	partition := Partition{StartPosition: startPosition}
+	b.Partitions = append(b.Partitions, partition)
 }
 
 // AddEndPosition completes previously created fragment partition with its endPosition.
 // It should be called after AddStartPosition.
 //
 // endPosition — end position of the fragment.
-func (fragmentBuilder *FragmentBuilder) AddEndPosition(endPosition int) {
-	if len(fragmentBuilder.Partitions) == 0 {
+func (b *FragmentBuilder) AddEndPosition(endPosition int) {
+	if b.isPartitionsEmpty() {
 		panic("error: the list of partitions is empty")
 	}
-	lastAddedPartition := &fragmentBuilder.Partitions[len(fragmentBuilder.Partitions)-1]
-	if lastAddedPartition.EndPosition != nil {
+	lastPartition := b.lastAddedPartition()
+	if lastPartition.EndPosition != 0 {
 		panic(fmt.Sprintf("unexpected #enddocfragment statement at %s:%d",
-			fragmentBuilder.CodeFilePath,
-			*lastAddedPartition.EndPosition),
+			b.CodeFilePath,
+			lastPartition.EndPosition),
 		)
 	}
-	lastAddedPartition.EndPosition = &endPosition
+	lastPartition.EndPosition = endPosition
 }
 
 // Build creates and returns new Fragment with the previously added and filled Partitions.
-func (fragmentBuilder *FragmentBuilder) Build() Fragment {
+func (b *FragmentBuilder) Build() Fragment {
 	return Fragment{
-		Name:       fragmentBuilder.Name,
-		Partitions: fragmentBuilder.Partitions,
+		Name:       b.Name,
+		Partitions: b.Partitions,
 	}
+}
+
+func (b *FragmentBuilder) isPartitionsEmpty() bool {
+	return len(b.Partitions) == 0
+}
+
+func (b *FragmentBuilder) lastAddedPartition() Partition {
+	lastIndex := len(b.Partitions) - 1
+	return b.Partitions[lastIndex]
 }

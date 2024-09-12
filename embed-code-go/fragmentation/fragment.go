@@ -21,7 +21,7 @@ package fragmentation
 import (
 	"strings"
 
-	"embed-code/embed-code-go/configuration"
+	config "embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/indent"
 )
 
@@ -45,7 +45,7 @@ func CreateDefaultFragment() Fragment {
 	}
 }
 
-// WriteTo Takes given lines, unites them into a text and writes it into given file.
+// WriteTo takes given lines, unites them into a text and writes it into given file.
 //
 // file — a FragmentFile to write the lines to.
 //
@@ -54,9 +54,55 @@ func CreateDefaultFragment() Fragment {
 // configuration — a Configuration with all embed-code settings.
 //
 // Creates the file if not exists and overwrites if exists.
-func (fragment Fragment) WriteTo(file FragmentFile, lines []string, config configuration.Configuration) {
-	text := fragment.text(lines, config)
+func (f Fragment) WriteTo(file FragmentFile, lines []string, config config.Configuration) {
+	text := f.text(lines, config)
 	file.Write(text)
+}
+
+func (f Fragment) isDefault() bool {
+	return f.Name == DefaultFragmentName
+}
+
+// Obtains the text for the fragment.
+//
+// The partition of the fragment is separated with the Configuration.Separator.
+//
+// lines — a list with every line of the file.
+//
+// configuration — a configuration for embedding.
+func (f Fragment) text(lines []string, config config.Configuration) string {
+	if f.isDefault() {
+		return strings.Join(lines, "\n")
+	}
+
+	partitionsTexts := calculatePartitionsTexts(lines, f.Partitions)
+
+	text := ""
+	for index, partitionText := range partitionsTexts {
+		indentation := indent.MaxCommonIndentation(partitionText)
+		cutIndentLines := indent.CutIndent(partitionText, indentation)
+
+		if index != 0 {
+			separatorIndentation := separatorIndent(cutIndentLines)
+			text += separatorIndentation + config.Separator + "\n"
+		}
+
+		text += strings.Join(cutIndentLines, "\n") + "\n"
+	}
+
+	return text
+}
+
+// Returns string indent for separator.
+func separatorIndent(lines []string) string {
+	if len(lines) > 0 {
+		firstLine := lines[0]
+		leadingSpaces := len(firstLine) - len(strings.TrimLeft(firstLine, " "))
+
+		return strings.Repeat(" ", leadingSpaces)
+	}
+
+	return ""
 }
 
 // Calculates and returns a list which contains corresponding lines for every partition.
@@ -72,50 +118,4 @@ func calculatePartitionsTexts(lines []string, partitions []Partition) [][]string
 	}
 
 	return partitionLines
-}
-
-// Returns string indent for separator.
-func calculateSeparatorIndent(lines []string) string {
-	if len(lines) > 0 {
-		firstLine := lines[0]
-		leadingSpaces := len(firstLine) - len(strings.TrimLeft(firstLine, " "))
-
-		return strings.Repeat(" ", leadingSpaces)
-	}
-
-	return ""
-}
-
-// Obtains the text for the fragment.
-//
-// The partition of the fragment is separated with the Configuration.Separator.
-//
-// lines — a list with every line of the file.
-//
-// configuration — a configuration for embedding.
-func (fragment Fragment) text(lines []string, configuration configuration.Configuration) string {
-	if fragment.isDefault() {
-		return strings.Join(lines, "\n")
-	}
-
-	partitionsTexts := calculatePartitionsTexts(lines, fragment.Partitions)
-
-	text := ""
-	for index, partitionText := range partitionsTexts {
-		partitionIndentation := indent.MaxCommonIndentation(partitionText)
-		cutIndentLines := indent.CutIndent(partitionText, partitionIndentation)
-
-		if index != 0 {
-			separatorIndentation := calculateSeparatorIndent(cutIndentLines)
-			text += separatorIndentation + configuration.Separator + "\n"
-		}
-
-		text += strings.Join(cutIndentLines, "\n") + "\n"
-	}
-
-	return text
-}
-
-func (fragment Fragment) isDefault() bool {
-	return fragment.Name == DefaultFragmentName
 }

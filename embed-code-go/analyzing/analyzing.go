@@ -1,13 +1,13 @@
 package analyzing
 
 import (
-	"embed-code/embed-code-go/files"
 	"fmt"
 	"os"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
+	"embed-code/embed-code-go/files"
 	"github.com/bmatcuk/doublestar/v4"
 )
 

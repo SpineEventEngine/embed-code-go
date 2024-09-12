@@ -92,21 +92,27 @@ func NewFragmentation(codeFileRelative string, config configuration.Configuratio
 //
 // Returns a refined content of the file to be cut into fragments, and the Fragments.
 // Also returns an error if the fragmentation couldn't be done.
-func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment, error) {
+func (f Fragmentation) Fragmentize() ([]string, map[string]Fragment, error) {
 	fragmentBuilders := make(map[string]*FragmentBuilder)
 	var contentToRender []string
 
-	file, err := os.Open(fragmentation.CodeFile)
+	file, err := os.Open(f.CodeFile)
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
+
+	defer func(file *os.File) {
+		err = file.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(file)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		contentToRender, fragmentBuilders, err =
-			fragmentation.parseLine(line, contentToRender, fragmentBuilders)
+			f.parseLine(line, contentToRender, fragmentBuilders)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -127,21 +133,21 @@ func (fragmentation Fragmentation) Fragmentize() ([]string, map[string]Fragment,
 // That is, `SRC/src/main` becomes `OUT/src/main`.
 //
 // Returns an error if the fragmentation couldn't be done.
-func (fragmentation Fragmentation) WriteFragments() error {
-	allLines, fragments, err := fragmentation.Fragmentize()
+func (f Fragmentation) WriteFragments() error {
+	allLines, fragments, err := f.Fragmentize()
 	if err != nil {
 		return err
 	}
 
-	err = files.EnsureDirExists(fragmentation.targetDirectory())
+	err = files.EnsureDirExists(f.targetDirectory())
 	if err != nil {
 		return err
 	}
 
 	for _, fragment := range fragments {
-		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name,
-			fragmentation.Configuration)
-		fragment.WriteTo(fragmentFile, allLines, fragmentation.Configuration)
+		fragmentFile := NewFragmentFileFromAbsolute(f.CodeFile, fragment.Name,
+			f.Configuration)
+		fragment.WriteTo(fragmentFile, allLines, f.Configuration)
 	}
 
 	return nil
@@ -222,7 +228,7 @@ func ShouldFragmentize(filePath string) bool {
 // positions of it's items updated.
 //
 // Returns updated contentToRender, fragmentBuilders and error if there's any.
-func (fragmentation Fragmentation) parseLine(
+func (f Fragmentation) parseLine(
 	line string, contentToRender []string,
 	fragmentBuilders map[string]*FragmentBuilder,
 ) ([]string, map[string]*FragmentBuilder, error) {
@@ -235,7 +241,10 @@ func (fragmentation Fragmentation) parseLine(
 		for _, fragmentName := range fragmentStarts {
 			fragment, exists := fragmentBuilders[fragmentName]
 			if !exists {
-				builder := FragmentBuilder{CodeFilePath: fragmentation.CodeFile, Name: fragmentName}
+				builder := FragmentBuilder{
+					CodeFilePath: f.CodeFile,
+					Name:         fragmentName,
+				}
 				fragmentBuilders[fragmentName] = &builder
 				fragment = fragmentBuilders[fragmentName]
 			}
@@ -248,7 +257,7 @@ func (fragmentation Fragmentation) parseLine(
 			} else {
 				return nil, nil,
 					fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
-						fragmentName, fragmentation.CodeFile)
+						fragmentName, f.CodeFile)
 			}
 		}
 	} else {
@@ -260,13 +269,13 @@ func (fragmentation Fragmentation) parseLine(
 
 // Calculates the target directory path based on the
 // Configuration.FragmentsDir and the parent dir of Fragmentation.CodeFile.
-func (fragmentation Fragmentation) targetDirectory() string {
-	fragmentsDir := fragmentation.Configuration.FragmentsDir
-	codeRoot, err := filepath.Abs(fragmentation.Configuration.CodeRoot)
+func (f Fragmentation) targetDirectory() string {
+	fragmentsDir := f.Configuration.FragmentsDir
+	codeRoot, err := filepath.Abs(f.Configuration.CodeRoot)
 	if err != nil {
 		panic(fmt.Sprintf("error calculating absolute path: %v", err))
 	}
-	relativeFile, err := filepath.Rel(codeRoot, fragmentation.CodeFile)
+	relativeFile, err := filepath.Rel(codeRoot, f.CodeFile)
 	if err != nil {
 		panic(fmt.Sprintf("error calculating relative path: %v", err))
 	}
