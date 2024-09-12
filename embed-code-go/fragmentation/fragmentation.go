@@ -190,8 +190,7 @@ func CleanFragmentFiles(config config.Configuration) {
 	if !exists {
 		panic(fmt.Errorf("%s directory is not exist", config.FragmentsDir))
 	}
-	err = os.RemoveAll(config.FragmentsDir)
-	if err != nil {
+	if err = os.RemoveAll(config.FragmentsDir); err != nil {
 		panic(err)
 	}
 }
@@ -204,6 +203,7 @@ func writeFragments(configuration config.Configuration, codeFile string) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -212,13 +212,11 @@ func writeFragments(configuration config.Configuration, codeFile string) error {
 //   - is a file (not a dir)
 //   - is textual-encoded.
 func shouldFragmentize(filePath string) bool {
-	info, err := os.Stat(filePath)
+	exists, err := files.IsFileExist(filePath)
 	if err != nil {
-		panic(err)
+		return false
 	}
-
-	isFile := !info.IsDir()
-	if isFile {
+	if exists {
 		return IsEncodedAsText(filePath)
 	}
 
@@ -246,10 +244,11 @@ func (f Fragmentation) parseLine(line string, contentToRender []string) ([]strin
 
 	switch {
 	case len(docFragments) > 0:
-		f.parseDocFragments(docFragments, cursor)
+		if err := f.parseDocFragments(docFragments, cursor); err != nil {
+			return nil, err
+		}
 	case len(endDocFragments) > 0:
-		err := f.parseEndDocFragments(endDocFragments, cursor)
-		if err != nil {
+		if err := f.parseEndDocFragments(endDocFragments, cursor); err != nil {
 			return nil, err
 		}
 	default:
@@ -259,7 +258,7 @@ func (f Fragmentation) parseLine(line string, contentToRender []string) ([]strin
 	return contentToRender, nil
 }
 
-func (f Fragmentation) parseDocFragments(docFragments []string, cursor int) {
+func (f Fragmentation) parseDocFragments(docFragments []string, cursor int) error {
 	for _, fragmentName := range docFragments {
 		fragment, exists := f.fragmentBuilders[fragmentName]
 		if !exists {
@@ -270,14 +269,20 @@ func (f Fragmentation) parseDocFragments(docFragments []string, cursor int) {
 			f.fragmentBuilders[fragmentName] = &builder
 			fragment = f.fragmentBuilders[fragmentName]
 		}
-		fragment.AddStartPosition(cursor)
+		if err := fragment.AddStartPosition(cursor); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int) error {
 	for _, fragmentName := range endDocFragments {
 		if fragment, exists := f.fragmentBuilders[fragmentName]; exists {
-			fragment.AddEndPosition(cursor - 1)
+			if err := fragment.AddEndPosition(cursor - 1); err != nil {
+				return err
+			}
 		} else {
 			return fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
 				fragmentName, f.CodeFile)
