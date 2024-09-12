@@ -22,9 +22,88 @@
 package files
 
 import (
+	"bufio"
+	"embed-code/embed-code-go/configuration"
 	"fmt"
 	"os"
+	"path/filepath"
 )
+
+const readWriteExecPermission uint32 = 0777
+
+// WriteLinesToFile writes lines to the file at given filePath.
+func WriteLinesToFile(filepath string, lines []string) {
+	file, err := os.Create(filepath)
+	if err != nil {
+		panic(err)
+	}
+	defer func(file *os.File) {
+		if err = file.Close(); err != nil {
+			panic(err)
+		}
+	}(file)
+
+	for _, s := range lines {
+		_, err := file.WriteString(s + "\n")
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+// ReadFile reads and returns all lines from the file at given filePath.
+func ReadFile(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var lines []string
+	defer func(file *os.File) {
+		err = file.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(file)
+
+	reader := bufio.NewReader(file)
+
+	for {
+		line, _, err := reader.ReadLine()
+		if err != nil {
+			break
+		}
+		lines = append(lines, string(line))
+	}
+
+	return lines, nil
+}
+
+// BuildDocRelativePath builds a relative path for documentation file with a given config.
+func BuildDocRelativePath(absolutePath string, config configuration.Configuration) string {
+	relativePath, err := filepath.Rel(config.DocumentationRoot, absolutePath)
+	if err != nil {
+		panic(err)
+	}
+
+	return relativePath
+}
+
+// EnsureDirExists creates dir at given path if it doesn't exist. Does nothing if exists.
+func EnsureDirExists(path string) error {
+	exist, err := IsDirExist(path)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		err = os.MkdirAll(path, os.FileMode(readWriteExecPermission))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 // IsFileExist reports whether the given path to a file exists in the file system.
 func IsFileExist(filePath string) (bool, error) {

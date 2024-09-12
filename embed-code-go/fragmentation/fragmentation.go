@@ -37,6 +37,7 @@ package fragmentation
 
 import (
 	"bufio"
+	"embed-code/embed-code-go/files"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -132,7 +133,10 @@ func (fragmentation Fragmentation) WriteFragments() error {
 		return err
 	}
 
-	EnsureDirExists(fragmentation.targetDirectory())
+	err = files.EnsureDirExists(fragmentation.targetDirectory())
+	if err != nil {
+		return err
+	}
 
 	for _, fragment := range fragments {
 		fragmentFile := NewFragmentFileFromAbsolute(fragmentation.CodeFile, fragment.Name,
