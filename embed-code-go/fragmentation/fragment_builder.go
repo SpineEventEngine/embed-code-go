@@ -87,5 +87,6 @@ func (b *FragmentBuilder) isPartitionsEmpty() bool {
 
 func (b *FragmentBuilder) lastAddedPartition() Partition {
 	lastIndex := len(b.Partitions) - 1
+
 	return b.Partitions[lastIndex]
 }

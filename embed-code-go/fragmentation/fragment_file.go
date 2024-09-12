@@ -54,7 +54,6 @@ type FragmentFile struct {
 // Returns composed fragment.
 func NewFragmentFileFromAbsolute(codeFile string, fragmentName string,
 	config configuration.Configuration) FragmentFile {
-
 	absolutePath, err := filepath.Abs(config.CodeRoot)
 	if err != nil {
 		panic(err)

@@ -180,7 +180,7 @@ func (suite *FragmentationTestSuite) TestManyPartitions() {
 
 func (suite *FragmentationTestSuite) TestFindFragmentOpenings() {
 	testString := "// #docfragment \"main\",\"sub-main\"\n"
-	foundedOpenings := fragmentation.FindFragmentOpenings(testString)
+	foundedOpenings := fragmentation.FindDocFragments(testString)
 
 	suite.Len(foundedOpenings, 2)
 	suite.Equal("main", foundedOpenings[0])
@@ -189,7 +189,7 @@ func (suite *FragmentationTestSuite) TestFindFragmentOpenings() {
 
 func (suite *FragmentationTestSuite) TestFindFragmentEndings() {
 	testString := "// #enddocfragment \"main\",\"sub-main\"\n"
-	foundedEndings := fragmentation.FindFragmentEndings(testString)
+	foundedEndings := fragmentation.FindEndDocFragments(testString)
 
 	suite.Len(foundedEndings, 2)
 	suite.Equal("main", foundedEndings[0])
