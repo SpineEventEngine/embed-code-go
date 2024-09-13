@@ -21,7 +21,6 @@ package fragmentation
 import (
 	"strings"
 
-	config "embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/indent"
 )
 
@@ -51,11 +50,11 @@ func CreateDefaultFragment() Fragment {
 //
 // lines — a list of strings to write.
 //
-// configuration — a Configuration with all embed-code settings.
+// separator — string to insert between multiple partitions of a single fragment.
 //
 // Creates the file if not exists and overwrites if exists.
-func (f Fragment) WriteTo(file FragmentFile, lines []string, config config.Configuration) {
-	text := f.text(lines, config)
+func (f Fragment) WriteTo(file FragmentFile, lines []string, separator string) {
+	text := f.text(lines, separator)
 	file.Write(text)
 }
 
@@ -65,12 +64,10 @@ func (f Fragment) isDefault() bool {
 
 // Obtains the text for the fragment.
 //
-// The partition of the fragment is separated with the Configuration.Separator.
-//
 // lines — a list with every line of the file.
 //
-// configuration — a configuration for embedding.
-func (f Fragment) text(lines []string, config config.Configuration) string {
+// separator — string to insert between multiple partitions of a single fragment.
+func (f Fragment) text(lines []string, separator string) string {
 	if f.isDefault() {
 		return strings.Join(lines, "\n")
 	}
@@ -84,7 +81,7 @@ func (f Fragment) text(lines []string, config config.Configuration) string {
 
 		if index > 0 {
 			separatorIndentation := separatorIndent(cutIndentLines)
-			text += separatorIndentation + config.Separator + "\n"
+			text += separatorIndentation + separator + "\n"
 		}
 
 		text += strings.Join(cutIndentLines, "\n") + "\n"
