@@ -34,10 +34,19 @@ type Partition struct {
 	EndPosition   int
 }
 
+// NewPartition returns a new Partition with both positions set to -1, as they should to be
+// positive once set by a user.
+func NewPartition() Partition {
+	return Partition{
+		-1,
+		-1,
+	}
+}
+
 // Select returns the partition-related lines from given lines.
 // If EndPosition is nil, returns all the lines started from StartPosition.
 func (p Partition) Select(lines []string) []string {
-	if p.EndPosition == 0 {
+	if p.EndPosition < 0 {
 		return lines[p.StartPosition:]
 	}
 
