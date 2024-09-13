@@ -51,7 +51,8 @@ func (b *FragmentBuilder) AddStartPosition(startPosition int) error {
 		}
 	}
 
-	partition := Partition{StartPosition: startPosition}
+	partition := NewPartition()
+	partition.StartPosition = startPosition
 	b.Partitions = append(b.Partitions, partition)
 
 	return nil
@@ -66,11 +67,12 @@ func (b *FragmentBuilder) AddEndPosition(endPosition int) error {
 		return errors.New("error: the list of partitions is empty")
 	}
 	lastPartition := b.lastAddedPartition()
-	if lastPartition.EndPosition != 0 {
+	if lastPartition.EndPosition < 0 {
+		lastPartition.EndPosition = endPosition
+	} else {
 		return fmt.Errorf("unexpected #enddocfragment statement at %s:%d", b.CodeFilePath,
 			lastPartition.EndPosition)
 	}
-	lastPartition.EndPosition = endPosition
 
 	return nil
 }
