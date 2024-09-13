@@ -64,18 +64,18 @@ func FindEndDocFragments(line string) []string {
 //
 // Returns the list of the names found.
 func lookup(line string, prefix string) []string {
-	var unquotedFragmentNames []string
+	var unquotedNames []string
 	if strings.Contains(line, prefix) {
 		// 1 for trailing space after the prefix.
 		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1
 		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {
-			quotedFragmentName := strings.Trim(fragmentName, "\n\t ")
-			unquotedFragmentName := unquoteName(quotedFragmentName)
-			unquotedFragmentNames = append(unquotedFragmentNames, unquotedFragmentName)
+			quotedName := strings.Trim(fragmentName, "\n\t ")
+			unquotedName := unquoteName(quotedName)
+			unquotedNames = append(unquotedNames, unquotedName)
 		}
 	}
 
-	return unquotedFragmentNames
+	return unquotedNames
 }
 
 // Returns the unquoted name from given quotedName.

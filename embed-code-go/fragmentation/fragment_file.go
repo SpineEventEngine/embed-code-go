@@ -26,7 +26,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"embed-code/embed-code-go/configuration"
+	config "embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/files"
 )
 
@@ -40,7 +40,7 @@ import (
 type FragmentFile struct {
 	CodePath      string
 	FragmentName  string
-	Configuration configuration.Configuration
+	Configuration config.Configuration
 }
 
 // NewFragmentFileFromAbsolute composes a FragmentFile for the given fragment in given codeFile.
@@ -53,7 +53,7 @@ type FragmentFile struct {
 //
 // Returns composed fragment.
 func NewFragmentFileFromAbsolute(codeFile string, fragmentName string,
-	config configuration.Configuration) FragmentFile {
+	config config.Configuration) FragmentFile {
 	absolutePath, err := filepath.Abs(config.CodeRoot)
 	if err != nil {
 		panic(err)
@@ -70,7 +70,7 @@ func NewFragmentFileFromAbsolute(codeFile string, fragmentName string,
 	}
 }
 
-// Writes text to the file.
+// Writes the given text to the file.
 //
 // Creates the file if not exists and overwrites if exists.
 func (f FragmentFile) Write(text string) {
@@ -84,7 +84,7 @@ func (f FragmentFile) Write(text string) {
 
 // Content reads content of the file.
 //
-// Returns contents of the file as a list of strings, or returns an error if it doesn't exists.
+// Returns contents of the file as a list of strings, or returns an error if it doesn't exist.
 func (f FragmentFile) Content() ([]string, error) {
 	path := f.absolutePath()
 	isPathFileExits, err := files.IsFileExist(path)
@@ -125,8 +125,8 @@ func (f FragmentFile) absolutePath() string {
 
 // Calculates and returns a hash string for FragmentFile.
 //
-// Since fragments which have the same name unite into one
-// fragment with multiple partitions, the name of a fragment is unique.
+// Since fragments which have the same name unite into one fragment with multiple partitions,
+// the name of a fragment is unique.
 func (f FragmentFile) fragmentHash() string {
 	hash := sha256.New()
 	hash.Write([]byte(f.FragmentName))

@@ -24,6 +24,7 @@ import (
 	"embed-code/embed-code-go/fragmentation"
 	"embed-code/embed-code-go/test/filesystem"
 	"fmt"
+	"github.com/onsi/ginkgo/v2"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -151,7 +152,10 @@ func (suite *FragmentationTestSuite) TestManyPartitions() {
 
 	fileName := "Complex.java"
 	frag := buildTestFragmentation(fileName, suite.config)
-	frag.WriteFragments()
+	err := frag.WriteFragments()
+	if err != nil {
+		ginkgo.Fail(err.Error())
+	}
 
 	fragmentDir := fmt.Sprintf("%s/org/example", suite.config.FragmentsDir)
 	fragmentFiles, _ := os.ReadDir(fragmentDir)
