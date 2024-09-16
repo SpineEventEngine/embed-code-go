@@ -16,7 +16,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package embedding_instruction
+package embedding
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ import (
 	"github.com/gobwas/glob"
 )
 
-// Represents a glob-like pattern to match a line of a source file.
+// Pattern represents a glob-like pattern to match a line of a source file.
 //
 // Contains both original glob string and modified pattern suitable for matching.
 //
@@ -37,11 +37,7 @@ type Pattern struct {
 	pattern    string
 }
 
-//
-// Initializers
-//
-
-// Creates a new Pattern based on provided glob string.
+// NewPattern creates a new Pattern based on provided glob string.
 //
 // The resulting Pattern struct contains both original glob string and
 // modified pattern suitable for matching.
@@ -86,11 +82,7 @@ func NewPattern(glob string) Pattern {
 	}
 }
 
-//
-// Public methods
-//
-
-// Reports whether given line matches the pattern.
+// Match reports whether given line matches the pattern.
 //
 // line — a line to check the match for.
 func (p Pattern) Match(line string) bool {

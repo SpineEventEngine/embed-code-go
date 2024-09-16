@@ -24,9 +24,9 @@ import (
 	"embed-code/embed-code-go/embedding/parsing"
 )
 
-// Describes an error which occurs if something goes wrong during embedding.
+// EmbeddingError Describes an error which occurs if something goes wrong during embedding.
 type EmbeddingError struct {
-	Context parsing.ParsingContext
+	Context parsing.Context
 }
 
 func (err EmbeddingError) Error() string {
@@ -44,14 +44,14 @@ func (err EmbeddingError) Error() string {
 	}
 
 	if len(err.Context.UnacceptedEmbeddings) > 0 {
-		unacceptedEmbbeddingsStr := "\nUnaccepted embeddings: \n"
+		unacceptedEmbeddingStr := "\nUnaccepted embeddings: \n"
 		for _, emb := range err.Context.UnacceptedEmbeddings {
-			unacceptedEmbbeddingsStr += fmt.Sprintf(
+			unacceptedEmbeddingStr += fmt.Sprintf(
 				"%s — %s\n",
 				emb.CodeFile,
 				emb.Fragment)
 		}
-		errorString += unacceptedEmbbeddingsStr
+		errorString += unacceptedEmbeddingStr
 	}
 
 	return errorString

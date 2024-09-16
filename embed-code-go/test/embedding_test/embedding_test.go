@@ -62,7 +62,7 @@ func (suite *EmbeddingTestSuite) TearDownTest() {
 
 func (suite *EmbeddingTestSuite) TestNotUpToDate() {
 	docPath := fmt.Sprintf("%s/whole-file-fragment.md", suite.config.DocumentationRoot)
-	processor := embedding.NewEmbeddingProcessor(docPath, suite.config)
+	processor := embedding.NewProcessor(docPath, suite.config)
 
 	isUpToDate := processor.IsUpToDate()
 	suite.False(isUpToDate)
@@ -70,7 +70,7 @@ func (suite *EmbeddingTestSuite) TestNotUpToDate() {
 
 func (suite *EmbeddingTestSuite) TestUpToDate() {
 	docPath := fmt.Sprintf("%s/whole-file-fragment.md", suite.config.DocumentationRoot)
-	processor := embedding.NewEmbeddingProcessor(docPath, suite.config)
+	processor := embedding.NewProcessor(docPath, suite.config)
 	err := processor.Embed()
 	suite.Require().NoError(err, "There was unexpected error during embedding.")
 
@@ -80,7 +80,7 @@ func (suite *EmbeddingTestSuite) TestUpToDate() {
 
 func (suite *EmbeddingTestSuite) TestNothingToUpdate() {
 	docPath := fmt.Sprintf("%s/no-embedding-doc.md", suite.config.DocumentationRoot)
-	processor := embedding.NewEmbeddingProcessor(docPath, suite.config)
+	processor := embedding.NewProcessor(docPath, suite.config)
 	suite.True(processor.IsUpToDate())
 }
 
@@ -97,14 +97,14 @@ func (suite *EmbeddingTestSuite) TestFalseTransitions() {
 		"CODE_FENCE_END":        {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
 	}
 
-	falseProcessor := embedding.NewEmbeddingProcessorWithTransitions(docPath, suite.config, falseTransitions)
+	falseProcessor := embedding.NewProcessorWithTransitions(docPath, suite.config, falseTransitions)
 	err := falseProcessor.Embed()
 	suite.Require().Error(err, "The error was expected during the embedding with the false transitions, but there wasn't one.")
 }
 
 func (suite *EmbeddingTestSuite) TestMultiLinedTag() {
 	docPath := fmt.Sprintf("%s/multi-lined-tag.md", suite.config.DocumentationRoot)
-	processor := embedding.NewEmbeddingProcessor(docPath, suite.config)
+	processor := embedding.NewProcessor(docPath, suite.config)
 	err := processor.Embed()
 	suite.Require().NoError(err, "There was unexpected error during embedding.")
 

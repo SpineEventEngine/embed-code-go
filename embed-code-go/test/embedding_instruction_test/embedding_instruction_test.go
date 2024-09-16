@@ -20,7 +20,7 @@ package embedding_instruction_test
 
 import (
 	"embed-code/embed-code-go/configuration"
-	"embed-code/embed-code-go/embedding_instruction"
+	"embed-code/embed-code-go/embedding"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -86,7 +86,7 @@ func (suite *EmbeddingInstructionTestSuite) SetupSuite() {
 func (suite *EmbeddingInstructionTestSuite) TestParsingMisformedXML() {
 	xmlString := "<file=\"org/example/Hello.java\" fragment=\"Hello class\"/>"
 
-	_, err := embedding_instruction.FromXML(xmlString, suite.config)
+	_, err := embedding.FromXML(xmlString, suite.config)
 	suite.Require().Error(err, "Parsing misformed XML should cause an error.")
 }
 
@@ -96,7 +96,7 @@ func (suite *EmbeddingInstructionTestSuite) TestParseFromXML() {
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 
-	_, err := embedding_instruction.FromXML(xmlString, suite.config)
+	_, err := embedding.FromXML(xmlString, suite.config)
 	suite.NoError(err, "There was unexpected error during the XML parsing.")
 }
 
@@ -107,7 +107,7 @@ func (suite *EmbeddingInstructionTestSuite) TestParseWithClosingTag() {
 	}
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 
-	_, err := embedding_instruction.FromXML(xmlString, suite.config)
+	_, err := embedding.FromXML(xmlString, suite.config)
 	suite.NoError(err, "There was unexpected error during the XML parsing.")
 }
 
@@ -133,7 +133,7 @@ func (suite *EmbeddingInstructionTestSuite) TestFragmentAndStart() {
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 
-	_, err := embedding_instruction.FromXML(xmlString, suite.config)
+	_, err := embedding.FromXML(xmlString, suite.config)
 	suite.Error(err, "Instruction tag with both fragment and startGlob provided should cause an error.")
 }
 
@@ -145,7 +145,7 @@ func (suite *EmbeddingInstructionTestSuite) TestFragmentAndEnd() {
 
 	xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 
-	_, err := embedding_instruction.FromXML(xmlString, suite.config)
+	_, err := embedding.FromXML(xmlString, suite.config)
 	suite.Error(err, "Instruction tag with both fragment and endGlob provided should cause an error.")
 }
 
@@ -304,14 +304,13 @@ func (suite *EmbeddingInstructionTestSuite) TestExplicitLineEnd() {
 	suite.Equal("This line ends with bar", lines[5])
 }
 
-func (suite *EmbeddingInstructionTestSuite) createInstructionFromXML(
-	xmlString string) embedding_instruction.EmbeddingInstruction {
-	instruction, err := embedding_instruction.FromXML(xmlString, suite.config)
+func (suite *EmbeddingInstructionTestSuite) createInstructionFromXML(xmlString string) embedding.Instruction {
+	instruction, err := embedding.FromXML(xmlString, suite.config)
 	suite.Require().NoError(err, "There was unexpected error during the XML parsing.")
 	return instruction
 }
 
-func (suite *EmbeddingInstructionTestSuite) readInstructionContent(instruction embedding_instruction.EmbeddingInstruction) []string {
+func (suite *EmbeddingInstructionTestSuite) readInstructionContent(instruction embedding.Instruction) []string {
 	lines, err := instruction.Content()
 	suite.Require().NoError(err, "There was unexpected error during receiving instruction content.")
 	return lines

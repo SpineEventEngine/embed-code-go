@@ -61,7 +61,7 @@ func extractAnalyticsForDocs(
 	var changedEmbeddingsLines, problemEmbeddingsLines []string
 
 	for _, docFile := range docFiles {
-		processor := embedding.NewEmbeddingProcessor(docFile, config)
+		processor := embedding.NewProcessor(docFile, config)
 		changedEmbeddings, err := processor.FindChangedEmbeddings()
 
 		// If there is an error during embedding, it is written to the analytics file.

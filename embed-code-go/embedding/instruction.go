@@ -1,24 +1,27 @@
-// Copyright 2024, TeamDev. All rights reserved.
-//
-// Redistribution and use in source and/or binary forms, with or without
-// modification, must retain the above copyright notice and the following
-// disclaimer.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+ * Copyright 2024, TeamDev. All rights reserved.
+ *
+ * Redistribution and use in source and/or binary forms, with or without
+ * modification, must retain the above copyright notice and the following
+ * disclaimer.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
-package embedding_instruction
+package embedding
 
 import (
+	"embed-code/embed-code-go/embedding/parsing"
 	"fmt"
 
 	"embed-code/embed-code-go/configuration"
@@ -26,14 +29,15 @@ import (
 	"embed-code/embed-code-go/indent"
 )
 
-// Specifies the code fragment to embed into a Markdown file, and the embedding parameters.
+// Instruction specifies the code fragment to embed into a Markdown file, and the
+// embedding parameters.
 //
 // Takes form of an XML processing instruction <embed-code file="..." fragment="..."/>.
 //
 // CodeFile — a path to a code file to embed. The path is relative to Configuration.CodeRoot dir.
 //
-// Fragment — name of the particular fragment in the code. If Fragment is empty,
-// the whole file is embedded.
+// Fragment — name of the particular fragment in the code. If Fragment is empty, the whole file
+// is embedded.
 //
 // StartPattern — an optional glob-like pattern. If specified, lines before the matching one
 // are excluded.
@@ -42,7 +46,7 @@ import (
 // are excluded.
 //
 // Configuration — a Configuration with all embed-code settings.
-type EmbeddingInstruction struct {
+type Instruction struct {
 	CodeFile      string
 	Fragment      string
 	StartPattern  *Pattern
@@ -50,11 +54,7 @@ type EmbeddingInstruction struct {
 	Configuration configuration.Configuration
 }
 
-//
-// Initializers
-//
-
-// Creates a new EmbeddingInstruction based on provided attributes and configuration.
+// NewInstruction creates an Instruction based on provided attributes and configuration.
 //
 // attributes — a map with string-typed both keys and values. Possible keys are:
 //   - file — a mandatory relative path to the file with the code;
@@ -67,15 +67,15 @@ type EmbeddingInstruction struct {
 // config — a Configuration with all embed-code settings.
 //
 // Returns an error if the instruction is wrong.
-func NewEmbeddingInstruction(
-	attributes map[string]string, config configuration.Configuration) (EmbeddingInstruction, error) {
+func NewInstruction(
+	attributes map[string]string, config configuration.Configuration) (Instruction, error) {
 	codeFile := attributes["file"]
 	fragment := attributes["fragment"]
 	startValue := attributes["start"]
 	endValue := attributes["end"]
 
 	if fragment != "" && (startValue != "" || endValue != "") {
-		return EmbeddingInstruction{},
+		return Instruction{},
 			fmt.Errorf("<embed-code> must NOT specify both a fragment name and start/end patterns")
 	}
 	var end *Pattern
@@ -90,7 +90,7 @@ func NewEmbeddingInstruction(
 		end = &endPattern
 	}
 
-	return EmbeddingInstruction{
+	return Instruction{
 		CodeFile:      codeFile,
 		Fragment:      fragment,
 		StartPattern:  start,
@@ -99,7 +99,7 @@ func NewEmbeddingInstruction(
 	}, nil
 }
 
-// Reads the instruction from the '<embed-code>' XML tag and creates new EmbeddingInstruction.
+// FromXML reads the instruction from the '<embed-code>' XML tag and creates new Instruction.
 //
 // line — a line which contains '<embed-code>' XML tag.
 // For example: '<embed-code file="org/example/Hello.java" fragment="Hello class"/>'.
@@ -116,23 +116,19 @@ func NewEmbeddingInstruction(
 // config — a Configuration with all embed-code settings.
 //
 // Returns an error if the paring of XML instruction failed.
-func FromXML(line string, config configuration.Configuration) (EmbeddingInstruction, error) {
-	fields, err := ParseXMLLine(line)
+func FromXML(line string, config configuration.Configuration) (Instruction, error) {
+	fields, err := parsing.ParseXMLLine(line)
 	if err != nil {
-		return EmbeddingInstruction{}, err
+		return Instruction{}, err
 	}
 
-	return NewEmbeddingInstruction(fields, config)
+	return NewInstruction(fields, config)
 }
 
-//
-// Public methods
-//
-
-// Reads and returns the lines for specified fragment from the code.
+// Content reads and returns the lines for specified fragment from the code.
 //
 // Returns an error if there was an error during reading the content.
-func (e EmbeddingInstruction) Content() ([]string, error) {
+func (e Instruction) Content() ([]string, error) {
 	fragmentName := e.Fragment
 	if fragmentName == "" {
 		fragmentName = fragmentation.DefaultFragmentName
@@ -154,20 +150,16 @@ func (e EmbeddingInstruction) Content() ([]string, error) {
 	return file.Content()
 }
 
-// Returns string representation of EmbeddingInstruction.
-func (e EmbeddingInstruction) String() string {
+// Returns string representation of Instruction.
+func (e Instruction) String() string {
 	return fmt.Sprintf("EmbeddingInstruction[file=`%s`, fragment=`%s`, start=`%s`, end=`%s`]",
 		e.CodeFile, e.Fragment, e.StartPattern, e.EndPattern)
 }
 
-//
-// Private methods
-//
-
 // Filters and returns a subset of input lines based on start and end patterns.
 //
 // lines — a list of strings representing the input lines.
-func (e EmbeddingInstruction) matchingLines(lines []string) []string {
+func (e Instruction) matchingLines(lines []string) []string {
 	startPosition := 0
 	if e.StartPattern != nil {
 		startPosition = e.matchGlob(e.StartPattern, lines, 0)
@@ -189,7 +181,7 @@ func (e EmbeddingInstruction) matchingLines(lines []string) []string {
 // lines — a list of lines to search in.
 //
 // startFrom — an index from which to start searching.
-func (e EmbeddingInstruction) matchGlob(pattern *Pattern, lines []string, startFrom int) int {
+func (e Instruction) matchGlob(pattern *Pattern, lines []string, startFrom int) int {
 	lineCount := len(lines)
 	resultLine := startFrom
 	for resultLine < lineCount {
