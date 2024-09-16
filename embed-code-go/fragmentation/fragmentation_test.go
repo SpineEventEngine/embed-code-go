@@ -161,7 +161,7 @@ var _ = Describe("Fragmentation", func() {
 				"// #docfragment \"%s\",\"%s\"", mainFragment, subMainFragment)
 
 			openings := fragmentation.FindEndDocFragments(docFragment)
-			Expect(openings).Should(HaveLen(0))
+			Expect(openings).Should(BeEmpty())
 		})
 
 		It("should not find fragment openings as there are endings", func() {
@@ -169,7 +169,7 @@ var _ = Describe("Fragmentation", func() {
 				"// #enddocfragment \"%s\",\"%s\"", mainFragment, subMainFragment)
 
 			endings := fragmentation.FindDocFragments(endDocFragment)
-			Expect(endings).Should(HaveLen(0))
+			Expect(endings).Should(BeEmpty())
 		})
 	})
 
