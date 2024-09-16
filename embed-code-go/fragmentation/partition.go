@@ -22,9 +22,8 @@ package fragmentation
 //
 // A fragment may consist of a few partitions, collected from different points in the code file.
 // In the resulting doc file, the partitions are joined by the Configuration.Separator.
-// StartPosition and EndPosition are both pointers, because it's the way to make them nil-able.
-// Otherwise, the default value for them is 0, which is wrong, because 0 is in the scope of
-// possible values for them.
+// StartPosition and EndPosition are both set to -1 by default as the default int value for them
+// is 0, which is wrong, because 0 is in the scope of possible values for them.
 //
 // StartPosition — an index from which the scope of partition exists.
 //
@@ -44,7 +43,7 @@ func NewPartition() Partition {
 }
 
 // Select returns the partition-related lines from given lines.
-// If EndPosition is nil, returns all the lines started from StartPosition.
+// If EndPosition is not set, returns all the lines started from StartPosition.
 func (p Partition) Select(lines []string) []string {
 	if p.EndPosition < 0 {
 		return lines[p.StartPosition:]

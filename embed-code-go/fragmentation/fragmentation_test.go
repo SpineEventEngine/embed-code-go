@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -194,9 +195,9 @@ var _ = Describe("Fragmentation", func() {
 		expected := []string{
 			"public class Main {",
 			config.Separator,
-			`public.*`,
+			"public static void main(String[] args) {",
 			config.Separator,
-			`\s{4}System.*`,
+			"System.out.println(helperMethod());",
 			"",
 			"}",
 			config.Separator,
@@ -204,7 +205,7 @@ var _ = Describe("Fragmentation", func() {
 		}
 
 		for index, line := range content {
-			Expect(line).Should(Equal(expected[index]))
+			Expect(strings.TrimLeft(line, " ")).Should(Equal(expected[index]))
 		}
 	})
 })
