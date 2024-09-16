@@ -16,7 +16,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package embedding_instruction
+package parsing
 
 import (
 	"encoding/xml"
@@ -25,7 +25,7 @@ import (
 
 const xmlStringHeader string = "embed-code"
 
-// Needed for xml.Unmarshal parsing. The fields are filling up during the parsing.
+// Item needed for xml.Unmarshal parsing. The fields are filling up during the parsing.
 //
 // XMLName — a name of the tag in XML line.
 //
@@ -35,9 +35,9 @@ type Item struct {
 	Attrs   []xml.Attr `xml:",any,attr"`
 }
 
-// Parses given XML-encoded xmlLine and returns attributes data as key-value pairs.
+// ParseXMLLine parses given XML-encoded xmlLine and returns attributes data as key-value pairs.
 //
-// xmlLine — a XML-encoded line.
+// xmlLine — an XML-encoded line.
 //
 // Returns a map of key-value pairs. If the provided line is not valid, returns an error.
 func ParseXMLLine(xmlLine string) (map[string]string, error) {

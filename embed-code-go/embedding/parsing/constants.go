@@ -18,7 +18,7 @@
 
 package parsing
 
-// Maps state names to the list of possible next states.
+// Transitions maps state names to the list of possible next states.
 //
 // States are chosen considered the logical validity of their existence.
 //
@@ -35,7 +35,7 @@ var Transitions = map[string][]string{
 	"CODE_FENCE_END":        {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
 }
 
-// Maps a state name to a Transition.
+// StateToTransition maps a state name to a Transition.
 var StateToTransition = map[string]Transition{
 	"REGULAR_LINE":          RegularLine{},
 	"EMBEDDING_INSTRUCTION": EmbedInstructionToken{},

@@ -22,31 +22,27 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// Represents a line of a code sample.
+// CodeSampleLine represents a line of a code sample.
 type CodeSampleLine struct{}
 
+// Recognize reports whether the current line is a code sample line.
 //
-// Public methods
-//
-
-// Reports whether the current line is a code sample line.
-//
-// If codeFenceStarted is true and it's not the end of the file,
+// If codeFenceStarted is true, and it's not the end of the file,
 // the line is a code sample line.
 //
 // context — a context of the parsing process.
-func (c CodeSampleLine) Recognize(context ParsingContext) bool {
+func (c CodeSampleLine) Recognize(context Context) bool {
 	return !context.ReachedEOF() && context.CodeFenceStarted
 }
 
-// Moves to the next line.
+// Accept moves to the next line.
 //
 // context — a context of the parsing process.
 //
 // config — a configuration of the embedding.
 //
 // This implementation never returns an error.
-func (c CodeSampleLine) Accept(context *ParsingContext, _ configuration.Configuration) error {
+func (c CodeSampleLine) Accept(context *Context, _ configuration.Configuration) error {
 	context.ToNextLine()
 
 	return nil
