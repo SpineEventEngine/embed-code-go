@@ -45,7 +45,7 @@ type FragmentBuilder struct {
 func (b *FragmentBuilder) AddStartPosition(startPosition int) error {
 	if !b.isPartitionsEmpty() {
 		lastPartition := b.lastAddedPartition()
-		if lastPartition.EndPosition == 0 {
+		if lastPartition.EndPosition < 0 {
 			return fmt.Errorf("error: for the fragment \"%s\" of the file \"%s\", "+
 				"the last added partition has no end position", b.Name, b.CodeFilePath)
 		}
@@ -64,7 +64,7 @@ func (b *FragmentBuilder) AddStartPosition(startPosition int) error {
 // endPosition — end position of the fragment.
 func (b *FragmentBuilder) AddEndPosition(endPosition int) error {
 	if b.isPartitionsEmpty() {
-		return errors.New("error: the list of partitions is empty")
+		return errors.New("the list of partitions is empty")
 	}
 	lastPartition := b.lastAddedPartition()
 	if lastPartition.EndPosition < 0 {
@@ -89,8 +89,8 @@ func (b *FragmentBuilder) isPartitionsEmpty() bool {
 	return len(b.Partitions) == 0
 }
 
-func (b *FragmentBuilder) lastAddedPartition() Partition {
+func (b *FragmentBuilder) lastAddedPartition() *Partition {
 	lastIndex := len(b.Partitions) - 1
 
-	return b.Partitions[lastIndex]
+	return &b.Partitions[lastIndex]
 }
