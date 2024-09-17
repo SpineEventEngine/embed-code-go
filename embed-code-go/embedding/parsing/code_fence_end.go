@@ -25,9 +25,7 @@ import (
 )
 
 // CodeFenceEnd represents the end of a code fence.
-type CodeFenceEnd struct {
-	StateName string
-}
+type CodeFenceEnd struct{}
 
 // Recognize reports whether the current line is the end of a code fence.
 //
@@ -68,10 +66,6 @@ func (c CodeFenceEnd) Accept(context *Context, _ configuration.Configuration) er
 	context.ToNextLine()
 
 	return err
-}
-
-func (c CodeFenceEnd) State() string {
-	return c.StateName
 }
 
 // Renders the sample content of the embedding.

@@ -39,12 +39,12 @@ var Transitions = TransitionMap{
 }
 
 var (
-	start            = Start{"START"}
-	regularLine      = RegularLine{"REGULAR_LINE"}
-	embedInstruction = EmbedInstructionToken{"EMBEDDING_INSTRUCTION"}
-	blankLine        = BlankLine{"BLANK_LINE"}
-	codeFenceStart   = CodeFenceStart{"CODE_FENCE_START"}
-	codeFenceEnd     = CodeFenceEnd{"CODE_FENCE_END"}
-	codeSampleLine   = CodeSampleLine{"CODE_SAMPLE_LINE"}
-	finish           = Finish{"FINISH"}
+	start            = Start{}
+	regularLine      = RegularLine{}
+	embedInstruction = EmbedInstructionToken{}
+	blankLine        = BlankLine{}
+	codeFenceStart   = CodeFenceStart{}
+	codeFenceEnd     = CodeFenceEnd{}
+	codeSampleLine   = CodeSampleLine{}
+	finish           = Finish{}
 )

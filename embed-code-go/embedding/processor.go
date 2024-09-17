@@ -124,10 +124,10 @@ func (p Processor) constructEmbedding() (parsing.Context, error) {
 	var constructEmbeddingError = errors.New(errorStr)
 
 	var currentState parsing.Transition
-	currentState = parsing.Start{StateName: "START"}
-	finishState := parsing.Finish{StateName: "FINISH"}
+	currentState = parsing.Start{}
+	finishState := parsing.Finish{}
 
-	for currentState.State() != finishState.State() {
+	for currentState != finishState {
 		accepted := false
 		for _, nextState := range parsing.Transitions[currentState] {
 			if nextState.Recognize(context) {
@@ -142,7 +142,7 @@ func (p Processor) constructEmbedding() (parsing.Context, error) {
 			}
 		}
 		if !accepted {
-			currentState = parsing.RegularLine{StateName: "REGULAR_LINE"}
+			currentState = parsing.RegularLine{}
 			context.ResolveUnacceptedEmbedding()
 			isErrorFaced = true
 		}

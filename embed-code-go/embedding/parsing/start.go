@@ -23,9 +23,7 @@ package parsing
 import "embed-code/embed-code-go/configuration"
 
 // Start represents an initial state.
-type Start struct {
-	StateName string
-}
+type Start struct{}
 
 // Recognize reports whether it is an initial state.
 func (s Start) Recognize(_ Context) bool {
@@ -35,8 +33,4 @@ func (s Start) Recognize(_ Context) bool {
 // Accept returns nil as it is an initial state.
 func (s Start) Accept(_ *Context, _ configuration.Configuration) error {
 	return nil
-}
-
-func (s Start) State() string {
-	return s.StateName
 }

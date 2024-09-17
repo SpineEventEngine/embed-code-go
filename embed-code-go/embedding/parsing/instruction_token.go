@@ -27,9 +27,7 @@ import (
 )
 
 // EmbedInstructionToken represents an embedding instruction token of a markdown.
-type EmbedInstructionToken struct {
-	StateName string
-}
+type EmbedInstructionToken struct{}
 
 // Recognize reports whether the current line in the parsing context starts with "<embed-code",
 // and if there is no ongoing embedding and the end of the file is not reached, it returns true.
@@ -75,8 +73,4 @@ func (e EmbedInstructionToken) Accept(context *Context, config configuration.Con
 	}
 
 	return nil
-}
-
-func (e EmbedInstructionToken) State() string {
-	return e.StateName
 }
