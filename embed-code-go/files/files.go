@@ -54,9 +54,9 @@ func WriteLinesToFile(filepath string, lines []string) {
 	}
 }
 
-// ReadFile reads and returns all lines from the file at given filePath.
-func ReadFile(path string) ([]string, error) {
-	file, err := os.Open(path)
+// ReadFile reads and returns all lines from the file at given file path.
+func ReadFile(filepath string) ([]string, error) {
+	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
