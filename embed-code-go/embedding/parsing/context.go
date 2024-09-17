@@ -19,11 +19,10 @@
 package parsing
 
 import (
+	"embed-code/embed-code-go/instruction"
 	"fmt"
 	"os"
 	"regexp"
-
-	"embed-code/embed-code-go/embedding"
 )
 
 // EmbeddingInParsingContext represents an embedding in the parsing context.
@@ -40,7 +39,7 @@ import (
 //
 // ResultEndLineIndex - an index of the end line in the result markdown file.
 type EmbeddingInParsingContext struct {
-	Embedding            embedding.Instruction
+	Embedding            instruction.Instruction
 	SourceStartLineIndex int
 	SourceEndLineIndex   int
 	ResultStartLineIndex int
@@ -53,7 +52,7 @@ type EmbeddingInParsingContext struct {
 //
 // Source - a list of strings representing the original markdown file.
 //
-// MarkdownFile - a path to the markdown file.
+// MarkdownFilePath - a path to the markdown file.
 //
 // LineIndex - an index of the current line in the markdown file.
 //
@@ -71,27 +70,27 @@ type EmbeddingInParsingContext struct {
 //
 // UnacceptedEmbeddings - a list of embedding instructions that are not accepted by the parser.
 type Context struct {
-	Embedding             *embedding.Instruction
+	Embedding             *instruction.Instruction
 	Source                []string
-	MarkdownFile          string
+	MarkdownFilePath      string
 	LineIndex             int
 	Result                []string
 	CodeFenceStarted      bool
 	CodeFenceIndentation  int
 	FileContainsEmbedding bool
 	Embeddings            []EmbeddingInParsingContext
-	EmbeddingsNotFound    []embedding.Instruction
-	UnacceptedEmbeddings  []embedding.Instruction
+	EmbeddingsNotFound    []instruction.Instruction
+	UnacceptedEmbeddings  []instruction.Instruction
 }
 
 // NewContext Creates and returns a new Context struct with initial values for markdownFile, source,
 // lineIndex, and result.
 func NewContext(markdownFile string) Context {
 	return Context{
-		MarkdownFile: markdownFile,
-		Source:       readLines(markdownFile),
-		LineIndex:    0,
-		Result:       make([]string, 0),
+		MarkdownFilePath: markdownFile,
+		Source:           readLines(markdownFile),
+		LineIndex:        0,
+		Result:           make([]string, 0),
 	}
 }
 
@@ -123,8 +122,8 @@ func (c *Context) IsContentChanged() bool {
 }
 
 // FindChangedEmbeddings returns a list of changed embeddings.
-func (c *Context) FindChangedEmbeddings() []embedding.Instruction {
-	changedEmbeddings := make([]embedding.Instruction, 0)
+func (c *Context) FindChangedEmbeddings() []instruction.Instruction {
+	changedEmbeddings := make([]instruction.Instruction, 0)
 	for _, embedding := range c.Embeddings {
 		sourceContent := c.readEmbeddingSource(embedding)
 		resultContent := c.readEmbeddingResult(embedding)
@@ -163,7 +162,7 @@ func (c *Context) ResolveUnacceptedEmbedding() {
 // SetEmbedding sets an embedding to Context.
 //
 // Also sets FileContainsEmbedding flag.
-func (c *Context) SetEmbedding(embedding *embedding.Instruction) {
+func (c *Context) SetEmbedding(embedding *instruction.Instruction) {
 	// TODO:2024-09-05:olena-zmiiova: https://github.com/SpineEventEngine/embed-code/issues/48
 	indexIncrease := 2 // +2 for instruction and code fence.
 	if embedding != nil {
@@ -180,15 +179,15 @@ func (c *Context) SetEmbedding(embedding *embedding.Instruction) {
 	c.Embedding = embedding
 }
 
-// GetResult returns the result lines of the ParsingContext.
+// GetResult returns the result lines of the Context.
 func (c *Context) GetResult() []string {
 	return c.Result
 }
 
-// Returns a string representation of ParsingContext.
+// Returns a string representation of Context.
 func (c *Context) String() string {
 	return fmt.Sprintf("ParsingContext[embedding=`%s`, file=`%s`, line=`%d`]",
-		c.Embedding, c.MarkdownFile, c.LineIndex)
+		c.Embedding, c.MarkdownFilePath, c.LineIndex)
 }
 
 func (c *Context) readEmbeddingSource(context EmbeddingInParsingContext) []string {

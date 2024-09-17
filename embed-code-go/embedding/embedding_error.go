@@ -30,7 +30,7 @@ type EmbeddingError struct {
 }
 
 func (err EmbeddingError) Error() string {
-	errorString := fmt.Sprintf("embedding error for file `%s`.", err.Context.MarkdownFile)
+	errorString := fmt.Sprintf("embedding error for file `%s`.", err.Context.MarkdownFilePath)
 
 	if len(err.Context.EmbeddingsNotFound) > 0 {
 		embeddingsNotFoundStr := "\nMissing embeddings: \n"

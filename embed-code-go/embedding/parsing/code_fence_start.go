@@ -25,7 +25,9 @@ import (
 )
 
 // CodeFenceStart represents the start of a code fence.
-type CodeFenceStart struct{}
+type CodeFenceStart struct {
+	StateName string
+}
 
 // Recognize reports whether the current line is the start of a code fence.
 //
@@ -60,4 +62,8 @@ func (c CodeFenceStart) Accept(context *Context, _ configuration.Configuration) 
 	context.ToNextLine()
 
 	return nil
+}
+
+func (c CodeFenceStart) State() string {
+	return c.StateName
 }

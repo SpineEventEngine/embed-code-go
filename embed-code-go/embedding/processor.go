@@ -20,6 +20,7 @@ package embedding
 
 import (
 	"embed-code/embed-code-go/files"
+	"embed-code/embed-code-go/instruction"
 	"errors"
 	"fmt"
 	"os"
@@ -40,7 +41,7 @@ import (
 type Processor struct {
 	DocFilePath    string
 	Config         configuration.Configuration
-	TransitionsMap map[string][]string
+	TransitionsMap parsing.TransitionMap
 }
 
 // NewProcessor creates and returns new Processor with given docFile and config.
@@ -55,7 +56,7 @@ func NewProcessor(docFile string, config configuration.Configuration) Processor 
 // NewProcessorWithTransitions Creates and returns new Processor with given docFile, config
 // and transitions.
 func NewProcessorWithTransitions(docFile string, config configuration.Configuration,
-	transitions map[string][]string) Processor {
+	transitions parsing.TransitionMap) Processor {
 	return Processor{
 		DocFilePath:    docFile,
 		Config:         config,
@@ -87,7 +88,7 @@ func (p Processor) Embed() error {
 // markdown file.
 //
 // If any problems during the embedding construction faced, an error is returned.
-func (p Processor) FindChangedEmbeddings() ([]Instruction, error) {
+func (p Processor) FindChangedEmbeddings() ([]instruction.Instruction, error) {
 	context, err := p.constructEmbedding()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
@@ -122,14 +123,16 @@ func (p Processor) constructEmbedding() (parsing.Context, error) {
 		"an error was occurred during embedding construction for doc file `%s`", p.DocFilePath)
 	var constructEmbeddingError = errors.New(errorStr)
 
-	currentState := "START"
-	for currentState != "FINISH" {
+	var currentState parsing.Transition
+	currentState = parsing.Start{StateName: "START"}
+	finishState := parsing.Finish{StateName: "FINISH"}
+
+	for currentState.State() != finishState.State() {
 		accepted := false
 		for _, nextState := range parsing.Transitions[currentState] {
-			transition := parsing.StateToTransition[nextState]
-			if transition.Recognize(context) {
+			if nextState.Recognize(context) {
 				currentState = nextState
-				err := transition.Accept(&context, p.Config)
+				err := nextState.Accept(&context, p.Config)
 				if err != nil {
 					isErrorFaced = true
 				}
@@ -139,7 +142,7 @@ func (p Processor) constructEmbedding() (parsing.Context, error) {
 			}
 		}
 		if !accepted {
-			currentState = "REGULAR_LINE"
+			currentState = parsing.RegularLine{StateName: "REGULAR_LINE"}
 			context.ResolveUnacceptedEmbedding()
 			isErrorFaced = true
 		}

@@ -18,10 +18,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package embedding
+package instruction
 
 import (
-	"embed-code/embed-code-go/embedding/parsing"
 	"fmt"
 
 	"embed-code/embed-code-go/configuration"
@@ -117,7 +116,7 @@ func NewInstruction(
 //
 // Returns an error if the paring of XML instruction failed.
 func FromXML(line string, config configuration.Configuration) (Instruction, error) {
-	fields, err := parsing.ParseXMLLine(line)
+	fields, err := ParseXMLLine(line)
 	if err != nil {
 		return Instruction{}, err
 	}

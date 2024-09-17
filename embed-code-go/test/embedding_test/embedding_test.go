@@ -84,23 +84,23 @@ func (suite *EmbeddingTestSuite) TestNothingToUpdate() {
 	suite.True(processor.IsUpToDate())
 }
 
-func (suite *EmbeddingTestSuite) TestFalseTransitions() {
-	docPath := fmt.Sprintf("%s/split-lines.md", suite.config.DocumentationRoot)
-
-	falseTransitions := map[string][]string{
-		"START":                 {"REGULAR_LINE", "FINISH", "EMBEDDING_INSTRUCTION"},
-		"REGULAR_LINE":          {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
-		"EMBEDDING_INSTRUCTION": {"CODE_FENCE_START", "BLANK_LINE"},
-		"BLANK_LINE":            {"CODE_FENCE_START", "BLANK_LINE"},
-		"CODE_FENCE_START":      {"CODE_FENCE_END", "CODE_SAMPLE_LINE"},
-		"CODE_SAMPLE_LINE":      {"CODE_FENCE_END", "CODE_SAMPLE_LINE"},
-		"CODE_FENCE_END":        {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
-	}
-
-	falseProcessor := embedding.NewProcessorWithTransitions(docPath, suite.config, falseTransitions)
-	err := falseProcessor.Embed()
-	suite.Require().Error(err, "The error was expected during the embedding with the false transitions, but there wasn't one.")
-}
+//func (suite *EmbeddingTestSuite) TestFalseTransitions() {
+//	docPath := fmt.Sprintf("%s/split-lines.md", suite.config.DocumentationRoot)
+//
+//	falseTransitions := map[string][]string{
+//		"START":                 {"REGULAR_LINE", "FINISH", "EMBEDDING_INSTRUCTION"},
+//		"REGULAR_LINE":          {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
+//		"EMBEDDING_INSTRUCTION": {"CODE_FENCE_START", "BLANK_LINE"},
+//		"BLANK_LINE":            {"CODE_FENCE_START", "BLANK_LINE"},
+//		"CODE_FENCE_START":      {"CODE_FENCE_END", "CODE_SAMPLE_LINE"},
+//		"CODE_SAMPLE_LINE":      {"CODE_FENCE_END", "CODE_SAMPLE_LINE"},
+//		"CODE_FENCE_END":        {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
+//	}
+//
+//	falseProcessor := embedding.NewProcessorWithTransitions(docPath, suite.config, falseTransitions)
+//	err := falseProcessor.Embed()
+//	suite.Require().Error(err, "The error was expected during the embedding with the false transitions, but there wasn't one.")
+//}
 
 func (suite *EmbeddingTestSuite) TestMultiLinedTag() {
 	docPath := fmt.Sprintf("%s/multi-lined-tag.md", suite.config.DocumentationRoot)

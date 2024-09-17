@@ -23,7 +23,9 @@ import (
 )
 
 // RegularLine represents a regular line of a markdown.
-type RegularLine struct{}
+type RegularLine struct {
+	StateName string
+}
 
 // Recognize reports whether the current line is a regular line.
 //
@@ -48,4 +50,8 @@ func (r RegularLine) Accept(context *Context, _ configuration.Configuration) err
 	context.ToNextLine()
 
 	return nil
+}
+
+func (r RegularLine) State() string {
+	return r.StateName
 }
