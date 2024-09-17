@@ -19,7 +19,6 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/instruction"
 	"fmt"
 	"strings"
 
@@ -57,7 +56,7 @@ func (e EmbedInstructionToken) Accept(context *Context, config configuration.Con
 	for !context.ReachedEOF() && context.Embedding == nil {
 		instructionBody = append(instructionBody, context.CurrentLine())
 
-		instruction, err := instruction.FromXML(strings.Join(instructionBody, ""), config)
+		instruction, err := FromXML(strings.Join(instructionBody, ""), config)
 		if err == nil {
 			context.SetEmbedding(&instruction)
 		}

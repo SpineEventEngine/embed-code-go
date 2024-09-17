@@ -18,7 +18,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package instruction
+package parsing
 
 import (
 	"fmt"
@@ -96,32 +96,6 @@ func NewInstruction(
 		EndPattern:    end,
 		Configuration: config,
 	}, nil
-}
-
-// FromXML reads the instruction from the '<embed-code>' XML tag and creates new Instruction.
-//
-// line — a line which contains '<embed-code>' XML tag.
-// For example: '<embed-code file="org/example/Hello.java" fragment="Hello class"/>'.
-// The line can also contain closing tag:
-// '<embed-code file=\"org/example/Hello.java\" fragment=\"Hello class\"></embed-code>'.
-// The following parameters are currently supported:
-//   - file — a mandatory relative path to the file with the code;
-//   - fragment — an optional name of the particular fragment in the code. If no fragment
-//     is specified, the whole file is embedded;
-//   - start — an optional glob-like pattern. If specified, lines before the matching one
-//     are excluded;
-//   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
-//
-// config — a Configuration with all embed-code settings.
-//
-// Returns an error if the paring of XML instruction failed.
-func FromXML(line string, config configuration.Configuration) (Instruction, error) {
-	fields, err := ParseXMLLine(line)
-	if err != nil {
-		return Instruction{}, err
-	}
-
-	return NewInstruction(fields, config)
 }
 
 // Content reads and returns the lines for specified fragment from the code.
