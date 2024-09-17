@@ -19,8 +19,6 @@
 package embedding
 
 import (
-	"embed-code/embed-code-go/files"
-	"embed-code/embed-code-go/instruction"
 	"errors"
 	"fmt"
 	"os"
@@ -28,6 +26,7 @@ import (
 
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/parsing"
+	"embed-code/embed-code-go/files"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -88,7 +87,7 @@ func (p Processor) Embed() error {
 // markdown file.
 //
 // If any problems during the embedding construction faced, an error is returned.
-func (p Processor) FindChangedEmbeddings() ([]instruction.Instruction, error) {
+func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 	context, err := p.constructEmbedding()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
