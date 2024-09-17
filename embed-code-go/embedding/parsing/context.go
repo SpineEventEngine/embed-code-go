@@ -25,11 +25,10 @@ import (
 	"regexp"
 )
 
-// EmbeddingInParsingContext represents an embedding in the parsing context.
+// EmbeddingInParsingContext contains the information about the position in the source and the
+// resulting Markdown files.
 //
-// Contains the information about the position of it in the source and the resulting Markdown files.
-//
-// Embedding - an EmbeddingInstruction, containing all the needed embedding information.
+// Embedding - an Instruction, containing all the needed embedding information.
 //
 // SourceStartLineIndex - an index of the start line in the original markdown file.
 //
@@ -159,9 +158,7 @@ func (c *Context) ResolveUnacceptedEmbedding() {
 	c.SetEmbedding(nil)
 }
 
-// SetEmbedding sets an embedding to Context.
-//
-// Also sets FileContainsEmbedding flag.
+// SetEmbedding sets an embedding to Context. Also sets FileContainsEmbedding flag.
 func (c *Context) SetEmbedding(embedding *instruction.Instruction) {
 	// TODO:2024-09-05:olena-zmiiova: https://github.com/SpineEventEngine/embed-code/issues/48
 	indexIncrease := 2 // +2 for instruction and code fence.

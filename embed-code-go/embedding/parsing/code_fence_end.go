@@ -27,10 +27,8 @@ import (
 // CodeFenceEnd represents the end of a code fence.
 type CodeFenceEnd struct{}
 
-// Recognize reports whether the current line is the end of a code fence.
-//
-// The line is a code fence end if:
-//   - the end is not reached;
+// Recognize reports whether the current line meets this conditions:
+//   - the end of file is not reached;
 //   - the code fence has started;
 //   - the current line starts with the appropriate indentation and "```"
 //
@@ -44,12 +42,10 @@ func (c CodeFenceEnd) Recognize(context Context) bool {
 	return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
 }
 
-// Accept processes the end of a code fence by adding the current line to the result,
-// resetting certain context variables, and moving to the next line.
+// Accept adds the current line to the result, resets certain context variables, and moves to
+// the next line.
 //
 // context — a context of the parsing process.
-//
-// config — a configuration of the embedding.
 //
 // Returns an error if the rendering was not successful.
 func (c CodeFenceEnd) Accept(context *Context, _ configuration.Configuration) error {

@@ -22,10 +22,8 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-const Statement = "<embed-code"
-
-// Transition represent a transition of a single line in the parsing process.
-type Transition interface {
+// State represent a transition of a single line in the parsing process.
+type State interface {
 
 	// Accept updates the parsing context based on the transition.
 	//

@@ -18,16 +18,19 @@
 
 package parsing
 
-// Transitions maps state names to the list of possible next states.
+// EmbeddingTag is a start of a tag where it requires to embed the code.
+const EmbeddingTag = "<embed-code"
+
+// TransitionMap is a type for mapping one State to a list of possible next States.
+type TransitionMap map[State][]State
+
+// Transitions maps State to the list of possible next states.
 //
 // States are chosen considered the logical validity of their existence.
 //
 // The order of the next states is important. States are ordered by the level of their specificity,
 // so the first state in the list is the most specific one.
 // When the state is chosen, the latter ones are skipped.
-
-type TransitionMap map[Transition][]Transition
-
 var Transitions = TransitionMap{
 	start:            {finish, embedInstruction, regularLine},
 	regularLine:      {finish, embedInstruction, regularLine},

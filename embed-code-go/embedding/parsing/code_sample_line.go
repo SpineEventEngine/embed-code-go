@@ -18,17 +18,13 @@
 
 package parsing
 
-import (
-	"embed-code/embed-code-go/configuration"
-)
+import "embed-code/embed-code-go/configuration"
 
 // CodeSampleLine represents a line of a code sample.
 type CodeSampleLine struct{}
 
-// Recognize reports whether the current line is a code sample line.
-//
-// If codeFenceStarted is true, and it's not the end of the file,
-// the line is a code sample line.
+// Recognize reports whether the current line is a code sample line: the code fence is started, and
+// it is not the end of a file.
 //
 // context — a context of the parsing process.
 func (c CodeSampleLine) Recognize(context Context) bool {
@@ -38,10 +34,6 @@ func (c CodeSampleLine) Recognize(context Context) bool {
 // Accept moves to the next line.
 //
 // context — a context of the parsing process.
-//
-// config — a configuration of the embedding.
-//
-// This implementation never returns an error.
 func (c CodeSampleLine) Accept(context *Context, _ configuration.Configuration) error {
 	context.ToNextLine()
 
