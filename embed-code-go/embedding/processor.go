@@ -73,10 +73,10 @@ func (p Processor) Embed() error {
 	}
 
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
-		err = os.WriteFile(p.DocFilePath, []byte(strings.Join(context.GetResult(), "\n")),
-			os.FileMode(files.ReadWriteExecPermission))
+		data := []byte(strings.Join(context.GetResult(), "\n"))
+		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.ReadWriteExecPermission))
 		if err != nil {
-			return EmbeddingError{Context: context}
+			return EmbeddingError{context}
 		}
 	}
 
@@ -91,7 +91,7 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 	context, err := p.constructEmbedding()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
-		return changedEmbeddings, EmbeddingError{Context: context}
+		return changedEmbeddings, EmbeddingError{context}
 	}
 
 	return changedEmbeddings, nil
@@ -107,7 +107,7 @@ func (p Processor) IsUpToDate() bool {
 	return !context.IsContentChanged()
 }
 
-// Creates and returns new ParsingContext based on Processor.DocFilePath and Processor.Config.
+// Creates and returns new Context based on Processor.DocFilePath and Processor.Config.
 //
 // If any problems faced, an error is returned.
 //
@@ -117,7 +117,6 @@ func (p Processor) IsUpToDate() bool {
 // the document file is returned.
 func (p Processor) constructEmbedding() (parsing.Context, error) {
 	context := parsing.NewContext(p.DocFilePath)
-	isErrorFaced := false
 	errorStr := fmt.Sprintf(
 		"an error was occurred during embedding construction for doc file `%s`", p.DocFilePath)
 	var constructEmbeddingError = errors.New(errorStr)
@@ -133,7 +132,7 @@ func (p Processor) constructEmbedding() (parsing.Context, error) {
 				currentState = nextState
 				err := nextState.Accept(&context, p.Config)
 				if err != nil {
-					isErrorFaced = true
+					return context, constructEmbeddingError
 				}
 				accepted = true
 
@@ -143,16 +142,11 @@ func (p Processor) constructEmbedding() (parsing.Context, error) {
 		if !accepted {
 			currentState = parsing.RegularLine{}
 			context.ResolveUnacceptedEmbedding()
-			isErrorFaced = true
+			return context, constructEmbeddingError
 		}
 	}
 
-	var err error
-	if isErrorFaced {
-		err = constructEmbeddingError
-	}
-
-	return context, err
+	return context, nil
 }
 
 // EmbedAll processes embedding for multiple documentation files based on provided config.
