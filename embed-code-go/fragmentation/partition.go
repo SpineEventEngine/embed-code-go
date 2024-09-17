@@ -45,9 +45,36 @@ func NewPartition() Partition {
 // Select returns the partition-related lines from given lines.
 // If EndPosition is not set, returns all the lines started from StartPosition.
 func (p Partition) Select(lines []string) []string {
-	if p.EndPosition < 0 {
-		return lines[p.StartPosition:]
+	startPosition := p.StartPosition
+	endPosition := p.EndPosition
+
+	// Verifying lines actually have those indexes.
+	_, ok := safeAccess(lines, startPosition)
+	if !ok {
+		panic("an unexpected error occurred. the given lines don't have start position")
 	}
 
-	return lines[p.StartPosition : p.EndPosition+1]
+	if endPosition < 0 {
+		return lines[startPosition:]
+	}
+
+	_, ok = safeAccess(lines, endPosition)
+	if !ok {
+		panic("an unexpected error occurred. the given lines don't have end position")
+	}
+
+	return lines[startPosition : endPosition+1]
+}
+
+func safeAccess(slice []string, index int) (string, bool) {
+	var ok bool
+	defer func() {
+		if r := recover(); r != nil {
+			ok = false
+		}
+	}()
+	value := slice[index]
+	ok = true
+
+	return value, ok
 }
