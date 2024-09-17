@@ -49,8 +49,8 @@ func (p Partition) Select(lines []string) []string {
 	endPosition := p.EndPosition
 
 	// Verifying lines actually have those indexes.
-	_, ok := safeAccess(lines, startPosition)
-	if !ok {
+	hasStartPosition := safeAccess(lines, startPosition)
+	if !hasStartPosition {
 		panic("an unexpected error occurred. the given lines don't have start position")
 	}
 
@@ -58,23 +58,23 @@ func (p Partition) Select(lines []string) []string {
 		return lines[startPosition:]
 	}
 
-	_, ok = safeAccess(lines, endPosition)
-	if !ok {
+	hasEndPosition := safeAccess(lines, endPosition)
+	if !hasEndPosition {
 		panic("an unexpected error occurred. the given lines don't have end position")
 	}
 
 	return lines[startPosition : endPosition+1]
 }
 
-func safeAccess(slice []string, index int) (string, bool) {
-	var ok bool
+func safeAccess(slice []string, index int) bool {
+	var hasIndex bool
 	defer func() {
 		if r := recover(); r != nil {
-			ok = false
+			hasIndex = false
 		}
 	}()
-	value := slice[index]
-	ok = true
+	_ = slice[index]
+	hasIndex = true
 
-	return value, ok
+	return hasIndex
 }
