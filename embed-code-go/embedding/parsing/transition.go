@@ -42,4 +42,7 @@ type Transition interface {
 	//
 	// context — a context of the parsing process.
 	Recognize(context Context) bool
+
+	// State returns a state name for this transition.
+	State() string
 }

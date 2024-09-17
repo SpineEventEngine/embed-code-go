@@ -19,7 +19,7 @@
 package parsing
 
 import (
-	"embed-code/embed-code-go/embedding"
+	"embed-code/embed-code-go/instruction"
 	"fmt"
 	"strings"
 
@@ -27,7 +27,9 @@ import (
 )
 
 // EmbedInstructionToken represents an embedding instruction token of a markdown.
-type EmbedInstructionToken struct{}
+type EmbedInstructionToken struct {
+	StateName string
+}
 
 // Recognize reports whether the current line in the parsing context starts with "<embed-code",
 // and if there is no ongoing embedding and the end of the file is not reached, it returns true.
@@ -52,13 +54,12 @@ func (e EmbedInstructionToken) Recognize(context Context) bool {
 // config — a configuration of the embedding.
 //
 // An error is returned if the building of the embedding instruction fails.
-func (e EmbedInstructionToken) Accept(context *Context,
-	config configuration.Configuration) error {
+func (e EmbedInstructionToken) Accept(context *Context, config configuration.Configuration) error {
 	var instructionBody []string
 	for !context.ReachedEOF() {
 		instructionBody = append(instructionBody, context.CurrentLine())
 
-		instruction, err := embedding.FromXML(strings.Join(instructionBody, ""), config)
+		instruction, err := instruction.FromXML(strings.Join(instructionBody, ""), config)
 		if err == nil {
 			context.SetEmbedding(&instruction)
 		}
@@ -74,4 +75,8 @@ func (e EmbedInstructionToken) Accept(context *Context,
 	}
 
 	return nil
+}
+
+func (e EmbedInstructionToken) State() string {
+	return e.StateName
 }

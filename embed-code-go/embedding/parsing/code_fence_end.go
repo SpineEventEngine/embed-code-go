@@ -25,7 +25,9 @@ import (
 )
 
 // CodeFenceEnd represents the end of a code fence.
-type CodeFenceEnd struct{}
+type CodeFenceEnd struct {
+	StateName string
+}
 
 // Recognize reports whether the current line is the end of a code fence.
 //
@@ -36,13 +38,12 @@ type CodeFenceEnd struct{}
 //
 // context — a context of the parsing process.
 func (c CodeFenceEnd) Recognize(context Context) bool {
-	if !context.ReachedEOF() {
-		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
-
-		return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
+	if context.ReachedEOF() {
+		return false
 	}
+	indentation := strings.Repeat(" ", context.CodeFenceIndentation)
 
-	return false
+	return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
 }
 
 // Accept processes the end of a code fence by adding the current line to the result,
@@ -67,6 +68,10 @@ func (c CodeFenceEnd) Accept(context *Context, _ configuration.Configuration) er
 	context.ToNextLine()
 
 	return err
+}
+
+func (c CodeFenceEnd) State() string {
+	return c.StateName
 }
 
 // Renders the sample content of the embedding.

@@ -25,7 +25,9 @@ import (
 )
 
 // BlankLine represents a blank line of a markdown.
-type BlankLine struct{}
+type BlankLine struct {
+	StateName string
+}
 
 // Recognize reports whether the current line is a blank line.
 //
@@ -33,7 +35,8 @@ type BlankLine struct{}
 // and if there is an embedding. If these conditions are met, it returns true.
 // Otherwise, it returns false.
 func (b BlankLine) Recognize(context Context) bool {
-	if !context.ReachedEOF() && strings.TrimSpace(context.CurrentLine()) == "" {
+	isEmptyString := strings.TrimSpace(context.CurrentLine()) == ""
+	if !context.ReachedEOF() && isEmptyString {
 		return !context.CodeFenceStarted && context.Embedding != nil
 	}
 
@@ -43,12 +46,14 @@ func (b BlankLine) Recognize(context Context) bool {
 // Accept processes a blank line of a markdown.
 //
 // Appends the current line of the context to the result, and moves to the next line.
-//
-// This implementation never returns an error.
 func (b BlankLine) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()
 
 	return nil
+}
+
+func (b BlankLine) State() string {
+	return b.StateName
 }
