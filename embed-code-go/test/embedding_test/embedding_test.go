@@ -21,6 +21,7 @@ package embedding_test
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
+	"embed-code/embed-code-go/embedding/parsing"
 	"embed-code/embed-code-go/test/filesystem"
 	"fmt"
 	"os"
@@ -84,23 +85,23 @@ func (suite *EmbeddingTestSuite) TestNothingToUpdate() {
 	suite.True(processor.IsUpToDate())
 }
 
-//func (suite *EmbeddingTestSuite) TestFalseTransitions() {
-//	docPath := fmt.Sprintf("%s/split-lines.md", suite.config.DocumentationRoot)
-//
-//	falseTransitions := map[string][]string{
-//		"START":                 {"REGULAR_LINE", "FINISH", "EMBEDDING_INSTRUCTION"},
-//		"REGULAR_LINE":          {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
-//		"EMBEDDING_INSTRUCTION": {"CODE_FENCE_START", "BLANK_LINE"},
-//		"BLANK_LINE":            {"CODE_FENCE_START", "BLANK_LINE"},
-//		"CODE_FENCE_START":      {"CODE_FENCE_END", "CODE_SAMPLE_LINE"},
-//		"CODE_SAMPLE_LINE":      {"CODE_FENCE_END", "CODE_SAMPLE_LINE"},
-//		"CODE_FENCE_END":        {"FINISH", "EMBEDDING_INSTRUCTION", "REGULAR_LINE"},
-//	}
-//
-//	falseProcessor := embedding.NewProcessorWithTransitions(docPath, suite.config, falseTransitions)
-//	err := falseProcessor.Embed()
-//	suite.Require().Error(err, "The error was expected during the embedding with the false transitions, but there wasn't one.")
-//}
+func (suite *EmbeddingTestSuite) TestFalseTransitions() {
+	docPath := fmt.Sprintf("%s/split-lines.md", suite.config.DocumentationRoot)
+
+	falseTransitions := parsing.TransitionMap{
+		parsing.Start{}:                 {parsing.RegularLine{}, parsing.Finish{}, parsing.EmbedInstructionToken{}},
+		parsing.RegularLine{}:           {parsing.Finish{}, parsing.EmbedInstructionToken{}, parsing.RegularLine{}},
+		parsing.EmbedInstructionToken{}: {parsing.CodeFenceStart{}, parsing.BlankLine{}},
+		parsing.BlankLine{}:             {parsing.CodeFenceStart{}, parsing.BlankLine{}},
+		parsing.CodeFenceStart{}:        {parsing.CodeFenceEnd{}, parsing.CodeSampleLine{}},
+		parsing.CodeSampleLine{}:        {parsing.CodeFenceEnd{}, parsing.CodeSampleLine{}},
+		parsing.CodeFenceEnd{}:          {parsing.Finish{}, parsing.EmbedInstructionToken{}, parsing.RegularLine{}},
+	}
+
+	falseProcessor := embedding.NewProcessorWithTransitions(docPath, suite.config, falseTransitions)
+	err := falseProcessor.Embed()
+	suite.Require().Error(err, "The error was expected during the embedding with the false transitions, but there wasn't one.")
+}
 
 func (suite *EmbeddingTestSuite) TestMultiLinedTag() {
 	docPath := fmt.Sprintf("%s/multi-lined-tag.md", suite.config.DocumentationRoot)

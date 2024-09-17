@@ -23,9 +23,7 @@ import (
 )
 
 // Finish represents the end of the file.
-type Finish struct {
-	StateName string
-}
+type Finish struct{}
 
 // Recognize reports whether the current line satisfies the transition.
 //
@@ -43,8 +41,4 @@ func (f Finish) Recognize(context Context) bool {
 // This implementation never returns an error.
 func (f Finish) Accept(_ *Context, _ configuration.Configuration) error {
 	return nil
-}
-
-func (f Finish) State() string {
-	return f.StateName
 }

@@ -25,9 +25,7 @@ import (
 )
 
 // BlankLine represents a blank line of a markdown.
-type BlankLine struct {
-	StateName string
-}
+type BlankLine struct{}
 
 // Recognize reports whether the current line is a blank line.
 //
@@ -52,8 +50,4 @@ func (b BlankLine) Accept(context *Context, _ configuration.Configuration) error
 	context.ToNextLine()
 
 	return nil
-}
-
-func (b BlankLine) State() string {
-	return b.StateName
 }

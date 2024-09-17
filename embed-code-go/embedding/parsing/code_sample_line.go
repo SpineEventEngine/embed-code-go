@@ -23,9 +23,7 @@ import (
 )
 
 // CodeSampleLine represents a line of a code sample.
-type CodeSampleLine struct {
-	StateName string
-}
+type CodeSampleLine struct{}
 
 // Recognize reports whether the current line is a code sample line.
 //
@@ -48,8 +46,4 @@ func (c CodeSampleLine) Accept(context *Context, _ configuration.Configuration) 
 	context.ToNextLine()
 
 	return nil
-}
-
-func (c CodeSampleLine) State() string {
-	return c.StateName
 }
