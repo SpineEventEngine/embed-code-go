@@ -123,7 +123,7 @@ func (p Processor) constructEmbedding() (parsing.Context, error) {
 		"an error was occurred during embedding construction for doc file `%s`", p.DocFilePath)
 	var constructEmbeddingError = errors.New(errorStr)
 
-	var currentState parsing.Transition
+	var currentState parsing.State
 	currentState = parsing.Start{}
 	finishState := parsing.Finish{}
 

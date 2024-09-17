@@ -32,13 +32,7 @@ func (f Finish) Recognize(context Context) bool {
 	return context.ReachedEOF()
 }
 
-// Accept accepts finish, there's no need to do anything.
-//
-// context — a context of the parsing process.
-//
-// config — a configuration of the embedding.
-//
-// This implementation never returns an error.
+// Accept accepts finish, as there's no need to do anything, returns nil.
 func (f Finish) Accept(_ *Context, _ configuration.Configuration) error {
 	return nil
 }

@@ -27,9 +27,7 @@ import (
 // CodeFenceStart represents the start of a code fence.
 type CodeFenceStart struct{}
 
-// Recognize reports whether the current line is the start of a code fence.
-//
-// The line is a code fence start if the end is not reached and the current line starts with "```".
+// Recognize reports whether the current line is not reached the end and starts with "```".
 //
 // context — a context of the parsing process.
 func (c CodeFenceStart) Recognize(context Context) bool {
@@ -40,17 +38,11 @@ func (c CodeFenceStart) Recognize(context Context) bool {
 	return false
 }
 
-// Accept processes the start of a code fence.
-//
-// Appends the current line from the parsing context to the result,
-// sets a flag to indicate that a code fence has started,
-// calculates the indentation level of the code fence, and moves to the next line in the context.
+// Accept appends the current line from the parsing context to the result, sets a flag to indicate
+// that a code fence has started, calculates the indentation level of the code fence, and moves
+// to the next line in the context.
 //
 // context — a context of the parsing process.
-//
-// config — a configuration of the embedding.
-//
-// This implementation never returns an error.
 func (c CodeFenceStart) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
