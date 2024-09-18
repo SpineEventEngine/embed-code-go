@@ -138,7 +138,7 @@ func (e EmbeddingInstruction) Content() ([]string, error) {
 		fragmentName = fragmentation.DefaultFragmentName
 	}
 	file := fragmentation.FragmentFile{
-		CodeFile:      e.CodeFile,
+		CodePath:      e.CodeFile,
 		FragmentName:  fragmentName,
 		Configuration: e.Configuration,
 	}

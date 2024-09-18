@@ -7,7 +7,7 @@ import (
 
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
-	"embed-code/embed-code-go/fragmentation"
+	"embed-code/embed-code-go/files"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -31,10 +31,13 @@ func AnalyzeAll(config configuration.Configuration) {
 	changedEmbeddings, problemEmbeddings := extractAnalyticsForDocs(config, docFiles)
 
 	os.MkdirAll(analyticsDir, permission)
-	fragmentation.WriteLinesToFile(
-		fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFile), changedEmbeddings)
-	fragmentation.WriteLinesToFile(
-		fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemEmbeddings)
+	files.WriteLinesToFile(pathToFile(embeddingChangedFile), changedEmbeddings)
+	files.WriteLinesToFile(pathToFile(embeddingsNotFoundFile), problemEmbeddings)
+}
+
+// Generates a path to a given file in the analytics directory.
+func pathToFile(fileName string) string {
+	return fmt.Sprintf("%s/%s", analyticsDir, fileName)
 }
 
 // Finds all documentation files for given config.
@@ -70,7 +73,7 @@ func extractAnalyticsForDocs(
 		}
 		// Even if error occurs, there might be embeddings that are changed.
 		if len(changedEmbeddings) > 0 {
-			docRelPath := fragmentation.BuildDocRelativePath(docFile, config)
+			docRelPath := files.BuildDocRelativePath(docFile, config)
 			for _, changedEmbedding := range changedEmbeddings {
 				line := fmt.Sprintf("%s : %s", docRelPath, changedEmbedding.String())
 				changedEmbeddingsLines = append(changedEmbeddingsLines, line)
