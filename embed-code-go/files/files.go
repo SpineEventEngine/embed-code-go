@@ -1,22 +1,20 @@
-/*
- * Copyright 2024, TeamDev. All rights reserved.
- *
- * Redistribution and use in source and/or binary forms, with or without
- * modification, must retain the above copyright notice and the following
- * disclaimer.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// Copyright 2024, TeamDev. All rights reserved.
+//
+// Redistribution and use in source and/or binary forms, with or without
+// modification, must retain the above copyright notice and the following
+// disclaimer.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Package files holds common functions to operate with files and directories.
 package files
@@ -34,7 +32,7 @@ const (
 	WritePermission         uint32 = 0600
 )
 
-// WriteLinesToFile writes lines to the file at given filePath.
+// WriteLinesToFile writes lines to the file at given file path (relative or absolute).
 func WriteLinesToFile(filepath string, lines []string) {
 	file, err := os.Create(filepath)
 	if err != nil {
@@ -54,7 +52,7 @@ func WriteLinesToFile(filepath string, lines []string) {
 	}
 }
 
-// ReadFile reads and returns all lines from the file at given file path.
+// ReadFile reads and returns all lines from the file at given file path (relative or absolute).
 func ReadFile(filepath string) ([]string, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
@@ -92,7 +90,8 @@ func BuildDocRelativePath(absolutePath string, config configuration.Configuratio
 	return relativePath
 }
 
-// EnsureDirExists creates dir at given path if it doesn't exist. Does nothing if exists.
+// EnsureDirExists creates dir at given path (relative or absolute) if it doesn't exist.
+// Does nothing if exists.
 func EnsureDirExists(path string) error {
 	exist, err := IsDirExist(path)
 	if err != nil {
@@ -108,7 +107,8 @@ func EnsureDirExists(path string) error {
 	return nil
 }
 
-// IsFileExist reports whether the given path to a file exists in the file system.
+// IsFileExist reports whether the given path (relative or absolute) to a file exists in the
+// file system.
 func IsFileExist(filePath string) (bool, error) {
 	exists, info, err := validatePathExists(filePath)
 	if err != nil {
@@ -125,7 +125,8 @@ func IsFileExist(filePath string) (bool, error) {
 	return false, nil
 }
 
-// IsDirExist reports whether the given directory exists in the file system.
+// IsDirExist reports whether the given directory exists in the file system by the path
+// (relative or absolute).
 func IsDirExist(path string) (bool, error) {
 	exists, info, err := validatePathExists(path)
 	if err != nil {
@@ -143,7 +144,7 @@ func IsDirExist(path string) (bool, error) {
 }
 
 // Reports whether the given path is valid and exist in the file system. Also returns a FileInfo if
-// the path exists.
+// the path (relative or absolute) exists.
 func validatePathExists(path string) (bool, os.FileInfo, error) {
 	info, err := os.Stat(path)
 
