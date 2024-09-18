@@ -19,14 +19,16 @@
 package parsing_test
 
 import (
-	"embed-code/embed-code-go/configuration"
-	"embed-code/embed-code-go/embedding/parsing"
 	"fmt"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"os"
 	"strings"
 	"testing"
+
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding/parsing"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 type TestInstructionParams struct {
@@ -281,6 +283,7 @@ func getXMLExtractionContent(fileName string, params TestInstructionParams,
 	config configuration.Configuration) []string {
 	xmlString := buildInstruction(fileName, params)
 	instruction := createInstructionFromXML(xmlString, config)
+
 	return readInstructionContent(instruction)
 }
 
@@ -314,7 +317,8 @@ func buildInstruction(fileName string, params TestInstructionParams) string {
 	return instructionLine
 }
 
-func createInstructionFromXML(xmlString string, config configuration.Configuration) parsing.Instruction {
+func createInstructionFromXML(xmlString string,
+	config configuration.Configuration) parsing.Instruction {
 	instruction, err := parsing.FromXML(xmlString, config)
 	if err != nil {
 		Fail("unexpected error occurred during XML parsing: " + err.Error())
