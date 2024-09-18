@@ -243,7 +243,7 @@ func (f Fragmentation) parseLine(line string, contentToRender []string) ([]strin
 
 	switch {
 	case len(docFragments) > 0:
-		if err := f.parseDocFragments(docFragments, cursor); err != nil {
+		if err := f.parseStartDocFragments(docFragments, cursor); err != nil {
 			return nil, err
 		}
 	case len(endDocFragments) > 0:
@@ -259,7 +259,7 @@ func (f Fragmentation) parseLine(line string, contentToRender []string) ([]strin
 
 // Iterates through the fragments` starts, creates fragments builders (if necessary), and adds a
 // new partition to the fragment.
-func (f Fragmentation) parseDocFragments(docFragments []string, cursor int) error {
+func (f Fragmentation) parseStartDocFragments(docFragments []string, cursor int) error {
 	for _, fragmentName := range docFragments {
 		fragment, exists := f.fragmentBuilders[fragmentName]
 		if !exists {

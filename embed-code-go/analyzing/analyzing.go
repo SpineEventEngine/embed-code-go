@@ -31,10 +31,13 @@ func AnalyzeAll(config configuration.Configuration) {
 	changedEmbeddings, problemEmbeddings := extractAnalyticsForDocs(config, docFiles)
 
 	os.MkdirAll(analyticsDir, permission)
-	files.WriteLinesToFile(
-		fmt.Sprintf("%s/%s", analyticsDir, embeddingChangedFile), changedEmbeddings)
-	files.WriteLinesToFile(
-		fmt.Sprintf("%s/%s", analyticsDir, embeddingsNotFoundFile), problemEmbeddings)
+	files.WriteLinesToFile(pathToFile(embeddingChangedFile), changedEmbeddings)
+	files.WriteLinesToFile(pathToFile(embeddingsNotFoundFile), problemEmbeddings)
+}
+
+// Generates a path to a given file in the analytics directory.
+func pathToFile(fileName string) string {
+	return fmt.Sprintf("%s/%s", analyticsDir, fileName)
 }
 
 // Finds all documentation files for given config.
