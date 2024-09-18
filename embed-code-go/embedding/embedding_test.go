@@ -19,14 +19,16 @@
 package embedding_test
 
 import (
+	"fmt"
+	"os"
+	"testing"
+
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/embedding/parsing"
-	"fmt"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"os"
-	"testing"
 )
 
 func TestEmbedding(t *testing.T) {
