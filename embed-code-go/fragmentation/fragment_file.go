@@ -26,25 +26,24 @@ import (
 	"path/filepath"
 	"strings"
 
-	"embed-code/embed-code-go/configuration"
+	config "embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/files"
 )
 
-// A file storing a single fragment from the file.
+// FragmentFile is a file storing a single fragment from the file.
 //
-// CodeFile — a relative path to a code file. The path is relative to Configuration.CodeRoot.
+// CodePath — a relative path to a code file. The path is relative to Configuration.CodeRoot.
 //
 // FragmentName — a name of the fragment in the code file.
 //
 // Configuration — a configuration for embedding.
 type FragmentFile struct {
-	CodeFile      string
+	CodePath      string
 	FragmentName  string
-	Configuration configuration.Configuration
+	Configuration config.Configuration
 }
 
-// Iniitalizers
-
-// Composes a FragmentFile for the given fragment in given codeFile.
+// NewFragmentFileFromAbsolute composes a FragmentFile for the given fragment in given codeFile.
 //
 // codeFile — an absolute path to a code file.
 //
@@ -53,94 +52,84 @@ type FragmentFile struct {
 // configuration — configuration for embedding.
 //
 // Returns composed fragment.
-func NewFragmentFileFromAbsolute(
-	codeFile string,
-	fragmentName string,
-	configuration configuration.Configuration,
-) FragmentFile {
-	absoluteCodeRoot, err := filepath.Abs(configuration.CodeRoot)
+func NewFragmentFileFromAbsolute(codeFile string, fragmentName string,
+	config config.Configuration) FragmentFile {
+	absolutePath, err := filepath.Abs(config.CodeRoot)
 	if err != nil {
 		panic(err)
 	}
-	relativeCodeFile, err := filepath.Rel(absoluteCodeRoot, codeFile)
+	relativePath, err := filepath.Rel(absolutePath, codeFile)
 	if err != nil {
 		panic(err)
 	}
 
 	return FragmentFile{
-		CodeFile:      relativeCodeFile,
+		CodePath:      relativePath,
 		FragmentName:  fragmentName,
-		Configuration: configuration,
+		Configuration: config,
 	}
 }
 
-//
-// Public methods
-//
-
-// Writes text to the file.
+// Writes the given text to the file.
 //
 // Creates the file if not exists and overwrites if exists.
-func (fragmentFile FragmentFile) Write(text string) {
+func (f FragmentFile) Write(text string) {
 	byteStr := []byte(text)
-	filePath := fragmentFile.absolutePath()
-	var writePermission uint32 = 0600
-	os.WriteFile(filePath, byteStr, os.FileMode(writePermission))
+	filePath := f.absolutePath()
+	err := os.WriteFile(filePath, byteStr, os.FileMode(files.WritePermission))
+	if err != nil {
+		panic(err)
+	}
 }
 
-// Reads content of the file.
+// Content reads content of the file.
 //
-// Returns contents of the file as a list of strings, or returns an error if it doesn't exists.
-func (fragmentFile FragmentFile) Content() ([]string, error) {
-	path := fragmentFile.absolutePath()
-	isPathFileExits, err := IsFileExists(path)
+// Returns contents of the file as a list of strings, or returns an error if it doesn't exist.
+func (f FragmentFile) Content() ([]string, error) {
+	path := f.absolutePath()
+	isPathFileExits, err := files.IsFileExist(path)
 
 	if err != nil {
 		return nil, err
 	}
 
 	if isPathFileExits {
-		return ReadLines(path), nil
+		return files.ReadFile(path)
 	}
 
 	return nil, fmt.Errorf("file %s doesn't exist", path)
 }
 
 // Returns string representation of FragmentFile.
-func (fragmentFile FragmentFile) String() string {
-	return fragmentFile.absolutePath()
+func (f FragmentFile) String() string {
+	return f.absolutePath()
 }
 
-//
-// Private methods
-//
-
 // Obtains the absolute path to this fragment file.
-func (fragmentFile FragmentFile) absolutePath() string {
-	fileExtension := filepath.Ext(fragmentFile.CodeFile)
-	fragmentsAbsDir, err := filepath.Abs(fragmentFile.Configuration.FragmentsDir)
+func (f FragmentFile) absolutePath() string {
+	fileExtension := filepath.Ext(f.CodePath)
+	fragmentsAbsDir, err := filepath.Abs(f.Configuration.FragmentsDir)
 	if err != nil {
 		panic(err)
 	}
 
-	if fragmentFile.FragmentName == DefaultFragmentName {
-		return filepath.Join(fragmentsAbsDir, fragmentFile.CodeFile)
+	if f.FragmentName == DefaultFragmentName {
+		return filepath.Join(fragmentsAbsDir, f.CodePath)
 	}
 
-	withoutExtension := strings.TrimSuffix(fragmentFile.CodeFile, fileExtension)
-	filename := fmt.Sprintf("%s-%s", withoutExtension, fragmentFile.calculateFragmentHash())
+	withoutExtension := strings.TrimSuffix(f.CodePath, fileExtension)
+	filename := fmt.Sprintf("%s-%s", withoutExtension, f.fragmentHash())
 
 	return filepath.Join(fragmentsAbsDir, filename+fileExtension)
 }
 
 // Calculates and returns a hash string for FragmentFile.
 //
-// Since fragments which have the same name unite into one
-// fragment with multiple partitions, the name of a fragment is unique.
-func (fragmentFile FragmentFile) calculateFragmentHash() string {
+// Since fragments which have the same name unite into one fragment with multiple partitions,
+// the name of a fragment is unique.
+func (f FragmentFile) fragmentHash() string {
 	hash := sha256.New()
-	hash.Write([]byte(fragmentFile.FragmentName))
-	sha1Hash := hex.EncodeToString(hash.Sum(nil))[:8]
+	hash.Write([]byte(f.FragmentName))
 
-	return sha1Hash
+	return hex.EncodeToString(hash.Sum(nil))[:8]
 }

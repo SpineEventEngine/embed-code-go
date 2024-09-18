@@ -18,32 +18,63 @@
 
 package fragmentation
 
-// A code fragment partition.
+// Partition a code fragment partition.
 //
 // A fragment may consist of a few partitions, collected from different points in the code file.
 // In the resulting doc file, the partitions are joined by the Configuration.Separator.
-// StartPosition and EndPosition are both pointers, because it's the way to make them nil-able.
-// Otherwise, the default value for them is 0, which is wrong, because 0 is in the scope of
-// possible values for them.
+// StartPosition and EndPosition are both set to -1 by default as the default int value for them
+// is 0, which is wrong, because 0 is in the scope of possible values for them.
 //
 // StartPosition — an index from which the scope of partition exists.
 //
 // EndPosition — an index on which the scope of partition ends.
 type Partition struct {
-	StartPosition *int
-	EndPosition   *int
+	StartPosition int
+	EndPosition   int
 }
 
-//
-// Public methods
-//
+// NewPartition returns a new Partition with both positions set to -1, as they should to be
+// positive once set by a user.
+func NewPartition() Partition {
+	return Partition{
+		-1,
+		-1,
+	}
+}
 
-// Returns the partition-related lines from given lines.
-// If EndPosition is nil, returns all the lines started from StartPosition.
-func (partition Partition) Select(lines []string) []string {
-	if partition.EndPosition == nil {
-		return lines[*partition.StartPosition:]
+// Select returns the partition-related lines from given lines.
+// If EndPosition is not set, returns all the lines started from StartPosition.
+func (p Partition) Select(lines []string) []string {
+	startPosition := p.StartPosition
+	endPosition := p.EndPosition
+
+	// Verifying lines actually have those indexes.
+	hasStartPosition := safeAccess(lines, startPosition)
+	if !hasStartPosition {
+		panic("an unexpected error occurred. the given lines don't have start position")
 	}
 
-	return lines[*partition.StartPosition : *partition.EndPosition+1]
+	if endPosition < 0 {
+		return lines[startPosition:]
+	}
+
+	hasEndPosition := safeAccess(lines, endPosition)
+	if !hasEndPosition {
+		panic("an unexpected error occurred. the given lines don't have end position")
+	}
+
+	return lines[startPosition : endPosition+1]
+}
+
+func safeAccess(slice []string, index int) bool {
+	var hasIndex bool
+	defer func() {
+		if r := recover(); r != nil {
+			hasIndex = false
+		}
+	}()
+	_ = slice[index]
+	hasIndex = true
+
+	return hasIndex
 }

@@ -18,9 +18,12 @@
 
 package fragmentation
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-// A single fragment builder.
+// FragmentBuilder is a single fragment builder.
 //
 // CodeFilePath — a path to a file to fragment.
 //
@@ -33,55 +36,61 @@ type FragmentBuilder struct {
 	Name         string
 }
 
-//
-// Public methods
-//
-
-// Adds a new partition with given startPosition.
+// AddStartPosition adds a new partition with given startPosition.
 //
 // AddEndPosition is need to be called when the end of the fragment is reached,
 // or else it will be considered that the end of partition is in the end of the file.
 //
 // startPosition — starting position of the fragment.
-func (fragmentBuilder *FragmentBuilder) AddStartPosition(startPosition int) {
-	if len(fragmentBuilder.Partitions) > 0 {
-		lastAddedPartition := fragmentBuilder.Partitions[len(fragmentBuilder.Partitions)-1]
-		if lastAddedPartition.EndPosition == nil {
-			panic(
-				fmt.Sprintf("error: for the fragment \"%s\" of the file \"%s\", "+
-					"the last added partition has no end position",
-					fragmentBuilder.Name,
-					fragmentBuilder.CodeFilePath))
+func (b *FragmentBuilder) AddStartPosition(startPosition int) error {
+	if !b.isPartitionsEmpty() {
+		lastPartition := b.lastAddedPartition()
+		if lastPartition.EndPosition < 0 {
+			return fmt.Errorf("error: for the fragment \"%s\" of the file \"%s\", "+
+				"the last added partition has no end position", b.Name, b.CodeFilePath)
 		}
 	}
 
-	partition := Partition{StartPosition: &startPosition}
-	fragmentBuilder.Partitions = append(fragmentBuilder.Partitions, partition)
+	partition := NewPartition()
+	partition.StartPosition = startPosition
+	b.Partitions = append(b.Partitions, partition)
+
+	return nil
 }
 
-// Completes previously created fragment partition with its endPosition.
-//
+// AddEndPosition completes previously created fragment partition with its endPosition.
 // It should be called after AddStartPosition.
 //
 // endPosition — end position of the fragment.
-func (fragmentBuilder *FragmentBuilder) AddEndPosition(endPosition int) {
-	if len(fragmentBuilder.Partitions) == 0 {
-		panic("error: the list of partitions is empty")
+func (b *FragmentBuilder) AddEndPosition(endPosition int) error {
+	if b.isPartitionsEmpty() {
+		return errors.New("the list of partitions is empty")
 	}
-	lastAddedPartition := &fragmentBuilder.Partitions[len(fragmentBuilder.Partitions)-1]
-	if lastAddedPartition.EndPosition != nil {
-		panic(fmt.Sprintf("unexpected #enddocfragment statement at %s:%d",
-			fragmentBuilder.CodeFilePath,
-			*lastAddedPartition.EndPosition),
-		)
+	lastPartition := b.lastAddedPartition()
+	if lastPartition.EndPosition < 0 {
+		lastPartition.EndPosition = endPosition
+	} else {
+		return fmt.Errorf("unexpected #enddocfragment statement at %s:%d", b.CodeFilePath,
+			lastPartition.EndPosition)
 	}
-	lastAddedPartition.EndPosition = &endPosition
+
+	return nil
 }
 
-// Creates and returns new Fragment with the previously added and filled Partitions.
-func (fragmentBuilder FragmentBuilder) Build() Fragment {
+// Build creates and returns new Fragment with the previously added and filled Partitions.
+func (b *FragmentBuilder) Build() Fragment {
 	return Fragment{
-		Name:       fragmentBuilder.Name,
-		Partitions: fragmentBuilder.Partitions,
+		Name:       b.Name,
+		Partitions: b.Partitions,
 	}
+}
+
+func (b *FragmentBuilder) isPartitionsEmpty() bool {
+	return len(b.Partitions) == 0
+}
+
+func (b *FragmentBuilder) lastAddedPartition() *Partition {
+	lastIndex := len(b.Partitions) - 1
+
+	return &b.Partitions[lastIndex]
 }
