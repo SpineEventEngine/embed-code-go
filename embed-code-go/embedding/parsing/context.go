@@ -29,11 +29,11 @@ import (
 //
 // Embedding - an Instruction, containing all the needed embedding information.
 //
-// SourceStartIndex - an index of the start line in the original markdown file.
+// SourceStartIndex - an index of the StartState line in the original markdown file.
 //
 // SourceEndIndex - an index of the end line in the original markdown file.
 //
-// ResultStartIndex - an index of the start line in the result markdown file.
+// ResultStartIndex - an index of the StartState line in the result markdown file.
 //
 // ResultEndIndex - an index of the end line in the result markdown file.
 type EmbeddingInParsingContext struct {

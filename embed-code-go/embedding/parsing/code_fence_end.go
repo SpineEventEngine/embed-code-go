@@ -24,8 +24,8 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// CodeFenceEnd represents the end of a code fence.
-type CodeFenceEnd struct{}
+// CodeFenceEndState represents the end of a code fence.
+type CodeFenceEndState struct{}
 
 // Recognize reports whether the current line meets this conditions:
 //   - the end of file is not reached;
@@ -33,7 +33,7 @@ type CodeFenceEnd struct{}
 //   - the current line starts with the appropriate indentation and "```"
 //
 // context — a context of the parsing process.
-func (c CodeFenceEnd) Recognize(context Context) bool {
+func (c CodeFenceEndState) Recognize(context Context) bool {
 	if context.ReachedEOF() {
 		return false
 	}
@@ -48,7 +48,7 @@ func (c CodeFenceEnd) Recognize(context Context) bool {
 // context — a context of the parsing process.
 //
 // Returns an error if the rendering was not successful.
-func (c CodeFenceEnd) Accept(context *Context, _ configuration.Configuration) error {
+func (c CodeFenceEndState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	err := renderSample(context)
 	context.SetEmbedding(nil)

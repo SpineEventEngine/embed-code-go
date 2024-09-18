@@ -24,13 +24,13 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// CodeFenceStart represents the start of a code fence.
-type CodeFenceStart struct{}
+// CodeFenceStartState represents the StartState of a code fence.
+type CodeFenceStartState struct{}
 
 // Recognize reports whether the current line is not reached the end and starts with "```".
 //
 // context — a context of the parsing process.
-func (c CodeFenceStart) Recognize(context Context) bool {
+func (c CodeFenceStartState) Recognize(context Context) bool {
 	if !context.ReachedEOF() {
 		return strings.HasPrefix(strings.TrimSpace(context.CurrentLine()), "```")
 	}
@@ -43,7 +43,7 @@ func (c CodeFenceStart) Recognize(context Context) bool {
 // to the next line in the context.
 //
 // context — a context of the parsing process.
-func (c CodeFenceStart) Accept(context *Context, _ configuration.Configuration) error {
+func (c CodeFenceStartState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.CodeFenceStarted = true

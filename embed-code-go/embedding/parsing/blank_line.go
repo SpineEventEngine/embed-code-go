@@ -24,14 +24,14 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// BlankLine represents a blank line of a markdown.
-type BlankLine struct{}
+// BlankLineState represents a blank line of a markdown.
+type BlankLineState struct{}
 
 // Recognize reports whether the current line is blank.
 //
 // Checks if the current line is empty and not part of a code fence, and if there is an embedding.
 // If these conditions are met, it returns true. Otherwise, it returns false.
-func (b BlankLine) Recognize(context Context) bool {
+func (b BlankLineState) Recognize(context Context) bool {
 	isEmptyString := strings.TrimSpace(context.CurrentLine()) == ""
 	if !context.ReachedEOF() && isEmptyString {
 		return !context.CodeFenceStarted && context.Embedding != nil
@@ -41,7 +41,7 @@ func (b BlankLine) Recognize(context Context) bool {
 }
 
 // Accept appends the current line of the context to the result, and moves to the next line.
-func (b BlankLine) Accept(context *Context, _ configuration.Configuration) error {
+func (b BlankLineState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()

@@ -22,17 +22,17 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// Finish represents the end of the file.
-type Finish struct{}
+// FinishState represents the end of the file.
+type FinishState struct{}
 
 // Recognize reports whether the current line satisfies the transition.
 //
 // context — a context of the parsing process.
-func (f Finish) Recognize(context Context) bool {
+func (f FinishState) Recognize(context Context) bool {
 	return context.ReachedEOF()
 }
 
-// Accept accepts finish, as there's no need to do anything, returns nil.
-func (f Finish) Accept(_ *Context, _ configuration.Configuration) error {
+// Accept accepts FinishState, as there's no need to do anything, returns nil.
+func (f FinishState) Accept(_ *Context, _ configuration.Configuration) error {
 	return nil
 }
