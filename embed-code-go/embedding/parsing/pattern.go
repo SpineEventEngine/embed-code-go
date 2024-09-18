@@ -37,6 +37,12 @@ type Pattern struct {
 	pattern    string
 }
 
+const (
+	anyCharacterSequence = "*"
+	lineStart            = "^"
+	lineEnd              = "$"
+)
+
 // NewPattern creates a new Pattern based on provided glob string.
 //
 // The resulting Pattern struct contains both original glob string and
@@ -61,19 +67,22 @@ type Pattern struct {
 //	fmt.Println("Modified pattern:", p.pattern) // ".txt*"
 func NewPattern(glob string) Pattern {
 	pattern := glob
-	startOfLine := strings.HasPrefix(glob, "^")
-	if !startOfLine && !strings.HasPrefix(glob, "*") {
-		pattern = "*" + pattern
+
+	startOfLine := strings.HasPrefix(glob, lineStart)
+	if !startOfLine && !strings.HasPrefix(glob, anyCharacterSequence) {
+		pattern = anyCharacterSequence + pattern
 	}
 	if startOfLine {
 		pattern = pattern[1:]
 	}
-	endOfLine := strings.HasSuffix(glob, "$")
-	if !endOfLine && !strings.HasSuffix(glob, "*") {
-		pattern += "*"
+
+	endOfLine := strings.HasSuffix(glob, lineEnd)
+	if !endOfLine && !strings.HasSuffix(glob, anyCharacterSequence) {
+		pattern += anyCharacterSequence
 	}
 	if endOfLine {
-		pattern = pattern[:len(pattern)-1]
+		lastIndex := len(pattern) - 1
+		pattern = pattern[:lastIndex]
 	}
 
 	return Pattern{

@@ -69,14 +69,14 @@ func NewProcessorWithTransitions(docFile string, config configuration.Configurat
 func (p Processor) Embed() error {
 	context, err := p.constructEmbedding()
 	if err != nil {
-		return EmbeddingError{Context: context}
+		return UnexpectedProcessingError{Context: context}
 	}
 
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		data := []byte(strings.Join(context.GetResult(), "\n"))
 		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.ReadWriteExecPermission))
 		if err != nil {
-			return EmbeddingError{context}
+			return UnexpectedProcessingError{context}
 		}
 	}
 
@@ -91,7 +91,7 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 	context, err := p.constructEmbedding()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
-		return changedEmbeddings, EmbeddingError{context}
+		return changedEmbeddings, UnexpectedProcessingError{context}
 	}
 
 	return changedEmbeddings, nil
@@ -105,48 +105,6 @@ func (p Processor) IsUpToDate() bool {
 	}
 
 	return !context.IsContentChanged()
-}
-
-// Creates and returns new Context based on Processor.DocFilePath and Processor.Config.
-//
-// If any problems faced, an error is returned.
-//
-// Processes an embedding by iterating through different states based on transitions until it
-// reaches the finish state. If a transition is recognized, it updates the current state and
-// accepts the transition. If no transition is accepted, the error indicating the failure to parse
-// the document file is returned.
-func (p Processor) constructEmbedding() (parsing.Context, error) {
-	context := parsing.NewContext(p.DocFilePath)
-	errorStr := fmt.Sprintf(
-		"an error was occurred during embedding construction for doc file `%s`", p.DocFilePath)
-	var constructEmbeddingError = errors.New(errorStr)
-
-	var currentState parsing.State
-	currentState = parsing.Start{}
-	finishState := parsing.Finish{}
-
-	for currentState != finishState {
-		accepted := false
-		for _, nextState := range parsing.Transitions[currentState] {
-			if nextState.Recognize(context) {
-				currentState = nextState
-				err := nextState.Accept(&context, p.Config)
-				if err != nil {
-					return context, constructEmbeddingError
-				}
-				accepted = true
-
-				break
-			}
-		}
-		if !accepted {
-			currentState = parsing.RegularLine{}
-			context.ResolveUnacceptedEmbedding()
-			return context, constructEmbeddingError
-		}
-	}
-
-	return context, nil
 }
 
 // EmbedAll processes embedding for multiple documentation files based on provided config.
@@ -179,6 +137,59 @@ func CheckUpToDate(config configuration.Configuration) {
 	if len(changedFiles) > 0 {
 		panic(UnexpectedDiffError{changedFiles})
 	}
+}
+
+// Creates and returns new Context based on Processor.DocFilePath and Processor.Config.
+//
+// If any problems faced, an error is returned.
+//
+// Processes an embedding by iterating through different states based on transitions until it
+// reaches the finish state. If a transition is recognized, it updates the current state and
+// accepts the transition. If no transition is accepted, the error indicating the failure to parse
+// the document file is returned.
+func (p Processor) constructEmbedding() (parsing.Context, error) {
+	context := parsing.NewContext(p.DocFilePath)
+	errorStr := fmt.Sprintf(
+		"an error was occurred during embedding construction for doc file `%s`", p.DocFilePath)
+	var constructEmbeddingError = errors.New(errorStr)
+
+	var currentState parsing.State
+	currentState = parsing.Start
+	finishState := parsing.Finish
+
+	for currentState != finishState {
+		accepted, newState, err := p.moveToNextState(&currentState, &context)
+		if err != nil {
+			return parsing.Context{}, constructEmbeddingError
+		}
+		if !accepted {
+			currentState = &parsing.RegularLineState{}
+			context.ResolveUnacceptedEmbedding()
+
+			return context, constructEmbeddingError
+		}
+		currentState = *newState
+	}
+
+	return context, nil
+}
+
+// Moves to the next state accordingly to a transition map from the current state. Reports whether
+// it successfully moved to the next state and returns the new state.
+func (p Processor) moveToNextState(state *parsing.State, context *parsing.Context) (
+	bool, *parsing.State, error) {
+	for _, nextState := range parsing.Transitions[*state] {
+		if nextState.Recognize(*context) {
+			err := nextState.Accept(context, p.Config)
+			if err != nil {
+				return false, &nextState, err
+			}
+
+			return true, &nextState, nil
+		}
+	}
+
+	return false, state, nil
 }
 
 // Returns a list of documentation files that are not up-to-date with their code files.

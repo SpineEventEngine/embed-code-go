@@ -18,7 +18,7 @@
 
 package parsing
 
-// EmbeddingTag is a start of a tag where it requires to embed the code.
+// EmbeddingTag is a StartState of a tag where it requires to embed the code.
 const EmbeddingTag = "<embed-code"
 
 // TransitionMap is a type for mapping one State to a list of possible next States.
@@ -32,22 +32,22 @@ type TransitionMap map[State][]State
 // so the first state in the list is the most specific one.
 // When the state is chosen, the latter ones are skipped.
 var Transitions = TransitionMap{
-	start:            {finish, embedInstruction, regularLine},
-	regularLine:      {finish, embedInstruction, regularLine},
-	embedInstruction: {codeFenceStart, blankLine},
-	blankLine:        {codeFenceStart, blankLine},
-	codeFenceStart:   {codeFenceEnd, codeSampleLine},
-	codeSampleLine:   {codeFenceEnd, codeSampleLine},
-	codeFenceEnd:     {finish, embedInstruction, regularLine},
+	Start:            {Finish, EmbedInstruction, RegularLine},
+	RegularLine:      {Finish, EmbedInstruction, RegularLine},
+	EmbedInstruction: {CodeFenceStart, BlankLine},
+	BlankLine:        {CodeFenceStart, BlankLine},
+	CodeFenceStart:   {CodeFenceEnd, CodeSampleLine},
+	CodeSampleLine:   {CodeFenceEnd, CodeSampleLine},
+	CodeFenceEnd:     {Finish, EmbedInstruction, RegularLine},
 }
 
 var (
-	start            = Start{}
-	regularLine      = RegularLine{}
-	embedInstruction = EmbedInstructionToken{}
-	blankLine        = BlankLine{}
-	codeFenceStart   = CodeFenceStart{}
-	codeFenceEnd     = CodeFenceEnd{}
-	codeSampleLine   = CodeSampleLine{}
-	finish           = Finish{}
+	Start            = StartState{}
+	RegularLine      = RegularLineState{}
+	EmbedInstruction = EmbedInstructionTokenState{}
+	BlankLine        = BlankLineState{}
+	CodeFenceStart   = CodeFenceStartState{}
+	CodeFenceEnd     = CodeFenceEndState{}
+	CodeSampleLine   = CodeSampleLineState{}
+	Finish           = FinishState{}
 )

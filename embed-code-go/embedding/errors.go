@@ -18,7 +18,11 @@
 
 package embedding
 
-import "fmt"
+import (
+	"fmt"
+
+	"embed-code/embed-code-go/embedding/parsing"
+)
 
 // UnexpectedDiffError describes an error which occurs if outdated files are found during
 // the checking.
@@ -26,6 +30,40 @@ type UnexpectedDiffError struct {
 	changedFiles []string
 }
 
-func (m *UnexpectedDiffError) Error() string {
-	return fmt.Sprintf("unexpected diff: %v", m.changedFiles)
+func (e *UnexpectedDiffError) Error() string {
+	return fmt.Sprintf("unexpected diff: %v", e.changedFiles)
+}
+
+// UnexpectedProcessingError describes an error which occurs if something goes wrong during
+// embedding.
+type UnexpectedProcessingError struct {
+	Context parsing.Context
+}
+
+func (e UnexpectedProcessingError) Error() string {
+	errorString := fmt.Sprintf("embedding error for file `%s`.", e.Context.MarkdownFilePath)
+
+	if len(e.Context.EmbeddingsNotFound) > 0 {
+		embeddingsNotFoundStr := "\nMissing embeddings: \n"
+		for _, emb := range e.Context.EmbeddingsNotFound {
+			embeddingsNotFoundStr += fmt.Sprintf(
+				"%s — %s\n",
+				emb.CodeFile,
+				emb.Fragment)
+		}
+		errorString += embeddingsNotFoundStr
+	}
+
+	if len(e.Context.UnacceptedEmbeddings) > 0 {
+		unacceptedEmbeddingStr := "\nUnaccepted embeddings: \n"
+		for _, emb := range e.Context.UnacceptedEmbeddings {
+			unacceptedEmbeddingStr += fmt.Sprintf(
+				"%s — %s\n",
+				emb.CodeFile,
+				emb.Fragment)
+		}
+		errorString += unacceptedEmbeddingStr
+	}
+
+	return errorString
 }

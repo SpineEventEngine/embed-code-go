@@ -20,18 +20,18 @@ package parsing
 
 import "embed-code/embed-code-go/configuration"
 
-// RegularLine represents a regular line of a markdown.
-type RegularLine struct{}
+// RegularLineState represents a regular line of a markdown.
+type RegularLineState struct{}
 
 // Recognize returns true as every line can be considered as a regular line.
-func (r RegularLine) Recognize(_ Context) bool {
+func (r RegularLineState) Recognize(_ Context) bool {
 	return true
 }
 
 // Accept adds the current line from the parsing context to the result and moves to the next line.
 //
 // context — a context of the parsing process.
-func (r RegularLine) Accept(context *Context, _ configuration.Configuration) error {
+func (r RegularLineState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	context.Result = append(context.Result, line)
 	context.ToNextLine()

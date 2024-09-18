@@ -20,21 +20,21 @@ package parsing
 
 import "embed-code/embed-code-go/configuration"
 
-// CodeSampleLine represents a line of a code sample.
-type CodeSampleLine struct{}
+// CodeSampleLineState represents a line of a code sample.
+type CodeSampleLineState struct{}
 
 // Recognize reports whether the current line is a code sample line: the code fence is started, and
 // it is not the end of a file.
 //
 // context — a context of the parsing process.
-func (c CodeSampleLine) Recognize(context Context) bool {
+func (c CodeSampleLineState) Recognize(context Context) bool {
 	return !context.ReachedEOF() && context.CodeFenceStarted
 }
 
 // Accept moves to the next line.
 //
 // context — a context of the parsing process.
-func (c CodeSampleLine) Accept(context *Context, _ configuration.Configuration) error {
+func (c CodeSampleLineState) Accept(context *Context, _ configuration.Configuration) error {
 	context.ToNextLine()
 
 	return nil

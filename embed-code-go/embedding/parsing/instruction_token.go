@@ -25,15 +25,15 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// EmbedInstructionToken represents an embedding instruction token of a markdown.
-type EmbedInstructionToken struct{}
+// EmbedInstructionTokenState represents an embedding instruction token of a markdown.
+type EmbedInstructionTokenState struct{}
 
 // Recognize reports whether the current line in the parsing context starts with "<embed-code",
 // and if there is no ongoing embedding and the end of the file is not reached, it returns true.
 // Otherwise, it returns false.
 //
 // context — a context of the parsing process.
-func (e EmbedInstructionToken) Recognize(context Context) bool {
+func (e EmbedInstructionTokenState) Recognize(context Context) bool {
 	line := context.CurrentLine()
 	isStatement := strings.HasPrefix(strings.TrimSpace(line), EmbeddingTag)
 	if context.Embedding == nil && !context.ReachedEOF() && isStatement {
@@ -51,7 +51,8 @@ func (e EmbedInstructionToken) Recognize(context Context) bool {
 // config — a configuration of the embedding.
 //
 // Returns an error if the building of the embedding instruction fails.
-func (e EmbedInstructionToken) Accept(context *Context, config configuration.Configuration) error {
+func (e EmbedInstructionTokenState) Accept(context *Context,
+	config configuration.Configuration) error {
 	var instructionBody []string
 	for !context.ReachedEOF() && context.Embedding == nil {
 		instructionBody = append(instructionBody, context.CurrentLine())

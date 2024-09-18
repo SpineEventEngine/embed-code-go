@@ -21,7 +21,7 @@ package embedding_test
 import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
-	"embed-code/embed-code-go/embedding/parsing"
+	. "embed-code/embed-code-go/embedding/parsing"
 	"embed-code/embed-code-go/test/filesystem"
 	"fmt"
 	"os"
@@ -88,14 +88,14 @@ func (suite *EmbeddingTestSuite) TestNothingToUpdate() {
 func (suite *EmbeddingTestSuite) TestFalseTransitions() {
 	docPath := fmt.Sprintf("%s/split-lines.md", suite.config.DocumentationRoot)
 
-	falseTransitions := parsing.TransitionMap{
-		parsing.Start{}:                 {parsing.RegularLine{}, parsing.Finish{}, parsing.EmbedInstructionToken{}},
-		parsing.RegularLine{}:           {parsing.Finish{}, parsing.EmbedInstructionToken{}, parsing.RegularLine{}},
-		parsing.EmbedInstructionToken{}: {parsing.CodeFenceStart{}, parsing.BlankLine{}},
-		parsing.BlankLine{}:             {parsing.CodeFenceStart{}, parsing.BlankLine{}},
-		parsing.CodeFenceStart{}:        {parsing.CodeFenceEnd{}, parsing.CodeSampleLine{}},
-		parsing.CodeSampleLine{}:        {parsing.CodeFenceEnd{}, parsing.CodeSampleLine{}},
-		parsing.CodeFenceEnd{}:          {parsing.Finish{}, parsing.EmbedInstructionToken{}, parsing.RegularLine{}},
+	falseTransitions := TransitionMap{
+		Start:            {RegularLine, Finish, EmbedInstruction},
+		RegularLine:      {Finish, EmbedInstruction, RegularLine},
+		EmbedInstruction: {CodeFenceStart, BlankLine},
+		BlankLine:        {CodeFenceStart, BlankLine},
+		CodeFenceStart:   {CodeFenceEnd, CodeSampleLine},
+		CodeSampleLine:   {CodeFenceEnd, CodeSampleLine},
+		CodeFenceEnd:     {Finish, EmbedInstruction, RegularLine},
 	}
 
 	falseProcessor := embedding.NewProcessorWithTransitions(docPath, suite.config, falseTransitions)
