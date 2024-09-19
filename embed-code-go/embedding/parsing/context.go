@@ -24,35 +24,11 @@ import (
 	"regexp"
 )
 
-// EmbeddingInParsingContext contains the information about the position in the source and the
-// resulting Markdown files.
-//
-// Embedding - an Instruction, containing all the needed embedding information.
-//
-// SourceStartIndex - an index of the StartState line in the original markdown file.
-//
-// SourceEndIndex - an index of the end line in the original markdown file.
-//
-// ResultStartIndex - an index of the StartState line in the result markdown file.
-//
-// ResultEndIndex - an index of the end line in the result markdown file.
-type EmbeddingInParsingContext struct {
-	Embedding        Instruction
-	SourceStartIndex int
-	SourceEndIndex   int
-	ResultStartIndex int
-	ResultEndIndex   int
-}
-
 // Context represents the context for parsing a file containing code embeddings.
 //
-// Embedding - a pointer to the embedding instruction.
-//
-// Source - a list of strings representing the original markdown file.
+// EmbeddingInstruction - a pointer to the embedding instruction.
 //
 // MarkdownFilePath - a path to the markdown file.
-//
-// LineIndex - an index of the current line in the markdown file.
 //
 // Result - a list of strings representing the markdown file updated with embedding.
 //
@@ -60,25 +36,45 @@ type EmbeddingInParsingContext struct {
 //
 // CodeFenceIndentation - an indentation of the markdown's code fences.
 //
-// FileContainsEmbedding - a flag indicating whether the file contains an embedding instruction.
-//
-// Embeddings - a list of embedding instructions found in the markdown file.
-//
 // EmbeddingsNotFound - a list of embedding instructions that are not found in the code.
 //
 // UnacceptedEmbeddings - a list of embedding instructions that are not accepted by the parser.
 type Context struct {
-	Embedding             *Instruction
-	Source                []string
-	MarkdownFilePath      string
-	LineIndex             int
-	Result                []string
-	CodeFenceStarted      bool
-	CodeFenceIndentation  int
-	FileContainsEmbedding bool
-	Embeddings            []EmbeddingInParsingContext
-	EmbeddingsNotFound    []Instruction
-	UnacceptedEmbeddings  []Instruction
+	EmbeddingInstruction *Instruction
+	MarkdownFilePath     string
+	Result               []string
+	CodeFenceStarted     bool
+	CodeFenceIndentation int
+	EmbeddingsNotFound   []Instruction
+	UnacceptedEmbeddings []Instruction
+	// source - a list of strings representing the original markdown file.
+	source []string
+	// lineIndex - an index of the current line in the markdown file.
+	lineIndex int
+	// fileContainsEmbedding - a flag indicating whether the file contains an embedding instruction.
+	fileContainsEmbedding bool
+	// embeddings - a list of embedding instructions found in the markdown file.
+	embeddings []parsingContext
+}
+
+// parsingContext contains the information about the position in the source and the
+// resulting Markdown files.
+//
+// embeddingInstruction - an Instruction, containing all the needed embedding information.
+//
+// sourceStartIndex - an index of the StartState line in the original markdown file.
+//
+// sourceEndIndex - an index of the end line in the original markdown file.
+//
+// resultStartIndex - an index of the StartState line in the result markdown file.
+//
+// resultEndIndex - an index of the end line in the result markdown file.
+type parsingContext struct {
+	embeddingInstruction Instruction
+	sourceStartIndex     int
+	sourceEndIndex       int
+	resultStartIndex     int
+	resultEndIndex       int
 }
 
 // NewContext Creates and returns a new Context struct with initial values for markdownFile, source,
@@ -86,32 +82,32 @@ type Context struct {
 func NewContext(markdownFile string) Context {
 	return Context{
 		MarkdownFilePath: markdownFile,
-		Source:           readLines(markdownFile),
-		LineIndex:        0,
 		Result:           make([]string, 0),
+		source:           readLines(markdownFile),
+		lineIndex:        0,
 	}
 }
 
 // CurrentLine returns the line of source code at the current ParsingContext.lineIndex.
 func (c *Context) CurrentLine() string {
-	return c.Source[c.LineIndex]
+	return c.source[c.lineIndex]
 }
 
 // ToNextLine increments ParsingContext.lineIndex field by 1.
 func (c *Context) ToNextLine() {
-	c.LineIndex++
+	c.lineIndex++
 }
 
 // ReachedEOF reports whether the end of the source code file has been reached.
 func (c *Context) ReachedEOF() bool {
-	return c.LineIndex >= len(c.Source)
+	return c.lineIndex >= len(c.source)
 }
 
 // IsContentChanged Reports whether the content of the code file has changed compared to the
 // embedding of the markdown file.
 func (c *Context) IsContentChanged() bool {
-	for i := 0; i < c.LineIndex; i++ {
-		if c.Source[i] != c.Result[i] {
+	for i := 0; i < c.lineIndex; i++ {
+		if c.source[i] != c.Result[i] {
 			return true
 		}
 	}
@@ -122,11 +118,11 @@ func (c *Context) IsContentChanged() bool {
 // FindChangedEmbeddings returns a list of changed embeddings.
 func (c *Context) FindChangedEmbeddings() []Instruction {
 	var changedEmbeddings []Instruction
-	for _, embedding := range c.Embeddings {
+	for _, embedding := range c.embeddings {
 		sourceContent := c.readEmbeddingSource(embedding)
 		resultContent := c.readEmbeddingResult(embedding)
 		if !isStringSlicesEqual(sourceContent, resultContent) {
-			changedEmbeddings = append(changedEmbeddings, embedding.Embedding)
+			changedEmbeddings = append(changedEmbeddings, embedding.embeddingInstruction)
 		}
 	}
 
@@ -135,44 +131,49 @@ func (c *Context) FindChangedEmbeddings() []Instruction {
 
 // IsContainsEmbedding reports whether the doc file contains an embedding.
 func (c *Context) IsContainsEmbedding() bool {
-	return c.FileContainsEmbedding
+	return c.fileContainsEmbedding
 }
 
 // ResolveEmbeddingNotFound writes the source content of the markdown file if embedding
 // is not found.
 func (c *Context) ResolveEmbeddingNotFound() {
-	currentEmbedding := c.Embeddings[len(c.Embeddings)-1]
+	currentEmbedding := *c.currentEmbedding()
 	source := c.readEmbeddingSource(currentEmbedding)
 	c.Result = append(c.Result, source...)
-	c.EmbeddingsNotFound = append(c.EmbeddingsNotFound, currentEmbedding.Embedding)
+	c.EmbeddingsNotFound = append(c.EmbeddingsNotFound, currentEmbedding.embeddingInstruction)
 }
 
 // ResolveUnacceptedEmbedding deletes embedding from the list of embeddings if it is not accepted.
 //
 // Also appends it to the list of such embeddings for logging.
 func (c *Context) ResolveUnacceptedEmbedding() {
-	currentEmbedding := c.Embeddings[len(c.Embeddings)-1]
-	c.UnacceptedEmbeddings = append(c.UnacceptedEmbeddings, currentEmbedding.Embedding)
-	c.Embeddings = c.Embeddings[:len(c.Embeddings)-1]
+	currentEmbeddingInstruction := (*c.currentEmbedding()).embeddingInstruction
+	c.UnacceptedEmbeddings = append(c.UnacceptedEmbeddings, currentEmbeddingInstruction)
+	c.embeddings = c.embeddings[:c.currentEmbeddingIndex()]
 	c.SetEmbedding(nil)
 }
 
-// SetEmbedding sets an embedding to Context. Also sets FileContainsEmbedding flag.
+// SetEmbedding sets an embedding to Context. Also sets fileContainsEmbedding flag.
 func (c *Context) SetEmbedding(embedding *Instruction) {
 	// TODO:2024-09-05:olena-zmiiova: https://github.com/SpineEventEngine/embed-code/issues/48
 	indexIncrease := 2 // +2 for instruction and code fence.
+	sourceIndex := c.lineIndex
+	resultIndex := len(c.Result) + 1
+
 	if embedding != nil {
-		c.FileContainsEmbedding = true
-		c.Embeddings = append(c.Embeddings, EmbeddingInParsingContext{
-			Embedding:        *embedding,
-			SourceStartIndex: c.LineIndex + indexIncrease,
-			ResultStartIndex: len(c.Result) + indexIncrease,
-		})
+		c.fileContainsEmbedding = true
+		context := parsingContext{
+			embeddingInstruction: *embedding,
+			sourceStartIndex:     sourceIndex + indexIncrease,
+			resultStartIndex:     resultIndex + indexIncrease,
+		}
+
+		c.embeddings = append(c.embeddings, context)
 	} else {
-		c.Embeddings[len(c.Embeddings)-1].SourceEndIndex = c.LineIndex
-		c.Embeddings[len(c.Embeddings)-1].ResultEndIndex = len(c.Result)
+		c.currentEmbedding().sourceEndIndex = sourceIndex
+		c.currentEmbedding().resultEndIndex = resultIndex
 	}
-	c.Embedding = embedding
+	c.EmbeddingInstruction = embedding
 }
 
 // GetResult returns the result lines of the Context.
@@ -183,15 +184,23 @@ func (c *Context) GetResult() []string {
 // Returns a string representation of Context.
 func (c *Context) String() string {
 	return fmt.Sprintf("ParsingContext[embedding=`%s`, file=`%s`, line=`%d`]",
-		c.Embedding, c.MarkdownFilePath, c.LineIndex)
+		c.EmbeddingInstruction, c.MarkdownFilePath, c.lineIndex)
 }
 
-func (c *Context) readEmbeddingSource(context EmbeddingInParsingContext) []string {
-	return c.Source[context.SourceStartIndex : context.SourceEndIndex+1]
+func (c *Context) currentEmbedding() *parsingContext {
+	return &c.embeddings[c.currentEmbeddingIndex()]
 }
 
-func (c *Context) readEmbeddingResult(context EmbeddingInParsingContext) []string {
-	return c.Result[context.ResultStartIndex : context.ResultEndIndex+1]
+func (c *Context) currentEmbeddingIndex() int {
+	return len(c.embeddings) - 1
+}
+
+func (c *Context) readEmbeddingSource(context parsingContext) []string {
+	return c.source[context.sourceStartIndex:context.sourceEndIndex]
+}
+
+func (c *Context) readEmbeddingResult(context parsingContext) []string {
+	return c.Result[context.resultStartIndex:context.resultEndIndex]
 }
 
 // Returns the content of a file placed at filepath as a list of strings.
