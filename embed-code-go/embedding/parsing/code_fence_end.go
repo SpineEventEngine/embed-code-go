@@ -70,7 +70,7 @@ func (c CodeFenceEndState) Accept(context *Context, _ configuration.Configuratio
 //
 // Returns an error if the reading of the embedding's content was not successful.
 func renderSample(context *Context) error {
-	content, err := context.Embedding.Content()
+	content, err := context.EmbeddingInstruction.Content()
 	if err != nil {
 		return err
 	}
