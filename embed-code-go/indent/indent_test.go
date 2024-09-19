@@ -19,10 +19,12 @@
 package indent_test
 
 import (
+	"testing"
+
 	"embed-code/embed-code-go/indent"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 func TestIndent(t *testing.T) {
