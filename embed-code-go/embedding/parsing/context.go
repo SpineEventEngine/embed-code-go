@@ -155,8 +155,6 @@ func (c *Context) ResolveUnacceptedEmbedding() {
 
 // SetEmbedding sets an embedding to Context. Also sets fileContainsEmbedding flag.
 func (c *Context) SetEmbedding(embedding *Instruction) {
-	// TODO:2024-09-05:olena-zmiiova: https://github.com/SpineEventEngine/embed-code/issues/48
-	indexIncrease := 2 // +2 for instruction and code fence.
 	sourceIndex := c.lineIndex
 	resultIndex := len(c.Result) + 1
 
@@ -167,13 +165,21 @@ func (c *Context) SetEmbedding(embedding *Instruction) {
 		c.fileContainsEmbedding = true
 		context := parsingContext{
 			embeddingInstruction: *embedding,
-			sourceStartIndex:     sourceIndex + indexIncrease,
-			resultStartIndex:     resultIndex + indexIncrease,
 		}
 
 		c.embeddings = append(c.embeddings, context)
 	}
 	c.EmbeddingInstruction = embedding
+}
+
+// SetCodeStart sets the current line as a start of a code lines in the result. It's needed to not
+// include instructions in the embedding.
+func (c *Context) SetCodeStart() {
+	if c.fileContainsEmbedding {
+		lastEmbedding := c.currentEmbedding()
+		lastEmbedding.sourceStartIndex = c.lineIndex
+		lastEmbedding.resultStartIndex = len(c.Result) + 1
+	}
 }
 
 // GetResult returns the result lines of the Context.
