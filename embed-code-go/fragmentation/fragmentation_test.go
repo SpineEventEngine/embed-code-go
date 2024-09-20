@@ -242,5 +242,4 @@ func cleanupDir(dirPath string) {
 	if err != nil {
 		Fail(err.Error())
 	}
-
 }
