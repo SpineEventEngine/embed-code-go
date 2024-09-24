@@ -34,8 +34,8 @@ func (e *UnexpectedDiffError) Error() string {
 	return fmt.Sprintf("unexpected diff: %v", e.changedFiles)
 }
 
-// UnexpectedProcessingError describes an error which occurs if something goes wrong during
-// embedding.
+// UnexpectedProcessingError describes an error which occurs if something goes wrong
+// during embedding.
 type UnexpectedProcessingError struct {
 	Context parsing.Context
 }

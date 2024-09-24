@@ -67,7 +67,7 @@ func NewProcessorWithTransitions(docFile string, config configuration.Configurat
 //
 // If any problems faced, an error is returned.
 func (p Processor) Embed() error {
-	context, err := p.constructEmbedding()
+	context, err := p.fillEmbeddingContext()
 	if err != nil {
 		return UnexpectedProcessingError{Context: context}
 	}
@@ -88,7 +88,7 @@ func (p Processor) Embed() error {
 //
 // If any problems during the embedding construction faced, an error is returned.
 func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
-	context, err := p.constructEmbedding()
+	context, err := p.fillEmbeddingContext()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
 		return changedEmbeddings, UnexpectedProcessingError{context}
@@ -99,7 +99,7 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 
 // IsUpToDate reports whether the embedding of the target markdown is up-to-date with the code file.
 func (p Processor) IsUpToDate() bool {
-	context, err := p.constructEmbedding()
+	context, err := p.fillEmbeddingContext()
 	if err != nil {
 		panic(err)
 	}
@@ -139,15 +139,11 @@ func CheckUpToDate(config configuration.Configuration) {
 	}
 }
 
-// Creates and returns new Context based on Processor.DocFilePath and Processor.Config.
-//
-// If any problems faced, an error is returned.
-//
-// Processes an embedding by iterating through different states based on transitions until it
-// reaches the finish state. If a transition is recognized, it updates the current state and
-// accepts the transition. If no transition is accepted, the error indicating the failure to parse
-// the document file is returned.
-func (p Processor) constructEmbedding() (parsing.Context, error) {
+// Iterates through the doc file line by line considering them as a states of an embedding.
+// Such way, transits from the state to the next possible one until it reaches the end of a file.
+// By the transition process, fills the parsing.Context accordingly, so it is ready to retrieve
+// the result. Returns a parsing.Context and an error if any occurs.
+func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	context := parsing.NewContext(p.DocFilePath)
 	errorStr := fmt.Sprintf(
 		"an error was occurred during embedding construction for doc file `%s`", p.DocFilePath)
