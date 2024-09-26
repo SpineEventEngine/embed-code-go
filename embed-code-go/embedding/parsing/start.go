@@ -16,15 +16,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package embedding
+package parsing
 
-import "fmt"
+import "embed-code/embed-code-go/configuration"
 
-// Describes an error which occurs if outdated files are found during the checking.
-type UnexpectedDiffError struct {
-	changedFiles []string
+// StartState represents an initial state.
+type StartState struct{}
+
+// Recognize reports whether it is an initial state. Returns true as every state can be a
+// StartState.
+func (s StartState) Recognize(_ Context) bool {
+	return true
 }
 
-func (m *UnexpectedDiffError) Error() string {
-	return fmt.Sprintf("unexpected diff: %v", m.changedFiles)
+// Accept returns nil as it is an initial state and nothing should be processed.
+func (s StartState) Accept(_ *Context, _ configuration.Configuration) error {
+	return nil
 }

@@ -16,7 +16,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package embedding_instruction
+package parsing
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ import (
 	"github.com/gobwas/glob"
 )
 
-// Represents a glob-like pattern to match a line of a source file.
+// Pattern represents a glob-like pattern to match a line of a source file.
 //
 // Contains both original glob string and modified pattern suitable for matching.
 //
@@ -37,11 +37,13 @@ type Pattern struct {
 	pattern    string
 }
 
-//
-// Initializers
-//
+const (
+	anyCharacterSequence = "*"
+	lineStart            = "^"
+	lineEnd              = "$"
+)
 
-// Creates a new Pattern based on provided glob string.
+// NewPattern creates a new Pattern based on provided glob string.
 //
 // The resulting Pattern struct contains both original glob string and
 // modified pattern suitable for matching.
@@ -65,19 +67,22 @@ type Pattern struct {
 //	fmt.Println("Modified pattern:", p.pattern) // ".txt*"
 func NewPattern(glob string) Pattern {
 	pattern := glob
-	startOfLine := strings.HasPrefix(glob, "^")
-	if !startOfLine && !strings.HasPrefix(glob, "*") {
-		pattern = "*" + pattern
+
+	startOfLine := strings.HasPrefix(glob, lineStart)
+	if !startOfLine && !strings.HasPrefix(glob, anyCharacterSequence) {
+		pattern = anyCharacterSequence + pattern
 	}
 	if startOfLine {
 		pattern = pattern[1:]
 	}
-	endOfLine := strings.HasSuffix(glob, "$")
-	if !endOfLine && !strings.HasSuffix(glob, "*") {
-		pattern += "*"
+
+	endOfLine := strings.HasSuffix(glob, lineEnd)
+	if !endOfLine && !strings.HasSuffix(glob, anyCharacterSequence) {
+		pattern += anyCharacterSequence
 	}
 	if endOfLine {
-		pattern = pattern[:len(pattern)-1]
+		lastIndex := len(pattern) - 1
+		pattern = pattern[:lastIndex]
 	}
 
 	return Pattern{
@@ -86,11 +91,7 @@ func NewPattern(glob string) Pattern {
 	}
 }
 
-//
-// Public methods
-//
-
-// Reports whether given line matches the pattern.
+// Match reports whether given line matches the pattern.
 //
 // line — a line to check the match for.
 func (p Pattern) Match(line string) bool {

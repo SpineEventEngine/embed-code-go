@@ -22,12 +22,10 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-const Statement = "<embed-code"
+// State represent a transition of a single line in the parsing process.
+type State interface {
 
-// Represent a transition of a single line in the parsing process.
-type Transition interface {
-
-	// Updates the parsing context based on the transition.
+	// Accept updates the parsing context based on the transition.
 	//
 	// Switches context to the next line if EOF is not reached yet.
 	//
@@ -36,10 +34,10 @@ type Transition interface {
 	// config — a configuration of the embedding.
 	//
 	// Returns an error if any occurs.
-	Accept(context *ParsingContext, config configuration.Configuration) error
+	Accept(context *Context, config configuration.Configuration) error
 
-	// Reports whether the current line satisfies the transition.
+	// Recognize reports whether the current line satisfies the transition.
 	//
 	// context — a context of the parsing process.
-	Recognize(context ParsingContext) bool
+	Recognize(context Context) bool
 }

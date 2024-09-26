@@ -97,6 +97,10 @@ issues:
         - revive
       text: "dot-imports: should not use dot imports"
       path: _test\.go
+    # We may have repeating lines in tests and it should be valid.
+    - linters:
+        - goconst
+      path: _test\.go
   # Excluding test folder as tests are in progress of moving to the source files.
   exclude-dirs:
     - test/
