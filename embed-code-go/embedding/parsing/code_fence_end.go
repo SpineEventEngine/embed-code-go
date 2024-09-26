@@ -24,40 +24,31 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-//
-// Public methods
-//
+// CodeFenceEndState represents the end of a code fence.
+type CodeFenceEndState struct{}
 
-// Represents the end of a code fence.
-type CodeFenceEnd struct{}
-
-// Reports whether the current line is the end of a code fence.
-//
-// The line is a code fence end if:
-//   - the end is not reached;
+// Recognize reports whether the current line meets this conditions:
+//   - the end of file is not reached;
 //   - the code fence has started;
 //   - the current line starts with the appropriate indentation and "```"
 //
 // context — a context of the parsing process.
-func (c CodeFenceEnd) Recognize(context ParsingContext) bool {
-	if !context.ReachedEOF() {
-		indentation := strings.Repeat(" ", context.CodeFenceIndentation)
-
-		return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
+func (c CodeFenceEndState) Recognize(context Context) bool {
+	if context.ReachedEOF() {
+		return false
 	}
+	indentation := strings.Repeat(" ", context.CodeFenceIndentation)
 
-	return false
+	return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
 }
 
-// Processes the end of a code fence by adding the current line to the result,
-// resetting certain context variables, and moving to the next line.
+// Accept adds the current line to the result, resets certain context variables, and moves to
+// the next line.
 //
 // context — a context of the parsing process.
 //
-// config — a configuration of the embedding.
-//
 // Returns an error if the rendering was not successful.
-func (c CodeFenceEnd) Accept(context *ParsingContext, _ configuration.Configuration) error {
+func (c CodeFenceEndState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	err := renderSample(context)
 	context.SetEmbedding(nil)
@@ -73,16 +64,12 @@ func (c CodeFenceEnd) Accept(context *ParsingContext, _ configuration.Configurat
 	return err
 }
 
-//
-// Private methods
-//
-
 // Renders the sample content of the embedding.
 //
 // context — a context of the parsing process.
 //
 // Returns an error if the reading of the embedding's content was not successful.
-func renderSample(context *ParsingContext) error {
+func renderSample(context *Context) error {
 	content, err := context.Embedding.Content()
 	if err != nil {
 		return err
