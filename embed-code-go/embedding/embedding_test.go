@@ -19,8 +19,11 @@
 package embedding_test
 
 import (
+	"embed-code/embed-code-go/files"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"embed-code/embed-code-go/configuration"
@@ -30,6 +33,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
+
+const temporaryTestDir = "../test/docs"
 
 func TestEmbedding(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -49,6 +54,15 @@ var _ = Describe("Embedding", func() {
 			Fail("unexpected error during the test setup: " + err.Error())
 		}
 		config = buildConfigWithPreparedFragments()
+
+		// Copying files not to edit them directly during the test run.
+		copyDirRecursive("../test/resources/docs", config.DocumentationRoot)
+	})
+
+	AfterEach(func() {
+		if err := os.RemoveAll(temporaryTestDir); err != nil {
+			Fail(err.Error())
+		}
 	})
 
 	It("should be up to date", func() {
@@ -98,9 +112,73 @@ var _ = Describe("Embedding", func() {
 
 func buildConfigWithPreparedFragments() configuration.Configuration {
 	var config = configuration.NewConfiguration()
-	config.DocumentationRoot = "../test/resources/docs"
+	config.DocumentationRoot = temporaryTestDir
 	config.CodeRoot = "../test/resources/code"
 	config.FragmentsDir = "../test/resources/prepared-fragments"
 
 	return config
+}
+
+func copyDirRecursive(sourceDirPath string, targetDirPath string) {
+	info, err := os.Stat(sourceDirPath)
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.MkdirAll(targetDirPath, info.Mode())
+	if err != nil {
+		panic(err)
+	}
+
+	entries, err := os.ReadDir(sourceDirPath)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, entry := range entries {
+		sourcePath := filepath.Join(sourceDirPath, entry.Name())
+		targetPath := filepath.Join(targetDirPath, entry.Name())
+
+		if entry.IsDir() {
+			copyDirRecursive(sourcePath, targetPath)
+		} else {
+			err = copyFile(sourcePath, targetPath)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+}
+
+func copyFile(sourceFilePath string, targetFilePath string) (err error) {
+	sourceFile, err := os.Open(sourceFilePath)
+	if err != nil {
+		Fail(err.Error())
+	}
+
+	defer func(sourceFile *os.File) {
+		err = sourceFile.Close()
+		if err != nil {
+			Fail(err.Error())
+		}
+	}(sourceFile)
+
+	targetFile, err := os.Create(targetFilePath)
+	if err != nil {
+		return
+	}
+	defer func() {
+		err = targetFile.Close()
+		if err != nil {
+			Fail(err.Error())
+		}
+	}()
+
+	if _, err = io.Copy(targetFile, sourceFile); err != nil {
+		return
+	}
+
+	err = os.Chmod(targetFilePath, os.FileMode(files.WritePermission))
+
+	return
 }

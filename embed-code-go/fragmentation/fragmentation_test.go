@@ -22,7 +22,6 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/files"
 	"embed-code/embed-code-go/fragmentation"
-	"embed-code/embed-code-go/test/filesystem"
 	"fmt"
 	"os"
 	"regexp"
@@ -56,7 +55,7 @@ var _ = Describe("Fragmentation", func() {
 	})
 
 	AfterEach(func() {
-		filesystem.CleanupDir(config.FragmentsDir)
+		cleanupDir(config.FragmentsDir)
 	})
 
 	It("should do file fragmentation successfully", func() {
@@ -236,4 +235,11 @@ func findFragmentFile(files []os.DirEntry, fileName string) string {
 	}
 
 	return ""
+}
+
+func cleanupDir(dirPath string) {
+	err := os.RemoveAll(dirPath)
+	if err != nil {
+		Fail(err.Error())
+	}
 }

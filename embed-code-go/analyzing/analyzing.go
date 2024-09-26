@@ -12,25 +12,26 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-const analyticsDir = "./build/analytics"
-const embeddingsNotFoundFile = "embeddings-not-found-files.txt"
-const embeddingChangedFile = "embeddings-changed-files.txt"
+const (
+	analyticsDir           = "./build/analytics"
+	embeddingsNotFoundFile = "embeddings-not-found-files.txt"
+	embeddingChangedFile   = "embeddings-changed-files.txt"
+	// Represents read and write permissions for the owner of the file, and read-only permissions
+	// for group and others.
+	permission = 0755
+)
 
-// Represents read and write permissions for the owner of the file, and read-only permissions
-// for group and others.
-const permission = 0755
-
-// Analyzes all documentation files.
-//
-// If any error occurs during embedding, it is written to the analytics file with all
-// the needed information.
+// AnalyzeAll analyzes all documentation files. If any error occurs during embedding, it is written
+// to the analytics file with all the needed information.
 //
 // config — a configuration for embedding.
 func AnalyzeAll(config configuration.Configuration) {
 	docFiles := findDocumentationFiles(config)
 	changedEmbeddings, problemEmbeddings := extractAnalyticsForDocs(config, docFiles)
 
-	os.MkdirAll(analyticsDir, permission)
+	if err := os.MkdirAll(analyticsDir, permission); err != nil {
+		panic(err)
+	}
 	files.WriteLinesToFile(pathToFile(embeddingChangedFile), changedEmbeddings)
 	files.WriteLinesToFile(pathToFile(embeddingsNotFoundFile), problemEmbeddings)
 }

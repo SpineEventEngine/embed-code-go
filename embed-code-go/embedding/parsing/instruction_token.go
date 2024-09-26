@@ -36,7 +36,7 @@ type EmbedInstructionTokenState struct{}
 func (e EmbedInstructionTokenState) Recognize(context Context) bool {
 	line := context.CurrentLine()
 	isStatement := strings.HasPrefix(strings.TrimSpace(line), EmbeddingTag)
-	if context.Embedding == nil && !context.ReachedEOF() && isStatement {
+	if context.EmbeddingInstruction == nil && !context.ReachedEOF() && isStatement {
 		return true
 	}
 
@@ -54,7 +54,7 @@ func (e EmbedInstructionTokenState) Recognize(context Context) bool {
 func (e EmbedInstructionTokenState) Accept(context *Context,
 	config configuration.Configuration) error {
 	var instructionBody []string
-	for !context.ReachedEOF() && context.Embedding == nil {
+	for !context.ReachedEOF() && context.EmbeddingInstruction == nil {
 		instructionBody = append(instructionBody, context.CurrentLine())
 
 		instruction, err := FromXML(strings.Join(instructionBody, ""), config)
@@ -65,7 +65,7 @@ func (e EmbedInstructionTokenState) Accept(context *Context,
 		context.Result = append(context.Result, context.CurrentLine())
 		context.ToNextLine()
 	}
-	if context.Embedding == nil {
+	if context.EmbeddingInstruction == nil {
 		return fmt.Errorf("failed to parse an embedding instruction. Context: %v", context)
 	}
 

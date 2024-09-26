@@ -34,7 +34,7 @@ type BlankLineState struct{}
 func (b BlankLineState) Recognize(context Context) bool {
 	isEmptyString := strings.TrimSpace(context.CurrentLine()) == ""
 	if !context.ReachedEOF() && isEmptyString {
-		return !context.CodeFenceStarted && context.Embedding != nil
+		return !context.CodeFenceStarted && context.EmbeddingInstruction != nil
 	}
 
 	return false

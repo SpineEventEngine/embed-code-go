@@ -21,47 +21,43 @@ package indent_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
-
 	"embed-code/embed-code-go/indent"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-type IndentTestSuite struct {
-	suite.Suite
+func TestIndent(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Data Suite")
 }
 
-func (suite *IndentTestSuite) TestNoSpaces() {
-	testLines := []string{"", "foo", "bar", "", "baz", ""}
+var _ = Describe("Indent", func() {
 
-	assert.Equal(suite.T(), 0, indent.MaxCommonIndentation(testLines))
-}
+	It("should not find indentations", func() {
+		testLines := []string{"", "foo", "bar", "", "baz", ""}
 
-func (suite *IndentTestSuite) TestNoLines() {
-	testLines := []string{}
+		Expect(indent.MaxCommonIndentation(testLines)).Should(BeZero())
+	})
 
-	assert.Equal(suite.T(), 0, indent.MaxCommonIndentation(testLines))
-}
+	It("should not find indentations as the given lines asre nil", func() {
+		var testLines []string
 
-func (suite *IndentTestSuite) TestOnlyEmptyLines() {
-	testLines := []string{"", "    ", ""}
+		Expect(indent.MaxCommonIndentation(testLines)).Should(BeZero())
+	})
 
-	assert.Equal(suite.T(), 0, indent.MaxCommonIndentation(testLines))
-}
+	It("should properly find indentations", func() {
+		testLines := []string{"", "  foo", "    bar", "", "", "  baz"}
+		expectedIndents := 2
 
-func (suite *IndentTestSuite) TestTwoIndents() {
-	testLines := []string{"", "  foo", "    bar", "", "", "  baz"}
+		Expect(indent.MaxCommonIndentation(testLines)).Should(Equal(expectedIndents))
+	})
 
-	assert.Equal(suite.T(), 2, indent.MaxCommonIndentation(testLines))
-}
+	It("should properly cut indentations", func() {
+		testLines := []string{"", "  foo", "    bar", "", "", "  baz"}
+		changedLines := indent.CutIndent(testLines, 2)
 
-func (suite *IndentTestSuite) TestCutIndent() {
-	testLines := []string{"", "  foo", "    bar", "", "", "  baz"}
-	testLinesChanged := indent.CutIndent(testLines, 2)
+		Expect(changedLines).ShouldNot(Equal(testLines))
+	})
 
-	assert.NotEqual(suite.T(), testLines, testLinesChanged)
-}
-
-func TestIndentTestSuite(t *testing.T) {
-	suite.Run(t, new(IndentTestSuite))
-}
+})

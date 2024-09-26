@@ -50,6 +50,9 @@ func (c CodeFenceStartState) Accept(context *Context, _ configuration.Configurat
 	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
 	context.CodeFenceIndentation = leadingSpaces
 	context.ToNextLine()
+	// As we accepted this state and moved to the next line, we assume that the code lines
+	// start here.
+	context.SetCodeStart()
 
 	return nil
 }

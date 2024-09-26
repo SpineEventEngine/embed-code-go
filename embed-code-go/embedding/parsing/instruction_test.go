@@ -264,7 +264,12 @@ var _ = Describe("Instruction", func() {
 		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 		instruction := createInstructionFromXML(xmlString, config)
 
-		Expect(func() { instruction.Content() }).To(Panic())
+		Expect(func() {
+			_, err := instruction.Content()
+			if err != nil {
+				return
+			}
+		}).To(Panic())
 	})
 
 	It("should panic when end glob does not match", func() {
@@ -275,7 +280,12 @@ var _ = Describe("Instruction", func() {
 		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 		instruction := createInstructionFromXML(xmlString, config)
 
-		Expect(func() { instruction.Content() }).To(Panic())
+		Expect(func() {
+			_, err := instruction.Content()
+			if err != nil {
+				return
+			}
+		}).To(Panic())
 	})
 })
 
