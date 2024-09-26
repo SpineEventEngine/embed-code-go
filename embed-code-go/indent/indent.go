@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-// Finds the maximal common indentation of given lines.
+// MaxCommonIndentation finds the maximal common indentation of given lines.
 //
 // If all given lines are empty, contain only whitespace, or there are no lines at all,
 // returns zero.
@@ -50,7 +50,7 @@ func MaxCommonIndentation(lines []string) int {
 	return indent
 }
 
-// Reduces indentation to given redundantSpaces amount.
+// CutIndent reduces indentation to given redundantSpaces amount.
 //
 // lines — a list of strings representing the lines to process.
 //
