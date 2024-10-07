@@ -117,13 +117,13 @@ func AnalyzeCodeSamples(config configuration.Configuration) {
 func ReadArgs() Config {
 	codePath := flag.String("code-path", "", "a path to a root directory with code files")
 	docsPath := flag.String("docs-path", "", "a path to a root directory with docs files")
-	codeIncludes := flag.String("code-includes", "**/*.*",
+	codeIncludes := flag.String("code-includes", "",
 		"a comma-separated string of glob patterns for code files to include")
-	docIncludes := flag.String("doc-includes", "**/*.md,**/*.html",
+	docIncludes := flag.String("doc-includes", "",
 		"a comma-separated string of glob patterns for docs files to include")
-	fragmentsPath := flag.String("fragments-path", "./build/fragments",
+	fragmentsPath := flag.String("fragments-path", "",
 		"a path to a directory where fragmented code is stored")
-	separator := flag.String("separator", "...",
+	separator := flag.String("separator", "",
 		"a string that's inserted between multiple partitions of a single fragment")
 	configPath := flag.String("config-path", "", "a path to a yaml configuration file")
 	mode := flag.String("mode", "",
