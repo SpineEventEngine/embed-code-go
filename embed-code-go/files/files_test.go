@@ -45,6 +45,13 @@ var _ = Describe("Files actions", func() {
 			Expect(files.IsDirExist(currentDir)).Should(BeTrue())
 		})
 
+		It("should return true as the referenced directory exists (glob format)", func() {
+			dir := "../test"
+
+			Expect(files.IsDirExist(dir)).Error().ShouldNot(HaveOccurred())
+			Expect(files.IsDirExist(dir)).Should(BeTrue())
+		})
+
 		It("should return false as the referenced path does not exist", func() {
 			filePath := "/a/path/to/nowhere"
 
@@ -68,6 +75,13 @@ var _ = Describe("Files actions", func() {
 		It("should return true as the referenced file exists", func() {
 			currentDir, _ := os.Getwd()
 			filePath := filepath.Dir(currentDir) + "/test/resources/config_files/correct_config.yml"
+
+			Expect(files.IsFileExist(filePath)).Error().ShouldNot(HaveOccurred())
+			Expect(files.IsFileExist(filePath)).Should(BeTrue())
+		})
+
+		It("should return true as the referenced file exists (glob format)", func() {
+			filePath := "../test/resources/config_files/correct_config.yml"
 
 			Expect(files.IsFileExist(filePath)).Error().ShouldNot(HaveOccurred())
 			Expect(files.IsFileExist(filePath)).Should(BeTrue())
