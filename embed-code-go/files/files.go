@@ -21,11 +21,13 @@ package files
 
 import (
 	"bufio"
-	"embed-code/embed-code-go/configuration"
 	"fmt"
-	"github.com/bmatcuk/doublestar/v4"
 	"os"
 	"path/filepath"
+
+	"embed-code/embed-code-go/configuration"
+
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 const (
