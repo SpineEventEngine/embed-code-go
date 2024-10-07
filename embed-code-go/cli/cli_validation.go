@@ -139,7 +139,7 @@ func validatePathSet(path string) (bool, error) {
 			return true, err
 		}
 		if !exists {
-			return true, errors.New("config file is not exist")
+			return true, fmt.Errorf("the given path %s is not exist", path)
 		}
 
 		return true, nil
