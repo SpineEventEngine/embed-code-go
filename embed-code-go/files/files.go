@@ -21,10 +21,13 @@ package files
 
 import (
 	"bufio"
-	"embed-code/embed-code-go/configuration"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"embed-code/embed-code-go/configuration"
+
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 const (
@@ -146,7 +149,19 @@ func IsDirExist(path string) (bool, error) {
 // Reports whether the given path is valid and exist in the file system. Also returns a FileInfo if
 // the path (relative or absolute) exists.
 func validatePathExists(path string) (bool, os.FileInfo, error) {
-	info, err := os.Stat(path)
+	// Getting matches for the given path if it is a glob format. Otherwise, does nothing.
+	matches, err := doublestar.FilepathGlob(path)
+
+	if len(matches) == 0 {
+		return false, nil, nil
+	}
+
+	if err != nil {
+		return false, nil, err
+	}
+
+	firstMatch := matches[0]
+	info, err := os.Stat(firstMatch)
 
 	if err != nil {
 		if os.IsNotExist(err) {

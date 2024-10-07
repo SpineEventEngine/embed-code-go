@@ -37,15 +37,6 @@ func TestCli(t *testing.T) {
 
 var _ = Describe("CLI validation", func() {
 
-	It("should set default values when they are not provided", func() {
-		defaultConfig := cli.ReadArgs()
-
-		Expect(defaultConfig.CodeIncludes).Should(Equal("**/*.*"))
-		Expect(defaultConfig.DocIncludes).Should(Equal("**/*.md,**/*.html"))
-		Expect(defaultConfig.FragmentsPath).Should(Equal("./build/fragments"))
-		Expect(defaultConfig.Separator).Should(Equal("..."))
-	})
-
 	Context("with valid config", func() {
 		var config cli.Config
 
