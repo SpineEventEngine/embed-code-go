@@ -169,13 +169,23 @@ func WriteFragmentFiles(config config.Configuration) error {
 	codeRoot := config.CodeRoot
 	for _, rule := range includes {
 		pattern := fmt.Sprintf("%s/%s", codeRoot, rule)
-		codeFiles, err := doublestar.FilepathGlob(pattern)
+		matches, err := doublestar.FilepathGlob(pattern)
 		if err != nil {
 			return err
 		}
-		for _, codeFile := range codeFiles {
-			if err = writeFragments(config, codeFile); err != nil {
-				return err
+		for _, match := range matches {
+			err = filepath.Walk(match, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if err := writeFragments(config, match); err != nil {
+					return err
+				}
+				return nil
+			})
+
+			if err != nil {
+				panic(err)
 			}
 		}
 	}
