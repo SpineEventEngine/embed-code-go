@@ -93,6 +93,10 @@ func (c *Context) CurrentLine() string {
 	return c.source[c.lineIndex]
 }
 
+func (c *Context) CurrentIndex() int {
+	return c.lineIndex + 1
+}
+
 // ToNextLine increments ParsingContext.lineIndex field by 1.
 func (c *Context) ToNextLine() {
 	c.lineIndex++
