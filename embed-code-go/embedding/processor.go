@@ -21,7 +21,6 @@ package embedding
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
@@ -69,14 +68,14 @@ func NewProcessorWithTransitions(docFile string, config configuration.Configurat
 func (p Processor) Embed() error {
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
-		return UnexpectedProcessingError{Context: context}
+		return &UnexpectedProcessingError{context, err}
 	}
 
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		data := []byte(strings.Join(context.GetResult(), "\n"))
 		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.ReadWriteExecPermission))
 		if err != nil {
-			return UnexpectedProcessingError{context}
+			return &UnexpectedProcessingError{context, err}
 		}
 	}
 
@@ -91,7 +90,7 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 	context, err := p.fillEmbeddingContext()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
-		return changedEmbeddings, UnexpectedProcessingError{context}
+		return changedEmbeddings, &UnexpectedProcessingError{context, err}
 	}
 
 	return changedEmbeddings, nil
@@ -118,25 +117,15 @@ func EmbedAll(config configuration.Configuration) {
 	docPatterns := config.DocIncludes
 	for _, pattern := range docPatterns {
 		globString := strings.Join([]string{documentationRoot, pattern}, "/")
-		matches, _ := doublestar.FilepathGlob(globString)
+		matches, err := doublestar.FilepathGlob(globString)
+		if err != nil {
+			panic(err)
+		}
 		for _, match := range matches {
-
-			err := filepath.Walk(match, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				processor := NewProcessor(match, config)
-				err = processor.Embed()
-				if err != nil {
-					return err
-				}
-				return nil
-			})
-
-			if err != nil {
+			processor := NewProcessor(match, config)
+			if err = processor.Embed(); err != nil {
 				panic(err)
 			}
-
 		}
 	}
 }
@@ -157,7 +146,7 @@ func CheckUpToDate(config configuration.Configuration) {
 // the result. Returns a parsing.Context and an error if any occurs.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	context := parsing.NewContext(p.DocFilePath)
-	errorStr := "an error was occurred during embedding construction for doc file `%s` at line %v"
+	errorStr := "unable to embed construction for doc file `%s` at line %v: %s"
 
 	var currentState parsing.State
 	currentState = parsing.Start
@@ -166,12 +155,13 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	for currentState != finishState {
 		accepted, newState, err := p.moveToNextState(&currentState, &context)
 		if err != nil {
-			return parsing.Context{}, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex())
+			return parsing.Context{}, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(),
+				err)
 		}
 		if !accepted {
 			currentState = &parsing.RegularLineState{}
 			context.ResolveUnacceptedEmbedding()
-			return context, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex())
+			return context, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(), err)
 		}
 		currentState = *newState
 	}
@@ -212,22 +202,10 @@ func findChangedFiles(config configuration.Configuration) []string {
 			panic(err)
 		}
 		for _, match := range matches {
-
-			err := filepath.Walk(match, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				upToDate := NewProcessor(match, config).IsUpToDate()
-				if !upToDate {
-					changedFiles = append(changedFiles, match)
-				}
-				return nil
-			})
-
-			if err != nil {
-				fmt.Println("error walking through directory:", err)
+			upToDate := NewProcessor(match, config).IsUpToDate()
+			if !upToDate {
+				changedFiles = append(changedFiles, match)
 			}
-
 		}
 	}
 

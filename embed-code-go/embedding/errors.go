@@ -37,11 +37,13 @@ func (e *UnexpectedDiffError) Error() string {
 // UnexpectedProcessingError describes an error which occurs if something goes wrong
 // during embedding.
 type UnexpectedProcessingError struct {
-	Context parsing.Context
+	Context      parsing.Context
+	initialError error
 }
 
-func (e UnexpectedProcessingError) Error() string {
-	errorString := fmt.Sprintf("embedding error for file `%s`.", e.Context.MarkdownFilePath)
+func (e *UnexpectedProcessingError) Error() string {
+	errorString := fmt.Sprintf("embedding error for file `%s`: %s.",
+		e.Context.MarkdownFilePath, e.initialError)
 
 	if len(e.Context.EmbeddingsNotFound) > 0 {
 		embeddingsNotFoundStr := "\nMissing embeddings: \n"
