@@ -123,10 +123,12 @@ func validateConfig(config Config) error {
 func validateOptionalParamsSet(config Config) bool {
 	isCodeIncludesSet := isNotEmpty(config.CodeIncludes)
 	isDocIncludesSet := isNotEmpty(config.DocIncludes)
+	isDocExcludesSet := isNotEmpty(config.DocExcludes)
 	isSeparatorSet := isNotEmpty(config.Separator)
 	isFragmentPathSet := isNotEmpty(config.FragmentsPath)
 
-	return isCodeIncludesSet || isDocIncludesSet || isFragmentPathSet || isSeparatorSet
+	return isCodeIncludesSet || isDocIncludesSet || isFragmentPathSet ||
+		isSeparatorSet || isDocExcludesSet
 }
 
 // Reports whether path is set or not. If it is set, checks if such path exists in a file system.
