@@ -113,19 +113,11 @@ func (p Processor) IsUpToDate() bool {
 //
 // config — a configuration for embedding.
 func EmbedAll(config configuration.Configuration) {
-	documentationRoot := config.DocumentationRoot
-	docPatterns := config.DocIncludes
-	for _, pattern := range docPatterns {
-		globString := strings.Join([]string{documentationRoot, pattern}, "/")
-		matches, err := doublestar.FilepathGlob(globString)
-		if err != nil {
+	requiredDocPaths := requiredDocs(config)
+	for _, doc := range requiredDocPaths {
+		processor := NewProcessor(doc, config)
+		if err := processor.Embed(); err != nil {
 			panic(err)
-		}
-		for _, match := range matches {
-			processor := NewProcessor(match, config)
-			if err = processor.Embed(); err != nil {
-				panic(err)
-			}
 		}
 	}
 }
@@ -191,23 +183,67 @@ func (p Processor) moveToNextState(state *parsing.State, context *parsing.Contex
 //
 // config — a configuration for embedding.
 func findChangedFiles(config configuration.Configuration) []string {
-	documentationRoot := config.DocumentationRoot
-	docPatterns := config.DocIncludes
+	requiredDocPaths := requiredDocs(config)
 	var changedFiles []string
 
-	for _, pattern := range docPatterns {
-		globString := strings.Join([]string{documentationRoot, pattern}, "/")
-		matches, err := doublestar.FilepathGlob(globString)
-		if err != nil {
-			panic(err)
-		}
-		for _, match := range matches {
-			upToDate := NewProcessor(match, config).IsUpToDate()
-			if !upToDate {
-				changedFiles = append(changedFiles, match)
-			}
+	for _, doc := range requiredDocPaths {
+		upToDate := NewProcessor(doc, config).IsUpToDate()
+		if !upToDate {
+			changedFiles = append(changedFiles, doc)
 		}
 	}
 
 	return changedFiles
+}
+
+func requiredDocs(config configuration.Configuration) []string {
+	documentationRoot := config.DocumentationRoot
+	includedPatterns := config.DocIncludes
+	excludedPatterns := config.DocExcludes
+
+	includedDocs, err := getFilesByPatterns(documentationRoot, includedPatterns)
+	if err != nil {
+		panic(err)
+	}
+
+	excludedDocs, err := getFilesByPatterns(documentationRoot, excludedPatterns)
+	if err != nil {
+		panic(err)
+	}
+	if len(excludedDocs) == 0 {
+		return includedDocs
+	}
+
+	return removeElements(includedDocs, excludedDocs)
+}
+
+func getFilesByPatterns(root string, patterns []string) ([]string, error) {
+	var result []string
+	for _, pattern := range patterns {
+		globString := strings.Join([]string{root, pattern}, "/")
+		matches, err := doublestar.FilepathGlob(globString)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, matches...)
+	}
+
+	return result, nil
+}
+
+// Removes elements of the second list from the first one.
+func removeElements(first, second []string) []string {
+	firstMap := make(map[string]struct{})
+	for _, value := range first {
+		firstMap[value] = struct{}{}
+	}
+
+	var result []string
+	for _, val := range second {
+		if _, exists := firstMap[val]; !exists {
+			result = append(result, val)
+		}
+	}
+
+	return result
 }
