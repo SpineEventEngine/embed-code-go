@@ -69,7 +69,7 @@ var _ = Describe("Embedding", func() {
 		docPath := fmt.Sprintf("%s/whole-file-fragment.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 
-		Expect(processor.Embed()).ShouldNot(HaveOccurred())
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
@@ -77,7 +77,7 @@ var _ = Describe("Embedding", func() {
 		docPath := fmt.Sprintf("%s/no-embedding-doc.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 
-		Expect(processor.Embed()).ShouldNot(HaveOccurred())
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
@@ -105,6 +105,18 @@ var _ = Describe("Embedding", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-tag.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+
+		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
+
+	It("should successfully embed to a file in a nested dir", func() {
+		docPath := fmt.Sprintf("%s/nested-dir-1/nested-dir-2/nested-dir-doc.md",
+			config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(func() {
+			embedding.EmbedAll(config)
+		}).NotTo(Panic())
 
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
