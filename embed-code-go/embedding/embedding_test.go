@@ -81,20 +81,13 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
+	// TODO:olena-zmiiova:https://github.com/SpineEventEngine/embed-code/issues/59
 	It("should have error as it has invalid transition map", func() {
 		docPath := fmt.Sprintf("%s/split-lines.md", config.DocumentationRoot)
 
 		falseTransitions := parsing.TransitionMap{
-			parsing.Start: {parsing.RegularLine, parsing.Finish,
-				parsing.EmbedInstruction},
-			parsing.RegularLine: {parsing.Finish, parsing.EmbedInstruction,
-				parsing.RegularLine},
-			parsing.EmbedInstruction: {parsing.CodeFenceStart, parsing.BlankLine},
-			parsing.BlankLine:        {parsing.CodeFenceStart, parsing.BlankLine},
-			parsing.CodeFenceStart:   {parsing.CodeFenceEnd, parsing.CodeSampleLine},
-			parsing.CodeSampleLine:   {parsing.CodeFenceEnd, parsing.CodeSampleLine},
-			parsing.CodeFenceEnd: {parsing.Finish, parsing.EmbedInstruction,
-				parsing.RegularLine},
+			parsing.Start:       {parsing.Finish, parsing.EmbedInstruction, parsing.RegularLine},
+			parsing.RegularLine: {parsing.CodeFenceEnd},
 		}
 
 		falseProcessor := embedding.NewProcessorWithTransitions(docPath, config, falseTransitions)
