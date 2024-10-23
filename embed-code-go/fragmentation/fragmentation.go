@@ -174,19 +174,10 @@ func WriteFragmentFiles(config config.Configuration) error {
 			return err
 		}
 		for _, match := range matches {
-			//err = filepath.Walk(match, func(path string, info os.FileInfo, err error) error {
-			//	if err != nil {
-			//		return err
-			//	}
-			if err := writeFragments(config, match); err != nil {
+			if err = writeFragments(config, match); err != nil {
 				return err
 			}
 			return nil
-			//})
-
-			//if err != nil {
-			//	panic(err)
-			//}
 		}
 	}
 
