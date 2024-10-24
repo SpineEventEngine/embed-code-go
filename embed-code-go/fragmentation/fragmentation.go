@@ -169,16 +169,14 @@ func WriteFragmentFiles(config config.Configuration) error {
 	codeRoot := config.CodeRoot
 	for _, rule := range includes {
 		pattern := fmt.Sprintf("%s/%s", codeRoot, rule)
-		matches, err := doublestar.FilepathGlob(pattern)
+		codeFiles, err := doublestar.FilepathGlob(pattern)
 		if err != nil {
 			return err
 		}
-		for _, match := range matches {
-			if err = writeFragments(config, match); err != nil {
+		for _, codeFile := range codeFiles {
+			if err = writeFragments(config, codeFile); err != nil {
 				return err
 			}
-
-			return nil
 		}
 	}
 
