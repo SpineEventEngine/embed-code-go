@@ -38,17 +38,19 @@ import (
 //
 // Config — a configuration for embedding.
 type Processor struct {
-	DocFilePath    string
-	Config         configuration.Configuration
-	TransitionsMap parsing.TransitionMap
+	DocFilePath      string
+	Config           configuration.Configuration
+	TransitionsMap   parsing.TransitionMap
+	requiredDocPaths []string
 }
 
 // NewProcessor creates and returns new Processor with given docFile and config.
 func NewProcessor(docFile string, config configuration.Configuration) Processor {
 	return Processor{
-		DocFilePath:    docFile,
-		Config:         config,
-		TransitionsMap: parsing.Transitions,
+		DocFilePath:      docFile,
+		Config:           config,
+		TransitionsMap:   parsing.Transitions,
+		requiredDocPaths: requiredDocs(config),
 	}
 }
 
@@ -57,9 +59,10 @@ func NewProcessor(docFile string, config configuration.Configuration) Processor 
 func NewProcessorWithTransitions(docFile string, config configuration.Configuration,
 	transitions parsing.TransitionMap) Processor {
 	return Processor{
-		DocFilePath:    docFile,
-		Config:         config,
-		TransitionsMap: transitions,
+		DocFilePath:      docFile,
+		Config:           config,
+		TransitionsMap:   transitions,
+		requiredDocPaths: requiredDocs(config),
 	}
 }
 
@@ -67,8 +70,7 @@ func NewProcessorWithTransitions(docFile string, config configuration.Configurat
 //
 // If any problems faced, an error is returned.
 func (p Processor) Embed() error {
-	requiredDocPaths := requiredDocs(p.Config)
-	if !slices.Contains(requiredDocPaths, p.DocFilePath) {
+	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
 		return nil
 	}
 
@@ -93,8 +95,7 @@ func (p Processor) Embed() error {
 //
 // If any problems during the embedding construction faced, an error is returned.
 func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
-	requiredDocPaths := requiredDocs(p.Config)
-	if !slices.Contains(requiredDocPaths, p.DocFilePath) {
+	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
 		return nil, nil
 	}
 	context, err := p.fillEmbeddingContext()
@@ -108,8 +109,7 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 
 // IsUpToDate reports whether the embedding of the target markdown is up-to-date with the code file.
 func (p Processor) IsUpToDate() bool {
-	requiredDocPaths := requiredDocs(p.Config)
-	if !slices.Contains(requiredDocPaths, p.DocFilePath) {
+	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
 		return true
 	}
 	context, err := p.fillEmbeddingContext()
@@ -167,6 +167,7 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 		if !accepted {
 			currentState = &parsing.RegularLineState{}
 			context.ResolveUnacceptedEmbedding()
+
 			return context, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(), err)
 		}
 		currentState = *newState

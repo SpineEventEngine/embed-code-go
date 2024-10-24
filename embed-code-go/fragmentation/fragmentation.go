@@ -177,6 +177,7 @@ func WriteFragmentFiles(config config.Configuration) error {
 			if err = writeFragments(config, match); err != nil {
 				return err
 			}
+
 			return nil
 		}
 	}
