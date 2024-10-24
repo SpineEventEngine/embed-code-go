@@ -49,6 +49,7 @@ The available arguments are:
   * `-docs-path`: optional, path to the root directory containing documentation files;
   * `-config-path`: optional, path to a YAML configuration file that contains the code_root and docs_root fields;
   * `-code-includes`: optional, a comma-separated string of glob patterns for code files to include. For example: `"**/*.java,**/*.gradle"`. Default value is `"**/*.*"`;
+  * `-code-excludes`: optional, a comma-separated string of glob patterns for docs files to exclude from the embedding. For example: `"old-docs/**/*.md,old-guides/*.html"`. It is not set by default;
   * `-doc-includes`: optional, a comma-separated string of glob patterns for docs files to include. For example: `"docs/**/*.md,guides/*.html"`. Default value is `"**/*.md,**/*.html"`;
   * `-fragments-path`: optional, a path to a directory with code fragments. Default value is `./build/fragments`;
   * `-separator`: optional, a string which is used as a separator between code fragments. Default value is `...`.
@@ -75,6 +76,7 @@ The available arguments for the config file are:
   * `docs-path`: mandatory;
   * `config-path`: optional;
   * `code-includes`: optional;
+  * `code-excludes`: optional;
   * `doc-includes`: optional;
   * `fragments-path`: optional;
   * `separator`: optional.
