@@ -69,6 +69,10 @@ import (
 //   - doc-includes — a comma-separated string of glob patterns for docs files to include.
 //     For example:
 //     "docs/**/*.md,guides/*.html". Default value is "**/*.md,**/*.html";
+//   - doc-excludes - a comma-separated string of glob patterns for docs files to exclude from
+//     the embedding.
+//     For example:
+//     "old-docs/**/*.md,old-guides/*.html". It is not set by default;
 //   - fragments-path — a path to a directory with code fragments. Default value is
 //     "./build/fragments";
 //   - separator — a string which is used as a separator between code fragments. Default value

@@ -21,6 +21,7 @@ package embedding
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
@@ -66,6 +67,11 @@ func NewProcessorWithTransitions(docFile string, config configuration.Configurat
 //
 // If any problems faced, an error is returned.
 func (p Processor) Embed() error {
+	requiredDocPaths := requiredDocs(p.Config)
+	if !slices.Contains(requiredDocPaths, p.DocFilePath) {
+		return nil
+	}
+
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
 		return &UnexpectedProcessingError{context, err}
@@ -87,6 +93,10 @@ func (p Processor) Embed() error {
 //
 // If any problems during the embedding construction faced, an error is returned.
 func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
+	requiredDocPaths := requiredDocs(p.Config)
+	if !slices.Contains(requiredDocPaths, p.DocFilePath) {
+		return nil, nil
+	}
 	context, err := p.fillEmbeddingContext()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
@@ -98,6 +108,10 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 
 // IsUpToDate reports whether the embedding of the target markdown is up-to-date with the code file.
 func (p Processor) IsUpToDate() bool {
+	requiredDocPaths := requiredDocs(p.Config)
+	if !slices.Contains(requiredDocPaths, p.DocFilePath) {
+		return true
+	}
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
 		panic(err)
@@ -185,7 +199,6 @@ func (p Processor) moveToNextState(state *parsing.State, context *parsing.Contex
 func findChangedFiles(config configuration.Configuration) []string {
 	requiredDocPaths := requiredDocs(config)
 	var changedFiles []string
-
 	for _, doc := range requiredDocPaths {
 		upToDate := NewProcessor(doc, config).IsUpToDate()
 		if !upToDate {
@@ -214,7 +227,7 @@ func requiredDocs(config configuration.Configuration) []string {
 		return includedDocs
 	}
 
-	return removeElements(includedDocs, excludedDocs)
+	return removeElements(excludedDocs, includedDocs)
 }
 
 func getFilesByPatterns(root string, patterns []string) ([]string, error) {
@@ -239,9 +252,9 @@ func removeElements(first, second []string) []string {
 	}
 
 	var result []string
-	for _, val := range second {
-		if _, exists := firstMap[val]; !exists {
-			result = append(result, val)
+	for _, value := range second {
+		if _, exists := firstMap[value]; !exists {
+			result = append(result, value)
 		}
 	}
 

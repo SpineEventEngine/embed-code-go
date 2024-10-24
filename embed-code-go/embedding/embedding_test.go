@@ -113,6 +113,16 @@ var _ = Describe("Embedding", func() {
 
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
+
+	It("should not embed to a file matched the `code-excludes` pattern", func() {
+		config.DocExcludes = []string{"**/excluded-doc.*"}
+
+		docPath := fmt.Sprintf("%s/excluded-doc.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
 })
 
 func buildConfigWithPreparedFragments() configuration.Configuration {
