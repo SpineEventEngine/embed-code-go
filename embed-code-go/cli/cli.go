@@ -64,6 +64,7 @@ type Config struct {
 	DocsPath      string `yaml:"docs-path"`
 	CodeIncludes  string `yaml:"code-includes"`
 	DocIncludes   string `yaml:"doc-includes"`
+	DocExcludes   string `yaml:"doc-excludes"`
 	FragmentsPath string `yaml:"fragments-path"`
 	Separator     string `yaml:"separator"`
 	ConfigPath    string
@@ -121,6 +122,8 @@ func ReadArgs() Config {
 		"a comma-separated string of glob patterns for code files to include")
 	docIncludes := flag.String("doc-includes", "",
 		"a comma-separated string of glob patterns for docs files to include")
+	docExcludes := flag.String("doc-excludes", "",
+		"a comma-separated string of glob patterns for docs files to exclude")
 	fragmentsPath := flag.String("fragments-path", "",
 		"a path to a directory where fragmented code is stored")
 	separator := flag.String("separator", "",
@@ -136,6 +139,7 @@ func ReadArgs() Config {
 		DocsPath:      *docsPath,
 		CodeIncludes:  *codeIncludes,
 		DocIncludes:   *docIncludes,
+		DocExcludes:   *docExcludes,
 		FragmentsPath: *fragmentsPath,
 		Separator:     *separator,
 		ConfigPath:    *configPath,
@@ -158,6 +162,9 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	}
 	if isNotEmpty(configFields.DocIncludes) {
 		args.DocIncludes = configFields.DocIncludes
+	}
+	if isNotEmpty(configFields.DocExcludes) {
+		args.DocExcludes = configFields.DocExcludes
 	}
 	if isNotEmpty(configFields.FragmentsPath) {
 		args.FragmentsPath = configFields.FragmentsPath
@@ -182,6 +189,9 @@ func BuildEmbedCodeConfiguration(userArgs Config) configuration.Configuration {
 	}
 	if isNotEmpty(userArgs.DocIncludes) {
 		embedCodeConfig.DocIncludes = parseListArgument(userArgs.DocIncludes)
+	}
+	if isNotEmpty(userArgs.DocExcludes) {
+		embedCodeConfig.DocExcludes = parseListArgument(userArgs.DocExcludes)
 	}
 	if isNotEmpty(userArgs.FragmentsPath) {
 		embedCodeConfig.FragmentsDir = userArgs.FragmentsPath
