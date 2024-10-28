@@ -67,6 +67,18 @@ type Configuration struct {
 	// The default value is ["**/*.md", "**/*.html"].
 	DocIncludes []string
 
+	// DocExcludes is a list of patterns for filtering which we should not include for embedding
+	// instructions.
+	//
+	// The patterns are resolved relatively to the `documentation_root`.
+	//
+	// By the such a pattern, it can be both directories and files.
+	//
+	// For example, ["old-docs/**/*.md", "old-docs-v1/**/*"]
+	//
+	// Be the default, it is not set.
+	DocExcludes []string
+
 	// FragmentsDir is a directory where fragmented code is stored. A temporary directory that
 	// should not be tracked in VCS.
 	//

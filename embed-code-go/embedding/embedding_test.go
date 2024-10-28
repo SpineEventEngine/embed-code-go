@@ -69,7 +69,7 @@ var _ = Describe("Embedding", func() {
 		docPath := fmt.Sprintf("%s/whole-file-fragment.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 
-		Expect(processor.Embed()).ShouldNot(HaveOccurred())
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
@@ -77,24 +77,17 @@ var _ = Describe("Embedding", func() {
 		docPath := fmt.Sprintf("%s/no-embedding-doc.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 
-		Expect(processor.Embed()).ShouldNot(HaveOccurred())
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
+	// TODO:olena-zmiiova:https://github.com/SpineEventEngine/embed-code/issues/59
 	It("should have error as it has invalid transition map", func() {
 		docPath := fmt.Sprintf("%s/split-lines.md", config.DocumentationRoot)
 
 		falseTransitions := parsing.TransitionMap{
-			parsing.Start: {parsing.RegularLine, parsing.Finish,
-				parsing.EmbedInstruction},
-			parsing.RegularLine: {parsing.Finish, parsing.EmbedInstruction,
-				parsing.RegularLine},
-			parsing.EmbedInstruction: {parsing.CodeFenceStart, parsing.BlankLine},
-			parsing.BlankLine:        {parsing.CodeFenceStart, parsing.BlankLine},
-			parsing.CodeFenceStart:   {parsing.CodeFenceEnd, parsing.CodeSampleLine},
-			parsing.CodeSampleLine:   {parsing.CodeFenceEnd, parsing.CodeSampleLine},
-			parsing.CodeFenceEnd: {parsing.Finish, parsing.EmbedInstruction,
-				parsing.RegularLine},
+			parsing.Start:       {parsing.Finish, parsing.EmbedInstruction, parsing.RegularLine},
+			parsing.RegularLine: {parsing.CodeFenceEnd},
 		}
 
 		falseProcessor := embedding.NewProcessorWithTransitions(docPath, config, falseTransitions)
@@ -106,6 +99,28 @@ var _ = Describe("Embedding", func() {
 		processor := embedding.NewProcessor(docPath, config)
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
+		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
+
+	It("should successfully embed to a file in a nested dir", func() {
+		docPath := fmt.Sprintf("%s/nested-dir-1/nested-dir-2/nested-dir-doc.md",
+			config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(func() {
+			embedding.EmbedAll(config)
+		}).NotTo(Panic())
+
+		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
+
+	It("should not embed to a file matched the `code-excludes` pattern", func() {
+		config.DocExcludes = []string{"**/excluded-doc.*"}
+
+		docPath := fmt.Sprintf("%s/excluded-doc.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 })

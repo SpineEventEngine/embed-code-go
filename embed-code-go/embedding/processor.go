@@ -19,9 +19,9 @@
 package embedding
 
 import (
-	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
@@ -38,17 +38,19 @@ import (
 //
 // Config — a configuration for embedding.
 type Processor struct {
-	DocFilePath    string
-	Config         configuration.Configuration
-	TransitionsMap parsing.TransitionMap
+	DocFilePath      string
+	Config           configuration.Configuration
+	TransitionsMap   parsing.TransitionMap
+	requiredDocPaths []string
 }
 
 // NewProcessor creates and returns new Processor with given docFile and config.
 func NewProcessor(docFile string, config configuration.Configuration) Processor {
 	return Processor{
-		DocFilePath:    docFile,
-		Config:         config,
-		TransitionsMap: parsing.Transitions,
+		DocFilePath:      docFile,
+		Config:           config,
+		TransitionsMap:   parsing.Transitions,
+		requiredDocPaths: requiredDocs(config),
 	}
 }
 
@@ -57,9 +59,10 @@ func NewProcessor(docFile string, config configuration.Configuration) Processor 
 func NewProcessorWithTransitions(docFile string, config configuration.Configuration,
 	transitions parsing.TransitionMap) Processor {
 	return Processor{
-		DocFilePath:    docFile,
-		Config:         config,
-		TransitionsMap: transitions,
+		DocFilePath:      docFile,
+		Config:           config,
+		TransitionsMap:   transitions,
+		requiredDocPaths: requiredDocs(config),
 	}
 }
 
@@ -67,16 +70,20 @@ func NewProcessorWithTransitions(docFile string, config configuration.Configurat
 //
 // If any problems faced, an error is returned.
 func (p Processor) Embed() error {
+	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
+		return nil
+	}
+
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
-		return UnexpectedProcessingError{Context: context}
+		return &UnexpectedProcessingError{context, err}
 	}
 
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		data := []byte(strings.Join(context.GetResult(), "\n"))
 		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.ReadWriteExecPermission))
 		if err != nil {
-			return UnexpectedProcessingError{context}
+			return &UnexpectedProcessingError{context, err}
 		}
 	}
 
@@ -88,10 +95,13 @@ func (p Processor) Embed() error {
 //
 // If any problems during the embedding construction faced, an error is returned.
 func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
+	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
+		return nil, nil
+	}
 	context, err := p.fillEmbeddingContext()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
-		return changedEmbeddings, UnexpectedProcessingError{context}
+		return changedEmbeddings, &UnexpectedProcessingError{context, err}
 	}
 
 	return changedEmbeddings, nil
@@ -99,6 +109,9 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 
 // IsUpToDate reports whether the embedding of the target markdown is up-to-date with the code file.
 func (p Processor) IsUpToDate() bool {
+	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
+		return true
+	}
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
 		panic(err)
@@ -114,17 +127,11 @@ func (p Processor) IsUpToDate() bool {
 //
 // config — a configuration for embedding.
 func EmbedAll(config configuration.Configuration) {
-	documentationRoot := config.DocumentationRoot
-	docPatterns := config.DocIncludes
-	for _, pattern := range docPatterns {
-		globString := strings.Join([]string{documentationRoot, pattern}, "/")
-		documentationFiles, _ := doublestar.FilepathGlob(globString)
-		for _, documentationFile := range documentationFiles {
-			processor := NewProcessor(documentationFile, config)
-			err := processor.Embed()
-			if err != nil {
-				panic(err)
-			}
+	requiredDocPaths := requiredDocs(config)
+	for _, doc := range requiredDocPaths {
+		processor := NewProcessor(doc, config)
+		if err := processor.Embed(); err != nil {
+			panic(err)
 		}
 	}
 }
@@ -145,9 +152,7 @@ func CheckUpToDate(config configuration.Configuration) {
 // the result. Returns a parsing.Context and an error if any occurs.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	context := parsing.NewContext(p.DocFilePath)
-	errorStr := fmt.Sprintf(
-		"an error was occurred during embedding construction for doc file `%s`", p.DocFilePath)
-	var constructEmbeddingError = errors.New(errorStr)
+	errorStr := "unable to embed construction for doc file `%s` at line %v: %s"
 
 	var currentState parsing.State
 	currentState = parsing.Start
@@ -156,13 +161,14 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	for currentState != finishState {
 		accepted, newState, err := p.moveToNextState(&currentState, &context)
 		if err != nil {
-			return parsing.Context{}, constructEmbeddingError
+			return parsing.Context{}, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(),
+				err)
 		}
 		if !accepted {
 			currentState = &parsing.RegularLineState{}
 			context.ResolveUnacceptedEmbedding()
 
-			return context, constructEmbeddingError
+			return context, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(), err)
 		}
 		currentState = *newState
 	}
@@ -192,24 +198,66 @@ func (p Processor) moveToNextState(state *parsing.State, context *parsing.Contex
 //
 // config — a configuration for embedding.
 func findChangedFiles(config configuration.Configuration) []string {
-	documentationRoot := config.DocumentationRoot
-	docPatterns := config.DocIncludes
+	requiredDocPaths := requiredDocs(config)
 	var changedFiles []string
-
-	for _, pattern := range docPatterns {
-		globString := strings.Join([]string{documentationRoot, pattern}, "/")
-		matches, err := doublestar.FilepathGlob(globString)
-		if err != nil {
-			panic(err)
-		}
-
-		for _, documentationFile := range matches {
-			upToDate := NewProcessor(documentationFile, config).IsUpToDate()
-			if !upToDate {
-				changedFiles = append(changedFiles, documentationFile)
-			}
+	for _, doc := range requiredDocPaths {
+		upToDate := NewProcessor(doc, config).IsUpToDate()
+		if !upToDate {
+			changedFiles = append(changedFiles, doc)
 		}
 	}
 
 	return changedFiles
+}
+
+func requiredDocs(config configuration.Configuration) []string {
+	documentationRoot := config.DocumentationRoot
+	includedPatterns := config.DocIncludes
+	excludedPatterns := config.DocExcludes
+
+	includedDocs, err := getFilesByPatterns(documentationRoot, includedPatterns)
+	if err != nil {
+		panic(err)
+	}
+
+	excludedDocs, err := getFilesByPatterns(documentationRoot, excludedPatterns)
+	if err != nil {
+		panic(err)
+	}
+	if len(excludedDocs) == 0 {
+		return includedDocs
+	}
+
+	return removeElements(excludedDocs, includedDocs)
+}
+
+func getFilesByPatterns(root string, patterns []string) ([]string, error) {
+	var result []string
+	for _, pattern := range patterns {
+		globString := strings.Join([]string{root, pattern}, "/")
+		matches, err := doublestar.FilepathGlob(globString)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, matches...)
+	}
+
+	return result, nil
+}
+
+// Removes elements of the second list from the first one.
+func removeElements(first, second []string) []string {
+	firstMap := make(map[string]struct{})
+	for _, value := range first {
+		firstMap[value] = struct{}{}
+	}
+
+	var result []string
+	for _, value := range second {
+		if _, exists := firstMap[value]; !exists {
+			result = append(result, value)
+		}
+	}
+
+	return result
 }
