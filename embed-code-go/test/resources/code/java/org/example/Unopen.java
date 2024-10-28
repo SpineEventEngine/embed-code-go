@@ -20,10 +20,10 @@
 
 package org.example;
 
-public class Unclosed {
+public class Unopen {
 
     public static void main(String[] args) {
-        // #docfragment "Fragment that never ends"
         System.out.println("Hello world");
     }
+
 }
