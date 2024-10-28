@@ -19,9 +19,8 @@
 package main
 
 import (
-	"log/slog"
-
 	"embed-code/embed-code-go/cli"
+	"log/slog"
 )
 
 // The entry point for embed-code.
@@ -102,21 +101,24 @@ func main() {
 		return
 	}
 
-	config := cli.BuildEmbedCodeConfiguration(userArgs)
+	configs := cli.BuildEmbedCodeConfiguration(userArgs)
 
-	switch userArgs.Mode {
-	case cli.ModeCheck:
-		cli.CheckCodeSamples(config)
+	for _, config := range configs {
 
-		slog.Info("the documentation files are up-to-date with code files.")
-	case cli.ModeEmbed:
-		cli.EmbedCodeSamples(config)
-		cli.CheckCodeSamples(config)
+		switch userArgs.Mode {
+		case cli.ModeCheck:
+			cli.CheckCodeSamples(config)
 
-		slog.Info("the code fragments are successfully embedded.")
-	case cli.ModeAnalyze:
-		cli.AnalyzeCodeSamples(config)
+			slog.Info("the documentation files are up-to-date with code files.")
+		case cli.ModeEmbed:
+			cli.EmbedCodeSamples(config)
+			cli.CheckCodeSamples(config)
 
-		slog.Info("analysis is completed, analytics files can be found in /build/analytics folder")
+			slog.Info("the code fragments are successfully embedded.")
+		case cli.ModeAnalyze:
+			cli.AnalyzeCodeSamples(config)
+
+			slog.Info("analysis is completed, analytics files can be found in /build/analytics folder")
+		}
 	}
 }

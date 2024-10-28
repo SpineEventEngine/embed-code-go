@@ -20,6 +20,7 @@ package cli
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"strings"
 
@@ -60,15 +61,23 @@ import (
 //
 // Mode — defines the mode of embed-code execution.
 type Config struct {
-	CodePath      string `yaml:"code-path"`
-	DocsPath      string `yaml:"docs-path"`
-	CodeIncludes  string `yaml:"code-includes"`
-	DocIncludes   string `yaml:"doc-includes"`
-	DocExcludes   string `yaml:"doc-excludes"`
-	FragmentsPath string `yaml:"fragments-path"`
-	Separator     string `yaml:"separator"`
+	CodePath      string         `yaml:"code-path"`
+	DocsPath      string         `yaml:"docs-path"`
+	CodeIncludes  string         `yaml:"code-includes"`
+	DocIncludes   string         `yaml:"doc-includes"`
+	DocExcludes   string         `yaml:"doc-excludes"`
+	FragmentsPath string         `yaml:"fragments-path"`
+	Separator     string         `yaml:"separator"`
+	EmbedMappings []EmbedMapping `yaml:"embed-mappings"`
 	ConfigPath    string
 	Mode          string
+}
+
+// EmbedMapping is an additional optional list of configs, which will be executed together with the
+// main one. A config written here has higher priority and may overwrite the base one.
+type EmbedMapping struct {
+	CodePath string `yaml:"code-path"`
+	DocsPath string `yaml:"docs-path"`
 }
 
 const (
@@ -160,6 +169,9 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	if isNotEmpty(configFields.CodeIncludes) {
 		args.CodeIncludes = configFields.CodeIncludes
 	}
+	if len(configFields.EmbedMappings) > 0 {
+		args.EmbedMappings = configFields.EmbedMappings
+	}
 	if isNotEmpty(configFields.DocIncludes) {
 		args.DocIncludes = configFields.DocIncludes
 	}
@@ -179,7 +191,36 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 // BuildEmbedCodeConfiguration generates and returns a configuration based on provided userArgs.
 //
 // userArgs — a Config with user-provided args.
-func BuildEmbedCodeConfiguration(userArgs Config) configuration.Configuration {
+func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration {
+	embedCodeConfigs := make([]configuration.Configuration, 0)
+
+	excludedConfigs := make([]string, 0)
+	if len(userArgs.EmbedMappings) > 0 {
+		for _, mapping := range userArgs.EmbedMappings {
+			embedCodeConfig := configuration.NewConfiguration()
+			embedCodeConfig.CodeRoot = mapping.CodePath
+			embedCodeConfig.DocumentationRoot = mapping.DocsPath
+
+			// As the top config may overwrite those files, we need to exclude it from the embedding
+			excludedConfigs = append(excludedConfigs, fmt.Sprintf("%s**/*.*", mapping.DocsPath))
+			println(fmt.Sprintf("%s**/*.*", mapping.DocsPath))
+
+			if isNotEmpty(userArgs.CodeIncludes) {
+				embedCodeConfig.CodeIncludes = parseListArgument(userArgs.CodeIncludes)
+			}
+			if isNotEmpty(userArgs.DocIncludes) {
+				embedCodeConfig.DocIncludes = parseListArgument(userArgs.DocIncludes)
+			}
+			if isNotEmpty(userArgs.FragmentsPath) {
+				embedCodeConfig.FragmentsDir = userArgs.FragmentsPath
+			}
+			if isNotEmpty(userArgs.Separator) {
+				embedCodeConfig.Separator = userArgs.Separator
+			}
+			embedCodeConfigs = append(embedCodeConfigs, embedCodeConfig)
+		}
+	}
+
 	embedCodeConfig := configuration.NewConfiguration()
 	embedCodeConfig.CodeRoot = userArgs.CodePath
 	embedCodeConfig.DocumentationRoot = userArgs.DocsPath
@@ -192,6 +233,9 @@ func BuildEmbedCodeConfiguration(userArgs Config) configuration.Configuration {
 	}
 	if isNotEmpty(userArgs.DocExcludes) {
 		embedCodeConfig.DocExcludes = parseListArgument(userArgs.DocExcludes)
+		embedCodeConfig.DocExcludes = append(embedCodeConfig.DocExcludes, excludedConfigs...)
+	} else {
+		embedCodeConfig.DocExcludes = excludedConfigs
 	}
 	if isNotEmpty(userArgs.FragmentsPath) {
 		embedCodeConfig.FragmentsDir = userArgs.FragmentsPath
@@ -200,7 +244,8 @@ func BuildEmbedCodeConfiguration(userArgs Config) configuration.Configuration {
 		embedCodeConfig.Separator = userArgs.Separator
 	}
 
-	return embedCodeConfig
+	embedCodeConfigs = append(embedCodeConfigs, embedCodeConfig)
+	return embedCodeConfigs
 }
 
 // Returns a list of strings from given comma-separated string listArgument.

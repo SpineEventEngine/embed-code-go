@@ -77,6 +77,7 @@ func (f FragmentFile) Write(text string) {
 	byteStr := []byte(text)
 	filePath := f.absolutePath()
 	err := os.WriteFile(filePath, byteStr, os.FileMode(files.WritePermission))
+	println(filePath)
 	if err != nil {
 		panic(err)
 	}
