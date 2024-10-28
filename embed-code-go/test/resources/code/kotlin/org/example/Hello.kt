@@ -18,12 +18,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.example;
+// #docfragment "Without License"
+package org.example
 
-public class Unopen {
+// #docfragment "Hello class"
+class Hello {
 
-    public static void main(String[] args) {
-        System.out.println("Hello world");
+    // #docfragment "main()"
+    companion object {
+        fun main(args: Array<String>) {
+            println("Hello world")
+        }
     }
-    // #enddocfragment "Fragment that never started"
+    // #enddocfragment "main()"
 }
+// #enddocfragment "Without License", "Hello class"
+

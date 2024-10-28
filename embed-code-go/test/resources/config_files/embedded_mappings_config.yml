@@ -1,0 +1,5 @@
+code-path: "test/resources/code/java"
+docs-path: "test/resources/docs"
+embed-mappings:
+  - code-path: "test/resources/code/kotlin"
+    docs-path: "test/resources/docs/nested-dir-1"
