@@ -5,4 +5,3 @@ embed-mappings:
     docs-path: "test/resources/docs/nested-dir-1"
   - code-path: "test/resources/code/java"
     docs-path: "test/resources/docs/nested-dir-1/nested-dir-3"
-

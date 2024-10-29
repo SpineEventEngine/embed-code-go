@@ -7,7 +7,8 @@ Key features:
 - extracts code fragments from source files and embeds them into documentation files;
 - verifies that embedded code samples are up-to-date with the source code;
 - supports flexible configuration via command line arguments or a YAML configuration file;
-- allows embedding specific code fragments or code between start and end line patterns.
+- allows embedding specific code fragments or code between start and end line patterns;
+- allows mapping multiple code sources to destination documentation folders.
 
 # Running
 
@@ -79,7 +80,8 @@ The available arguments for the config file are:
   * `code-excludes`: optional;
   * `doc-includes`: optional;
   * `fragments-path`: optional;
-  * `separator`: optional.
+  * `separator`: optional;
+  * `embed-mappings`: optional, contains `code-path` and `docs-path` fields.
 
 These settings have the same role as the command-line arguments.
 

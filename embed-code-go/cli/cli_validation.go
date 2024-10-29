@@ -54,8 +54,8 @@ func ValidateConfig(config Config) error {
 // Returns an error with a validation message. If everything is ok, returns nil.
 func ValidateConfigFile(userConfig Config) error {
 	// Configs should be read from file, verifying if they are not set already.
-	isCodePathSet := isNotEmpty(userConfig.Mapping.CodePath)
-	isDocsPathSet := isNotEmpty(userConfig.Mapping.DocsPath)
+	isCodePathSet := isNotEmpty(userConfig.BaseCodePath)
+	isDocsPathSet := isNotEmpty(userConfig.BaseDocsPath)
 	areOptionalParamsSet := validateOptionalParamsSet(userConfig)
 	isOneOfRootsSet := isCodePathSet || isDocsPathSet
 
@@ -95,11 +95,11 @@ func validateMode(mode string) error {
 
 // Validates if config is set correctly and does not have mutually exclusive params set.
 func validateConfig(config Config) error {
-	isCodePathSet, err := validatePathSet(config.Mapping.CodePath)
+	isCodePathSet, err := validatePathSet(config.BaseCodePath)
 	if err != nil {
 		return err
 	}
-	isDocsPathSet, err := validatePathSet(config.Mapping.DocsPath)
+	isDocsPathSet, err := validatePathSet(config.BaseDocsPath)
 	if err != nil {
 		return err
 	}
