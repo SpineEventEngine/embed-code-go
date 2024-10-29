@@ -102,7 +102,7 @@ var _ = Describe("CLI validation", func() {
 
 		It("should fail validation when docs path is missed", func() {
 			invalidConfig := baseCliConfig()
-			invalidConfig.DocsPath = ""
+			invalidConfig.Mapping.DocsPath = ""
 
 			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
 			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
@@ -118,6 +118,19 @@ var _ = Describe("CLI validation", func() {
 				"config path cannot be set when code-path, docs-path or optional params are set"))
 		})
 
+		It("should correctly convert embed mappings to a few configs", func() {
+			config := cli.Config{
+				Mode:       cli.ModeCheck,
+				ConfigPath: "../test/resources/config_files/embedded_mappings_config.yml",
+			}
+
+			fileConfig, err := cli.FillArgsFromConfigFile(config)
+			embedConfigs := cli.BuildEmbedCodeConfiguration(fileConfig)
+
+			Expect(err).To(BeNil())
+			Expect(embedConfigs).To(HaveLen(3))
+		})
+
 	})
 
 })
@@ -130,9 +143,11 @@ func baseCliConfig() cli.Config {
 	parentDir := filepath.Dir(currentDir)
 
 	return cli.Config{
-		Mode:     cli.ModeCheck,
-		DocsPath: parentDir + "/test/resources/docs",
-		CodePath: parentDir + "/test/resources/code",
+		Mode: cli.ModeCheck,
+		Mapping: cli.EmbedMapping{
+			DocsPath: parentDir + "/test/resources/docs",
+			CodePath: parentDir + "/test/resources/code",
+		},
 	}
 }
 
