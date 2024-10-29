@@ -34,9 +34,9 @@ import (
 
 // Config — user-specified embed-code configurations.
 //
-// CodePath — a path to a root directory with code files.
+// BaseCodePath — a path to a root directory with code files.
 //
-// DocsPath — a path to a root directory with docs files.
+// BaseDocsPath — a path to a root directory with docs files.
 //
 // CodeIncludes — a string with comma-separated patterns for filtering the code files
 // to be considered.
@@ -64,12 +64,13 @@ import (
 // EmbedMappings — an additional optional list of configs, which will be executed together with the
 // main one. A config written here has higher priority and may overwrite the base one.
 type Config struct {
-	CodeIncludes  string `yaml:"code-includes"`
-	DocIncludes   string `yaml:"doc-includes"`
-	DocExcludes   string `yaml:"doc-excludes"`
-	FragmentsPath string `yaml:"fragments-path"`
-	Separator     string `yaml:"separator"`
-	Mapping       EmbedMapping
+	CodeIncludes  string         `yaml:"code-includes"`
+	DocIncludes   string         `yaml:"doc-includes"`
+	DocExcludes   string         `yaml:"doc-excludes"`
+	FragmentsPath string         `yaml:"fragments-path"`
+	Separator     string         `yaml:"separator"`
+	BaseCodePath  string         `yaml:"code-path"`
+	BaseDocsPath  string         `yaml:"docs-path"`
 	EmbedMappings []EmbedMapping `yaml:"embed-mappings"`
 	ConfigPath    string
 	Mode          string
@@ -145,7 +146,8 @@ func ReadArgs() Config {
 	flag.Parse()
 
 	return Config{
-		Mapping:       EmbedMapping{CodePath: *codePath, DocsPath: *docsPath},
+		BaseCodePath:  *codePath,
+		BaseDocsPath:  *docsPath,
 		CodeIncludes:  *codeIncludes,
 		DocIncludes:   *docIncludes,
 		DocExcludes:   *docExcludes,
@@ -163,7 +165,8 @@ func ReadArgs() Config {
 // Returns filled Config.
 func FillArgsFromConfigFile(args Config) (Config, error) {
 	configFields := readConfigFields(args.ConfigPath)
-	args.Mapping = configFields.Mapping
+	args.BaseDocsPath = configFields.BaseDocsPath
+	args.BaseCodePath = configFields.BaseCodePath
 
 	if isNotEmpty(configFields.CodeIncludes) {
 		args.CodeIncludes = configFields.CodeIncludes
@@ -207,8 +210,8 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 	}
 
 	embedCodeConfig := configWithOptionalParams(userArgs)
-	embedCodeConfig.CodeRoot = userArgs.Mapping.CodePath
-	embedCodeConfig.DocumentationRoot = userArgs.Mapping.DocsPath
+	embedCodeConfig.CodeRoot = userArgs.BaseCodePath
+	embedCodeConfig.DocumentationRoot = userArgs.BaseDocsPath
 
 	if isNotEmpty(userArgs.DocExcludes) {
 		embedCodeConfig.DocExcludes = append(embedCodeConfig.DocExcludes, excludedConfigs...)
