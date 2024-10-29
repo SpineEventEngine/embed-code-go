@@ -100,11 +100,8 @@ func main() {
 
 		return
 	}
-
 	configs := cli.BuildEmbedCodeConfiguration(userArgs)
-
 	for _, config := range configs {
-
 		switch userArgs.Mode {
 		case cli.ModeCheck:
 			cli.CheckCodeSamples(config)

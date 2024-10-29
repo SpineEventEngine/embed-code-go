@@ -102,7 +102,7 @@ var _ = Describe("CLI validation", func() {
 
 		It("should fail validation when docs path is missed", func() {
 			invalidConfig := baseCliConfig()
-			invalidConfig.Mapping.DocsPath = ""
+			invalidConfig.BaseDocsPath = ""
 
 			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
 			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
@@ -127,7 +127,7 @@ var _ = Describe("CLI validation", func() {
 			fileConfig, err := cli.FillArgsFromConfigFile(config)
 			embedConfigs := cli.BuildEmbedCodeConfiguration(fileConfig)
 
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(embedConfigs).To(HaveLen(3))
 		})
 
@@ -143,11 +143,9 @@ func baseCliConfig() cli.Config {
 	parentDir := filepath.Dir(currentDir)
 
 	return cli.Config{
-		Mode: cli.ModeCheck,
-		Mapping: cli.EmbedMapping{
-			DocsPath: parentDir + "/test/resources/docs",
-			CodePath: parentDir + "/test/resources/code",
-		},
+		Mode:         cli.ModeCheck,
+		BaseDocsPath: parentDir + "/test/resources/docs",
+		BaseCodePath: parentDir + "/test/resources/code",
 	}
 }
 
