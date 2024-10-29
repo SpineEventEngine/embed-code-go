@@ -60,21 +60,22 @@ import (
 // ConfigPath — a path to a yaml configuration file which contains the roots.
 //
 // Mode — defines the mode of embed-code execution.
+//
+// EmbedMappings — an additional optional list of configs, which will be executed together with the
+// main one. A config written here has higher priority and may overwrite the base one.
 type Config struct {
-	CodePath      string         `yaml:"code-path"`
-	DocsPath      string         `yaml:"docs-path"`
-	CodeIncludes  string         `yaml:"code-includes"`
-	DocIncludes   string         `yaml:"doc-includes"`
-	DocExcludes   string         `yaml:"doc-excludes"`
-	FragmentsPath string         `yaml:"fragments-path"`
-	Separator     string         `yaml:"separator"`
+	CodeIncludes  string `yaml:"code-includes"`
+	DocIncludes   string `yaml:"doc-includes"`
+	DocExcludes   string `yaml:"doc-excludes"`
+	FragmentsPath string `yaml:"fragments-path"`
+	Separator     string `yaml:"separator"`
+	Mapping       EmbedMapping
 	EmbedMappings []EmbedMapping `yaml:"embed-mappings"`
 	ConfigPath    string
 	Mode          string
 }
 
-// EmbedMapping is an additional optional list of configs, which will be executed together with the
-// main one. A config written here has higher priority and may overwrite the base one.
+// EmbedMapping is a pair of a source code path and a destination docs path to perform an embedding.
 type EmbedMapping struct {
 	CodePath string `yaml:"code-path"`
 	DocsPath string `yaml:"docs-path"`
@@ -144,8 +145,7 @@ func ReadArgs() Config {
 	flag.Parse()
 
 	return Config{
-		CodePath:      *codePath,
-		DocsPath:      *docsPath,
+		Mapping:       EmbedMapping{CodePath: *codePath, DocsPath: *docsPath},
 		CodeIncludes:  *codeIncludes,
 		DocIncludes:   *docIncludes,
 		DocExcludes:   *docExcludes,
@@ -163,8 +163,7 @@ func ReadArgs() Config {
 // Returns filled Config.
 func FillArgsFromConfigFile(args Config) (Config, error) {
 	configFields := readConfigFields(args.ConfigPath)
-	args.CodePath = configFields.CodePath
-	args.DocsPath = configFields.DocsPath
+	args.Mapping = configFields.Mapping
 
 	if isNotEmpty(configFields.CodeIncludes) {
 		args.CodeIncludes = configFields.CodeIncludes
@@ -193,49 +192,43 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 // userArgs — a Config with user-provided args.
 func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration {
 	embedCodeConfigs := make([]configuration.Configuration, 0)
-
 	excludedConfigs := make([]string, 0)
+
 	if len(userArgs.EmbedMappings) > 0 {
 		for _, mapping := range userArgs.EmbedMappings {
-			embedCodeConfig := configuration.NewConfiguration()
+			embedCodeConfig := configWithOptionalParams(userArgs)
 			embedCodeConfig.CodeRoot = mapping.CodePath
 			embedCodeConfig.DocumentationRoot = mapping.DocsPath
 
 			// As the top config may overwrite those files, we need to exclude it from the embedding
 			excludedConfigs = append(excludedConfigs, fmt.Sprintf("%s**/*.*", mapping.DocsPath))
-			println(fmt.Sprintf("%s**/*.*", mapping.DocsPath))
-
-			if isNotEmpty(userArgs.CodeIncludes) {
-				embedCodeConfig.CodeIncludes = parseListArgument(userArgs.CodeIncludes)
-			}
-			if isNotEmpty(userArgs.DocIncludes) {
-				embedCodeConfig.DocIncludes = parseListArgument(userArgs.DocIncludes)
-			}
-			if isNotEmpty(userArgs.FragmentsPath) {
-				embedCodeConfig.FragmentsDir = userArgs.FragmentsPath
-			}
-			if isNotEmpty(userArgs.Separator) {
-				embedCodeConfig.Separator = userArgs.Separator
-			}
 			embedCodeConfigs = append(embedCodeConfigs, embedCodeConfig)
 		}
 	}
 
+	embedCodeConfig := configWithOptionalParams(userArgs)
+	embedCodeConfig.CodeRoot = userArgs.Mapping.CodePath
+	embedCodeConfig.DocumentationRoot = userArgs.Mapping.DocsPath
+
+	if isNotEmpty(userArgs.DocExcludes) {
+		embedCodeConfig.DocExcludes = append(embedCodeConfig.DocExcludes, excludedConfigs...)
+	} else {
+		embedCodeConfig.DocExcludes = excludedConfigs
+	}
+	embedCodeConfigs = append(embedCodeConfigs, embedCodeConfig)
+
+	return embedCodeConfigs
+}
+
+// Creates a new Configuration with the filled optional properties from the user args.
+func configWithOptionalParams(userArgs Config) configuration.Configuration {
 	embedCodeConfig := configuration.NewConfiguration()
-	embedCodeConfig.CodeRoot = userArgs.CodePath
-	embedCodeConfig.DocumentationRoot = userArgs.DocsPath
 
 	if isNotEmpty(userArgs.CodeIncludes) {
 		embedCodeConfig.CodeIncludes = parseListArgument(userArgs.CodeIncludes)
 	}
 	if isNotEmpty(userArgs.DocIncludes) {
 		embedCodeConfig.DocIncludes = parseListArgument(userArgs.DocIncludes)
-	}
-	if isNotEmpty(userArgs.DocExcludes) {
-		embedCodeConfig.DocExcludes = parseListArgument(userArgs.DocExcludes)
-		embedCodeConfig.DocExcludes = append(embedCodeConfig.DocExcludes, excludedConfigs...)
-	} else {
-		embedCodeConfig.DocExcludes = excludedConfigs
 	}
 	if isNotEmpty(userArgs.FragmentsPath) {
 		embedCodeConfig.FragmentsDir = userArgs.FragmentsPath
@@ -244,8 +237,7 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 		embedCodeConfig.Separator = userArgs.Separator
 	}
 
-	embedCodeConfigs = append(embedCodeConfigs, embedCodeConfig)
-	return embedCodeConfigs
+	return embedCodeConfig
 }
 
 // Returns a list of strings from given comma-separated string listArgument.

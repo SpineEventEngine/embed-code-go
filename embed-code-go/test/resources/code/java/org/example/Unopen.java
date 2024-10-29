@@ -25,5 +25,5 @@ public class Unopen {
     public static void main(String[] args) {
         System.out.println("Hello world");
     }
-
+    // #enddocfragment "Fragment that never started"
 }

@@ -1,4 +1,4 @@
 
-<embed-code file="org/example/Hello.java" fragment="main()"/>
+<embed-code file="org/example/Hello.kt" fragment="main()"/>
 ```kotlin
 ```
