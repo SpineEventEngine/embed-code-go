@@ -51,7 +51,7 @@ var _ = Describe("Fragmentation", func() {
 	BeforeEach(func() {
 		config = configuration.NewConfiguration()
 		config.DocumentationRoot = "../test/resources/docs"
-		config.CodeRoot = "../test/resources/code"
+		config.CodeRoot = "../test/resources/code/java"
 	})
 
 	AfterEach(func() {
