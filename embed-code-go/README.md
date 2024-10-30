@@ -70,6 +70,10 @@ Optional settings can be defined in the configuration file. The file is a YAML f
 code-path: path/to/code/root
 docs-path: path/to/docs/root
 code-includes: "**/*.java,**/*.gradle"
+doc-excludes: "**/*-old.*,**/deprecated/*.*"
+embed-mappings:
+  - code-path: path/to/code/root/kotlin
+    docs-path: path/to/other/docs
 ```
 
 The available arguments for the config file are:
@@ -77,7 +81,7 @@ The available arguments for the config file are:
   * `docs-path`: mandatory;
   * `config-path`: optional;
   * `code-includes`: optional;
-  * `code-excludes`: optional;
+  * `doc-excludes`: optional;
   * `doc-includes`: optional;
   * `fragments-path`: optional;
   * `separator`: optional;
