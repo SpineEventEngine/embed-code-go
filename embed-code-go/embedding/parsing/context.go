@@ -160,7 +160,7 @@ func (c *Context) ResolveUnacceptedEmbedding() {
 // SetEmbedding sets an embedding to Context. Also sets fileContainsEmbedding flag.
 func (c *Context) SetEmbedding(embedding *Instruction) {
 	sourceIndex := c.lineIndex
-	resultIndex := len(c.Result) + 1
+	resultIndex := len(c.Result)
 
 	if embedding == nil {
 		c.currentEmbedding().sourceEndIndex = sourceIndex
@@ -182,7 +182,7 @@ func (c *Context) SetCodeStart() {
 	if c.fileContainsEmbedding {
 		lastEmbedding := c.currentEmbedding()
 		lastEmbedding.sourceStartIndex = c.lineIndex
-		lastEmbedding.resultStartIndex = len(c.Result) + 1
+		lastEmbedding.resultStartIndex = len(c.Result)
 	}
 }
 
