@@ -102,6 +102,7 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
+	// TODO:olena-zmiiova:https://github.com/SpineEventEngine/embed-code/issues/65
 	It("should successfully embed to a file in a nested dir", func() {
 		docPath := fmt.Sprintf("%s/nested-dir-1/nested-dir-2/nested-dir-doc.md",
 			config.DocumentationRoot)
