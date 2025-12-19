@@ -188,9 +188,9 @@ var _ = Describe("Fragmentation", func() {
 
 		expected := []string{
 			"public class Main {",
-			config.Separator,
+			"    " + config.Separator,
 			"    public static void main(String[] args) {",
-			config.Separator,
+			"        " + config.Separator,
 			"        System.out.println(helperMethod());",
 			"",
 			"    }",
@@ -213,9 +213,9 @@ var _ = Describe("Fragmentation", func() {
 		expected := [][]string{
 			{
 				"public class TwoFragments {",
-				config.Separator,
+				"    " + config.Separator,
 				"    public static void main(String[] args) {",
-				config.Separator,
+				"        " + config.Separator,
 				"        System.out.println(helperMethod());",
 				"",
 				"    }",
@@ -224,7 +224,7 @@ var _ = Describe("Fragmentation", func() {
 			},
 			{
 				"public static void hello(String[] args) {",
-				config.Separator,
+				"    " + config.Separator,
 				"    var coolText = \"Cool Text\";",
 				"    System.out.println(coolText);",
 				"}",
