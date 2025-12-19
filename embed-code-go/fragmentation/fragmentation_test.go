@@ -273,6 +273,7 @@ func readFragmentsContent(fragmentDir string, fragmentFiles []os.DirEntry, skipF
 
 		result = append(result, content)
 	}
+
 	return result
 }
 
