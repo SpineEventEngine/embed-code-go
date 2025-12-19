@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -37,6 +36,7 @@ const (
 	unclosedFragmentFileName = "Unclosed.java"
 	unopenedFragmentFileName = "Unopen.java"
 	complexFragmentsFileName = "Complex.java"
+	twoFragmentsFileName     = "TwoFragments.java"
 	emptyFileName            = "Empty.java"
 )
 
@@ -173,10 +173,7 @@ var _ = Describe("Fragmentation", func() {
 
 	It("should correctly parse file into many partitions", func() {
 		frag := buildTestFragmentation(complexFragmentsFileName, config)
-		err := frag.WriteFragments()
-		if err != nil {
-			Fail(err.Error())
-		}
+		Expect(frag.WriteFragments()).Should(Succeed())
 
 		fragmentFiles := readFragmentsDir(config)
 		Expect(fragmentFiles).Should(HaveLen(2))
@@ -192,18 +189,49 @@ var _ = Describe("Fragmentation", func() {
 		expected := []string{
 			"public class Main {",
 			config.Separator,
-			"public static void main(String[] args) {",
+			"    public static void main(String[] args) {",
 			config.Separator,
-			"System.out.println(helperMethod());",
+			"        System.out.println(helperMethod());",
 			"",
-			"}",
+			"    }",
 			config.Separator,
 			"}",
+		}
+		Expect(content).Should(Equal(expected))
+	})
+
+	It("should correctly parse file with several different fragments", func() {
+		frag := buildTestFragmentation(twoFragmentsFileName, config)
+		Expect(frag.WriteFragments()).Should(Succeed())
+
+		fragmentFiles := readFragmentsDir(config)
+		Expect(fragmentFiles).Should(HaveLen(3))
+
+		fragmentDir := fragmentsDirPath(config.FragmentsDir)
+		actual := readFragmentsContent(fragmentDir, fragmentFiles, twoFragmentsFileName)
+
+		expected := [][]string{
+			{
+				"public class TwoFragments {",
+				config.Separator,
+				"    public static void main(String[] args) {",
+				config.Separator,
+				"        System.out.println(helperMethod());",
+				"",
+				"    }",
+				config.Separator,
+				"}",
+			},
+			{
+				"public static void hello(String[] args) {",
+				config.Separator,
+				"    var coolText = \"Cool Text\";",
+				"    System.out.println(coolText);",
+				"}",
+			},
 		}
 
-		for index, line := range content {
-			Expect(strings.TrimLeft(line, " ")).Should(Equal(expected[index]))
-		}
+		Expect(actual).Should(ConsistOf(expected))
 	})
 })
 
@@ -221,6 +249,31 @@ func readFragmentsDir(config configuration.Configuration) []os.DirEntry {
 	}
 
 	return fragmentFiles
+}
+
+// readFragmentsContent reads the contents of fragment files from a given directory.
+//
+// fragmentDir — path to the directory containing fragment files.
+// fragmentFiles — list of directory entries representing the fragment files.
+// skipFile — file name to skip (the default fragment file).
+//
+// Returns a slice of string slices, where each inner slice contains the lines
+// of a fragment file.
+//
+// This function fails the test immediately if any file cannot be read.
+func readFragmentsContent(fragmentDir string, fragmentFiles []os.DirEntry, skipFile string) [][]string {
+	var result [][]string
+	for _, file := range fragmentFiles {
+		if file.Name() == skipFile {
+			continue
+		}
+
+		content, err := files.ReadFile(fmt.Sprintf("%s/%s", fragmentDir, file.Name()))
+		Expect(err).ShouldNot(HaveOccurred())
+
+		result = append(result, content)
+	}
+	return result
 }
 
 func fragmentsDirPath(path string) string {
