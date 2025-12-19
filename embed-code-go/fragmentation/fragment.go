@@ -71,17 +71,19 @@ func (f Fragment) text(lines []string, separator string) string {
 	if f.isDefault() {
 		return strings.Join(lines, "\n")
 	}
-
 	partitionsTexts := f.obtainPartitionTexts(lines)
+	var fragmentText []string
+	for _, partition := range partitionsTexts {
+		fragmentText = append(fragmentText, partition...)
+	}
+	indentation := indent.MaxCommonIndentation(fragmentText)
 
 	text := ""
 	for index, partitionText := range partitionsTexts {
-		indentation := indent.MaxCommonIndentation(partitionText)
 		cutIndentLines := indent.CutIndent(partitionText, indentation)
 
 		if index > 0 {
-			separatorIndentation := separatorIndent(cutIndentLines)
-			text += separatorIndentation + separator + "\n"
+			text += separator + "\n"
 		}
 
 		text += strings.Join(cutIndentLines, "\n") + "\n"
@@ -103,16 +105,4 @@ func (f Fragment) obtainPartitionTexts(lines []string) [][]string {
 	}
 
 	return partitionLines
-}
-
-// Returns string indent for separator.
-func separatorIndent(lines []string) string {
-	if len(lines) > 0 {
-		firstLine := lines[0]
-		leadingSpaces := len(firstLine) - len(strings.TrimLeft(firstLine, " "))
-
-		return strings.Repeat(" ", leadingSpaces)
-	}
-
-	return ""
 }
