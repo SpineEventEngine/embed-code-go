@@ -261,7 +261,9 @@ func readFragmentsDir(config configuration.Configuration) []os.DirEntry {
 // of a fragment file.
 //
 // This function fails the test immediately if any file cannot be read.
-func readFragmentsContent(fragmentDir string, fragmentFiles []os.DirEntry, skipFile string) [][]string {
+func readFragmentsContent(
+	fragmentDir string, fragmentFiles []os.DirEntry, skipFile string,
+) [][]string {
 	var result [][]string
 	for _, file := range fragmentFiles {
 		if file.Name() == skipFile {
