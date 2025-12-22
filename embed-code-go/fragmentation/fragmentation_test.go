@@ -38,6 +38,7 @@ const (
 	complexFragmentsFileName = "Complex.java"
 	twoFragmentsFileName     = "TwoFragments.java"
 	emptyFileName            = "Empty.java"
+	indent                   = "    "
 )
 
 func TestFragmentation(t *testing.T) {
@@ -188,12 +189,12 @@ var _ = Describe("Fragmentation", func() {
 
 		expected := []string{
 			"public class Main {",
-			"    " + config.Separator,
-			"    public static void main(String[] args) {",
-			"        " + config.Separator,
-			"        System.out.println(helperMethod());",
+			indent + config.Separator,
+			indent + "public static void main(String[] args) {",
+			indent + indent + config.Separator,
+			indent + indent + "System.out.println(helperMethod());",
 			"",
-			"    }",
+			indent + "}",
 			config.Separator,
 			"}",
 		}
@@ -213,20 +214,20 @@ var _ = Describe("Fragmentation", func() {
 		expected := [][]string{
 			{
 				"public class TwoFragments {",
-				"    " + config.Separator,
-				"    public static void main(String[] args) {",
-				"        " + config.Separator,
-				"        System.out.println(helperMethod());",
+				indent + config.Separator,
+				indent + "public static void main(String[] args) {",
+				indent + indent + config.Separator,
+				indent + indent + "System.out.println(helperMethod());",
 				"",
-				"    }",
+				indent + "}",
 				config.Separator,
 				"}",
 			},
 			{
 				"public static void hello(String[] args) {",
-				"    " + config.Separator,
-				"    var coolText = \"Cool Text\";",
-				"    System.out.println(coolText);",
+				indent + config.Separator,
+				indent + "var coolText = \"Cool Text\";",
+				indent + "System.out.println(coolText);",
 				"}",
 			},
 		}
