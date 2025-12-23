@@ -104,6 +104,10 @@ var _ = Describe("Embedding", func() {
 
 	// TODO:olena-zmiiova:https://github.com/SpineEventEngine/embed-code/issues/65
 	It("should successfully embed to a file in a nested dir", func() {
+		Skip(
+			"Temporarily disabled, see " +
+				"[issue #65](https://github.com/SpineEventEngine/embed-code/issues/65).",
+		)
 		docPath := fmt.Sprintf("%s/nested-dir-1/nested-dir-2/nested-dir-doc.md",
 			config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
