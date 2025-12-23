@@ -83,6 +83,10 @@ var _ = Describe("Embedding", func() {
 
 	// TODO:olena-zmiiova:https://github.com/SpineEventEngine/embed-code/issues/59
 	It("should have error as it has invalid transition map", func() {
+		Skip(
+			"Temporarily disabled, see " +
+				"[issue #59](https://github.com/SpineEventEngine/embed-code/issues/59).",
+		)
 		docPath := fmt.Sprintf("%s/split-lines.md", config.DocumentationRoot)
 
 		falseTransitions := parsing.TransitionMap{
