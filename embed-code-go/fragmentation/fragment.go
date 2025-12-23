@@ -71,12 +71,15 @@ func (f Fragment) text(lines []string, separator string) string {
 	if f.isDefault() {
 		return strings.Join(lines, "\n")
 	}
-
 	partitionsTexts := f.obtainPartitionTexts(lines)
+	var fragmentText []string
+	for _, partition := range partitionsTexts {
+		fragmentText = append(fragmentText, partition...)
+	}
+	indentation := indent.MaxCommonIndentation(fragmentText)
 
 	text := ""
 	for index, partitionText := range partitionsTexts {
-		indentation := indent.MaxCommonIndentation(partitionText)
 		cutIndentLines := indent.CutIndent(partitionText, indentation)
 
 		if index > 0 {
