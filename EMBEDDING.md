@@ -79,7 +79,8 @@ Alternatively, you can specify a fragment using `start` and `end` patterns:
 ```java
 ```
 
-Patterns match the first and last lines of the desired fragment. If a pattern is omitted, the fragment will start at the beginning or end at the end of the file, respectively.
+Patterns match the first and last lines of the desired fragment.
+If a pattern is omitted, the fragment will start at the beginning or end at the end of the file, respectively.
 
 ### Pattern syntax
 
