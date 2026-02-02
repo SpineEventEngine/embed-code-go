@@ -1,38 +1,46 @@
-# Setting up documentation and code files
+# Setting Up Code Embedding
 
-Embed Code handles a custom tag `<embed-code>` that allows you to embed code
-samples from your code files into your documentation. 
+The `embed-code` utility uses a custom `<embed-code>` tag to insert code snippets from source files into Markdown documentation.
 
-There are two ways to specify the code fragment to embed.
+## Embedding options
 
-**Option 1: A named fragment**
-```
-<embed-code file="path/to/file" fragment="Fragment Name"></embed-code> (I)
-```
+There are two ways to specify which code fragment to embed:
 
-**Option 2: Regular expressions**
-```
-<embed-code file="path/to/file" start="first?line*glob" end="last?line*glob"></embed-code> (II)
+### Option 1: Named fragments
+
+Use a named fragment defined within the source file.
+```markdown
+<embed-code file="path/to/file" fragment="Fragment Name"></embed-code>
 ```
 
-The instruction must always be followed by a code fence (opening and closing three backticks):
-<pre>
-<embed-code ...></embed-code>
+### Option 2: Line patterns
+
+Use glob-style patterns to match the start and end lines of the fragment.
+```markdown
+<embed-code file="path/to/file" start="first-line-pattern" end="last-line-pattern"></embed-code>
+```
+
+## Embedding instruction format
+
+An `<embed-code>` instruction must always be followed by a Markdown code fence (triple backticks). 
+
+```markdown
+<embed-code file="java/lang/String.java" fragment="Constructor"></embed-code>
 ```java
+// The utility will automatically overwrite this content.
 ```
-</pre>
 
-The content of the code fence does not matter — the command will overwrite it automatically.
-
-Note that the code fence may specify the syntax in which the code will be highlighted.
+The content inside the code fence is irrelevant as it is automatically updated by the tool.
+However, you should specify the language for syntax highlighting (e.g., ` ```java `).
 
 This is true even when embedding into HTML.
 
-## Named fragments (I)
+## Named fragments
 
-## Markup fragments
+### Marking up source code
 
-You can mark up the code file to select named fragments like this:
+To define a named fragment in your source code, wrap the desired lines with
+`#docfragment` and `#enddocfragment` comments:
 
 ```java
 public final class String
@@ -46,51 +54,47 @@ public final class String
 }
 ```
 
-The `#docfragment` and `#enddocfragment` tags won't be copied into the resulting code fragment.
+The `#docfragment` and `#enddocfragment` tags are excluded from the embedded snippet.
 
-## Add embedding instructions
+### Usage in documentation
 
-To add a new code sample, add the following construct to the Markdown file:
+To embed a named fragment, add the following to your Markdown file:
 
-<pre>
-&lt;embed-code file=&quot;java/lang/String.java&quot;
-             fragment=&quot;Constructor&quot;&gt;&lt;/embed-code&gt;
+```markdown
+<embed-code file="java/lang/String.java" fragment="Constructor"></embed-code>
 ```java
-```   
-</pre>
+```
 
-The `file` attribute specifies the path to the code file relative to the code root, specified in
-the configuration. The `fragment` attribute specifies the name of the code fragment to embed. Omit
-this attribute to embed the whole file.
+- **`file`**: The path to the source file relative to the `code-path` defined in your configuration.
+- **`fragment`**: The name of the fragment to embed. If omitted, the entire file will be embedded.
 
-You may use any name for your fragments, just omit double quotes (`"`) and symbols forbidden in XML.
+Fragment names can be any string, but avoid using double quotes (`"`) or characters reserved by XML.
 
-## Pattern fragments (II)
+## Pattern-based fragments
 
-Alternatively, the `<embed-code>` tag may have the following form:
-<pre>
-&lt;embed-code file=&quot;java/lang/String.java&quot;
-             start=&quot;*class Hello*&quot;
-             end=&quot;}*&quot;&gt;&lt;/embed-code&gt;
+Alternatively, you can specify a fragment using `start` and `end` patterns:
+
+```markdown
+<embed-code file="java/lang/String.java" start="*class Hello*" end="}*"></embed-code>
 ```java
-```   
-</pre>
+```
 
-In this case, the fragment is specified by a pair of glob-style patterns. The patterns match
-the first and the last lines of the desired code fragment. Any of the patterns may be skipped.
-In such a case, the fragment starts at the beginning or ends at the end of the code file.
+Patterns match the first and last lines of the desired fragment. If a pattern is omitted, the fragment will start at the beginning or end at the end of the file, respectively.
 
-The pattern syntax supports an extended glob syntax:
-- `?` — one arbitrary symbol;
-- `*` — zero, one, or many arbitrary symbols;
-- `[set]` — one symbol from the given set (equivalent to `[set]` in regular expressions);
-- `^` at the start of the pattern to signify the start of the line;
-- `$` at the end of the pattern to signify the end of the line.
+### Pattern syntax
 
-Note that the `*` symbols at the start and in the end of the pattern are implied. Use `^` and `$` to
-mark that the pattern should not assume `*` at the start/end.
+The tool supports an extended glob syntax for matching lines:
 
-Note that `^` and `$` work as special characters in their respective positions but not in the middle
-of the pattern. To match the literal `^` symbol at the start of the line, prepend it with another
-`^`. Similarly, to match a literal `$` at the end of the line, append it with another `$`.
+- `?` — Matches any single character.
+- `*` — Matches zero or more characters.
+- `[set]` — Matches any single character from the specified set (similar to regex character classes).
+- `^` — When used at the start of a pattern, matches the beginning of the line.
+- `$` — When used at the end of a pattern, matches the end of the line.
+
+**Note on anchors:**
+By default, patterns imply a wildcard (`*`) at both the start and end.
+Use `^` and `$` to disable this behavior and match the exact line start or end.
+
+If you need to match a literal `^` at the start of a line, use `^^`.
+Similarly, use `$$` to match a literal `$` at the end of a line.
 
