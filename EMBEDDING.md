@@ -22,13 +22,15 @@ Use glob-style patterns to match the start and end lines of the fragment.
 
 ## Embedding instruction format
 
-An `<embed-code>` instruction must always be followed by a Markdown code fence (triple backticks). 
+An `<embed-code>` instruction must always be followed by a Markdown code fence 
+(opening and closing triple backticks). 
 
-```markdown
+````markdown
 <embed-code file="java/lang/String.java" fragment="Constructor"></embed-code>
 ```java
 // The utility will automatically overwrite this content.
 ```
+````
 
 The content inside the code fence is irrelevant as it is automatically updated by the tool.
 However, you should specify the language for syntax highlighting (e.g., ` ```java `).
@@ -60,10 +62,11 @@ The `#docfragment` and `#enddocfragment` tags are excluded from the embedded sni
 
 To embed a named fragment, add the following to your Markdown file:
 
-```markdown
+````markdown
 <embed-code file="java/lang/String.java" fragment="Constructor"></embed-code>
 ```java
 ```
+````
 
 - **`file`**: The path to the source file relative to the `code-path` defined in your configuration.
 - **`fragment`**: The name of the fragment to embed. If omitted, the entire file will be embedded.
@@ -74,10 +77,11 @@ Fragment names can be any string, but avoid using double quotes (`"`) or charact
 
 Alternatively, you can specify a fragment using `start` and `end` patterns:
 
-```markdown
+````markdown
 <embed-code file="java/lang/String.java" start="*class Hello*" end="}*"></embed-code>
 ```java
 ```
+````
 
 Patterns match the first and last lines of the desired fragment.
 If a pattern is omitted, the fragment will start at the beginning or end at the end of the file, respectively.
@@ -99,3 +103,109 @@ Use `^` and `$` to disable this behavior and match the exact line start or end.
 If you need to match a literal `^` at the start of a line, use `^^`.
 Similarly, use `$$` to match a literal `$` at the end of a line.
 
+## Advanced use cases
+
+### Joining several parts of code into one fragment
+
+A named fragment may consist of one or several pieces declared in a single file. 
+When rendered, the pieces that belong to a single fragment are joined together. 
+It is possible to specify a separator between the joined pieces, 
+see [Configuration](./README.md#arguments) for the corresponding parameter.
+
+Here is an example of how a multi-piece fragment is rendered.
+
+**Code:**
+
+```java
+public final class String
+    implements java.io.Serializable, Comparable<String>, CharSequence {
+
+    // #docfragment "Standard Object methods"
+    public int hashCode() {
+        // Method logic.
+        return hash;
+    }
+    // #enddocfragment "Standard Object methods"
+    
+    /* Here goes irrelevant code */
+
+    // #docfragment "Standard Object methods"
+    public boolean equals(Object anObject) {
+        // Method logic.
+        return false;
+    }
+    // #enddocfragment "Standard Object methods"
+
+    /* Here goes more irrelevant code */
+
+    // #docfragment "Standard Object methods"
+    public String toString() {
+        return this;
+    }
+    // #enddocfragment "Standard Object methods"
+}
+```
+
+**Result:**
+
+```java
+public int hashCode() {
+    // Method logic.
+    return hash;
+}
+...
+public boolean equals(Object anObject) {
+    // Method logic.
+    return false;
+}
+...
+public String toString() {
+    return this;
+}
+```
+
+### Declaring multiple fragments in one line
+
+Multiple fragments can start or end on a single line and may overlap:
+
+```java
+public final class String
+    implements java.io.Serializable, Comparable<String>, CharSequence {
+
+    // #docfragment "Standard Object methods", "All methods"
+    public int hashCode() {
+        // Method logic.
+        return hash;
+    }
+
+    public boolean equals(Object anObject) {
+        // Method logic.
+        return false;
+    }
+
+    public String toString() {
+        return this;
+    }
+    // #enddocfragment "Standard Object methods"
+
+    public boolean startsWith(String prefix, int toffset) {
+        // Method logic.
+        return true;
+    }
+    // #enddocfragment "All methods"
+}
+``` 
+
+### Usage with other languages
+
+The fragments can also be used in other languages:
+
+```html
+<html lang="en">
+<body>
+<!-- #docfragment "html-only" -->
+<span class="counter" id="counter"></span>
+<!-- #enddocfragment "html-only" -->
+</body>
+</html>
+```
