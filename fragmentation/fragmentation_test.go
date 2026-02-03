@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -32,13 +32,14 @@ import (
 )
 
 const (
-	correctFragmentsFileName = "Hello.java"
-	unclosedFragmentFileName = "Unclosed.java"
-	unopenedFragmentFileName = "Unopen.java"
-	complexFragmentsFileName = "Complex.java"
-	twoFragmentsFileName     = "TwoFragments.java"
-	emptyFileName            = "Empty.java"
-	indent                   = "    "
+	correctFragmentsFileName     = "Hello.java"
+	unclosedFragmentFileName     = "Unclosed.java"
+	unopenedFragmentFileName     = "Unopen.java"
+	complexFragmentsFileName     = "Complex.java"
+	twoFragmentsFileName         = "TwoFragments.java"
+	overlappingFragmentsFileName = "OverlappingFragments.java"
+	emptyFileName                = "Empty.java"
+	indent                       = "    "
 )
 
 func TestFragmentation(t *testing.T) {
@@ -228,6 +229,44 @@ var _ = Describe("Fragmentation", func() {
 				indent + config.Separator,
 				indent + "var coolText = \"Cool Text\";",
 				indent + "System.out.println(coolText);",
+				"}",
+			},
+		}
+
+		Expect(actual).Should(ConsistOf(expected))
+	})
+
+	It("should correctly parse file with several overlapping fragments", func() {
+		frag := buildTestFragmentation(overlappingFragmentsFileName, config)
+		Expect(frag.WriteFragments()).Should(Succeed())
+
+		fragmentFiles := readFragmentsDir(config)
+		Expect(fragmentFiles).Should(HaveLen(3))
+
+		fragmentDir := fragmentsDirPath(config.FragmentsDir)
+		actual := readFragmentsContent(fragmentDir, fragmentFiles, overlappingFragmentsFileName)
+
+		expected := [][]string{
+			{
+				"public class OverlappingFragments {",
+				indent + config.Separator,
+				indent + "public static void main(String[] args) {",
+				indent + indent + config.Separator,
+				indent + indent + "System.out.println(helperMethod());",
+				"",
+				indent + "}",
+				config.Separator,
+				"}",
+			},
+			{
+				"public class OverlappingFragments {",
+				indent + config.Separator,
+				indent + "public static void hello(String[] args) {",
+				indent + indent + config.Separator,
+				indent + indent + "var coolText = \"Cool Text\";",
+				indent + indent + "System.out.println(coolText);",
+				indent + "}",
+				config.Separator,
 				"}",
 			},
 		}
