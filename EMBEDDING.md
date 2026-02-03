@@ -122,7 +122,7 @@ public final class String
 
     // #docfragment "Standard Object methods"
     public int hashCode() {
-        // ...
+        // Method logic.
         return hash;
     }
     // #enddocfragment "Standard Object methods"
@@ -131,7 +131,7 @@ public final class String
 
     // #docfragment "Standard Object methods"
     public boolean equals(Object anObject) {
-        // ...
+        // Method logic.
         return false;
     }
     // #enddocfragment "Standard Object methods"
@@ -150,12 +150,12 @@ public final class String
 
 ```java
 public int hashCode() {
-    // ...
+    // Method logic.
     return hash;
 }
 ...
 public boolean equals(Object anObject) {
-    // ...
+    // Method logic.
     return false;
 }
 ...
@@ -174,12 +174,12 @@ public final class String
 
     // #docfragment "Standard Object methods", "All methods"
     public int hashCode() {
-        // ...
+        // Method logic.
         return hash;
     }
 
     public boolean equals(Object anObject) {
-        // ...
+        // Method logic.
         return false;
     }
 
@@ -189,7 +189,7 @@ public final class String
     // #enddocfragment "Standard Object methods"
 
     public boolean startsWith(String prefix, int toffset) {
-        // ...
+        // Method logic.
         return true;
     }
     // #enddocfragment "All methods"
@@ -203,7 +203,7 @@ The fragments can also be used in other languages:
 ```html
 <html lang="en">
 <body>
-<!-- #docfragment "html-only", "My Fragment" -->
+<!-- #docfragment "html-only" -->
 <span class="counter" id="counter"></span>
 <!-- #enddocfragment "html-only" -->
 </body>
