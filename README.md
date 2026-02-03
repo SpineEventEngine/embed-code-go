@@ -1,70 +1,88 @@
-# General
-This is the implementation of embed-code written in Go. For more information, you can check the [README.md](https://github.com/SpineEventEngine/embed-code/blob/master/README.md).
+# Embed Code
 
-Embed-code-go provides a way to embed code snippets into markdown files. This allows developers to easily include code examples within their documentation. 
+Embed Code provides a way to embed code snippets into Markdown files.
+This allows developers to easily include code examples within their documentation.
 
-Key features:
-- extracts code fragments from source files and embeds them into documentation files;
-- verifies that embedded code samples are up-to-date with the source code;
-- supports flexible configuration via command line arguments or a YAML configuration file;
-- allows embedding specific code fragments or code between start and end line patterns;
-- allows mapping multiple code sources to destination documentation folders.
+Previously, we used the `embed-code` utility written in [Ruby for Jekyll][embed-code-jekyll].
+Since we standardize our sites on Hugo, we rewrote the utility in Go.
+This project is the implementation of `embed-code` utility written in Go.
 
-# Running
+## Key features
+- Extracts code fragments from source files and embeds them into documentation.
+- Verifies that embedded code samples are up-to-date with the source.
+- Supports configuration via command-line arguments or a YAML file.
+- Allows embedding specific named fragments or matching code using line patterns.
+- Maps multiple code sources to various documentation folders.
 
-Embed-code-go can be run in three modes:
-1. Embedding — in this mode, all documentation files are scanned for `<embed-code>` tags, and the corresponding embeddings are performed. Embedding results are written to the given documentation files.
-2. Checking for being up-to-date — in this mode, all documentation files are checked for being up-to-date. All the embeddings under `<embed-code>` tags are compared with the corresponding code fragments. If the code is completely equals to the corresponding embeddings, the documentation files are up-to-date. If the check fails, an error message with the corresponding files is provided.
-3. Analyzing — in this mode, all embeddings are checked for having corresponding code fragments. All information about problems found is written to the `build/analytics/problem-files.txt` file.
+For the details of the usage in the documentation and the code, please refer to the [EMBEDDING.md](EMBEDDING.md).
 
-The mode is selected by the mandatory `mode` argument. If it is set to `check`, the checking for up-to-date is performed. If it is set to `embed`, the embedding is performed. If it is set to `analyze`, the analyzing is performed.
+## Running
 
-The tool can be executed as a binary file or as a Go file. In the latter case, the user must have Go [installed](#installation). The binary files are stored in the `./bin` directory.
+Embed Code operates in three modes:
 
-The code and documentation files must be prepared for embedding. The instructions are provided in the [Setting up documentation and code files](#setting-up-documentation-and-code-files) section.
+1. **Embedding**: Scans documentation files for `<embed-code>` tags and performs the requested embeddings,
+   overwriting the content of the target documentation files.
 
-### Running binary executable
-To run the `embed_code` binary executable, the following command can be used:
+2. **Up-to-Date Check**: Compares the content under `<embed-code>` tags with the corresponding source code fragments.
+   If they differ, the tool reports which files are out-of-date.
+
+3. **Analysis**: Verifies that all embeddings have matching source code fragments.
+   Any issues are logged to `build/analytics/problem-files.txt`.
+ 
+
+The mode is selected using the mandatory `-mode` argument:
+- `embed`: Performs the embedding process.
+- `check`: Checks if embeddings are up-to-date.
+- `analyze`: Runs the analysis process.
+
+The tool can be run as a pre-compiled binary or via the Go compiler (requires Go [installed](#installation)).
+Binaries are located in the `./bin` directory.
+
+The code and documentation files must be prepared for embedding.
+The instructions are provided in the [Setting up documentation and code files](EMBEDDING.md) document.
+
+### Running the binary
+
+To run the binary, use:
+```bash
+./bin/<binary_name> [arguments]
 ```
-./<binary_executable_name> [arguments]
-```
-The binaries are located in the `./bin` directory. 
 
-### Running Go file
+### Running the Go file
 
-#### Go version
+#### Running with Go
 
-Make sure you have Go [installed](#installation). Our version is `1.22.1`.
-
-#### Running
-
-To run the `main.go` file, the following command can be used:
-```
+If you have Go installed (version `1.22.1` recommended), you can run the tool directly:
+```bash
 go run ./main.go [arguments]
 ```
 
 ### Arguments
+
 The available arguments are:
-  * `-mode`: mandatory, `check` to checking for code embeddings to be up-to-date; `embed` to start the embedding process; `analyze` to run analyzing;
-  * `-code-path`: optional, path to the root directory containing code files;
-  * `-docs-path`: optional, path to the root directory containing documentation files;
-  * `-config-path`: optional, path to a YAML configuration file that contains the code_root and docs_root fields;
-  * `-code-includes`: optional, a comma-separated string of glob patterns for code files to include. For example: `"**/*.java,**/*.gradle"`. Default value is `"**/*.*"`;
-  * `-code-excludes`: optional, a comma-separated string of glob patterns for docs files to exclude from the embedding. For example: `"old-docs/**/*.md,old-guides/*.html"`. It is not set by default;
-  * `-doc-includes`: optional, a comma-separated string of glob patterns for docs files to include. For example: `"docs/**/*.md,guides/*.html"`. Default value is `"**/*.md,**/*.html"`;
-  * `-fragments-path`: optional, a path to a directory with code fragments. Default value is `./build/fragments`;
-  * `-separator`: optional, a string which is used as a separator between code fragments. Default value is `...`.
+  * `-mode`: (Mandatory) The execution mode: `embed`, `check`, or `analyze`.
+  * `-code-path`: (Optional) Path to the source code root directory.
+  * `-docs-path`: (Optional) Path to the documentation root directory.
+  * `-config-path`: (Optional) Path to a YAML configuration file containing `code-path` and `docs-path`.
+  * `-code-includes`: (Optional) Comma-separated glob patterns for source files to include (e.g., `"**/*.java,**/*.gradle"`). Defaults to `"**/*.*"`.
+  * `-code-excludes`: (Optional) Comma-separated glob patterns for source files to exclude.
+  * `-doc-includes`: (Optional) Comma-separated glob patterns for documentation files to include. Defaults to `"**/*.md,**/*.html"`.
+  * `-fragments-path`: (Optional) Directory for storing code fragments. Defaults to `./build/fragments`.
+  * `-separator`: (Optional) String used to separate joined code fragments. Defaults to `...`.
  
-Even though the `code-path`, `docs-path`, and `config-path` arguments are optional, Embed-code still requires the root directories for code and documentation to be set. This can be done in one of two ways:
+Even though the `code-path`, `docs-path`, and `config-path` arguments are optional,
+Embed Code still requires the root directories for code and documentation to be set.
+This can be done in one of two ways:
 
 1. Provide the `code-path` and `docs-path` arguments, in this case the roots are read directly from the provided paths.
 2. Provide the `config-path` argument, in this case the roots are read from the given configuration file.
 
-If neither of these options is provided, the embedding process will fail. If both options are set, the embedding will also fail.
+If neither of these options is provided, the embedding process will fail.
+If both options are set, the embedding will also fail.
 
 ### Configuration file
 
-Optional settings can be defined in the configuration file. The file is a YAML file with the following structure:
+Optional settings can be defined in a YAML configuration file:
 
 ```yaml
 code-path: path/to/code/root
@@ -76,110 +94,19 @@ embed-mappings:
     docs-path: path/to/other/docs
 ```
 
-The available arguments for the config file are:
-  * `code-path`: mandatory;
-  * `docs-path`: mandatory;
-  * `config-path`: optional;
-  * `code-includes`: optional;
-  * `doc-excludes`: optional;
-  * `doc-includes`: optional;
-  * `fragments-path`: optional;
-  * `separator`: optional;
-  * `embed-mappings`: optional, contains `code-path` and `docs-path` fields.
+The available fields for the configuration file are:
+  * `code-path`: (Mandatory) Path to the source code root.
+  * `docs-path`: (Mandatory) Path to the documentation root.
+  * `code-includes`: (Optional) Glob patterns for source files to include.
+  * `doc-excludes`: (Optional) Glob patterns for documentation files to exclude.
+  * `doc-includes`: (Optional) Glob patterns for documentation files to include.
+  * `fragments-path`: (Optional) Directory for code fragments.
+  * `separator`: (Optional) Separator for fragments.
+  * `embed-mappings`: (Optional) A list of custom mappings, each containing `code-path` and `docs-path`.
 
 These settings have the same role as the command-line arguments.
 
-## Setting up documentation and code files
-
-Synopsis:
-```
-<embed-code file="path/to/file" fragment="Fragment Name"></embed-code> (I)
-
-OR
-
-<embed-code file="path/to/file" start="first?line*glob" end="last?line*glob"></embed-code> (II)
-```
-
-The instruction must always be followed by a code fence (opening and closing three backticks):
-<pre>
-<embed-code ...></embed-code>
-```java
-```
-</pre>
-
-The content of the code fence does not matter — the command will overwrite it automatically.
-
-Note that the code fence may specify the syntax in which the code will be highlighted.
-
-This is true even when embedding into HTML.
-
-#### Named fragments (I)
-
-##### Markup fragments
-
-You can mark up the code file to select named fragments like this:
-
-```java
-public final class String
-    implements java.io.Serializable, Comparable<String>, CharSequence {
-    
-    // #docfragment "Constructor"
-    public String() {
-        this.value = new char[0];
-    }
-    // #enddocfragment "Constructor"
-}
-```
-
-The `#docfragment` and `#enddocfragment` tags won't be copied into the resulting code fragment.
-
-##### Add embedding instructions 
-
-To add a new code sample, add the following construct to the Markdown file:
-
-<pre>
-&lt;embed-code file=&quot;java/lang/String.java&quot;
-             fragment=&quot;Constructor&quot;&gt;&lt;/embed-code&gt;
-```java
-```   
-</pre>
-
-The `file` attribute specifies the path to the code file relative to the code root, specified in
-the configuration. The `fragment` attribute specifies the name of the code fragment to embed. Omit
-this attribute to embed the whole file.
-
-You may use any name for your fragments, just omit double quotes (`"`) and symbols forbidden in XML.
-
-#### Pattern fragments (II)
-
-Alternatively, the `<embed-code>` tag may have the following form:
-<pre>
-&lt;embed-code file=&quot;java/lang/String.java&quot;
-             start=&quot;*class Hello*&quot;
-             end=&quot;}*&quot;&gt;&lt;/embed-code&gt;
-```java
-```   
-</pre>
-
-In this case, the fragment is specified by a pair of glob-style patterns. The patterns match 
-the first and the last lines of the desired code fragment. Any of the patterns may be skipped.
-In such a case, the fragment starts at the beginning or ends at the end of the code file.
-
-The pattern syntax supports an extended glob syntax:
- - `?` — one arbitrary symbol;
- - `*` — zero, one, or many arbitrary symbols;
- - `[set]` — one symbol from the given set (equivalent to `[set]` in regular expressions);
- - `^` at the start of the pattern to signify the start of the line;
- - `$` at the end of the pattern to signify the end of the line.
-
-Note that the `*` symbols at the start and in the end of the pattern are implied. Use `^` and `$` to
-mark that the pattern should not assume `*` at the start/end. 
-
-Note that `^` and `$` work as special characters in their respective positions but not in the middle
-of the pattern. To match the literal `^` symbol at the start of the line, prepend it with another
-`^`. Similarly, to match a literal `$` at the end of the line, append it with another `$`.
-
-# Installation
+## Installation
 
 * Go to https://go.dev/doc/install. Our Go version is `1.22.1`, which can be checked in the [go.mod](./go.mod) file
 * Make sure your Go installed successfully with the command
@@ -187,16 +114,20 @@ of the pattern. To match the literal `^` symbol at the start of the line, prepen
     go version
     ```
 
-# Compilation
-The pre-compiled binary executables are stored in the `./bin` directory. However, it is also possible to compile the file manually.
-To compile the file, ensure that the Go is [installed](#installation).
+## Compilation
 
-Open terminal and navigate to the directory where `main.go` is located. Then, use the following command to compile the file: 
-```
+Pre-compiled binaries are available in the `./bin` directory.
+However, you can also compile the utility manually if Go is [installed](#installation).
+
+Navigate to the project root and run:
+```bash
 go build main.go
 ```
 
-There may be issues when running `go build` outside of the directory containing `main.go`, even if the path is specified correctly.
+There may be issues when running `go build` outside of the directory containing `main.go`,
+even if the path is specified correctly.
 
-This command will create an executable file named `embed_code` (or `embed_code.exe` on Windows) in the same directory.
+This command creates an executable named `embed-code` (or `embed-code.exe` on Windows).
 For further information, please refer to the [docs](https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies).
+
+[embed-code-jekyll]: https://github.com/SpineEventEngine/embed-code
