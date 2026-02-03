@@ -107,11 +107,12 @@ Similarly, use `$$` to match a literal `$` at the end of a line.
 
 ### Joining several parts of code into one fragment
 
-A named fragment may consist of one or several pieces declared in a single file. When rendered,
-the pieces which belong to a single fragment are joined together. It is possible to specify the separator 
-between joined pieces, see [Configuration](./README.md#arguments) for the corresponding parameter.
+A named fragment may consist of one or several pieces declared in a single file. 
+When rendered, the pieces that belong to a single fragment are joined together. 
+It is possible to specify a separator between the joined pieces, 
+see [Configuration](./README.md#arguments) for the corresponding parameter.
 
-Here is an example of how a re-occurring fragment is rendered.
+Here is an example of how a multi-piece fragment is rendered.
 
 **Code:**
 
@@ -165,7 +166,7 @@ public String toString() {
 
 ### Declaring multiple fragments in one line
 
-Multiple fragments can start or end on a single line, and they can overlap:
+Multiple fragments can start or end on a single line and may overlap:
 
 ```java
 public final class String
@@ -197,7 +198,7 @@ public final class String
 
 ### Usage with other languages
 
-The fragments can be used in any other languages too:
+The fragments can also be used in other languages:
 
 ```html
 <html lang="en">
