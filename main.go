@@ -77,26 +77,26 @@ import (
 //   - separator — a string which is used as a separator between code fragments. Default value
 //     is "...".
 func main() {
-	slog.Info("starting application, reading args...")
+	slog.Info("Starting application, reading args...")
 	userArgs := cli.ReadArgs()
 
 	if cli.IsUsingConfigFile(userArgs) {
 		err := cli.ValidateConfigFile(userArgs)
 		if err != nil {
-			slog.Error("the provided config file is not valid.", "error", err)
+			slog.Error("The provided config file is not valid.", "error", err)
 
 			return
 		}
 		userArgs, err = cli.FillArgsFromConfigFile(userArgs)
 		if err != nil {
-			slog.Error("received an issue while reading config file: ", "error", err)
+			slog.Error("Received an issue while reading config file: ", "error", err)
 
 			return
 		}
 	}
 	err := cli.ValidateConfig(userArgs)
 	if err != nil {
-		slog.Error("user arguments are not valid.", "error", err)
+		slog.Error("User arguments are not valid.", "error", err)
 
 		return
 	}
@@ -106,16 +106,16 @@ func main() {
 		case cli.ModeCheck:
 			cli.CheckCodeSamples(config)
 
-			slog.Info("the documentation files are up-to-date with code files.")
+			slog.Info("The documentation files are up-to-date with code files.")
 		case cli.ModeEmbed:
 			cli.EmbedCodeSamples(config)
 			cli.CheckCodeSamples(config)
 
-			slog.Info("the code fragments are successfully embedded.")
+			slog.Info("The code fragments are successfully embedded.")
 		case cli.ModeAnalyze:
 			cli.AnalyzeCodeSamples(config)
 
-			slog.Info("analysis is completed, analytics files can be found in /build/analytics folder")
+			slog.Info("Analysis is completed, analytics files can be found in /build/analytics folder.")
 		}
 	}
 }
