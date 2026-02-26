@@ -20,6 +20,7 @@ package embedding
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"slices"
 	"strings"
@@ -128,6 +129,9 @@ func (p Processor) IsUpToDate() bool {
 // config — a configuration for embedding.
 func EmbedAll(config configuration.Configuration) {
 	requiredDocPaths := requiredDocs(config)
+	slog.Info(
+		fmt.Sprintf("Found `%d` target documentation files.", len(requiredDocPaths)),
+	)
 	for _, doc := range requiredDocPaths {
 		processor := NewProcessor(doc, config)
 		if err := processor.Embed(); err != nil {
@@ -228,7 +232,7 @@ func requiredDocs(config configuration.Configuration) []string {
 		return includedDocs
 	}
 
-	return removeElements(excludedDocs, includedDocs)
+	return removeElements(includedDocs, excludedDocs)
 }
 
 func getFilesByPatterns(root string, patterns []string) ([]string, error) {
@@ -245,16 +249,16 @@ func getFilesByPatterns(root string, patterns []string) ([]string, error) {
 	return result, nil
 }
 
-// Removes elements of the second list from the first one.
+// Returns the elements of the first array excluding those present in the second array.
 func removeElements(first, second []string) []string {
-	firstMap := make(map[string]struct{})
-	for _, value := range first {
-		firstMap[value] = struct{}{}
+	secondMap := make(map[string]struct{})
+	for _, value := range second {
+		secondMap[value] = struct{}{}
 	}
 
 	var result []string
-	for _, value := range second {
-		if _, exists := firstMap[value]; !exists {
+	for _, value := range first {
+		if _, exists := secondMap[value]; !exists {
 			result = append(result, value)
 		}
 	}
