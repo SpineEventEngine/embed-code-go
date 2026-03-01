@@ -45,6 +45,19 @@ type Processor struct {
 	requiredDocPaths []string
 }
 
+// EmbedAllResult is result of the EmbedAll method.
+//
+// TargetFiles is the list of target documentation files.
+//
+// TotalEmbeddings is the total number of embeddings found in the target documentation files.
+//
+// UpdatedTargetFiles is the list of updated target document files.
+type EmbedAllResult struct {
+	TargetFiles        []string
+	TotalEmbeddings    int
+	UpdatedTargetFiles []string
+}
+
 // NewProcessor creates and returns new Processor with given docFile and config.
 func NewProcessor(docFile string, config configuration.Configuration) Processor {
 	return Processor{
@@ -70,25 +83,24 @@ func NewProcessorWithTransitions(docFile string, config configuration.Configurat
 // Embed Constructs embedding and modifies the doc file if embedding is needed.
 //
 // If any problems faced, an error is returned.
-func (p Processor) Embed() error {
+func (p Processor) Embed() (*parsing.Context, error) {
 	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
-		return nil
+		return nil, nil
 	}
 
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
-		return &UnexpectedProcessingError{context, err}
+		return nil, &UnexpectedProcessingError{context, err}
 	}
-
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		data := []byte(strings.Join(context.GetResult(), "\n"))
 		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.ReadWriteExecPermission))
 		if err != nil {
-			return &UnexpectedProcessingError{context, err}
+			return &context, &UnexpectedProcessingError{context, err}
 		}
 	}
 
-	return nil
+	return &context, nil
 }
 
 // FindChangedEmbeddings Returns the list of EmbeddingInstruction that are changed in the
@@ -127,16 +139,31 @@ func (p Processor) IsUpToDate() bool {
 // creates an EmbeddingProcessor for each file, and embeds code fragments in them.
 //
 // config — a configuration for embedding.
-func EmbedAll(config configuration.Configuration) {
+func EmbedAll(config configuration.Configuration) EmbedAllResult {
 	requiredDocPaths := requiredDocs(config)
-	slog.Info(
-		fmt.Sprintf("Found `%d` target documentation files.", len(requiredDocPaths)),
-	)
+	totalEmbeddings := 0
+	updatedTargetFiles := []string{}
 	for _, doc := range requiredDocPaths {
 		processor := NewProcessor(doc, config)
-		if err := processor.Embed(); err != nil {
+		context, err := processor.Embed()
+		if err != nil {
 			panic(err)
 		}
+		totalEmbeddings += len(context.Embeddings)
+		if context.IsContentChanged() {
+			updatedTargetFiles = append(updatedTargetFiles, doc)
+		}
+	}
+	slog.Info(
+		fmt.Sprintf(
+			"Found `%d` target documentation files with `%d` embeddings under `%s`.",
+			len(requiredDocPaths), totalEmbeddings, config.DocumentationRoot,
+		),
+	)
+	return EmbedAllResult{
+		TargetFiles:        requiredDocPaths,
+		TotalEmbeddings:    totalEmbeddings,
+		UpdatedTargetFiles: updatedTargetFiles,
 	}
 }
 
