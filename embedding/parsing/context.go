@@ -24,7 +24,7 @@ import (
 	"regexp"
 )
 
-// Context represents the context for parsing a file containing code embeddings.
+// Context represents the context for parsing a file containing code Embeddings.
 //
 // EmbeddingInstruction - a pointer to the embedding instruction.
 //
@@ -39,6 +39,8 @@ import (
 // EmbeddingsNotFound - a list of embedding instructions that are not found in the code.
 //
 // UnacceptedEmbeddings - a list of embedding instructions that are not accepted by the parser.
+//
+// Embeddings - a list of embedding instructions found in the markdown file.
 type Context struct {
 	EmbeddingInstruction *Instruction
 	MarkdownFilePath     string
@@ -47,14 +49,13 @@ type Context struct {
 	CodeFenceIndentation int
 	EmbeddingsNotFound   []Instruction
 	UnacceptedEmbeddings []Instruction
+	Embeddings           []parsingContext
 	// source - a list of strings representing the original markdown file.
 	source []string
 	// lineIndex - an index of the current line in the markdown file.
 	lineIndex int
 	// fileContainsEmbedding - a flag indicating whether the file contains an embedding instruction.
 	fileContainsEmbedding bool
-	// embeddings - a list of embedding instructions found in the markdown file.
-	embeddings []parsingContext
 }
 
 // parsingContext contains the information about the position in the source and the
@@ -119,10 +120,10 @@ func (c *Context) IsContentChanged() bool {
 	return false
 }
 
-// FindChangedEmbeddings returns a list of changed embeddings.
+// FindChangedEmbeddings returns a list of changed Embeddings.
 func (c *Context) FindChangedEmbeddings() []Instruction {
 	var changedEmbeddings []Instruction
-	for _, embedding := range c.embeddings {
+	for _, embedding := range c.Embeddings {
 		sourceContent := c.readEmbeddingSource(embedding)
 		resultContent := c.readEmbeddingResult(embedding)
 		if !isStringSlicesEqual(sourceContent, resultContent) {
@@ -147,13 +148,13 @@ func (c *Context) ResolveEmbeddingNotFound() {
 	c.EmbeddingsNotFound = append(c.EmbeddingsNotFound, currentEmbedding.embeddingInstruction)
 }
 
-// ResolveUnacceptedEmbedding deletes embedding from the list of embeddings if it is not accepted.
+// ResolveUnacceptedEmbedding deletes embedding from the list of Embeddings if it is not accepted.
 //
-// Also appends it to the list of such embeddings for logging.
+// Also appends it to the list of such Embeddings for logging.
 func (c *Context) ResolveUnacceptedEmbedding() {
 	currentEmbeddingInstruction := c.currentEmbedding().embeddingInstruction
 	c.UnacceptedEmbeddings = append(c.UnacceptedEmbeddings, currentEmbeddingInstruction)
-	c.embeddings = c.embeddings[:c.currentEmbeddingIndex()]
+	c.Embeddings = c.Embeddings[:c.currentEmbeddingIndex()]
 	c.SetEmbedding(nil)
 }
 
@@ -171,7 +172,7 @@ func (c *Context) SetEmbedding(embedding *Instruction) {
 			embeddingInstruction: *embedding,
 		}
 
-		c.embeddings = append(c.embeddings, context)
+		c.Embeddings = append(c.Embeddings, context)
 	}
 	c.EmbeddingInstruction = embedding
 }
@@ -198,11 +199,11 @@ func (c *Context) String() string {
 }
 
 func (c *Context) currentEmbedding() *parsingContext {
-	return &c.embeddings[c.currentEmbeddingIndex()]
+	return &c.Embeddings[c.currentEmbeddingIndex()]
 }
 
 func (c *Context) currentEmbeddingIndex() int {
-	return len(c.embeddings) - 1
+	return len(c.Embeddings) - 1
 }
 
 func (c *Context) readEmbeddingSource(context parsingContext) []string {
