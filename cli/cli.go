@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -72,9 +72,10 @@ type Config struct {
 	BaseCodePath  string         `yaml:"code-path"`
 	BaseDocsPath  string         `yaml:"docs-path"`
 	EmbedMappings []EmbedMapping `yaml:"embed-mappings"`
+	Info          bool           `yaml:"info"`
+	Stacktrace    bool           `yaml:"stacktrace"`
 	ConfigPath    string
 	Mode          string
-	Info          bool `yaml:"info"`
 }
 
 // EmbedMapping is a pair of a source code path and a destination docs path to perform an embedding.
@@ -151,6 +152,8 @@ func ReadArgs() Config {
 		"a mode of embed-code execution, which can be 'check' or 'embed'")
 	info := flag.Bool("info", false,
 		"an info logging level setter, enables info logs when 'true'")
+	stacktrace := flag.Bool("stacktrace", false,
+		"an stacktrace setter, enables stacktrace in errors when 'true'")
 
 	flag.Parse()
 
@@ -165,6 +168,7 @@ func ReadArgs() Config {
 		ConfigPath:    *configPath,
 		Mode:          *mode,
 		Info:          *info,
+		Stacktrace:    *stacktrace,
 	}
 }
 
@@ -197,6 +201,7 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 		args.Separator = configFields.Separator
 	}
 	args.Info = configFields.Info
+	args.Stacktrace = configFields.Stacktrace
 
 	return args, nil
 }
