@@ -34,7 +34,8 @@ import (
 //
 // Only messages with level greater than or equal to Handler.Level are printed.
 type Handler struct {
-	Level slog.Level
+	Level      slog.Level
+	attributes []slog.Attr
 }
 
 // Enabled returns true if the log level is greater than or equal to the Handler's Level.
@@ -52,12 +53,23 @@ func (h *Handler) Handle(_ context.Context, record slog.Record) error {
 		record.Level.String(),
 		record.Message,
 	)
+	for _, attr := range h.attributes {
+		fmt.Printf(" %s=%v\n", attr.Key, attr.Value)
+	}
+
+	record.Attrs(func(attr slog.Attr) bool {
+		fmt.Printf(" %s=%v\n", attr.Key, attr.Value)
+		return true
+	})
 	return nil
 }
 
 // WithAttrs returns a copy of the handler with extra attributes.
-// This handler ignores additional attributes and returns itself.
-func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler { return h }
+func (h *Handler) WithAttrs(attributes []slog.Attr) slog.Handler {
+	newHandler := *h
+	newHandler.attributes = append(append([]slog.Attr{}, h.attributes...), attributes...)
+	return &newHandler
+}
 
 // WithGroup returns a copy of the handler for a new group.
 // This handler ignores groups and returns itself.
