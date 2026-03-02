@@ -126,7 +126,9 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 		line := scanner.Text()
 		contentToRender, err = f.parseLine(line, contentToRender)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf(
+				"failed to do fragmentation on file `file://%s`: %s", f.CodeFile, err,
+			)
 		}
 	}
 
@@ -265,8 +267,14 @@ func shouldDoFragmentation(filePath string) bool {
 func (f Fragmentation) parseLine(line string, contentToRender []string) ([]string, error) {
 	cursor := len(contentToRender)
 
-	docFragments := FindDocFragments(line)
-	endDocFragments := FindEndDocFragments(line)
+	docFragments, startErr := FindDocFragments(line)
+	if startErr != nil {
+		return nil, startErr
+	}
+	endDocFragments, endErr := FindEndDocFragments(line)
+	if endErr != nil {
+		return nil, endErr
+	}
 
 	switch {
 	case len(docFragments) > 0:
@@ -314,7 +322,7 @@ func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int
 				return err
 			}
 		} else {
-			return fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
+			return fmt.Errorf("cannot end the fragment `%s` of the file `file://%s` as it wasn't started",
 				fragmentName, f.CodeFile)
 		}
 	}
