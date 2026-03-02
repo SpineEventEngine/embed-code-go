@@ -180,7 +180,9 @@ func CheckUpToDate(config configuration.Configuration) {
 // Iterates through the doc file line by line considering them as a states of an embedding.
 // Such way, transits from the state to the next possible one until it reaches the end of a file.
 // By the transition process, fills the parsing.Context accordingly, so it is ready to retrieve
-// the result. Returns a parsing.Context and an error if any occurs.
+// the result.
+//
+// Returns a parsing.Context and an error if any occurs.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	context := parsing.NewContext(p.DocFilePath)
 	errorStr := "unable to embed construction for doc file `%s` at line %v: %s"
@@ -192,7 +194,7 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	for currentState != finishState {
 		accepted, newState, err := p.moveToNextState(&currentState, &context)
 		if err != nil {
-			return parsing.Context{}, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(),
+			return context, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(),
 				err)
 		}
 		if !accepted {

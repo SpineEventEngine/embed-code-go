@@ -121,7 +121,7 @@ However, you can also compile the utility manually if Go is [installed](#install
 
 Navigate to the project root and run:
 ```bash
-go build main.go
+go build -trimpath main.go
 ```
 
 There may be issues when running `go build` outside of the directory containing `main.go`,
@@ -129,5 +129,8 @@ even if the path is specified correctly.
 
 This command creates an executable named `embed-code` (or `embed-code.exe` on Windows).
 For further information, please refer to the [docs](https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies).
+
+Without the `-trimpath` flag, Go includes absolute file paths in stack traces 
+based on the system where the binary was built. 
 
 [embed-code-jekyll]: https://github.com/SpineEventEngine/embed-code
