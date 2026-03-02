@@ -48,10 +48,11 @@ func (e *UnexpectedProcessingError) Error() string {
 	if len(e.Context.EmbeddingsNotFound) > 0 {
 		embeddingsNotFoundStr := "\nMissing embeddings: \n"
 		for _, emb := range e.Context.EmbeddingsNotFound {
-			embeddingsNotFoundStr += fmt.Sprintf(
-				"%s — %s\n",
-				emb.CodeFile,
-				emb.Fragment)
+			if emb.Fragment == "" {
+				embeddingsNotFoundStr += fmt.Sprintf("%s\n", emb.CodeFile)
+			} else {
+				embeddingsNotFoundStr += fmt.Sprintf("%s — %s\n", emb.CodeFile, emb.Fragment)
+			}
 		}
 		errorString += embeddingsNotFoundStr
 	}

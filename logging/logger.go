@@ -71,7 +71,7 @@ func (h *Handler) WithGroup(name string) slog.Handler { return h }
 //	defer HandlePanic(withStacktrace)
 func HandlePanic(withStacktrace bool) {
 	if r := recover(); r != nil {
-		fmt.Printf("Fatal error: %v\n", r)
+		fmt.Printf("Panic: %v\n", r)
 		if withStacktrace {
 			debug.PrintStack()
 		}
