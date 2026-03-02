@@ -19,7 +19,6 @@
 package parsing
 
 import (
-	"fmt"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
@@ -73,7 +72,7 @@ func (c CodeFenceEndState) Accept(context *Context, _ configuration.Configuratio
 func renderSample(context *Context) error {
 	content, err := context.EmbeddingInstruction.Content()
 	if err != nil {
-		return fmt.Errorf("unable to read the code fragment file: %s", err.Error())
+		return err
 	}
 	for _, line := range content {
 		indentation := strings.Repeat(" ", context.CodeFenceIndentation)

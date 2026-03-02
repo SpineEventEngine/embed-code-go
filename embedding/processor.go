@@ -19,6 +19,7 @@
 package embedding
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -90,13 +91,13 @@ func (p Processor) Embed() (*parsing.Context, error) {
 
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
-		return nil, &UnexpectedProcessingError{context, err}
+		return nil, err
 	}
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		data := []byte(strings.Join(context.GetResult(), "\n"))
 		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.ReadWriteExecPermission))
 		if err != nil {
-			return &context, &UnexpectedProcessingError{context, err}
+			return &context, err
 		}
 	}
 
@@ -114,7 +115,7 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 	context, err := p.fillEmbeddingContext()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
-		return changedEmbeddings, &UnexpectedProcessingError{context, err}
+		return changedEmbeddings, err
 	}
 
 	return changedEmbeddings, nil
@@ -142,12 +143,14 @@ func (p Processor) IsUpToDate() bool {
 func EmbedAll(config configuration.Configuration) EmbedAllResult {
 	requiredDocPaths := requiredDocs(config)
 	totalEmbeddings := 0
-	updatedTargetFiles := []string{}
+	var updatedTargetFiles []string
+	var embeddingErrors []error
 	for _, doc := range requiredDocPaths {
 		processor := NewProcessor(doc, config)
 		context, err := processor.Embed()
 		if err != nil {
-			panic(err)
+			embeddingErrors = append(embeddingErrors, err)
+			continue
 		}
 		totalEmbeddings += len(context.Embeddings)
 		if context.IsContentChanged() {
@@ -160,6 +163,9 @@ func EmbedAll(config configuration.Configuration) EmbedAllResult {
 			len(requiredDocPaths), totalEmbeddings, config.DocumentationRoot,
 		),
 	)
+	if len(embeddingErrors) > 0 {
+		panic(errors.Join(embeddingErrors...))
+	}
 	return EmbedAllResult{
 		TargetFiles:        requiredDocPaths,
 		TotalEmbeddings:    totalEmbeddings,
@@ -185,7 +191,7 @@ func CheckUpToDate(config configuration.Configuration) {
 // Returns a parsing.Context and an error if any occurs.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	context := parsing.NewContext(p.DocFilePath)
-	errorStr := "unable to embed construction for doc file `%s` at line %v: %s"
+	errorStr := "failed to embed code fragment into doc file `%s` at line %v: %s"
 
 	var currentState parsing.State
 	currentState = parsing.Start
