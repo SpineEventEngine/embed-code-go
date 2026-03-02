@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -76,7 +76,10 @@ func lookup(line string, prefix string) ([]string, error) {
 		}
 		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {
 			quotedName := strings.Trim(fragmentName, "\n\t ")
-			unquotedName := unquoteName(quotedName)
+			unquotedName, err := unquoteName(quotedName)
+			if err != nil {
+				return unquotedNames, err
+			}
 			unquotedNames = append(unquotedNames, unquotedName)
 		}
 	}
@@ -85,13 +88,16 @@ func lookup(line string, prefix string) ([]string, error) {
 }
 
 // Returns the unquoted name from given quotedName.
-func unquoteName(quotedName string) string {
-	r := regexp.MustCompile("\"(.*)\"")
+func unquoteName(quotedName string) (string, error) {
+	r, compilationErr := regexp.Compile("\"(.*)\"")
+	if compilationErr != nil {
+		return "", fmt.Errorf("failed to unquote name `%s`: %s", quotedName, compilationErr)
+	}
 	nameQuoted := r.FindString(quotedName)
 	nameCleaned, err := strconv.Unquote(nameQuoted)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("failed to unquote name `%s`: %s", quotedName, err)
 	}
 
-	return nameCleaned
+	return nameCleaned, nil
 }

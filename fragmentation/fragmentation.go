@@ -122,12 +122,15 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 	}(file)
 
 	scanner := bufio.NewScanner(file)
+	lineNumber := 0
 	for scanner.Scan() {
+		lineNumber++
 		line := scanner.Text()
 		contentToRender, err = f.parseLine(line, contentToRender)
 		if err != nil {
 			return nil, nil, fmt.Errorf(
-				"failed to do fragmentation on file `file://%s`: %s", f.CodeFile, err,
+				"failed to do fragmentation on file `file://%s`, line %d: %s",
+				f.CodeFile, lineNumber, err,
 			)
 		}
 	}
