@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -20,8 +20,15 @@ package main
 
 import (
 	"embed-code/embed-code-go/cli"
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/logging"
+	"fmt"
 	"log/slog"
+	"path/filepath"
 )
+
+// Version of the embed-code application.
+const Version = "1.0.0"
 
 // The entry point for embed-code.
 //
@@ -77,8 +84,10 @@ import (
 //   - separator — a string which is used as a separator between code fragments. Default value
 //     is "...".
 func main() {
-	slog.Info("Starting application, reading args...")
+	fmt.Println(fmt.Sprintf("Running embed-code v%s.", Version))
 	userArgs := cli.ReadArgs()
+	configureLogging(userArgs)
+	defer logging.HandlePanic(userArgs.Stacktrace)
 
 	if cli.IsUsingConfigFile(userArgs) {
 		err := cli.ValidateConfigFile(userArgs)
@@ -101,21 +110,65 @@ func main() {
 		return
 	}
 	configs := cli.BuildEmbedCodeConfiguration(userArgs)
-	for _, config := range configs {
-		switch userArgs.Mode {
-		case cli.ModeCheck:
+
+	switch userArgs.Mode {
+	case cli.ModeCheck:
+		for _, config := range configs {
 			cli.CheckCodeSamples(config)
-
-			slog.Info("The documentation files are up-to-date with code files.")
-		case cli.ModeEmbed:
-			cli.EmbedCodeSamples(config)
-			cli.CheckCodeSamples(config)
-
-			slog.Info("The code fragments are successfully embedded.")
-		case cli.ModeAnalyze:
-			cli.AnalyzeCodeSamples(config)
-
-			slog.Info("Analysis is completed, analytics files can be found in /build/analytics folder.")
 		}
+		fmt.Println("The documentation files are up-to-date with code files.")
+	case cli.ModeEmbed:
+		for _, config := range configs {
+			embedByConfig(config)
+		}
+		fmt.Println("Embedding process finished.")
+	case cli.ModeAnalyze:
+		for _, config := range configs {
+			cli.AnalyzeCodeSamples(config)
+		}
+		fmt.Println("Analysis is completed, analytics files can be found in /build/analytics folder.")
+	}
+}
+
+// configureLogging configures the slog logging.
+func configureLogging(config cli.Config) {
+	level := slog.LevelWarn
+	if config.Info {
+		level = slog.LevelInfo
+	}
+	logger := slog.New(&logging.Handler{Level: level})
+	slog.SetDefault(logger)
+}
+
+// embedByConfig runs the cli.EmbedCodeSamples for config and logs the results.
+func embedByConfig(config configuration.Configuration) {
+	result := cli.EmbedCodeSamples(config)
+	if result.TotalFragments == 0 {
+		slog.Warn(
+			fmt.Sprintf(
+				"No code fragments were found under `%s`.",
+				config.CodeRoot,
+			),
+		)
+	}
+	if result.TotalEmbeddings == 0 {
+		slog.Warn(
+			fmt.Sprintf(
+				"No embedding placeholders were found under `%s`.",
+				config.CodeRoot,
+			),
+		)
+	}
+	if len(result.UpdatedTargetFiles) == 0 &&
+		result.TotalFragments != 0 &&
+		result.TotalEmbeddings != 0 {
+		fmt.Println("All documentation files are already up to date. Nothing to update.")
+	}
+	for _, updatedDocFile := range result.UpdatedTargetFiles {
+		absPath, err := filepath.Abs(updatedDocFile)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("File updated: file://%s.\n", absPath)
 	}
 }
