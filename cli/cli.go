@@ -86,9 +86,9 @@ type EmbedMapping struct {
 
 // EmbedCodeSamplesResult is result of the EmbedCodeSamples method.
 //
-// WriteFragmentFilesResult result of the code fragmentation.
+// WriteFragmentFilesResult the result of code fragmentation.
 //
-// EmbedAllResult result of the code fragments embedding in the documentation.
+// EmbedAllResult the result of embedding code fragments in the documentation.
 type EmbedCodeSamplesResult struct {
 	fragmentation.WriteFragmentFilesResult
 	embedding.EmbedAllResult
@@ -151,9 +151,9 @@ func ReadArgs() Config {
 	mode := flag.String("mode", "",
 		"a mode of embed-code execution, which can be 'check' or 'embed'")
 	info := flag.Bool("info", false,
-		"an info logging level setter, enables info logs when 'true'")
+		"an info-level logging setter that enables info logs when set to 'true'")
 	stacktrace := flag.Bool("stacktrace", false,
-		"an stacktrace setter, enables stacktrace in errors when 'true'")
+		"a stack trace setter that enables stack traces in error logs when set to 'true'")
 
 	flag.Parse()
 
