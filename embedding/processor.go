@@ -153,7 +153,7 @@ func EmbedAll(config configuration.Configuration) EmbedAllResult {
 			embeddingErrors = append(embeddingErrors, err)
 			continue
 		}
-		totalEmbeddings += len(context.Embeddings)
+		totalEmbeddings += context.EmbeddingsCount()
 		if context.IsContentChanged() {
 			updatedTargetFiles = append(updatedTargetFiles, doc)
 		}
