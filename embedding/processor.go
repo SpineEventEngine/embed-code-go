@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -191,7 +192,8 @@ func CheckUpToDate(config configuration.Configuration) {
 // Returns a parsing.Context and an error if any occurs.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	context := parsing.NewContext(p.DocFilePath)
-	errorStr := "failed to embed code fragment into doc file `%s` at line %v: %s"
+	absDocPath, _ := filepath.Abs(p.DocFilePath)
+	errorStr := "failed to embed code fragment into doc file `file://%s` at line %v: %s"
 
 	var currentState parsing.State
 	currentState = parsing.Start
@@ -200,14 +202,14 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	for currentState != finishState {
 		accepted, newState, err := p.moveToNextState(&currentState, &context)
 		if err != nil {
-			return context, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(),
+			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentIndex(),
 				err)
 		}
 		if !accepted {
 			currentState = &parsing.RegularLineState{}
 			context.ResolveUnacceptedEmbedding()
 
-			return context, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(), err)
+			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentIndex(), err)
 		}
 		currentState = *newState
 	}
