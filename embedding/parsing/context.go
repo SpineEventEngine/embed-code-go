@@ -54,7 +54,7 @@ type Context struct {
 	// fileContainsEmbedding - a flag indicating whether the file contains an embedding instruction.
 	fileContainsEmbedding bool
 	// embeddings - a list of embedding instructions found in the markdown file.
-	embeddings []parsingContext
+	embeddings []ParsingContext
 }
 
 // EmbeddingsCount returns number of found embeddings.
@@ -62,22 +62,22 @@ func (c *Context) EmbeddingsCount() int {
 	return len(c.embeddings)
 }
 
-// parsingContext contains the information about the position in the source and the
+// ParsingContext contains the information about the position in the source and the
 // resulting Markdown files.
 //
 // embeddingInstruction - an Instruction, containing all the needed embedding information.
 //
-// sourceStartIndex - an index of the StartState line in the original markdown file.
+// SourceStartIndex - an index of the StartState line in the original markdown file.
 //
-// sourceEndIndex - an index of the end line in the original markdown file.
+// SourceEndIndex - an index of the end line in the original markdown file.
 //
 // resultStartIndex - an index of the StartState line in the result markdown file.
 //
 // resultEndIndex - an index of the end line in the result markdown file.
-type parsingContext struct {
+type ParsingContext struct {
 	embeddingInstruction Instruction
-	sourceStartIndex     int
-	sourceEndIndex       int
+	SourceStartIndex     int
+	SourceEndIndex       int
 	resultStartIndex     int
 	resultEndIndex       int
 }
@@ -146,7 +146,7 @@ func (c *Context) IsContainsEmbedding() bool {
 // ResolveEmbeddingNotFound writes the source content of the markdown file if embedding
 // is not found.
 func (c *Context) ResolveEmbeddingNotFound() {
-	currentEmbedding := *c.currentEmbedding()
+	currentEmbedding := *c.CurrentEmbedding()
 	source := c.readEmbeddingSource(currentEmbedding)
 	c.Result = append(c.Result, source...)
 	c.EmbeddingsNotFound = append(c.EmbeddingsNotFound, currentEmbedding.embeddingInstruction)
@@ -156,7 +156,7 @@ func (c *Context) ResolveEmbeddingNotFound() {
 //
 // Also appends it to the list of such embeddings for logging.
 func (c *Context) ResolveUnacceptedEmbedding() {
-	currentEmbeddingInstruction := c.currentEmbedding().embeddingInstruction
+	currentEmbeddingInstruction := c.CurrentEmbedding().embeddingInstruction
 	c.UnacceptedEmbeddings = append(c.UnacceptedEmbeddings, currentEmbeddingInstruction)
 	c.embeddings = c.embeddings[:c.currentEmbeddingIndex()]
 	c.SetEmbedding(nil)
@@ -168,11 +168,11 @@ func (c *Context) SetEmbedding(embedding *Instruction) {
 	resultIndex := len(c.Result)
 
 	if embedding == nil {
-		c.currentEmbedding().sourceEndIndex = sourceIndex
-		c.currentEmbedding().resultEndIndex = resultIndex
+		c.CurrentEmbedding().SourceEndIndex = sourceIndex
+		c.CurrentEmbedding().resultEndIndex = resultIndex
 	} else {
 		c.fileContainsEmbedding = true
-		context := parsingContext{
+		context := ParsingContext{
 			embeddingInstruction: *embedding,
 		}
 
@@ -185,8 +185,8 @@ func (c *Context) SetEmbedding(embedding *Instruction) {
 // include instructions in the embedding.
 func (c *Context) SetCodeStart() {
 	if c.fileContainsEmbedding {
-		lastEmbedding := c.currentEmbedding()
-		lastEmbedding.sourceStartIndex = c.lineIndex
+		lastEmbedding := c.CurrentEmbedding()
+		lastEmbedding.SourceStartIndex = c.lineIndex
 		lastEmbedding.resultStartIndex = len(c.Result)
 	}
 }
@@ -202,7 +202,7 @@ func (c *Context) String() string {
 		c.EmbeddingInstruction, c.MarkdownFilePath, c.lineIndex)
 }
 
-func (c *Context) currentEmbedding() *parsingContext {
+func (c *Context) CurrentEmbedding() *ParsingContext {
 	return &c.embeddings[c.currentEmbeddingIndex()]
 }
 
@@ -210,11 +210,11 @@ func (c *Context) currentEmbeddingIndex() int {
 	return len(c.embeddings) - 1
 }
 
-func (c *Context) readEmbeddingSource(context parsingContext) []string {
-	return c.source[context.sourceStartIndex:context.sourceEndIndex]
+func (c *Context) readEmbeddingSource(context ParsingContext) []string {
+	return c.source[context.SourceStartIndex:context.SourceEndIndex]
 }
 
-func (c *Context) readEmbeddingResult(context parsingContext) []string {
+func (c *Context) readEmbeddingResult(context ParsingContext) []string {
 	return c.Result[context.resultStartIndex:context.resultEndIndex]
 }
 
