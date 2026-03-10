@@ -118,9 +118,7 @@ func main() {
 		}
 		fmt.Println("The documentation files are up-to-date with code files.")
 	case cli.ModeEmbed:
-		for _, config := range configs {
-			embedByConfig(config)
-		}
+		embedByConfigs(configs)
 		fmt.Println("Embedding process finished.")
 	case cli.ModeAnalyze:
 		for _, config := range configs {
@@ -140,8 +138,39 @@ func configureLogging(config cli.Config) {
 	slog.SetDefault(logger)
 }
 
+// embedByConfig runs the embedByConfig for all configs and logs the results.
+func embedByConfigs(configs []configuration.Configuration) {
+	var totalEmbeddedFiles []string
+	totalEmbeddings := 0
+	totalFragments := 0
+	for _, config := range configs {
+		result := embedByConfig(config)
+		totalEmbeddedFiles = append(totalEmbeddedFiles, result.UpdatedTargetFiles...)
+		totalEmbeddings += result.TotalEmbeddings
+		totalFragments += result.TotalFragments
+	}
+	if len(totalEmbeddedFiles) == 0 &&
+		totalEmbeddings != 0 &&
+		totalFragments != 0 {
+		fmt.Println("All documentation files are already up to date. Nothing to update.")
+	}
+	if len(totalEmbeddedFiles) == 1 {
+		fmt.Println("File updated:")
+	}
+	if len(totalEmbeddedFiles) > 1 {
+		fmt.Println("Files updated:")
+	}
+	for _, updatedDocFile := range totalEmbeddedFiles {
+		absPath, err := filepath.Abs(updatedDocFile)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("- file://%s.\n", absPath)
+	}
+}
+
 // embedByConfig runs the cli.EmbedCodeSamples for config and logs the results.
-func embedByConfig(config configuration.Configuration) {
+func embedByConfig(config configuration.Configuration) cli.EmbedCodeSamplesResult {
 	result := cli.EmbedCodeSamples(config)
 	if result.TotalFragments == 0 {
 		slog.Warn(
@@ -159,16 +188,5 @@ func embedByConfig(config configuration.Configuration) {
 			),
 		)
 	}
-	if len(result.UpdatedTargetFiles) == 0 &&
-		result.TotalFragments != 0 &&
-		result.TotalEmbeddings != 0 {
-		fmt.Println("All documentation files are already up to date. Nothing to update.")
-	}
-	for _, updatedDocFile := range result.UpdatedTargetFiles {
-		absPath, err := filepath.Abs(updatedDocFile)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("File updated: file://%s.\n", absPath)
-	}
+	return result
 }
