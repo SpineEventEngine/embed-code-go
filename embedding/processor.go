@@ -193,7 +193,7 @@ func CheckUpToDate(config configuration.Configuration) {
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	context := parsing.NewContext(p.DocFilePath)
 	absDocPath, _ := filepath.Abs(p.DocFilePath)
-	errorStr := "failed to embed code fragment into doc file `file://%s` at line %v: %s"
+	errorStr := "failed to embed code fragment into doc file `file://%s:%d`: %s"
 
 	var currentState parsing.State
 	currentState = parsing.Start

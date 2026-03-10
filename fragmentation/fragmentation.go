@@ -129,7 +129,7 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 		contentToRender, err = f.parseLine(line, contentToRender)
 		if err != nil {
 			return nil, nil, fmt.Errorf(
-				"failed to do fragmentation on file `file://%s`, line %d: %s",
+				"failed to do fragmentation on file `file://%s:%d`: %s",
 				f.CodeFile, lineNumber, err,
 			)
 		}
