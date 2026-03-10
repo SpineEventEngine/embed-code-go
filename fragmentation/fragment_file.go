@@ -95,9 +95,14 @@ func (f FragmentFile) Content() ([]string, error) {
 
 	if !isPathFileExits {
 		if f.FragmentName != "" {
+			if f.FragmentName == "_default" {
+				return nil, fmt.Errorf(
+					"code file `%s/%s` not found", f.Configuration.CodeRoot, f.CodePath,
+				)
+			}
 			return nil, fmt.Errorf(
-				"fragment `%s` from code file `%s` not found",
-				f.FragmentName, f.CodePath,
+				"fragment `%s` from code file `%s/%s` not found",
+				f.FragmentName, f.Configuration.CodeRoot, f.CodePath,
 			)
 		}
 		return nil, fmt.Errorf(
