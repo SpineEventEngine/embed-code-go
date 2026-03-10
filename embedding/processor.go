@@ -202,14 +202,13 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	for currentState != finishState {
 		accepted, newState, err := p.moveToNextState(&currentState, &context)
 		if err != nil {
-			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentIndex(),
-				err)
+			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentEmbedding().SourceStartIndex-1, err)
 		}
 		if !accepted {
 			currentState = &parsing.RegularLineState{}
 			context.ResolveUnacceptedEmbedding()
 
-			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentIndex(), err)
+			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentEmbedding().SourceStartIndex-1, err)
 		}
 		currentState = *newState
 	}
