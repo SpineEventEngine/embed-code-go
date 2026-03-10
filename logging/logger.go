@@ -24,6 +24,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime/debug"
+	"strings"
 )
 
 // Handler is a custom slog.Handler that formats log records for simple console output.
@@ -36,6 +37,7 @@ import (
 type Handler struct {
 	Level      slog.Level
 	attributes []slog.Attr
+	groups     []string
 }
 
 // Enabled returns true if the log level is greater than or equal to the Handler's Level.
@@ -53,12 +55,18 @@ func (h *Handler) Handle(_ context.Context, record slog.Record) error {
 		record.Level.String(),
 		record.Message,
 	)
+
+	prefix := strings.Join(h.groups, ".")
+	if prefix != "" {
+		prefix += "."
+	}
+
 	for _, attr := range h.attributes {
-		fmt.Printf(" %s=%v\n", attr.Key, attr.Value)
+		fmt.Printf(" %s%s=%v\n", prefix, attr.Key, attr.Value)
 	}
 
 	record.Attrs(func(attr slog.Attr) bool {
-		fmt.Printf(" %s=%v\n", attr.Key, attr.Value)
+		fmt.Printf(" %s%s=%v\n", prefix, attr.Key, attr.Value)
 		return true
 	})
 	return nil
@@ -72,8 +80,11 @@ func (h *Handler) WithAttrs(attributes []slog.Attr) slog.Handler {
 }
 
 // WithGroup returns a copy of the handler for a new group.
-// This handler ignores groups and returns itself.
-func (h *Handler) WithGroup(name string) slog.Handler { return h }
+func (h *Handler) WithGroup(name string) slog.Handler {
+	newHandler := *h
+	newHandler.groups = append(append([]string{}, h.groups...), name)
+	return &newHandler
+}
 
 // HandlePanic is a handler for the panic.
 //
