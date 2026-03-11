@@ -158,6 +158,9 @@ func EmbedAll(config configuration.Configuration) EmbedAllResult {
 			updatedTargetFiles = append(updatedTargetFiles, doc)
 		}
 	}
+	if len(embeddingErrors) > 0 {
+		panic(errors.Join(embeddingErrors...))
+	}
 	if totalEmbeddings > 0 {
 		slog.Info(
 			fmt.Sprintf(
@@ -169,9 +172,6 @@ func EmbedAll(config configuration.Configuration) EmbedAllResult {
 		slog.Warn(
 			fmt.Sprintf("No embedding instructions were found under `%s`.", config.DocumentationRoot),
 		)
-	}
-	if len(embeddingErrors) > 0 {
-		panic(errors.Join(embeddingErrors...))
 	}
 	return EmbedAllResult{
 		TargetFiles:        requiredDocPaths,
