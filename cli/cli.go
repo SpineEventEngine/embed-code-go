@@ -64,9 +64,9 @@ import (
 // EmbedMappings — an additional optional list of configs, which will be executed together with the
 // main one. A config written here has higher priority and may overwrite the base one.
 type Config struct {
-	CodeIncludes  string         `yaml:"code-includes"`
-	DocIncludes   string         `yaml:"doc-includes"`
-	DocExcludes   string         `yaml:"doc-excludes"`
+	CodeIncludes  StringList     `yaml:"code-includes"`
+	DocIncludes   StringList     `yaml:"doc-includes"`
+	DocExcludes   StringList     `yaml:"doc-excludes"`
 	FragmentsPath string         `yaml:"fragments-path"`
 	Separator     string         `yaml:"separator"`
 	BaseCodePath  string         `yaml:"code-path"`
@@ -160,9 +160,9 @@ func ReadArgs() Config {
 	return Config{
 		BaseCodePath:  *codePath,
 		BaseDocsPath:  *docsPath,
-		CodeIncludes:  *codeIncludes,
-		DocIncludes:   *docIncludes,
-		DocExcludes:   *docExcludes,
+		CodeIncludes:  parseListArgument(*codeIncludes),
+		DocIncludes:   parseListArgument(*docIncludes),
+		DocExcludes:   parseListArgument(*docExcludes),
 		FragmentsPath: *fragmentsPath,
 		Separator:     *separator,
 		ConfigPath:    *configPath,
@@ -182,16 +182,16 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	args.BaseDocsPath = configFields.BaseDocsPath
 	args.BaseCodePath = configFields.BaseCodePath
 
-	if isNotEmpty(configFields.CodeIncludes) {
+	if len(configFields.CodeIncludes) > 0 {
 		args.CodeIncludes = configFields.CodeIncludes
 	}
 	if len(configFields.EmbedMappings) > 0 {
 		args.EmbedMappings = configFields.EmbedMappings
 	}
-	if isNotEmpty(configFields.DocIncludes) {
+	if len(configFields.DocIncludes) > 0 {
 		args.DocIncludes = configFields.DocIncludes
 	}
-	if isNotEmpty(configFields.DocExcludes) {
+	if len(configFields.DocExcludes) > 0 {
 		args.DocExcludes = configFields.DocExcludes
 	}
 	if isNotEmpty(configFields.FragmentsPath) {
@@ -229,7 +229,7 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 	embedCodeConfig.CodeRoot = userArgs.BaseCodePath
 	embedCodeConfig.DocumentationRoot = userArgs.BaseDocsPath
 
-	if isNotEmpty(userArgs.DocExcludes) {
+	if len(userArgs.DocExcludes) > 0 {
 		embedCodeConfig.DocExcludes = append(embedCodeConfig.DocExcludes, excludedConfigs...)
 	} else {
 		embedCodeConfig.DocExcludes = excludedConfigs
@@ -243,11 +243,11 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 func configWithOptionalParams(userArgs Config) configuration.Configuration {
 	embedCodeConfig := configuration.NewConfiguration()
 
-	if isNotEmpty(userArgs.CodeIncludes) {
-		embedCodeConfig.CodeIncludes = parseListArgument(userArgs.CodeIncludes)
+	if len(userArgs.CodeIncludes) > 0 {
+		embedCodeConfig.CodeIncludes = userArgs.CodeIncludes
 	}
-	if isNotEmpty(userArgs.DocIncludes) {
-		embedCodeConfig.DocIncludes = parseListArgument(userArgs.DocIncludes)
+	if len(userArgs.DocIncludes) > 0 {
+		embedCodeConfig.DocIncludes = userArgs.DocIncludes
 	}
 	if isNotEmpty(userArgs.FragmentsPath) {
 		embedCodeConfig.FragmentsDir = userArgs.FragmentsPath

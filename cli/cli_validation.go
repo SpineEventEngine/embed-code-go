@@ -121,9 +121,9 @@ func validateConfig(config Config) error {
 // Reports whether at least one of optional configs is set — code-includes, doc-includes, separator
 // or fragments-path.
 func validateOptionalParamsSet(config Config) bool {
-	isCodeIncludesSet := isNotEmpty(config.CodeIncludes)
-	isDocIncludesSet := isNotEmpty(config.DocIncludes)
-	isDocExcludesSet := isNotEmpty(config.DocExcludes)
+	isCodeIncludesSet := len(config.CodeIncludes) > 0
+	isDocIncludesSet := len(config.DocIncludes) > 0
+	isDocExcludesSet := len(config.DocExcludes) > 0
 	isSeparatorSet := isNotEmpty(config.Separator)
 	isFragmentPathSet := isNotEmpty(config.FragmentsPath)
 
