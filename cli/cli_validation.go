@@ -193,16 +193,18 @@ func findCodeSourceDuplications(paths _type.NamedPathList) error {
 	pathCount := make(map[string]int)
 
 	for _, path := range paths {
-		if path.Name != "" {
-			nameDuplicates[path.Name] = append(nameDuplicates[path.Name], path.Path)
-		}
+		nameDuplicates[path.Name] = append(nameDuplicates[path.Name], path.Path)
 		pathCount[path.Path]++
 	}
 
 	var warnLines []string
 	for name, paths := range nameDuplicates {
 		if len(paths) > 1 {
-			warnLines = append(warnLines, "- "+name)
+			if isEmpty(name) {
+				warnLines = append(warnLines, "- (unnamed)")
+			} else {
+				warnLines = append(warnLines, "- "+name)
+			}
 			for _, path := range paths {
 				warnLines = append(warnLines, "  - "+path)
 			}
