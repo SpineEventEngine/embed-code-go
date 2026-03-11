@@ -50,6 +50,9 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 )
 
+// NamedPathPrefix the prefix before the named code source.
+var NamedPathPrefix = "$"
+
 // Fragmentation splits the given file into fragments and writes them into corresponding
 // output files.
 //
@@ -370,7 +373,7 @@ func (f Fragmentation) targetDirectory() string {
 	subTree := filepath.Dir(relativeFile)
 
 	if strings.TrimSpace(f.SourcesRoot.Name) != "" {
-		return filepath.Join(fragmentsDir, f.SourcesRoot.Name, subTree)
+		return filepath.Join(fragmentsDir, NamedPathPrefix+f.SourcesRoot.Name, subTree)
 	}
 
 	return filepath.Join(fragmentsDir, subTree)

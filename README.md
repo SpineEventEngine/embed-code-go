@@ -112,8 +112,10 @@ The available fields for the configuration file are:
       When a named path is specified, fragments must be referenced in the embedding instructions 
       using the corresponding path name:
       ```md
-      <embed-code file="PATH_NAME/path/to/file"></embed-code>
+      <embed-code file="$PATH_NAME/path/to/file"></embed-code>
       ```
+      **Do not forget the dollar sign (`$`) before the path name.**
+    
       It is possible to specify a path without a name or with an empty name.
       In this case, fragments will be stored in the root defined by `fragments-path`.
 
