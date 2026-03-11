@@ -158,12 +158,18 @@ func EmbedAll(config configuration.Configuration) EmbedAllResult {
 			updatedTargetFiles = append(updatedTargetFiles, doc)
 		}
 	}
-	slog.Info(
-		fmt.Sprintf(
-			"Found `%d` target documentation files with `%d` embeddings under `%s`.",
-			len(requiredDocPaths), totalEmbeddings, config.DocumentationRoot,
-		),
-	)
+	if totalEmbeddings > 0 {
+		slog.Info(
+			fmt.Sprintf(
+				"Found `%d` target documentation files with `%d` embeddings under `%s`.",
+				len(requiredDocPaths), totalEmbeddings, config.DocumentationRoot,
+			),
+		)
+	} else {
+		slog.Warn(
+			fmt.Sprintf("No embedding instructions were found under `%s`.", config.DocumentationRoot),
+		)
+	}
 	if len(embeddingErrors) > 0 {
 		panic(errors.Join(embeddingErrors...))
 	}

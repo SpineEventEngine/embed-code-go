@@ -22,6 +22,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/files"
 	"embed-code/embed-code-go/fragmentation"
+	_type "embed-code/embed-code-go/type"
 	"fmt"
 	"os"
 	"regexp"
@@ -53,7 +54,7 @@ var _ = Describe("Fragmentation", func() {
 	BeforeEach(func() {
 		config = configuration.NewConfiguration()
 		config.DocumentationRoot = "../test/resources/docs"
-		config.CodeRoot = "../test/resources/code/java"
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
 	})
 
 	AfterEach(func() {
@@ -122,7 +123,7 @@ var _ = Describe("Fragmentation", func() {
 	It("should not do fragmentation of a binary file", func() {
 		config.CodeIncludes = []string{"**.jar"}
 
-		Expect(fragmentation.WriteFragmentFiles(config)).Error().ShouldNot(HaveOccurred())
+		Expect(fragmentation.WriteFragmentFiles(config).TotalFragments).Should(Equal(0))
 		Expect(files.IsDirExist(config.FragmentsDir)).Should(BeFalse())
 	})
 
@@ -140,7 +141,7 @@ var _ = Describe("Fragmentation", func() {
 			docFragment := fmt.Sprintf(
 				"// #docfragment \"%s\",\"%s\"", mainFragment, subMainFragment)
 
-			openings := fragmentation.FindDocFragments(docFragment)
+			openings, _ := fragmentation.FindDocFragments(docFragment)
 			Expect(openings).Should(HaveLen(2))
 			Expect(openings[0]).Should(Equal(mainFragment))
 			Expect(openings[1]).Should(Equal(subMainFragment))
@@ -150,7 +151,7 @@ var _ = Describe("Fragmentation", func() {
 			endDocFragment := fmt.Sprintf(
 				"// #enddocfragment \"%s\",\"%s\"", mainFragment, subMainFragment)
 
-			endings := fragmentation.FindEndDocFragments(endDocFragment)
+			endings, _ := fragmentation.FindEndDocFragments(endDocFragment)
 			Expect(endings).Should(HaveLen(2))
 			Expect(endings[0]).Should(Equal(mainFragment))
 			Expect(endings[1]).Should(Equal(subMainFragment))
@@ -160,7 +161,7 @@ var _ = Describe("Fragmentation", func() {
 			docFragment := fmt.Sprintf(
 				"// #docfragment \"%s\",\"%s\"", mainFragment, subMainFragment)
 
-			openings := fragmentation.FindEndDocFragments(docFragment)
+			openings, _ := fragmentation.FindEndDocFragments(docFragment)
 			Expect(openings).Should(BeEmpty())
 		})
 
@@ -168,14 +169,15 @@ var _ = Describe("Fragmentation", func() {
 			endDocFragment := fmt.Sprintf(
 				"// #enddocfragment \"%s\",\"%s\"", mainFragment, subMainFragment)
 
-			endings := fragmentation.FindDocFragments(endDocFragment)
+			endings, _ := fragmentation.FindDocFragments(endDocFragment)
 			Expect(endings).Should(BeEmpty())
 		})
 	})
 
 	It("should correctly parse file into many partitions", func() {
 		frag := buildTestFragmentation(complexFragmentsFileName, config)
-		Expect(frag.WriteFragments()).Should(Succeed())
+		_, err := frag.WriteFragments()
+		Expect(err).ToNot(HaveOccurred())
 
 		fragmentFiles := readFragmentsDir(config)
 		Expect(fragmentFiles).Should(HaveLen(2))
@@ -204,7 +206,8 @@ var _ = Describe("Fragmentation", func() {
 
 	It("should correctly parse file with several different fragments", func() {
 		frag := buildTestFragmentation(twoFragmentsFileName, config)
-		Expect(frag.WriteFragments()).Should(Succeed())
+		_, err := frag.WriteFragments()
+		Expect(err).ToNot(HaveOccurred())
 
 		fragmentFiles := readFragmentsDir(config)
 		Expect(fragmentFiles).Should(HaveLen(3))
@@ -238,7 +241,8 @@ var _ = Describe("Fragmentation", func() {
 
 	It("should correctly parse file with several overlapping fragments", func() {
 		frag := buildTestFragmentation(overlappingFragmentsFileName, config)
-		Expect(frag.WriteFragments()).Should(Succeed())
+		_, err := frag.WriteFragments()
+		Expect(err).ToNot(HaveOccurred())
 
 		fragmentFiles := readFragmentsDir(config)
 		Expect(fragmentFiles).Should(HaveLen(3))
@@ -277,9 +281,10 @@ var _ = Describe("Fragmentation", func() {
 
 func buildTestFragmentation(testFileName string,
 	config configuration.Configuration) fragmentation.Fragmentation {
-	testFilePath := fmt.Sprintf("%s/org/example/%s", config.CodeRoot, testFileName)
+	codeRoot := config.CodeRoots[0]
+	testFilePath := fmt.Sprintf("%s/org/example/%s", codeRoot.Path, testFileName)
 
-	return fragmentation.NewFragmentation(testFilePath, config)
+	return fragmentation.NewFragmentation(testFilePath, codeRoot, config)
 }
 
 func readFragmentsDir(config configuration.Configuration) []os.DirEntry {

@@ -144,7 +144,7 @@ func embedByConfigs(configs []configuration.Configuration) {
 	totalEmbeddings := 0
 	totalFragments := 0
 	for _, config := range configs {
-		result := embedByConfig(config)
+		result := cli.EmbedCodeSamples(config)
 		totalEmbeddedFiles = append(totalEmbeddedFiles, result.UpdatedTargetFiles...)
 		totalEmbeddings += result.TotalEmbeddings
 		totalFragments += result.TotalFragments
@@ -167,26 +167,4 @@ func embedByConfigs(configs []configuration.Configuration) {
 		}
 		fmt.Printf("- file://%s.\n", absPath)
 	}
-}
-
-// embedByConfig runs the cli.EmbedCodeSamples for config and logs the results.
-func embedByConfig(config configuration.Configuration) cli.EmbedCodeSamplesResult {
-	result := cli.EmbedCodeSamples(config)
-	if result.TotalFragments == 0 {
-		slog.Warn(
-			fmt.Sprintf(
-				"No code fragments were found under `%s`.",
-				config.CodeRoot,
-			),
-		)
-	}
-	if result.TotalEmbeddings == 0 {
-		slog.Warn(
-			fmt.Sprintf(
-				"No embedding placeholders were found under `%s`.",
-				config.CodeRoot,
-			),
-		)
-	}
-	return result
 }

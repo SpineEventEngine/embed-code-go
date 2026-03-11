@@ -19,6 +19,7 @@
 package cli
 
 import (
+	_type "embed-code/embed-code-go/type"
 	"flag"
 	"fmt"
 	"os"
@@ -34,22 +35,25 @@ import (
 
 // Config — user-specified embed-code configurations.
 //
-// BaseCodePath — a path to a root directory with code files.
+// BaseCodePaths — a NamedPathList to directories with code files.
 //
 // BaseDocsPath — a path to a root directory with docs files.
 //
-// CodeIncludes — a string with comma-separated patterns for filtering the code files
+// CodeIncludes — a StringList with patterns for filtering the code files
 // to be considered.
 // Directories are never matched by these patterns.
 // For example, "**/*.java,**/*.gradle".
 // The default value is "**/*.*".
 //
-// DocIncludes — a string with comma-separated patterns for filtering files
+// DocIncludes — a StringList with patterns for filtering files
 // in which we should look for embedding instructions.
 // The patterns are resolved relatively to the `documentation_root`.
 // Directories are never matched by these patterns.
 // For example, "docs/**/*.md,guides/*.html".
 // The default value is "**/*.md,**/*.html".
+//
+// DocExcludes - a StringList with patterns for filtering files
+// which should be excluded from the embedding process.
 //
 // FragmentsPath — a directory where fragmented code is stored. A temporary directory that should
 // not be tracked in VCS. The default value is: "./build/fragments".
@@ -57,31 +61,35 @@ import (
 // Separator — a string that's inserted between multiple partitions of a single fragment.
 // The default value is "...".
 //
+// EmbedMappings — an additional optional list of configs, which will be executed together with the
+// main one. A config written here has higher priority and may overwrite the base one.
+//
+// Info - defines when to show info-level logs.
+//
+// Stacktrace -  defines when to show the error stacktrace.
+//
 // ConfigPath — a path to a yaml configuration file which contains the roots.
 //
 // Mode — defines the mode of embed-code execution.
-//
-// EmbedMappings — an additional optional list of configs, which will be executed together with the
-// main one. A config written here has higher priority and may overwrite the base one.
 type Config struct {
-	CodeIncludes  StringList     `yaml:"code-includes"`
-	DocIncludes   StringList     `yaml:"doc-includes"`
-	DocExcludes   StringList     `yaml:"doc-excludes"`
-	FragmentsPath string         `yaml:"fragments-path"`
-	Separator     string         `yaml:"separator"`
-	BaseCodePath  string         `yaml:"code-path"`
-	BaseDocsPath  string         `yaml:"docs-path"`
-	EmbedMappings []EmbedMapping `yaml:"embed-mappings"`
-	Info          bool           `yaml:"info"`
-	Stacktrace    bool           `yaml:"stacktrace"`
+	CodeIncludes  _type.StringList    `yaml:"code-includes"`
+	DocIncludes   _type.StringList    `yaml:"doc-includes"`
+	DocExcludes   _type.StringList    `yaml:"doc-excludes"`
+	FragmentsPath string              `yaml:"fragments-path"`
+	Separator     string              `yaml:"separator"`
+	BaseCodePaths _type.NamedPathList `yaml:"code-path"`
+	BaseDocsPath  string              `yaml:"docs-path"`
+	EmbedMappings []EmbedMapping      `yaml:"embed-mappings"`
+	Info          bool                `yaml:"info"`
+	Stacktrace    bool                `yaml:"stacktrace"`
 	ConfigPath    string
 	Mode          string
 }
 
 // EmbedMapping is a pair of a source code path and a destination docs path to perform an embedding.
 type EmbedMapping struct {
-	CodePath string `yaml:"code-path"`
-	DocsPath string `yaml:"docs-path"`
+	CodePath _type.NamedPathList `yaml:"code-path"`
+	DocsPath string              `yaml:"docs-path"`
 }
 
 // EmbedCodeSamplesResult is result of the EmbedCodeSamples method.
@@ -158,7 +166,7 @@ func ReadArgs() Config {
 	flag.Parse()
 
 	return Config{
-		BaseCodePath:  *codePath,
+		BaseCodePaths: _type.NamedPathList{_type.NamedPath{Path: *codePath}},
 		BaseDocsPath:  *docsPath,
 		CodeIncludes:  parseListArgument(*codeIncludes),
 		DocIncludes:   parseListArgument(*docIncludes),
@@ -180,7 +188,7 @@ func ReadArgs() Config {
 func FillArgsFromConfigFile(args Config) (Config, error) {
 	configFields := readConfigFields(args.ConfigPath)
 	args.BaseDocsPath = configFields.BaseDocsPath
-	args.BaseCodePath = configFields.BaseCodePath
+	args.BaseCodePaths = configFields.BaseCodePaths
 
 	if len(configFields.CodeIncludes) > 0 {
 		args.CodeIncludes = configFields.CodeIncludes
@@ -216,7 +224,7 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 	if len(userArgs.EmbedMappings) > 0 {
 		for _, mapping := range userArgs.EmbedMappings {
 			embedCodeConfig := configWithOptionalParams(userArgs)
-			embedCodeConfig.CodeRoot = mapping.CodePath
+			embedCodeConfig.CodeRoots = mapping.CodePath
 			embedCodeConfig.DocumentationRoot = mapping.DocsPath
 
 			// As the top config may overwrite those files, we need to exclude it from the embedding
@@ -226,7 +234,7 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 	}
 
 	embedCodeConfig := configWithOptionalParams(userArgs)
-	embedCodeConfig.CodeRoot = userArgs.BaseCodePath
+	embedCodeConfig.CodeRoots = userArgs.BaseCodePaths
 	embedCodeConfig.DocumentationRoot = userArgs.BaseDocsPath
 
 	if len(userArgs.DocExcludes) > 0 {
