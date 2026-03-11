@@ -19,6 +19,7 @@
 package parsing_test
 
 import (
+	_type "embed-code/embed-code-go/type"
 	"fmt"
 	"os"
 	"strings"
@@ -300,7 +301,7 @@ func getXMLExtractionContent(fileName string, params TestInstructionParams,
 func buildConfigWithPreparedFragments() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = "../../test/resources/docs"
-	config.CodeRoot = "../../test/resources/code"
+	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../../test/resources/code"}}
 	config.FragmentsDir = "../../test/resources/prepared-fragments"
 
 	return config

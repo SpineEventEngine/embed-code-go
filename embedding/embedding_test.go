@@ -20,6 +20,7 @@ package embedding_test
 
 import (
 	"embed-code/embed-code-go/files"
+	_type "embed-code/embed-code-go/type"
 	"fmt"
 	"io"
 	"os"
@@ -137,7 +138,7 @@ var _ = Describe("Embedding", func() {
 func buildConfigWithPreparedFragments() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = temporaryTestDir
-	config.CodeRoot = "../test/resources/code"
+	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code"}}
 	config.FragmentsDir = "../test/resources/prepared-fragments"
 
 	return config

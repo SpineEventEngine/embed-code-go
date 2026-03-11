@@ -19,6 +19,10 @@
 // Package configuration contains configuration of the plugin.
 package configuration
 
+import (
+	_type "embed-code/embed-code-go/type"
+)
+
 const (
 	DefaultSeparator    = "..."
 	DefaultFragmentsDir = "./build/fragments"
@@ -40,8 +44,8 @@ var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 //
 //	config.FragmentsDir = "foo/bar"
 type Configuration struct {
-	// CodeRoot is a root directory of the source code to be embedded.
-	CodeRoot string
+	// CodeRoots is a list of directories with the source code to be embedded.
+	CodeRoots _type.NamedPathList
 
 	// DocumentationRoot is a root directory of the documentation files.
 	DocumentationRoot string

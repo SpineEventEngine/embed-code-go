@@ -22,6 +22,7 @@ package cli_test
 
 import (
 	"embed-code/embed-code-go/cli"
+	_type "embed-code/embed-code-go/type"
 	"os"
 	"path/filepath"
 	"testing"
@@ -143,9 +144,9 @@ func baseCliConfig() cli.Config {
 	parentDir := filepath.Dir(currentDir)
 
 	return cli.Config{
-		Mode:         cli.ModeCheck,
-		BaseDocsPath: parentDir + "/test/resources/docs",
-		BaseCodePath: parentDir + "/test/resources/code",
+		Mode:          cli.ModeCheck,
+		BaseDocsPath:  parentDir + "/test/resources/docs",
+		BaseCodePaths: _type.NamedPathList{_type.NamedPath{Path: parentDir + "/test/resources/code"}},
 	}
 }
 

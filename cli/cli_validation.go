@@ -22,6 +22,7 @@ package cli
 
 import (
 	"embed-code/embed-code-go/files"
+	_type "embed-code/embed-code-go/type"
 	"errors"
 	"fmt"
 	"slices"
@@ -54,7 +55,8 @@ func ValidateConfig(config Config) error {
 // Returns an error with a validation message. If everything is ok, returns nil.
 func ValidateConfigFile(userConfig Config) error {
 	// Configs should be read from file, verifying if they are not set already.
-	isCodePathSet := isNotEmpty(userConfig.BaseCodePath)
+	isCodePathSet := len(userConfig.BaseCodePaths) > 0 &&
+		isNotEmpty(userConfig.BaseCodePaths[0].Path)
 	isDocsPathSet := isNotEmpty(userConfig.BaseDocsPath)
 	areOptionalParamsSet := validateOptionalParamsSet(userConfig)
 	isOneOfRootsSet := isCodePathSet || isDocsPathSet
@@ -95,7 +97,7 @@ func validateMode(mode string) error {
 
 // Validates if config is set correctly and does not have mutually exclusive params set.
 func validateConfig(config Config) error {
-	isCodePathSet, err := validatePathSet(config.BaseCodePath)
+	isCodePathsSet, err := validatePathsSet(config.BaseCodePaths)
 	if err != nil {
 		return err
 	}
@@ -108,8 +110,8 @@ func validateConfig(config Config) error {
 		return err
 	}
 
-	isRootsSet := isCodePathSet && isDocsPathSet
-	isOneOfRootsSet := isCodePathSet || isDocsPathSet
+	isRootsSet := isCodePathsSet && isDocsPathSet
+	isOneOfRootsSet := isCodePathsSet || isDocsPathSet
 
 	if isOneOfRootsSet && !isRootsSet {
 		return errors.New("code-path and docs-path must both be set")
@@ -141,13 +143,33 @@ func validatePathSet(path string) (bool, error) {
 			return true, err
 		}
 		if !exists {
-			return true, fmt.Errorf("the given path %s is not exist", path)
+			return true, fmt.Errorf("the given path `%s` does not exist", path)
 		}
 
 		return true, nil
 	}
 
 	return false, nil
+}
+
+// Reports whether all paths are set or not.
+//
+// If they are set, checks if such paths exists in a file system.
+func validatePathsSet(paths _type.NamedPathList) (bool, error) {
+	allPathsSet := true
+	if len(paths) == 0 {
+		return false, nil
+	}
+	for _, path := range paths {
+		isPathSet, err := validatePathSet(path.Path)
+		if err != nil {
+			return true, fmt.Errorf("the given path `%s` does not exist", path)
+		}
+		if !isPathSet {
+			allPathsSet = false
+		}
+	}
+	return allPathsSet, nil
 }
 
 // Reports whether the given string is not empty.
