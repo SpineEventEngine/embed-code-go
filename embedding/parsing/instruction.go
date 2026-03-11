@@ -31,7 +31,7 @@ import (
 //
 // Takes form of an XML processing instruction <embed-code file="..." fragment="..."/>.
 //
-// CodeFile — a path to a code file to embed. The path is relative to the correspondent code root.
+// CodeFile — a path to a code file to embed. The path is relative to the corresponding code root.
 //
 // Fragment — name of the particular fragment in the code. If Fragment is empty, the whole file
 // is embedded.
