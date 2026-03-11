@@ -84,6 +84,29 @@ var _ = Describe("Fragmentation", func() {
 		Expect(isDefaultFragmentExist).Should(BeTrue())
 	})
 
+	It("should do multi-source fragmentation successfully", func() {
+		config := configuration.NewConfiguration()
+		config.DocumentationRoot = "../test/resources/docs"
+		javaCodePathName := "java-code"
+		kotlinCodePathName := "kotlin-code"
+		config.CodeRoots = _type.NamedPathList{
+			_type.NamedPath{
+				Name: javaCodePathName,
+				Path: "../test/resources/code/java/org/example/multitest",
+			},
+			_type.NamedPath{
+				Name: kotlinCodePathName,
+				Path: "../test/resources/code/kotlin/org/example/multitest",
+			},
+		}
+		result := fragmentation.WriteFragmentFiles(config)
+		Expect(result.TotalSourceFiles).Should(Equal(2))
+		javaFragments, _ := os.ReadDir(config.FragmentsDir + "/" + javaCodePathName)
+		kotlinFragments, _ := os.ReadDir(config.FragmentsDir + "/" + kotlinCodePathName)
+		Expect(len(javaFragments)).Should(Equal(2))
+		Expect(len(kotlinFragments)).Should(Equal(2))
+	})
+
 	It("should do fragmentation of a fragment without end", func() {
 		frag := buildTestFragmentation(unclosedFragmentFileName, config)
 		Expect(frag.WriteFragments()).Error().ShouldNot(HaveOccurred())
