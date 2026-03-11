@@ -33,7 +33,7 @@ import (
 
 // FragmentFile is a file storing a single fragment from the file.
 //
-// CodePath — a relative path to a code file. The path is relative to the correspondent code root,
+// CodePath — a relative path to a code file. The path is relative to the corresponding code root,
 // and starts with the code root name if it's provided.
 //
 // FragmentName — a name of the fragment in the code file.
