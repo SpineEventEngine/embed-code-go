@@ -55,7 +55,7 @@ import (
 //
 // Configuration — a configuration for embedding.
 //
-// SourcesRoot — a named source root.
+// SourcesRoot — a named source code path.
 //
 // CodeFile — a full path of a file to fragment.
 type Fragmentation struct {
@@ -359,17 +359,14 @@ func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int
 // dir of Fragmentation.CodeFile.
 func (f Fragmentation) targetDirectory() string {
 	fragmentsDir := f.Configuration.FragmentsDir
-
 	codeRoot, err := filepath.Abs(f.SourcesRoot.Path)
 	if err != nil {
 		panic(fmt.Sprintf("error calculating absolute path: %v", err))
 	}
-
 	relativeFile, err := filepath.Rel(codeRoot, f.CodeFile)
 	if err != nil {
 		panic(fmt.Sprintf("error calculating relative path: %v", err))
 	}
-
 	subTree := filepath.Dir(relativeFile)
 
 	if strings.TrimSpace(f.SourcesRoot.Name) != "" {

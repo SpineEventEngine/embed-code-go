@@ -33,7 +33,7 @@ import (
 
 // FragmentFile is a file storing a single fragment from the file.
 //
-// CodePath — a relative path to a code file. The path is relative to correspondent code root,
+// CodePath — a relative path to a code file. The path is relative to the correspondent code root,
 // and starts with the code root name if it's provided.
 //
 // FragmentName — a name of the fragment in the code file.
@@ -72,7 +72,7 @@ func NewFragmentFileFromAbsolute(
 		panic(err)
 	}
 
-	if codeRoot.Name != "" {
+	if strings.TrimSpace(codeRoot.Name) == "" {
 		relativePath = filepath.Join(codeRoot.Name, relativePath)
 	}
 

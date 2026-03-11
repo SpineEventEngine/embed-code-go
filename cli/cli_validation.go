@@ -159,9 +159,9 @@ func validatePathSet(path string) (bool, error) {
 
 // Reports whether all paths are valid.
 //
-// If paths are set, checks if such paths exists in a file system.
+// If paths are provided, checks whether each path exists in the file system.
 //
-// If any path name is not a valid folder name, returns an error.
+// Returns an error if any path name is not a valid folder name.
 func validatePaths(paths _type.NamedPathList) (bool, error) {
 	allPathsSet := true
 	if len(paths) == 0 {
@@ -183,29 +183,33 @@ func validatePaths(paths _type.NamedPathList) (bool, error) {
 	return allPathsSet, nil
 }
 
-// findCodeSourceDuplications checks the provided code sources for duplicated names and paths.
+// findCodeSourceDuplications checks the provided code sources for duplicate names and paths.
 //
-// If multiple code sources share the same name, a warning is logged.
-//
-// If multiple code sources use the same path, an error is returned.
+// It logs a warning for duplicate names and returns an error for duplicate paths.
 func findCodeSourceDuplications(paths _type.NamedPathList) error {
 	nameDuplicates := make(map[string][]string)
 	pathCount := make(map[string]int)
 
-	for _, path := range paths {
-		nameDuplicates[path.Name] = append(nameDuplicates[path.Name], path.Path)
-		pathCount[path.Path]++
+	for _, p := range paths {
+		name := p.Name
+		if isEmpty(name) {
+			name = "(unnamed)"
+		}
+		nameDuplicates[name] = append(nameDuplicates[name], p.Path)
+		pathCount[p.Path]++
 	}
 
+	verifyDuplicateNames(nameDuplicates)
+	return verifyDuplicatePaths(pathCount)
+}
+
+// verifyDuplicateNames logs a warning if multiple code sources share the same name.
+func verifyDuplicateNames(nameDuplicates map[string][]string) {
 	var warnLines []string
-	for name, paths := range nameDuplicates {
-		if len(paths) > 1 {
-			if isEmpty(name) {
-				warnLines = append(warnLines, "- (unnamed)")
-			} else {
-				warnLines = append(warnLines, "- "+name)
-			}
-			for _, path := range paths {
+	for name, ps := range nameDuplicates {
+		if len(ps) > 1 {
+			warnLines = append(warnLines, "- "+name)
+			for _, path := range ps {
 				warnLines = append(warnLines, "  - "+path)
 			}
 		}
@@ -218,7 +222,10 @@ func findCodeSourceDuplications(paths _type.NamedPathList) error {
 				strings.Join(warnLines, "\n"),
 		)
 	}
+}
 
+// verifyDuplicatePaths returns an error if multiple code sources use the same path.
+func verifyDuplicatePaths(pathCount map[string]int) error {
 	var errLines []string
 	for path, count := range pathCount {
 		if count > 1 {
@@ -232,7 +239,6 @@ func findCodeSourceDuplications(paths _type.NamedPathList) error {
 			strings.Join(errLines, "\n"),
 		)
 	}
-
 	return nil
 }
 

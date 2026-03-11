@@ -52,7 +52,7 @@ import (
 // For example, "docs/**/*.md,guides/*.html".
 // The default value is "**/*.md,**/*.html".
 //
-// DocExcludes - a StringList with patterns for filtering files
+// DocExcludes - a StringList with patterns for filtering documentation files
 // which should be excluded from the embedding process.
 //
 // FragmentsPath — a directory where fragmented code is stored. A temporary directory that should
@@ -64,21 +64,21 @@ import (
 // EmbedMappings — an additional optional list of configs, which will be executed together with the
 // main one. A config written here has higher priority and may overwrite the base one.
 //
-// Info - defines when to show info-level logs.
+// Info - specifies whether info-level logs should be shown.
 //
-// Stacktrace -  defines when to show the error stacktrace.
+// Stacktrace - specifies whether error stack traces should be shown.
 //
 // ConfigPath — a path to a yaml configuration file which contains the roots.
 //
 // Mode — defines the mode of embed-code execution.
 type Config struct {
+	BaseCodePaths _type.NamedPathList `yaml:"code-path"`
+	BaseDocsPath  string              `yaml:"docs-path"`
 	CodeIncludes  _type.StringList    `yaml:"code-includes"`
 	DocIncludes   _type.StringList    `yaml:"doc-includes"`
 	DocExcludes   _type.StringList    `yaml:"doc-excludes"`
 	FragmentsPath string              `yaml:"fragments-path"`
 	Separator     string              `yaml:"separator"`
-	BaseCodePaths _type.NamedPathList `yaml:"code-path"`
-	BaseDocsPath  string              `yaml:"docs-path"`
 	EmbedMappings []EmbedMapping      `yaml:"embed-mappings"`
 	Info          bool                `yaml:"info"`
 	Stacktrace    bool                `yaml:"stacktrace"`
