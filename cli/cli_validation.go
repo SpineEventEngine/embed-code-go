@@ -172,9 +172,11 @@ func validatePaths(paths _type.NamedPathList) (bool, error) {
 		if err != nil {
 			return true, fmt.Errorf("the given path `%s` does not exist", path)
 		}
-		if strings.ContainsAny(path.Name, ` *?:"<>|`) {
+		illegalChars := ` *?:"<>|`
+		if strings.ContainsAny(path.Name, illegalChars) {
 			return true, fmt.Errorf("the given code path name `%s` "+
-				"is not a valid name for the folder", path.Name)
+				"is not a valid name for the folder, those characters are not allowed `%s`",
+				path.Name, illegalChars)
 		}
 		if !isPathSet {
 			allPathsSet = false

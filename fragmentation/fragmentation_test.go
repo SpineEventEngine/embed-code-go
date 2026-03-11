@@ -101,8 +101,12 @@ var _ = Describe("Fragmentation", func() {
 		}
 		result := fragmentation.WriteFragmentFiles(config)
 		Expect(result.TotalSourceFiles).Should(Equal(2))
-		javaFragments, _ := os.ReadDir(config.FragmentsDir + "/" + javaCodePathName)
-		kotlinFragments, _ := os.ReadDir(config.FragmentsDir + "/" + kotlinCodePathName)
+		javaFragments, _ := os.ReadDir(
+			config.FragmentsDir + "/" + fragmentation.NamedPathPrefix + javaCodePathName,
+		)
+		kotlinFragments, _ := os.ReadDir(
+			config.FragmentsDir + "/" + fragmentation.NamedPathPrefix + kotlinCodePathName,
+		)
 		Expect(len(javaFragments)).Should(Equal(2))
 		Expect(len(kotlinFragments)).Should(Equal(2))
 	})
