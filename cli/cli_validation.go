@@ -25,6 +25,7 @@ import (
 	_type "embed-code/embed-code-go/type"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 )
@@ -97,7 +98,11 @@ func validateMode(mode string) error {
 
 // Validates if config is set correctly and does not have mutually exclusive params set.
 func validateConfig(config Config) error {
-	isCodePathsSet, err := validatePathsSet(config.BaseCodePaths)
+	isCodePathsSet, err := validatePaths(config.BaseCodePaths)
+	if err != nil {
+		return err
+	}
+	err = findCodeSourceDuplications(config.BaseCodePaths)
 	if err != nil {
 		return err
 	}
@@ -152,10 +157,12 @@ func validatePathSet(path string) (bool, error) {
 	return false, nil
 }
 
-// Reports whether all paths are set or not.
+// Reports whether all paths are valid.
 //
-// If they are set, checks if such paths exists in a file system.
-func validatePathsSet(paths _type.NamedPathList) (bool, error) {
+// If paths are set, checks if such paths exists in a file system.
+//
+// If any path name is not a valid folder name, returns an error.
+func validatePaths(paths _type.NamedPathList) (bool, error) {
 	allPathsSet := true
 	if len(paths) == 0 {
 		return false, nil
@@ -165,11 +172,66 @@ func validatePathsSet(paths _type.NamedPathList) (bool, error) {
 		if err != nil {
 			return true, fmt.Errorf("the given path `%s` does not exist", path)
 		}
+		if strings.ContainsAny(path.Name, ` *?:"<>|`) {
+			return true, fmt.Errorf("the given code path name `%s` "+
+				"is not a valid name for the folder", path.Name)
+		}
 		if !isPathSet {
 			allPathsSet = false
 		}
 	}
 	return allPathsSet, nil
+}
+
+// findCodeSourceDuplications checks the provided code sources for duplicated names and paths.
+//
+// If multiple code sources share the same name, a warning is logged.
+//
+// If multiple code sources use the same path, an error is returned.
+func findCodeSourceDuplications(paths _type.NamedPathList) error {
+	nameDuplicates := make(map[string][]string)
+	pathCount := make(map[string]int)
+
+	for _, path := range paths {
+		if path.Name != "" {
+			nameDuplicates[path.Name] = append(nameDuplicates[path.Name], path.Path)
+		}
+		pathCount[path.Path]++
+	}
+
+	var warnLines []string
+	for name, paths := range nameDuplicates {
+		if len(paths) > 1 {
+			warnLines = append(warnLines, "- "+name)
+			for _, path := range paths {
+				warnLines = append(warnLines, "  - "+path)
+			}
+		}
+	}
+
+	if len(warnLines) > 0 {
+		slog.Warn(
+			"Duplicate code source names detected, it may lead to " +
+				"overwriting code fragments with the same relative path:\n" +
+				strings.Join(warnLines, "\n"),
+		)
+	}
+
+	var errLines []string
+	for path, count := range pathCount {
+		if count > 1 {
+			errLines = append(errLines, "- "+path)
+		}
+	}
+
+	if len(errLines) > 0 {
+		return fmt.Errorf(
+			"duplicate code source paths detected:\n%s",
+			strings.Join(errLines, "\n"),
+		)
+	}
+
+	return nil
 }
 
 // Reports whether the given string is not empty.
