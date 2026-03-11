@@ -72,7 +72,7 @@ func NewFragmentFileFromAbsolute(
 		panic(err)
 	}
 
-	if strings.TrimSpace(codeRoot.Name) == "" {
+	if strings.TrimSpace(codeRoot.Name) != "" {
 		relativePath = filepath.Join(codeRoot.Name, relativePath)
 	}
 
