@@ -51,7 +51,7 @@ import (
 )
 
 // NamedPathPrefix the prefix before the named code source.
-var NamedPathPrefix = "$"
+const NamedPathPrefix = "$"
 
 // Fragmentation splits the given file into fragments and writes them into corresponding
 // output files.
@@ -186,7 +186,7 @@ func (f Fragmentation) WriteFragments() (map[string]Fragment, error) {
 // All fragments are placed inside Configuration.FragmentsDir with keeping the original directory
 // structure relative to the sources root dir.
 // That is, `SRC/src/main` becomes `OUT/src/main`.
-// If code root is named, `SRC/src/main` becomes `OUT/CODE_ROOT_NAME/src/main`
+// If code root is named, `SRC/src/main` becomes `OUT/$CODE_ROOT_NAME/src/main`
 //
 // config — is a configuration for embedding.
 //
@@ -200,7 +200,7 @@ func WriteFragmentFiles(config config.Configuration) WriteFragmentFilesResult {
 		codeRootFiles := 0
 		codeRootFragments := 0
 		for _, rule := range includes {
-			pattern := fmt.Sprintf("%s/%s", codeRoot.Path, rule)
+			pattern := filepath.Join(codeRoot.Path, rule)
 			codeFiles, err := doublestar.FilepathGlob(pattern)
 			codeRootFiles += len(codeFiles)
 			if err != nil {
@@ -363,6 +363,7 @@ func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int
 func (f Fragmentation) targetDirectory() string {
 	fragmentsDir := f.Configuration.FragmentsDir
 	codeRoot, err := filepath.Abs(f.SourcesRoot.Path)
+	codeRootName := strings.TrimSpace(f.SourcesRoot.Name)
 	if err != nil {
 		panic(fmt.Sprintf("error calculating absolute path: %v", err))
 	}
@@ -372,8 +373,8 @@ func (f Fragmentation) targetDirectory() string {
 	}
 	subTree := filepath.Dir(relativeFile)
 
-	if strings.TrimSpace(f.SourcesRoot.Name) != "" {
-		return filepath.Join(fragmentsDir, NamedPathPrefix+f.SourcesRoot.Name, subTree)
+	if codeRootName != "" {
+		return filepath.Join(fragmentsDir, NamedPathPrefix+codeRootName, subTree)
 	}
 
 	return filepath.Join(fragmentsDir, subTree)

@@ -25,6 +25,7 @@ import (
 	_type "embed-code/embed-code-go/type"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -102,13 +103,13 @@ var _ = Describe("Fragmentation", func() {
 		result := fragmentation.WriteFragmentFiles(config)
 		Expect(result.TotalSourceFiles).Should(Equal(2))
 		javaFragments, _ := os.ReadDir(
-			config.FragmentsDir + "/" + fragmentation.NamedPathPrefix + javaCodePathName,
+			filepath.Join(config.FragmentsDir, fragmentation.NamedPathPrefix+javaCodePathName),
 		)
 		kotlinFragments, _ := os.ReadDir(
-			config.FragmentsDir + "/" + fragmentation.NamedPathPrefix + kotlinCodePathName,
+			filepath.Join(config.FragmentsDir, fragmentation.NamedPathPrefix+kotlinCodePathName),
 		)
-		Expect(len(javaFragments)).Should(Equal(2))
-		Expect(len(kotlinFragments)).Should(Equal(2))
+		Expect(javaFragments).Should(HaveLen(2))
+		Expect(kotlinFragments).Should(HaveLen(2))
 	})
 
 	It("should do fragmentation of a fragment without end", func() {
@@ -120,7 +121,7 @@ var _ = Describe("Fragmentation", func() {
 
 		fragmentFileName := findFragmentFile(fragmentFiles, unclosedFragmentFileName)
 		fragmentsDir := fragmentsDirPath(config.FragmentsDir)
-		content, err := os.ReadFile(fmt.Sprintf("%s/%s", fragmentsDir, fragmentFileName))
+		content, err := os.ReadFile(filepath.Join(fragmentsDir, fragmentFileName))
 		if err != nil {
 			Fail(err.Error())
 		}

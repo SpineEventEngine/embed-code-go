@@ -30,6 +30,9 @@ import (
 	"strings"
 )
 
+// IllegalFolderNameChars the string with chars that are not allowed for the folder name.
+const IllegalFolderNameChars = ` *?:"<>|`
+
 // IsUsingConfigFile reports whether user configs are set with file.
 func IsUsingConfigFile(config Config) bool {
 	return isNotEmpty(config.ConfigPath)
@@ -172,11 +175,10 @@ func validatePaths(paths _type.NamedPathList) (bool, error) {
 		if err != nil {
 			return true, fmt.Errorf("the given path `%s` does not exist", path)
 		}
-		illegalChars := ` *?:"<>|`
-		if strings.ContainsAny(path.Name, illegalChars) {
+		if strings.ContainsAny(path.Name, IllegalFolderNameChars) {
 			return true, fmt.Errorf("the given code path name `%s` "+
 				"is not a valid name for the folder, those characters are not allowed `%s`",
-				path.Name, illegalChars)
+				path.Name, IllegalFolderNameChars)
 		}
 		if !isPathSet {
 			allPathsSet = false
