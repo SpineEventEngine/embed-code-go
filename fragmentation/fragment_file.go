@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -20,6 +20,7 @@ package fragmentation
 
 import (
 	"crypto/sha256"
+	_type "embed-code/embed-code-go/type"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -32,7 +33,8 @@ import (
 
 // FragmentFile is a file storing a single fragment from the file.
 //
-// CodePath — a relative path to a code file. The path is relative to Configuration.CodeRoot.
+// CodePath — a relative path to a code file. The path is relative to the corresponding code root,
+// and starts with the code root name if it's provided.
 //
 // FragmentName — a name of the fragment in the code file.
 //
@@ -47,20 +49,31 @@ type FragmentFile struct {
 //
 // codeFile — an absolute path to a code file.
 //
+// codeRoot - a _type.NamedPath to the code root.
+//
 // fragmentName — a name of the fragment in the code file.
 //
 // configuration — configuration for embedding.
 //
 // Returns composed fragment.
-func NewFragmentFileFromAbsolute(codeFile string, fragmentName string,
-	config config.Configuration) FragmentFile {
-	absolutePath, err := filepath.Abs(config.CodeRoot)
+func NewFragmentFileFromAbsolute(
+	codeFile string,
+	codeRoot _type.NamedPath,
+	fragmentName string,
+	config config.Configuration,
+) FragmentFile {
+	absolutePath, err := filepath.Abs(codeRoot.Path)
 	if err != nil {
 		panic(err)
 	}
+
 	relativePath, err := filepath.Rel(absolutePath, codeFile)
 	if err != nil {
 		panic(err)
+	}
+
+	if strings.TrimSpace(codeRoot.Name) != "" {
+		relativePath = filepath.Join(NamedPathPrefix+codeRoot.Name, relativePath)
 	}
 
 	return FragmentFile{
@@ -96,13 +109,10 @@ func (f FragmentFile) Content() ([]string, error) {
 	if !isPathFileExits {
 		if f.FragmentName != "" {
 			if f.FragmentName == "_default" {
-				return nil, fmt.Errorf(
-					"code file `%s/%s` not found", f.Configuration.CodeRoot, f.CodePath,
-				)
+				return nil, fmt.Errorf("code file `%s` not found", f.CodePath)
 			}
 			return nil, fmt.Errorf(
-				"fragment `%s` from code file `%s/%s` not found",
-				f.FragmentName, f.Configuration.CodeRoot, f.CodePath,
+				"fragment `%s` from code file `%s` not found", f.FragmentName, f.CodePath,
 			)
 		}
 		return nil, fmt.Errorf(

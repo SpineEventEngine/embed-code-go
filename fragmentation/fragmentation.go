@@ -38,27 +38,32 @@ package fragmentation
 import (
 	"bufio"
 	"embed-code/embed-code-go/files"
+	_type "embed-code/embed-code-go/type"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	config "embed-code/embed-code-go/configuration"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
 
+// NamedPathPrefix the prefix before the named code source.
+const NamedPathPrefix = "$"
+
 // Fragmentation splits the given file into fragments and writes them into corresponding
 // output files.
 //
 // Configuration — a configuration for embedding.
 //
-// SourcesRoot — a full path of the root directory of the source code to be embedded.
+// SourcesRoot — a named source code path.
 //
 // CodeFile — a full path of a file to fragment.
 type Fragmentation struct {
 	Configuration    config.Configuration
-	SourcesRoot      string
+	SourcesRoot      _type.NamedPath
 	CodeFile         string
 	fragmentBuilders map[string]*FragmentBuilder
 }
@@ -79,13 +84,15 @@ type WriteFragmentFilesResult struct {
 // codeFileRelative — a relative path to a code file to fragment.
 //
 // config — a configuration for embedding.
-func NewFragmentation(codeFileRelative string, config config.Configuration) Fragmentation {
+func NewFragmentation(
+	codeFileRelative string,
+	codeRoot _type.NamedPath,
+	config config.Configuration,
+) Fragmentation {
 	fragmentation := Fragmentation{}
 
-	sourcesRootRelative := config.CodeRoot
-
-	absoluteSourcesRoot, err := filepath.Abs(sourcesRootRelative)
-	fragmentation.SourcesRoot = absoluteSourcesRoot
+	fragmentation.SourcesRoot = codeRoot
+	_, err := filepath.Abs(codeRoot.Path)
 	if err != nil {
 		panic(err)
 	}
@@ -162,7 +169,9 @@ func (f Fragmentation) WriteFragments() (map[string]Fragment, error) {
 	}
 
 	for _, fragment := range fragments {
-		fragmentFile := NewFragmentFileFromAbsolute(f.CodeFile, fragment.Name, f.Configuration)
+		fragmentFile := NewFragmentFileFromAbsolute(
+			f.CodeFile, f.SourcesRoot, fragment.Name, f.Configuration,
+		)
 		fragment.WriteTo(fragmentFile, allLines, f.Configuration.Separator)
 	}
 
@@ -177,35 +186,47 @@ func (f Fragmentation) WriteFragments() (map[string]Fragment, error) {
 // All fragments are placed inside Configuration.FragmentsDir with keeping the original directory
 // structure relative to the sources root dir.
 // That is, `SRC/src/main` becomes `OUT/src/main`.
+// If code root is named, `SRC/src/main` becomes `OUT/$CODE_ROOT_NAME/src/main`
 //
 // config — is a configuration for embedding.
 //
 // Returns an error if any of the fragments couldn't be written.
 func WriteFragmentFiles(config config.Configuration) WriteFragmentFilesResult {
 	includes := config.CodeIncludes
-	codeRoot := config.CodeRoot
+	codeRoots := config.CodeRoots
 	totalSourceFiles := 0
 	totalFragments := 0
-	for _, rule := range includes {
-		pattern := fmt.Sprintf("%s/%s", codeRoot, rule)
-		codeFiles, err := doublestar.FilepathGlob(pattern)
-		totalSourceFiles += len(codeFiles)
-		if err != nil {
-			panic(err)
-		}
-		for _, codeFile := range codeFiles {
-			fragments, err := writeFragments(config, codeFile)
+	for _, codeRoot := range codeRoots {
+		codeRootFiles := 0
+		codeRootFragments := 0
+		for _, rule := range includes {
+			pattern := filepath.Join(codeRoot.Path, rule)
+			codeFiles, err := doublestar.FilepathGlob(pattern)
+			codeRootFiles += len(codeFiles)
 			if err != nil {
 				panic(err)
 			}
-			totalFragments += len(fragments)
+			for _, codeFile := range codeFiles {
+				fragments, err := writeFragments(config, codeRoot, codeFile)
+				if err != nil {
+					panic(err)
+				}
+				codeRootFragments += len(fragments)
+			}
+		}
+		totalSourceFiles += codeRootFiles
+		totalFragments += codeRootFragments
+		if codeRootFiles > 0 {
+			slog.Info(
+				fmt.Sprintf("Found `%d` source code files with `%d` fragments under `%s`.",
+					codeRootFiles, codeRootFragments, codeRoot.Path),
+			)
+		} else {
+			slog.Warn(
+				fmt.Sprintf("No code fragments were found under `%s`.", codeRoot.Path),
+			)
 		}
 	}
-
-	slog.Info(
-		fmt.Sprintf("Found `%d` source code files with `%d` fragments under `%s`.",
-			totalSourceFiles, totalFragments, config.CodeRoot),
-	)
 
 	return WriteFragmentFilesResult{
 		TotalSourceFiles: totalSourceFiles,
@@ -228,9 +249,13 @@ func CleanFragmentFiles(config config.Configuration) {
 }
 
 // Checks if the code is able to split into fragments and writes them to a file.
-func writeFragments(config config.Configuration, codeFile string) (map[string]Fragment, error) {
+func writeFragments(
+	config config.Configuration,
+	codeRoot _type.NamedPath,
+	codeFile string,
+) (map[string]Fragment, error) {
 	if shouldDoFragmentation(codeFile) {
-		fragmentation := NewFragmentation(codeFile, config)
+		fragmentation := NewFragmentation(codeFile, codeRoot, config)
 		fragments, err := fragmentation.WriteFragments()
 		if err != nil {
 			return nil, err
@@ -337,7 +362,8 @@ func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int
 // dir of Fragmentation.CodeFile.
 func (f Fragmentation) targetDirectory() string {
 	fragmentsDir := f.Configuration.FragmentsDir
-	codeRoot, err := filepath.Abs(f.Configuration.CodeRoot)
+	codeRoot, err := filepath.Abs(f.SourcesRoot.Path)
+	codeRootName := strings.TrimSpace(f.SourcesRoot.Name)
 	if err != nil {
 		panic(fmt.Sprintf("error calculating absolute path: %v", err))
 	}
@@ -346,6 +372,10 @@ func (f Fragmentation) targetDirectory() string {
 		panic(fmt.Sprintf("error calculating relative path: %v", err))
 	}
 	subTree := filepath.Dir(relativeFile)
+
+	if codeRootName != "" {
+		return filepath.Join(fragmentsDir, NamedPathPrefix+codeRootName, subTree)
+	}
 
 	return filepath.Join(fragmentsDir, subTree)
 }

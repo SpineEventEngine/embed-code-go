@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -31,7 +31,7 @@ import (
 //
 // Takes form of an XML processing instruction <embed-code file="..." fragment="..."/>.
 //
-// CodeFile — a path to a code file to embed. The path is relative to Configuration.CodeRoot dir.
+// CodeFile — a path to a code file to embed. The path is relative to the corresponding code root.
 //
 // Fragment — name of the particular fragment in the code. If Fragment is empty, the whole file
 // is embedded.
