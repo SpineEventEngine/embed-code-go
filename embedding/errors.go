@@ -20,8 +20,6 @@ package embedding
 
 import (
 	"fmt"
-
-	"embed-code/embed-code-go/embedding/parsing"
 )
 
 // UnexpectedDiffError describes an error which occurs if outdated files are found during
@@ -32,40 +30,4 @@ type UnexpectedDiffError struct {
 
 func (e *UnexpectedDiffError) Error() string {
 	return fmt.Sprintf("unexpected diff: %v", e.changedFiles)
-}
-
-// UnexpectedProcessingError describes an error which occurs if something goes wrong
-// during embedding.
-type UnexpectedProcessingError struct {
-	Context      parsing.Context
-	initialError error
-}
-
-func (e *UnexpectedProcessingError) Error() string {
-	errorString := fmt.Sprintf("embedding error for file `%s`: %s.",
-		e.Context.MarkdownFilePath, e.initialError)
-
-	if len(e.Context.EmbeddingsNotFound) > 0 {
-		embeddingsNotFoundStr := "\nMissing embeddings: \n"
-		for _, emb := range e.Context.EmbeddingsNotFound {
-			embeddingsNotFoundStr += fmt.Sprintf(
-				"%s — %s\n",
-				emb.CodeFile,
-				emb.Fragment)
-		}
-		errorString += embeddingsNotFoundStr
-	}
-
-	if len(e.Context.UnacceptedEmbeddings) > 0 {
-		unacceptedEmbeddingStr := "\nUnaccepted embeddings: \n"
-		for _, emb := range e.Context.UnacceptedEmbeddings {
-			unacceptedEmbeddingStr += fmt.Sprintf(
-				"%s — %s\n",
-				emb.CodeFile,
-				emb.Fragment)
-		}
-		errorString += unacceptedEmbeddingStr
-	}
-
-	return errorString
 }

@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -39,6 +39,7 @@ import (
 	"bufio"
 	"embed-code/embed-code-go/files"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -60,6 +61,17 @@ type Fragmentation struct {
 	SourcesRoot      string
 	CodeFile         string
 	fragmentBuilders map[string]*FragmentBuilder
+}
+
+// WriteFragmentFilesResult is result of the WriteFragmentFiles method.
+//
+// TotalSourceFiles total number of source code files.
+//
+// TotalFragments is the total number of fragments extracted from the source code files.
+// A whole source file also counts as a fragment.
+type WriteFragmentFilesResult struct {
+	TotalSourceFiles int
+	TotalFragments   int
 }
 
 // NewFragmentation builds Fragmentation from given codeFileRelative and config.
@@ -110,11 +122,16 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 	}(file)
 
 	scanner := bufio.NewScanner(file)
+	lineNumber := 0
 	for scanner.Scan() {
+		lineNumber++
 		line := scanner.Text()
 		contentToRender, err = f.parseLine(line, contentToRender)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf(
+				"failed to do fragmentation on file `file://%s:%d`: %s",
+				f.CodeFile, lineNumber, err,
+			)
 		}
 	}
 
@@ -132,16 +149,16 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 // Keeps the original directory structure relative to the sources root dir.
 // That is, `SRC/src/main` becomes `OUT/src/main`.
 //
-// Returns an error if the fragmentation couldn't be done.
-func (f Fragmentation) WriteFragments() error {
+// Returns fragments or an error if the fragmentation couldn't be done.
+func (f Fragmentation) WriteFragments() (map[string]Fragment, error) {
 	allLines, fragments, err := f.DoFragmentation()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = files.EnsureDirExists(f.targetDirectory())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, fragment := range fragments {
@@ -149,7 +166,7 @@ func (f Fragmentation) WriteFragments() error {
 		fragment.WriteTo(fragmentFile, allLines, f.Configuration.Separator)
 	}
 
-	return nil
+	return fragments, nil
 }
 
 // WriteFragmentFiles writes each fragment into a corresponding file.
@@ -164,23 +181,36 @@ func (f Fragmentation) WriteFragments() error {
 // config — is a configuration for embedding.
 //
 // Returns an error if any of the fragments couldn't be written.
-func WriteFragmentFiles(config config.Configuration) error {
+func WriteFragmentFiles(config config.Configuration) WriteFragmentFilesResult {
 	includes := config.CodeIncludes
 	codeRoot := config.CodeRoot
+	totalSourceFiles := 0
+	totalFragments := 0
 	for _, rule := range includes {
 		pattern := fmt.Sprintf("%s/%s", codeRoot, rule)
 		codeFiles, err := doublestar.FilepathGlob(pattern)
+		totalSourceFiles += len(codeFiles)
 		if err != nil {
-			return err
+			panic(err)
 		}
 		for _, codeFile := range codeFiles {
-			if err = writeFragments(config, codeFile); err != nil {
-				return err
+			fragments, err := writeFragments(config, codeFile)
+			if err != nil {
+				panic(err)
 			}
+			totalFragments += len(fragments)
 		}
 	}
 
-	return nil
+	slog.Info(
+		fmt.Sprintf("Found `%d` source code files with `%d` fragments under `%s`.",
+			totalSourceFiles, totalFragments, config.CodeRoot),
+	)
+
+	return WriteFragmentFilesResult{
+		TotalSourceFiles: totalSourceFiles,
+		TotalFragments:   totalFragments,
+	}
 }
 
 // CleanFragmentFiles deletes Configuration.FragmentsDir if it exists.
@@ -198,15 +228,17 @@ func CleanFragmentFiles(config config.Configuration) {
 }
 
 // Checks if the code is able to split into fragments and writes them to a file.
-func writeFragments(config config.Configuration, codeFile string) error {
+func writeFragments(config config.Configuration, codeFile string) (map[string]Fragment, error) {
 	if shouldDoFragmentation(codeFile) {
 		fragmentation := NewFragmentation(codeFile, config)
-		if err := fragmentation.WriteFragments(); err != nil {
-			return err
+		fragments, err := fragmentation.WriteFragments()
+		if err != nil {
+			return nil, err
 		}
+		return fragments, nil
 	}
 
-	return nil
+	return map[string]Fragment{}, nil
 }
 
 // shouldDoFragmentation reports whether the file is valid to do fragmentation:
@@ -238,8 +270,14 @@ func shouldDoFragmentation(filePath string) bool {
 func (f Fragmentation) parseLine(line string, contentToRender []string) ([]string, error) {
 	cursor := len(contentToRender)
 
-	docFragments := FindDocFragments(line)
-	endDocFragments := FindEndDocFragments(line)
+	docFragments, startErr := FindDocFragments(line)
+	if startErr != nil {
+		return nil, startErr
+	}
+	endDocFragments, endErr := FindEndDocFragments(line)
+	if endErr != nil {
+		return nil, endErr
+	}
 
 	switch {
 	case len(docFragments) > 0:
@@ -287,7 +325,7 @@ func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int
 				return err
 			}
 		} else {
-			return fmt.Errorf("cannot end the fragment `%s` of the file `%s` as it wasn't started",
+			return fmt.Errorf("cannot end the fragment `%s` of the file `file://%s` as it wasn't started",
 				fragmentName, f.CodeFile)
 		}
 	}
