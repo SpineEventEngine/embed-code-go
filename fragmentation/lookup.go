@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -19,6 +19,7 @@
 package fragmentation
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -37,7 +38,7 @@ const (
 // line — a line to search in.
 //
 // Returns the list of the names found.
-func FindDocFragments(line string) []string {
+func FindDocFragments(line string) ([]string, error) {
 	return lookup(line, FragmentStart)
 }
 
@@ -49,7 +50,7 @@ func FindDocFragments(line string) []string {
 // line — a line to search in.
 //
 // Returns the list of the names found.
-func FindEndDocFragments(line string) []string {
+func FindEndDocFragments(line string) ([]string, error) {
 	return lookup(line, FragmentEnd)
 }
 
@@ -62,30 +63,41 @@ func FindEndDocFragments(line string) []string {
 //
 // prefix — a user-defined indicator of a fragment, e.g. "#docfragment".
 //
-// Returns the list of the names found.
-func lookup(line string, prefix string) []string {
+// Returns the list of the names found and error if prefix found without names.
+func lookup(line string, prefix string) ([]string, error) {
 	var unquotedNames []string
 	if strings.Contains(line, prefix) {
 		// 1 for trailing space after the prefix.
 		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1
+		if len(line) < fragmentsStart {
+			return unquotedNames, fmt.Errorf(
+				"found `%s` pefix without any name", prefix,
+			)
+		}
 		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {
 			quotedName := strings.Trim(fragmentName, "\n\t ")
-			unquotedName := unquoteName(quotedName)
+			unquotedName, err := unquoteName(quotedName)
+			if err != nil {
+				return unquotedNames, err
+			}
 			unquotedNames = append(unquotedNames, unquotedName)
 		}
 	}
 
-	return unquotedNames
+	return unquotedNames, nil
 }
 
 // Returns the unquoted name from given quotedName.
-func unquoteName(quotedName string) string {
-	r := regexp.MustCompile("\"(.*)\"")
+func unquoteName(quotedName string) (string, error) {
+	r, compilationErr := regexp.Compile("\"(.*)\"")
+	if compilationErr != nil {
+		return "", fmt.Errorf("failed to unquote name `%s`: %s", quotedName, compilationErr)
+	}
 	nameQuoted := r.FindString(quotedName)
 	nameCleaned, err := strconv.Unquote(nameQuoted)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("failed to unquote name `%s`: %s", quotedName, err)
 	}
 
-	return nameCleaned
+	return nameCleaned, nil
 }

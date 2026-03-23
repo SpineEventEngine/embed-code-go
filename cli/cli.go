@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -72,6 +72,8 @@ type Config struct {
 	BaseCodePath  string         `yaml:"code-path"`
 	BaseDocsPath  string         `yaml:"docs-path"`
 	EmbedMappings []EmbedMapping `yaml:"embed-mappings"`
+	Info          bool           `yaml:"info"`
+	Stacktrace    bool           `yaml:"stacktrace"`
 	ConfigPath    string
 	Mode          string
 }
@@ -80,6 +82,16 @@ type Config struct {
 type EmbedMapping struct {
 	CodePath string `yaml:"code-path"`
 	DocsPath string `yaml:"docs-path"`
+}
+
+// EmbedCodeSamplesResult is result of the EmbedCodeSamples method.
+//
+// WriteFragmentFilesResult the result of code fragmentation.
+//
+// EmbedAllResult the result of embedding code fragments in the documentation.
+type EmbedCodeSamplesResult struct {
+	fragmentation.WriteFragmentFilesResult
+	embedding.EmbedAllResult
 }
 
 const (
@@ -93,32 +105,28 @@ const (
 //
 // config — a configuration for checking code samples.
 func CheckCodeSamples(config configuration.Configuration) {
-	err := fragmentation.WriteFragmentFiles(config)
-	if err != nil {
-		panic(err)
-	}
+	fragmentation.WriteFragmentFiles(config)
 	embedding.CheckUpToDate(config)
 }
 
 // EmbedCodeSamples embeds code fragments in documentation files.
 //
 // config — a configuration for embedding.
-func EmbedCodeSamples(config configuration.Configuration) {
-	err := fragmentation.WriteFragmentFiles(config)
-	if err != nil {
-		panic(err)
+func EmbedCodeSamples(config configuration.Configuration) EmbedCodeSamplesResult {
+	fragmentationResult := fragmentation.WriteFragmentFiles(config)
+	embeddingResult := embedding.EmbedAll(config)
+	embedding.CheckUpToDate(config)
+	return EmbedCodeSamplesResult{
+		fragmentationResult,
+		embeddingResult,
 	}
-	embedding.EmbedAll(config)
 }
 
 // AnalyzeCodeSamples analyzes code fragments in documentation files.
 //
 // config — a configuration for embedding.
 func AnalyzeCodeSamples(config configuration.Configuration) {
-	err := fragmentation.WriteFragmentFiles(config)
-	if err != nil {
-		panic(err)
-	}
+	fragmentation.WriteFragmentFiles(config)
 	analyzing.AnalyzeAll(config)
 	fragmentation.CleanFragmentFiles(config)
 }
@@ -142,6 +150,10 @@ func ReadArgs() Config {
 	configPath := flag.String("config-path", "", "a path to a yaml configuration file")
 	mode := flag.String("mode", "",
 		"a mode of embed-code execution, which can be 'check' or 'embed'")
+	info := flag.Bool("info", false,
+		"an info-level logging setter that enables info logs when set to 'true'")
+	stacktrace := flag.Bool("stacktrace", false,
+		"a stack trace setter that enables stack traces in error logs when set to 'true'")
 
 	flag.Parse()
 
@@ -155,6 +167,8 @@ func ReadArgs() Config {
 		Separator:     *separator,
 		ConfigPath:    *configPath,
 		Mode:          *mode,
+		Info:          *info,
+		Stacktrace:    *stacktrace,
 	}
 }
 
@@ -186,6 +200,8 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	if isNotEmpty(configFields.Separator) {
 		args.Separator = configFields.Separator
 	}
+	args.Info = configFields.Info
+	args.Stacktrace = configFields.Stacktrace
 
 	return args, nil
 }

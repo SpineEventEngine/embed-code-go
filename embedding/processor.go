@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -19,8 +19,11 @@
 package embedding
 
 import (
+	"errors"
 	"fmt"
+	"log/slog"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -42,6 +45,19 @@ type Processor struct {
 	Config           configuration.Configuration
 	TransitionsMap   parsing.TransitionMap
 	requiredDocPaths []string
+}
+
+// EmbedAllResult is result of the EmbedAll method.
+//
+// TargetFiles is the list of target documentation files.
+//
+// TotalEmbeddings is the total number of embeddings found in the target documentation files.
+//
+// UpdatedTargetFiles is the list of updated target documentation files.
+type EmbedAllResult struct {
+	TargetFiles        []string
+	TotalEmbeddings    int
+	UpdatedTargetFiles []string
 }
 
 // NewProcessor creates and returns new Processor with given docFile and config.
@@ -69,25 +85,24 @@ func NewProcessorWithTransitions(docFile string, config configuration.Configurat
 // Embed Constructs embedding and modifies the doc file if embedding is needed.
 //
 // If any problems faced, an error is returned.
-func (p Processor) Embed() error {
+func (p Processor) Embed() (*parsing.Context, error) {
 	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
-		return nil
+		return nil, nil
 	}
 
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
-		return &UnexpectedProcessingError{context, err}
+		return nil, err
 	}
-
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		data := []byte(strings.Join(context.GetResult(), "\n"))
 		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.ReadWriteExecPermission))
 		if err != nil {
-			return &UnexpectedProcessingError{context, err}
+			return &context, err
 		}
 	}
 
-	return nil
+	return &context, nil
 }
 
 // FindChangedEmbeddings Returns the list of EmbeddingInstruction that are changed in the
@@ -101,7 +116,7 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 	context, err := p.fillEmbeddingContext()
 	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
-		return changedEmbeddings, &UnexpectedProcessingError{context, err}
+		return changedEmbeddings, err
 	}
 
 	return changedEmbeddings, nil
@@ -126,13 +141,36 @@ func (p Processor) IsUpToDate() bool {
 // creates an EmbeddingProcessor for each file, and embeds code fragments in them.
 //
 // config — a configuration for embedding.
-func EmbedAll(config configuration.Configuration) {
+func EmbedAll(config configuration.Configuration) EmbedAllResult {
 	requiredDocPaths := requiredDocs(config)
+	totalEmbeddings := 0
+	var updatedTargetFiles []string
+	var embeddingErrors []error
 	for _, doc := range requiredDocPaths {
 		processor := NewProcessor(doc, config)
-		if err := processor.Embed(); err != nil {
-			panic(err)
+		context, err := processor.Embed()
+		if err != nil {
+			embeddingErrors = append(embeddingErrors, err)
+			continue
 		}
+		totalEmbeddings += context.EmbeddingsCount()
+		if context.IsContentChanged() {
+			updatedTargetFiles = append(updatedTargetFiles, doc)
+		}
+	}
+	slog.Info(
+		fmt.Sprintf(
+			"Found `%d` target documentation files with `%d` embeddings under `%s`.",
+			len(requiredDocPaths), totalEmbeddings, config.DocumentationRoot,
+		),
+	)
+	if len(embeddingErrors) > 0 {
+		panic(errors.Join(embeddingErrors...))
+	}
+	return EmbedAllResult{
+		TargetFiles:        requiredDocPaths,
+		TotalEmbeddings:    totalEmbeddings,
+		UpdatedTargetFiles: updatedTargetFiles,
 	}
 }
 
@@ -149,10 +187,13 @@ func CheckUpToDate(config configuration.Configuration) {
 // Iterates through the doc file line by line considering them as a states of an embedding.
 // Such way, transits from the state to the next possible one until it reaches the end of a file.
 // By the transition process, fills the parsing.Context accordingly, so it is ready to retrieve
-// the result. Returns a parsing.Context and an error if any occurs.
+// the result.
+//
+// Returns a parsing.Context and an error if any occurs.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	context := parsing.NewContext(p.DocFilePath)
-	errorStr := "unable to embed construction for doc file `%s` at line %v: %s"
+	absDocPath, _ := filepath.Abs(p.DocFilePath)
+	errorStr := "failed to embed code fragment into doc file `file://%s:%d`: %s"
 
 	var currentState parsing.State
 	currentState = parsing.Start
@@ -161,14 +202,13 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	for currentState != finishState {
 		accepted, newState, err := p.moveToNextState(&currentState, &context)
 		if err != nil {
-			return parsing.Context{}, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(),
-				err)
+			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentEmbedding().SourceStartIndex-1, err)
 		}
 		if !accepted {
 			currentState = &parsing.RegularLineState{}
 			context.ResolveUnacceptedEmbedding()
 
-			return context, fmt.Errorf(errorStr, p.DocFilePath, context.CurrentIndex(), err)
+			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentEmbedding().SourceStartIndex-1, err)
 		}
 		currentState = *newState
 	}
@@ -228,7 +268,7 @@ func requiredDocs(config configuration.Configuration) []string {
 		return includedDocs
 	}
 
-	return removeElements(excludedDocs, includedDocs)
+	return removeElements(includedDocs, excludedDocs)
 }
 
 func getFilesByPatterns(root string, patterns []string) ([]string, error) {
@@ -245,16 +285,16 @@ func getFilesByPatterns(root string, patterns []string) ([]string, error) {
 	return result, nil
 }
 
-// Removes elements of the second list from the first one.
+// Returns the elements of the first array excluding those present in the second array.
 func removeElements(first, second []string) []string {
-	firstMap := make(map[string]struct{})
-	for _, value := range first {
-		firstMap[value] = struct{}{}
+	secondMap := make(map[string]struct{})
+	for _, value := range second {
+		secondMap[value] = struct{}{}
 	}
 
 	var result []string
-	for _, value := range second {
-		if _, exists := firstMap[value]; !exists {
+	for _, value := range first {
+		if _, exists := secondMap[value]; !exists {
 			result = append(result, value)
 		}
 	}

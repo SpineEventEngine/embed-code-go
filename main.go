@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -20,8 +20,15 @@ package main
 
 import (
 	"embed-code/embed-code-go/cli"
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/logging"
+	"fmt"
 	"log/slog"
+	"path/filepath"
 )
+
+// Version of the embed-code application.
+const Version = "1.0.0"
 
 // The entry point for embed-code.
 //
@@ -77,45 +84,109 @@ import (
 //   - separator — a string which is used as a separator between code fragments. Default value
 //     is "...".
 func main() {
-	slog.Info("starting application, reading args...")
+	fmt.Println(fmt.Sprintf("Running embed-code v%s.", Version))
 	userArgs := cli.ReadArgs()
+	configureLogging(userArgs)
+	defer logging.HandlePanic(userArgs.Stacktrace)
 
 	if cli.IsUsingConfigFile(userArgs) {
 		err := cli.ValidateConfigFile(userArgs)
 		if err != nil {
-			slog.Error("the provided config file is not valid.", "error", err)
+			slog.Error("The provided config file is not valid.", "error", err)
 
 			return
 		}
 		userArgs, err = cli.FillArgsFromConfigFile(userArgs)
 		if err != nil {
-			slog.Error("received an issue while reading config file: ", "error", err)
+			slog.Error("Received an issue while reading config file: ", "error", err)
 
 			return
 		}
 	}
 	err := cli.ValidateConfig(userArgs)
 	if err != nil {
-		slog.Error("user arguments are not valid.", "error", err)
+		slog.Error("User arguments are not valid.", "error", err)
 
 		return
 	}
 	configs := cli.BuildEmbedCodeConfiguration(userArgs)
-	for _, config := range configs {
-		switch userArgs.Mode {
-		case cli.ModeCheck:
+
+	switch userArgs.Mode {
+	case cli.ModeCheck:
+		for _, config := range configs {
 			cli.CheckCodeSamples(config)
-
-			slog.Info("the documentation files are up-to-date with code files.")
-		case cli.ModeEmbed:
-			cli.EmbedCodeSamples(config)
-			cli.CheckCodeSamples(config)
-
-			slog.Info("the code fragments are successfully embedded.")
-		case cli.ModeAnalyze:
-			cli.AnalyzeCodeSamples(config)
-
-			slog.Info("analysis is completed, analytics files can be found in /build/analytics folder")
 		}
+		fmt.Println("The documentation files are up-to-date with code files.")
+	case cli.ModeEmbed:
+		embedByConfigs(configs)
+		fmt.Println("Embedding process finished.")
+	case cli.ModeAnalyze:
+		for _, config := range configs {
+			cli.AnalyzeCodeSamples(config)
+		}
+		fmt.Println("Analysis is completed, analytics files can be found in /build/analytics folder.")
 	}
+}
+
+// configureLogging configures the slog logging.
+func configureLogging(config cli.Config) {
+	level := slog.LevelWarn
+	if config.Info {
+		level = slog.LevelInfo
+	}
+	logger := slog.New(&logging.Handler{Level: level})
+	slog.SetDefault(logger)
+}
+
+// embedByConfig runs the embedByConfig for all configs and logs the results.
+func embedByConfigs(configs []configuration.Configuration) {
+	var totalEmbeddedFiles []string
+	totalEmbeddings := 0
+	totalFragments := 0
+	for _, config := range configs {
+		result := embedByConfig(config)
+		totalEmbeddedFiles = append(totalEmbeddedFiles, result.UpdatedTargetFiles...)
+		totalEmbeddings += result.TotalEmbeddings
+		totalFragments += result.TotalFragments
+	}
+	if len(totalEmbeddedFiles) == 0 &&
+		totalEmbeddings != 0 &&
+		totalFragments != 0 {
+		fmt.Println("All documentation files are already up to date. Nothing to update.")
+	}
+	if len(totalEmbeddedFiles) == 1 {
+		fmt.Println("File updated:")
+	}
+	if len(totalEmbeddedFiles) > 1 {
+		fmt.Println("Files updated:")
+	}
+	for _, updatedDocFile := range totalEmbeddedFiles {
+		absPath, err := filepath.Abs(updatedDocFile)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("- file://%s.\n", absPath)
+	}
+}
+
+// embedByConfig runs the cli.EmbedCodeSamples for config and logs the results.
+func embedByConfig(config configuration.Configuration) cli.EmbedCodeSamplesResult {
+	result := cli.EmbedCodeSamples(config)
+	if result.TotalFragments == 0 {
+		slog.Warn(
+			fmt.Sprintf(
+				"No code fragments were found under `%s`.",
+				config.CodeRoot,
+			),
+		)
+	}
+	if result.TotalEmbeddings == 0 {
+		slog.Warn(
+			fmt.Sprintf(
+				"No embedding placeholders were found under `%s`.",
+				config.CodeRoot,
+			),
+		)
+	}
+	return result
 }
