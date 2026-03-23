@@ -209,3 +209,13 @@ The fragments can also be used in other languages:
 </body>
 </html>
 ```
+
+### Providing fragments directly
+
+It is possible to add the desired fragment file with exactly the required content
+directly to the fragments folder, for example: `FRAGMENTS/desired-path/MyFile.kt`.
+
+It can then be embedded just like any other fragment file:
+```markdown
+<embed-code file="desired-path/MyFile.kt"></embed-code>
+```

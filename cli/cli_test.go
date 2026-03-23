@@ -1,5 +1,5 @@
 /*
- * Copyright 2024, TeamDev. All rights reserved.
+ * Copyright 2026, TeamDev. All rights reserved.
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -22,6 +22,7 @@ package cli_test
 
 import (
 	"embed-code/embed-code-go/cli"
+	_type "embed-code/embed-code-go/type"
 	"os"
 	"path/filepath"
 	"testing"
@@ -143,9 +144,9 @@ func baseCliConfig() cli.Config {
 	parentDir := filepath.Dir(currentDir)
 
 	return cli.Config{
-		Mode:         cli.ModeCheck,
-		BaseDocsPath: parentDir + "/test/resources/docs",
-		BaseCodePath: parentDir + "/test/resources/code",
+		Mode:          cli.ModeCheck,
+		BaseDocsPath:  parentDir + "/test/resources/docs",
+		BaseCodePaths: _type.NamedPathList{_type.NamedPath{Path: parentDir + "/test/resources/code"}},
 	}
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024, TeamDev. All rights reserved.
+ * Copyright 2026, TeamDev. All rights reserved.
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -22,11 +22,16 @@ package cli
 
 import (
 	"embed-code/embed-code-go/files"
+	_type "embed-code/embed-code-go/type"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 )
+
+// IllegalFolderNameChars the string with chars that are not allowed for the folder name.
+const IllegalFolderNameChars = ` *?:"<>|`
 
 // IsUsingConfigFile reports whether user configs are set with file.
 func IsUsingConfigFile(config Config) bool {
@@ -54,7 +59,8 @@ func ValidateConfig(config Config) error {
 // Returns an error with a validation message. If everything is ok, returns nil.
 func ValidateConfigFile(userConfig Config) error {
 	// Configs should be read from file, verifying if they are not set already.
-	isCodePathSet := isNotEmpty(userConfig.BaseCodePath)
+	isCodePathSet := len(userConfig.BaseCodePaths) > 0 &&
+		isNotEmpty(userConfig.BaseCodePaths[0].Path)
 	isDocsPathSet := isNotEmpty(userConfig.BaseDocsPath)
 	areOptionalParamsSet := validateOptionalParamsSet(userConfig)
 	isOneOfRootsSet := isCodePathSet || isDocsPathSet
@@ -95,7 +101,11 @@ func validateMode(mode string) error {
 
 // Validates if config is set correctly and does not have mutually exclusive params set.
 func validateConfig(config Config) error {
-	isCodePathSet, err := validatePathSet(config.BaseCodePath)
+	isCodePathsSet, err := validatePaths(config.BaseCodePaths)
+	if err != nil {
+		return err
+	}
+	err = findCodeSourceDuplications(config.BaseCodePaths)
 	if err != nil {
 		return err
 	}
@@ -108,8 +118,8 @@ func validateConfig(config Config) error {
 		return err
 	}
 
-	isRootsSet := isCodePathSet && isDocsPathSet
-	isOneOfRootsSet := isCodePathSet || isDocsPathSet
+	isRootsSet := isCodePathsSet && isDocsPathSet
+	isOneOfRootsSet := isCodePathsSet || isDocsPathSet
 
 	if isOneOfRootsSet && !isRootsSet {
 		return errors.New("code-path and docs-path must both be set")
@@ -121,9 +131,9 @@ func validateConfig(config Config) error {
 // Reports whether at least one of optional configs is set — code-includes, doc-includes, separator
 // or fragments-path.
 func validateOptionalParamsSet(config Config) bool {
-	isCodeIncludesSet := isNotEmpty(config.CodeIncludes)
-	isDocIncludesSet := isNotEmpty(config.DocIncludes)
-	isDocExcludesSet := isNotEmpty(config.DocExcludes)
+	isCodeIncludesSet := len(config.CodeIncludes) > 0
+	isDocIncludesSet := len(config.DocIncludes) > 0
+	isDocExcludesSet := len(config.DocExcludes) > 0
 	isSeparatorSet := isNotEmpty(config.Separator)
 	isFragmentPathSet := isNotEmpty(config.FragmentsPath)
 
@@ -141,13 +151,99 @@ func validatePathSet(path string) (bool, error) {
 			return true, err
 		}
 		if !exists {
-			return true, fmt.Errorf("the given path %s is not exist", path)
+			return true, fmt.Errorf("the given path `%s` does not exist", path)
 		}
 
 		return true, nil
 	}
 
 	return false, nil
+}
+
+// Reports whether all paths are valid.
+//
+// If paths are provided, checks whether each path exists in the file system.
+//
+// Returns an error if any path name is not a valid folder name.
+func validatePaths(paths _type.NamedPathList) (bool, error) {
+	allPathsSet := true
+	if len(paths) == 0 {
+		return false, nil
+	}
+	for _, path := range paths {
+		isPathSet, err := validatePathSet(path.Path)
+		if err != nil {
+			return true, fmt.Errorf("the given path `%s` does not exist", path)
+		}
+		if strings.ContainsAny(path.Name, IllegalFolderNameChars) {
+			return true, fmt.Errorf("the given code path name `%s` "+
+				"is not a valid name for the folder, those characters are not allowed `%s`",
+				path.Name, IllegalFolderNameChars)
+		}
+		if !isPathSet {
+			allPathsSet = false
+		}
+	}
+	return allPathsSet, nil
+}
+
+// findCodeSourceDuplications checks the provided code sources for duplicate names and paths.
+//
+// It logs a warning for duplicate names and returns an error for duplicate paths.
+func findCodeSourceDuplications(paths _type.NamedPathList) error {
+	nameDuplicates := make(map[string][]string)
+	pathCount := make(map[string]int)
+
+	for _, p := range paths {
+		name := p.Name
+		if isEmpty(name) {
+			name = "(unnamed)"
+		}
+		nameDuplicates[name] = append(nameDuplicates[name], p.Path)
+		pathCount[p.Path]++
+	}
+
+	verifyDuplicateNames(nameDuplicates)
+	return verifyDuplicatePaths(pathCount)
+}
+
+// verifyDuplicateNames logs a warning if multiple code sources share the same name.
+func verifyDuplicateNames(nameDuplicates map[string][]string) {
+	var warnLines []string
+	for name, ps := range nameDuplicates {
+		if len(ps) > 1 {
+			warnLines = append(warnLines, "- "+name)
+			for _, path := range ps {
+				warnLines = append(warnLines, "  - "+path)
+			}
+		}
+	}
+
+	if len(warnLines) > 0 {
+		slog.Warn(
+			"Duplicate code source names detected, it may lead to " +
+				"overwriting code fragments with the same relative path:\n" +
+				strings.Join(warnLines, "\n"),
+		)
+	}
+}
+
+// verifyDuplicatePaths returns an error if multiple code sources use the same path.
+func verifyDuplicatePaths(pathCount map[string]int) error {
+	var errLines []string
+	for path, count := range pathCount {
+		if count > 1 {
+			errLines = append(errLines, "- "+path)
+		}
+	}
+
+	if len(errLines) > 0 {
+		return fmt.Errorf(
+			"duplicate code source paths detected:\n%s",
+			strings.Join(errLines, "\n"),
+		)
+	}
+	return nil
 }
 
 // Reports whether the given string is not empty.

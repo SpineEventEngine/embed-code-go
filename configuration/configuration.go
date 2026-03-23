@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -18,6 +18,10 @@
 
 // Package configuration contains configuration of the plugin.
 package configuration
+
+import (
+	_type "embed-code/embed-code-go/type"
+)
 
 const (
 	DefaultSeparator    = "..."
@@ -40,8 +44,8 @@ var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 //
 //	config.FragmentsDir = "foo/bar"
 type Configuration struct {
-	// CodeRoot is a root directory of the source code to be embedded.
-	CodeRoot string
+	// CodeRoots is a list of directories with the source code to be embedded.
+	CodeRoots _type.NamedPathList
 
 	// DocumentationRoot is a root directory of the documentation files.
 	DocumentationRoot string

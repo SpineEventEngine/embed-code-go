@@ -96,10 +96,39 @@ embed-mappings:
 
 The available fields for the configuration file are:
   * `code-path`: (Mandatory) Path to the source code root.
+    May be represented as:
+    * single path
+        ```yaml
+        code-path: path/to/code/root
+        ```
+    * multiple named paths:
+        ```yaml
+        code-path: 
+          - name: examples
+            path: path/to/code/root1
+          - name: production
+            path: path/to/code/root2
+        ```
+      When a named path is specified, fragments must be referenced in the embedding instructions 
+      using the corresponding path name:
+      ```md
+      <embed-code file="$PATH_NAME/path/to/file"></embed-code>
+      ```
+      **Do not forget the dollar sign (`$`) before the path name.**
+    
+      It is possible to specify a path without a name or with an empty name.
+      In this case, fragments will be stored in the root defined by `fragments-path`.
+
+      It is also possible to specify multiple paths with the same name,
+      but this may lead to fragments being overwritten if they have the same relative path and name.
+
   * `docs-path`: (Mandatory) Path to the documentation root.
   * `code-includes`: (Optional) Glob patterns for source files to include.
+    It may be represented as a comma-separated string list or as a YAML sequence.
   * `doc-excludes`: (Optional) Glob patterns for documentation files to exclude.
+    It may be represented as a comma-separated string list or as a YAML sequence.
   * `doc-includes`: (Optional) Glob patterns for documentation files to include.
+    It may be represented as a comma-separated string list or as a YAML sequence.
   * `fragments-path`: (Optional) Directory for code fragments.
   * `separator`: (Optional) Separator for fragments.
   * `embed-mappings`: (Optional) A list of custom mappings, each containing `code-path` and `docs-path`.

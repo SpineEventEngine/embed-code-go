@@ -1,4 +1,4 @@
-// Copyright 2024, TeamDev. All rights reserved.
+// Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
@@ -19,6 +19,7 @@
 package parsing_test
 
 import (
+	_type "embed-code/embed-code-go/type"
 	"fmt"
 	"os"
 	"strings"
@@ -300,7 +301,7 @@ func getXMLExtractionContent(fileName string, params TestInstructionParams,
 func buildConfigWithPreparedFragments() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = "../../test/resources/docs"
-	config.CodeRoot = "../../test/resources/code"
+	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../../test/resources/code"}}
 	config.FragmentsDir = "../../test/resources/prepared-fragments"
 
 	return config
