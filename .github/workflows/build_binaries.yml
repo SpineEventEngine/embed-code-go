@@ -46,6 +46,6 @@ jobs:
         uses: EndBug/add-and-commit@v9
         with:
           add: './bin'
-          message: 'Build embed_code.go for ${{ matrix.os }}'
+          message: 'Add binary for ${{ matrix.os }}.'
           default_author: github_actions
           push: true
