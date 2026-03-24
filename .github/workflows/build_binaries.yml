@@ -27,9 +27,6 @@ jobs:
         with:
           go-version: '1.22.1'
 
-      - name: Create bin directory
-        run: mkdir -p ./bin
-
       - name: Build embed_code.go for Windows
         if: matrix.os == 'windows-latest'
         run: go build -o ./bin/embed-code-win.exe -trimpath ./main.go
