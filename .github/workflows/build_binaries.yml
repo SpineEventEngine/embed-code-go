@@ -1,0 +1,54 @@
+name: Build and Commit Binaries
+
+on: push
+
+concurrency:
+  group: building
+  cancel-in-progress: true
+
+jobs:
+
+  build:
+    # Prevents the workflow from running on non-human triggers.
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      max-parallel: 1
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Go Environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.1'
+
+      - name: Create bin directory
+        run: mkdir -p ./bin
+
+      - name: Build embed_code.go for Windows
+        if: matrix.os == 'windows-latest'
+        run: go build -o ./bin/embed-code-win.exe -trimpath ./main.go
+
+      - name: Build embed_code.go for Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: go build -o ./bin/embed-code-ubuntu -trimpath ./main.go
+
+      - name: Build embed_code.go for MacOS
+        if: matrix.os == 'macos-latest'
+        env:
+          GOOS: darwin
+          GOARCH: amd64
+        run: go build -o ./bin/embed-code-macos -trimpath ./main.go
+
+      - name: Commit Built Files
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: './bin'
+          message: 'Build embed_code.go for ${{ matrix.os }}'
+          default_author: github_actions
+          push: true
