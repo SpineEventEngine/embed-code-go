@@ -107,17 +107,22 @@ func (f FragmentFile) Content() ([]string, error) {
 	}
 
 	if !isPathFileExits {
+		codeFileReference, err := f.codeFileReference()
+		if err != nil {
+			return nil, err
+		}
+
 		if f.FragmentName != "" {
 			if f.FragmentName == "_default" {
-				return nil, fmt.Errorf("code file `%s` not found", f.CodePath)
+				return nil, fmt.Errorf("code file `%s` not found", codeFileReference)
 			}
 			return nil, fmt.Errorf(
-				"fragment `%s` from code file `%s` not found", f.FragmentName, f.CodePath,
+				"fragment `%s` from code file `%s` not found", f.FragmentName, codeFileReference,
 			)
 		}
 		return nil, fmt.Errorf(
-			"code file `%s` fragment not found",
-			f.CodePath,
+			"code file %s fragment not found",
+			codeFileReference,
 		)
 	}
 
@@ -145,6 +150,68 @@ func (f FragmentFile) absolutePath() string {
 	filename := fmt.Sprintf("%s-%s", withoutExtension, f.fragmentHash())
 
 	return filepath.Join(fragmentsAbsDir, filename+fileExtension)
+}
+
+// Builds a user-facing reference to the original code file for error messages.
+//
+// If the source file exists, returns its absolute `file://` URL. If the file path uses a named
+// code root and the resolved file does not exist, returns both the prefixed path and the expanded
+// absolute path.
+func (f FragmentFile) codeFileReference() (string, error) {
+	originalCodePath, isPrefixed := f.originalCodePath()
+	if originalCodePath == "" {
+		return fmt.Sprintf("%s", f.CodePath), nil
+	}
+
+	exists, err := files.IsFileExist(originalCodePath)
+	if err != nil {
+		return "", err
+	}
+	if exists {
+		return "file://" + originalCodePath, nil
+	}
+	if isPrefixed {
+		return fmt.Sprintf("%s (%s)", f.CodePath, originalCodePath), nil
+	}
+
+	return fmt.Sprintf("%s", originalCodePath), nil
+}
+
+// Resolves the original source file path from the fragment's code path.
+//
+// Returns the absolute path to the source file and reports whether the input path used a named
+// code-root prefix such as `$runtime/...`.
+func (f FragmentFile) originalCodePath() (string, bool) {
+	normalizedPath := filepath.ToSlash(filepath.Clean(f.CodePath))
+
+	if strings.HasPrefix(normalizedPath, NamedPathPrefix) {
+		withoutPrefix := strings.TrimPrefix(normalizedPath, NamedPathPrefix)
+		codeRootName, relativePath, _ := strings.Cut(withoutPrefix, "/")
+
+		for _, codeRoot := range f.Configuration.CodeRoots {
+			if strings.TrimSpace(codeRoot.Name) != codeRootName {
+				continue
+			}
+
+			absoluteRoot, err := filepath.Abs(codeRoot.Path)
+			if err != nil {
+				panic(err)
+			}
+
+			return filepath.Join(absoluteRoot, filepath.FromSlash(relativePath)), true
+		}
+	}
+
+	if len(f.Configuration.CodeRoots) == 1 {
+		absoluteRoot, err := filepath.Abs(f.Configuration.CodeRoots[0].Path)
+		if err != nil {
+			panic(err)
+		}
+
+		return filepath.Join(absoluteRoot, filepath.FromSlash(normalizedPath)), false
+	}
+
+	return "", false
 }
 
 // Calculates and returns a hash string for FragmentFile.
