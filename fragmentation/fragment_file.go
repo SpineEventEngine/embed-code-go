@@ -158,7 +158,10 @@ func (f FragmentFile) absolutePath() string {
 // code root and the resolved file does not exist, returns both the prefixed path and the expanded
 // absolute path.
 func (f FragmentFile) codeFileReference() (string, error) {
-	originalCodePath, isPrefixed := f.originalCodePath()
+	originalCodePath, isPrefixed, err := f.originalCodePath()
+	if err != nil {
+		return "", err
+	}
 	if originalCodePath == "" {
 		return fmt.Sprintf("%s", f.CodePath), nil
 	}
@@ -181,7 +184,9 @@ func (f FragmentFile) codeFileReference() (string, error) {
 //
 // Returns the absolute path to the source file and reports whether the input path used a named
 // code-root prefix such as `$runtime/...`.
-func (f FragmentFile) originalCodePath() (string, bool) {
+//
+// Returns an error if the path uses a named code root that is not present in the configuration.
+func (f FragmentFile) originalCodePath() (string, bool, error) {
 	normalizedPath := filepath.ToSlash(filepath.Clean(f.CodePath))
 
 	if strings.HasPrefix(normalizedPath, NamedPathPrefix) {
@@ -198,8 +203,11 @@ func (f FragmentFile) originalCodePath() (string, bool) {
 				panic(err)
 			}
 
-			return filepath.Join(absoluteRoot, filepath.FromSlash(relativePath)), true
+			return filepath.Join(absoluteRoot, filepath.FromSlash(relativePath)), true, nil
 		}
+
+		return "", true, fmt.Errorf("code root with name `%s` not found for path `%s`",
+			codeRootName, f.CodePath)
 	}
 
 	if len(f.Configuration.CodeRoots) == 1 {
@@ -208,10 +216,10 @@ func (f FragmentFile) originalCodePath() (string, bool) {
 			panic(err)
 		}
 
-		return filepath.Join(absoluteRoot, filepath.FromSlash(normalizedPath)), false
+		return filepath.Join(absoluteRoot, filepath.FromSlash(normalizedPath)), false, nil
 	}
 
-	return "", false
+	return "", false, nil
 }
 
 // Calculates and returns a hash string for FragmentFile.
