@@ -18,6 +18,11 @@ jobs:
 
     steps:
 
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
+
       # Checkout the repository via SSH deployment key.
       #
       # This step uses deploy key to bypass the master branch protection rule,
@@ -26,7 +31,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ssh-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
           persist-credentials: false
 
       - name: Test SSH auth
