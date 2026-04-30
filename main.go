@@ -58,8 +58,8 @@ const Version = "1.1.0"
 //
 // If both options are missed, the embedding fails.
 // If both options are set, the embedding fails as well.
-// If config file is not exists or does not contain 'code-path' and 'docs-path' fields, the
-// embedding fails.
+// If config file does not exist, or contains neither root 'code-path' and 'docs-path' fields nor
+// 'embeddings' entries, the embedding fails.
 //
 // All possible args:
 //   - code-path — a path to a root directory with code files;

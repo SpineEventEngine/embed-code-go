@@ -92,7 +92,7 @@ func validateMode(mode string) error {
 	isValidMode := slices.Contains(validModes, mode)
 
 	if !isValidMode {
-		return fmt.Errorf("invalid value for mode. it must be one of — %s, %s or %s",
+		return fmt.Errorf("invalid value for mode. it must be one of — `%s`, `%s` or `%s`",
 			ModeEmbed, ModeCheck, ModeAnalyze)
 	}
 
@@ -101,6 +101,10 @@ func validateMode(mode string) error {
 
 // Validates if config is set correctly and does not have mutually exclusive params set.
 func validateConfig(config Config) error {
+	if len(config.Embeddings) > 0 {
+		return validateEmbeddingConfigs(config)
+	}
+
 	isCodePathsSet, err := validatePaths(config.BaseCodePaths)
 	if err != nil {
 		return err
@@ -122,7 +126,70 @@ func validateConfig(config Config) error {
 	isOneOfRootsSet := isCodePathsSet || isDocsPathSet
 
 	if isOneOfRootsSet && !isRootsSet {
-		return errors.New("code-path and docs-path must both be set")
+		return errors.New("`code-path` and `docs-path` must both be set")
+	}
+
+	return nil
+}
+
+// Validates the multi-target embedding configuration.
+func validateEmbeddingConfigs(config Config) error {
+	isCodePathsSet, err := validatePaths(config.BaseCodePaths)
+	if err != nil {
+		return err
+	}
+	isDocsPathSet, err := validatePathSet(config.BaseDocsPath)
+	if err != nil {
+		return err
+	}
+	if isCodePathsSet || isDocsPathSet {
+		return errors.New("`code-path` and `docs-path` cannot be set when `embeddings` are set")
+	}
+	if validateOptionalParamsSet(config) {
+		return errors.New("root optional embedding options cannot be set when `embeddings` are set")
+	}
+
+	for i, embedding := range config.Embeddings {
+		if err = validateEmbeddingConfig(embedding, i); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Validates one embedding entry.
+func validateEmbeddingConfig(embedding EmbeddingConfig, index int) error {
+	if isEmpty(embedding.Name) {
+		return fmt.Errorf("embedding #%d: `name` must be set", index+1)
+	}
+	if strings.ContainsAny(embedding.Name, IllegalFolderNameChars) {
+		return fmt.Errorf("embedding `%s`: `name` `%s` is not valid, "+
+			"those characters are not allowed `%s`",
+			embedding.Name, embedding.Name, IllegalFolderNameChars)
+	}
+
+	isCodePathsSet, err := validatePaths(embedding.CodePaths)
+	if err != nil {
+		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
+	}
+	if err = findCodeSourceDuplications(embedding.CodePaths); err != nil {
+		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
+	}
+
+	isDocsPathSet, err := validatePathSet(embedding.DocsPath)
+	if err != nil {
+		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
+	}
+	_, err = validatePathSet(embedding.FragmentsPath)
+	if err != nil {
+		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
+	}
+
+	isRootsSet := isCodePathsSet && isDocsPathSet
+	if !isRootsSet {
+		return fmt.Errorf("embedding `%s`: `code-path` and `docs-path` must both be set",
+			embedding.Name)
 	}
 
 	return nil

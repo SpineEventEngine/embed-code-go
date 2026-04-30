@@ -89,9 +89,24 @@ code-path: path/to/code/root
 docs-path: path/to/docs/root
 code-includes: "**/*.java,**/*.gradle"
 doc-excludes: "**/*-old.*,**/deprecated/*.*"
-embed-mappings:
-  - code-path: path/to/code/root/kotlin
-    docs-path: path/to/other/docs
+```
+
+For multiple independent documentation targets, use `embeddings` instead:
+
+```yaml
+embeddings:
+  - name: java
+    code-path: path/to/code/root/java
+    docs-path: path/to/java/docs
+    code-includes: "**/*.java"
+  - name: kotlin
+    code-path:
+      - name: samples
+        path: path/to/code/root/kotlin-samples
+      - name: runtime
+        path: path/to/code/root/kotlin-runtime
+    docs-path: path/to/kotlin/docs
+    separator: "---"
 ```
 
 The available fields for the configuration file are:
@@ -131,7 +146,10 @@ The available fields for the configuration file are:
     It may be represented as a comma-separated string list or as a YAML sequence.
   * `fragments-path`: (Optional) Directory for code fragments.
   * `separator`: (Optional) Separator for fragments.
-  * `embed-mappings`: (Optional) A list of custom mappings, each containing `code-path` and `docs-path`.
+  * `embeddings`: (Optional) A list of complete embedding configurations for multiple
+    documentation targets. When `embeddings` is set, do not set root-level `code-path`
+    or `docs-path`; define `code-path`, `docs-path`, and optional settings inside each entry.
+    Each entry must set `name`, which is used to identify that entry in validation messages.
 
 These settings have the same role as the command-line arguments.
 
