@@ -2,7 +2,7 @@ name: Build and Commit Binaries
 
 on:
   push:
-    branches: [master]
+    branches: [fix-workflow]
 
 concurrency:
   group: building
@@ -17,8 +17,17 @@ jobs:
     timeout-minutes: 10
 
     steps:
+
+      # Checkout the repository via SSH deployment key.
+      #
+      # This step uses deploy key to bypass the master branch protection rule,
+      # which allows to push changes only via pull request.
+      #
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
+          persist-credentials: false
 
       - name: Set Up Go Environment
         uses: actions/setup-go@v5
