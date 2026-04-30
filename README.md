@@ -148,8 +148,8 @@ The available fields for the configuration file are:
   * `separator`: (Optional) Separator for fragments.
   * `embeddings`: (Optional) A list of complete embedding configurations for multiple
     documentation targets. When `embeddings` is set, do not set root-level `code-path`
-    or `docs-path`; define `code-path`, `docs-path`, and optional settings inside each entry.
-    Each entry must set `name`, which is used to identify that entry in validation messages.
+    or `docs-path`. Define `code-path`, `docs-path`, and optional settings inside each entry.
+    Each entry must set a unique `name`.
 
 These settings have the same role as the command-line arguments.
 

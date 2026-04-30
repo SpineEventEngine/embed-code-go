@@ -155,6 +155,10 @@ func validateEmbeddingConfigs(config Config) error {
 		}
 	}
 
+	if err = findEmbeddingNameDuplications(config.Embeddings); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -192,6 +196,30 @@ func validateEmbeddingConfig(embedding EmbeddingConfig, index int) error {
 			embedding.Name)
 	}
 
+	return nil
+}
+
+// findEmbeddingNameDuplications returns an error if multiple embeddings use the same name.
+func findEmbeddingNameDuplications(embeddings []EmbeddingConfig) error {
+	nameCount := make(map[string]int)
+	for _, embedding := range embeddings {
+		nameCount[embedding.Name]++
+	}
+
+	var errLines []string
+	for name, count := range nameCount {
+		if count > 1 {
+			errLines = append(errLines, "- "+name)
+		}
+	}
+
+	if len(errLines) > 0 {
+		slices.Sort(errLines)
+		return fmt.Errorf(
+			"duplicate embedding names detected:\n%s",
+			strings.Join(errLines, "\n"),
+		)
+	}
 	return nil
 }
 

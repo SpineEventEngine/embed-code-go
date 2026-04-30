@@ -161,6 +161,19 @@ var _ = Describe("CLI validation", func() {
 				"embedding #1: `name` must be set"))
 		})
 
+		It("should fail validation when embedding names are duplicated", func() {
+			embedding := baseEmbeddingConfig()
+			duplicateEmbedding := baseEmbeddingConfig()
+			invalidConfig := cli.Config{
+				Mode:       cli.ModeCheck,
+				Embeddings: []cli.EmbeddingConfig{embedding, duplicateEmbedding},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"duplicate embedding names detected:\n- docs"))
+		})
+
 		It("should correctly convert embeddings to a few configs", func() {
 			config := cli.Config{
 				Mode:       cli.ModeCheck,
