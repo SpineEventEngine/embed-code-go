@@ -22,6 +22,7 @@ import (
 	_type "embed-code/embed-code-go/type"
 	"flag"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"embed-code/embed-code-go/analyzing"
@@ -243,6 +244,7 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 // Creates a new Configuration from one complete embedding config.
 func configFromEmbedding(embedding EmbeddingConfig) configuration.Configuration {
 	embedCodeConfig := configuration.NewConfiguration()
+	embedCodeConfig.Name = embedding.Name
 	embedCodeConfig.CodeRoots = embedding.CodePaths
 	embedCodeConfig.DocumentationRoot = embedding.DocsPath
 
@@ -258,6 +260,7 @@ func configFromEmbedding(embedding EmbeddingConfig) configuration.Configuration 
 	if isNotEmpty(embedding.FragmentsPath) {
 		embedCodeConfig.FragmentsDir = embedding.FragmentsPath
 	}
+	embedCodeConfig.FragmentsDir = filepath.Join(embedCodeConfig.FragmentsDir, embedding.Name)
 	if isNotEmpty(embedding.Separator) {
 		embedCodeConfig.Separator = embedding.Separator
 	}

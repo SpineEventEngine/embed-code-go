@@ -218,12 +218,13 @@ func WriteFragmentFiles(config config.Configuration) WriteFragmentFilesResult {
 		totalFragments += codeRootFragments
 		if codeRootFiles > 0 {
 			slog.Info(
-				fmt.Sprintf("Found `%d` source code files with `%d` fragments under `%s`.",
-					codeRootFiles, codeRootFragments, codeRoot.Path),
+				fmt.Sprintf("Found `%d` source code files with `%d` fragments under `%s`%s.",
+					codeRootFiles, codeRootFragments, codeRoot.Path, configNameLabel(config)),
 			)
 		} else {
 			slog.Warn(
-				fmt.Sprintf("No code fragments were found under `%s`.", codeRoot.Path),
+				fmt.Sprintf("No code fragments were found under `%s`%s.",
+					codeRoot.Path, configNameLabel(config)),
 			)
 		}
 	}
@@ -232,6 +233,13 @@ func WriteFragmentFiles(config config.Configuration) WriteFragmentFilesResult {
 		TotalSourceFiles: totalSourceFiles,
 		TotalFragments:   totalFragments,
 	}
+}
+
+func configNameLabel(config config.Configuration) string {
+	if config.Name == "" {
+		return ""
+	}
+	return fmt.Sprintf(" for embedding `%s`", config.Name)
 }
 
 // CleanFragmentFiles deletes Configuration.FragmentsDir if it exists.

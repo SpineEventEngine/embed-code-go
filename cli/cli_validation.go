@@ -32,7 +32,7 @@ import (
 )
 
 // IllegalFolderNameChars the string with chars that are not allowed for the folder name.
-const IllegalFolderNameChars = ` *?:"<>|`
+const IllegalFolderNameChars = `/\ *?:"<>|`
 
 // IsUsingConfigFile reports whether user configs are set with file.
 func IsUsingConfigFile(config Config) bool {
