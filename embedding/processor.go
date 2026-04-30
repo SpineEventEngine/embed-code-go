@@ -164,13 +164,15 @@ func EmbedAll(config configuration.Configuration) EmbedAllResult {
 	if totalEmbeddings > 0 {
 		slog.Info(
 			fmt.Sprintf(
-				"Found `%d` target documentation files with `%d` embeddings under `%s`.",
+				"Found `%d` target documentation files with `%d` embeddings under `%s`%s.",
 				len(requiredDocPaths), totalEmbeddings, config.DocumentationRoot,
+				configNameLabel(config),
 			),
 		)
 	} else {
 		slog.Warn(
-			fmt.Sprintf("No embedding instructions were found under `%s`.", config.DocumentationRoot),
+			fmt.Sprintf("No embedding instructions were found under `%s`%s.",
+				config.DocumentationRoot, configNameLabel(config)),
 		)
 	}
 	return EmbedAllResult{
@@ -178,6 +180,13 @@ func EmbedAll(config configuration.Configuration) EmbedAllResult {
 		TotalEmbeddings:    totalEmbeddings,
 		UpdatedTargetFiles: updatedTargetFiles,
 	}
+}
+
+func configNameLabel(config configuration.Configuration) string {
+	if config.Name == "" {
+		return ""
+	}
+	return fmt.Sprintf(" for embedding `%s`", config.Name)
 }
 
 // CheckUpToDate raises an error if the documentation files are not up-to-date with code files.

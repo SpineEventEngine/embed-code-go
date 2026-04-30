@@ -22,6 +22,7 @@ package cli_test
 
 import (
 	"embed-code/embed-code-go/cli"
+	"embed-code/embed-code-go/configuration"
 	_type "embed-code/embed-code-go/type"
 	"os"
 	"path/filepath"
@@ -73,6 +74,21 @@ var _ = Describe("CLI validation", func() {
 			}
 
 			Expect(cli.ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
+		})
+
+		It("should store embedding fragments under a named subfolder", func() {
+			embedding := baseEmbeddingConfig()
+			embedding.FragmentsPath = "/tmp/fragments"
+			config := cli.Config{
+				Mode:       cli.ModeCheck,
+				Embeddings: []cli.EmbeddingConfig{embedding},
+			}
+
+			embedConfigs := cli.BuildEmbedCodeConfiguration(config)
+
+			Expect(embedConfigs).To(HaveLen(1))
+			Expect(embedConfigs[0].Name).To(Equal("docs"))
+			Expect(embedConfigs[0].FragmentsDir).To(Equal(filepath.Join("/tmp/fragments", "docs")))
 		})
 	})
 
@@ -185,12 +201,21 @@ var _ = Describe("CLI validation", func() {
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(embedConfigs).To(HaveLen(3))
+			Expect(embedConfigs[0].Name).To(Equal("java"))
 			Expect(embedConfigs[0].CodeRoots[0].Path).To(Equal("test/resources/code/java"))
 			Expect(embedConfigs[0].DocumentationRoot).To(Equal("test/resources/docs"))
+			Expect(embedConfigs[0].FragmentsDir).To(Equal(
+				filepath.Join(configuration.DefaultFragmentsDir, "java")))
+			Expect(embedConfigs[1].Name).To(Equal("kotlin"))
 			Expect(embedConfigs[1].CodeRoots[0].Path).To(Equal("test/resources/code/kotlin"))
 			Expect(embedConfigs[1].DocumentationRoot).To(Equal("test/resources/docs/nested-dir-1"))
+			Expect(embedConfigs[1].FragmentsDir).To(Equal(
+				filepath.Join(configuration.DefaultFragmentsDir, "kotlin")))
+			Expect(embedConfigs[2].Name).To(Equal("nested-java"))
 			Expect(embedConfigs[2].DocumentationRoot).To(
 				Equal("test/resources/docs/nested-dir-1/nested-dir-3"))
+			Expect(embedConfigs[2].FragmentsDir).To(Equal(
+				filepath.Join(configuration.DefaultFragmentsDir, "nested-java")))
 			Expect(embedConfigs[2].Separator).To(Equal("---"))
 		})
 

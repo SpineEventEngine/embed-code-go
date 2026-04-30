@@ -44,6 +44,9 @@ var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 //
 //	config.FragmentsDir = "foo/bar"
 type Configuration struct {
+	// Name identifies this configuration when it is built from an embeddings entry.
+	Name string
+
 	// CodeRoots is a list of directories with the source code to be embedded.
 	CodeRoots _type.NamedPathList
 
