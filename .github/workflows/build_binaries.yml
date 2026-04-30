@@ -29,6 +29,9 @@ jobs:
           ssh-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
           persist-credentials: false
 
+      - name: Test SSH auth
+        run: ssh -T git@github.com || true
+
       - name: Set Up Go Environment
         uses: actions/setup-go@v5
         with:
