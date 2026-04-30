@@ -161,7 +161,7 @@ func ReadArgs() Config {
 	info := flag.Bool("info", false,
 		"an info-level logging setter that enables info logs when set to 'true'")
 	stacktrace := flag.Bool("stacktrace", false,
-		"a stack trace setter that enables stack traces in error logs when set to 'true'")
+		"a stack trace setter that enables stack traces in error logs when set to 'true'123")
 
 	flag.Parse()
 
