@@ -92,20 +92,20 @@ func main() {
 	if cli.IsUsingConfigFile(userArgs) {
 		err := cli.ValidateConfigFile(userArgs)
 		if err != nil {
-			slog.Error("The provided config file is not valid.", "error", err)
+			logError("The provided config file is not valid", err)
 
 			return
 		}
 		userArgs, err = cli.FillArgsFromConfigFile(userArgs)
 		if err != nil {
-			slog.Error("Received an issue while reading config file: ", "error", err)
+			logError("Received an issue while reading config file", err)
 
 			return
 		}
 	}
 	err := cli.ValidateConfig(userArgs)
 	if err != nil {
-		slog.Error("User arguments are not valid.", "error", err)
+		logError("User arguments are not valid", err)
 
 		return
 	}
@@ -136,6 +136,10 @@ func configureLogging(config cli.Config) {
 	}
 	logger := slog.New(&logging.Handler{Level: level})
 	slog.SetDefault(logger)
+}
+
+func logError(message string, err error) {
+	slog.Error(fmt.Sprintf("%s: %v", message, err))
 }
 
 // embedByConfig runs the embedByConfig for all configs and logs the results.
