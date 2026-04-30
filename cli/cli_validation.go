@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 	"slices"
 	"strings"
 )
@@ -158,6 +159,7 @@ func validateEmbeddingConfigs(config Config) error {
 	if err = findEmbeddingNameDuplications(config.Embeddings); err != nil {
 		return err
 	}
+	verifyDuplicateEmbeddingDocsPaths(config.Embeddings)
 
 	return nil
 }
@@ -221,6 +223,35 @@ func findEmbeddingNameDuplications(embeddings []EmbeddingConfig) error {
 		)
 	}
 	return nil
+}
+
+// verifyDuplicateEmbeddingDocsPaths logs a warning if multiple embeddings use the same docs path.
+func verifyDuplicateEmbeddingDocsPaths(embeddings []EmbeddingConfig) {
+	docsPathEmbeddings := make(map[string][]string)
+	for _, embedding := range embeddings {
+		docsPath := filepath.Clean(embedding.DocsPath)
+		docsPathEmbeddings[docsPath] = append(
+			docsPathEmbeddings[docsPath],
+			embedding.Name,
+		)
+	}
+
+	var warnLines []string
+	for docsPath, names := range docsPathEmbeddings {
+		if len(names) > 1 {
+			slices.Sort(names)
+			warnLines = append(warnLines, fmt.Sprintf("- `%s`: %s", docsPath, strings.Join(names, ", ")))
+		}
+	}
+
+	if len(warnLines) > 0 {
+		slices.Sort(warnLines)
+		slog.Warn(
+			"Multiple `embeddings` use the same `docs-path`. " +
+				"Make sure they are intended to process the same documentation root:\n" +
+				strings.Join(warnLines, "\n"),
+		)
+	}
 }
 
 // Reports whether at least one of optional configs is set — code-includes, doc-includes, separator
