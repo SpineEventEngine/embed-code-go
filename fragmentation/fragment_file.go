@@ -107,17 +107,22 @@ func (f FragmentFile) Content() ([]string, error) {
 	}
 
 	if !isPathFileExits {
+		codeFileReference, err := f.codeFileReference()
+		if err != nil {
+			return nil, err
+		}
+
 		if f.FragmentName != "" {
 			if f.FragmentName == "_default" {
-				return nil, fmt.Errorf("code file `%s` not found", f.CodePath)
+				return nil, fmt.Errorf("code file `%s` not found", codeFileReference)
 			}
 			return nil, fmt.Errorf(
-				"fragment `%s` from code file `%s` not found", f.FragmentName, f.CodePath,
+				"fragment `%s` from code file `%s` not found", f.FragmentName, codeFileReference,
 			)
 		}
 		return nil, fmt.Errorf(
-			"code file `%s` fragment not found",
-			f.CodePath,
+			"code file %s fragment not found",
+			codeFileReference,
 		)
 	}
 
@@ -145,6 +150,82 @@ func (f FragmentFile) absolutePath() string {
 	filename := fmt.Sprintf("%s-%s", withoutExtension, f.fragmentHash())
 
 	return filepath.Join(fragmentsAbsDir, filename+fileExtension)
+}
+
+// Builds a user-facing reference to the original code file for error messages.
+//
+// If the source file exists, returns its absolute `file://` URL. If the file path uses a named
+// code root and the resolved file does not exist, returns both the prefixed path and the expanded
+// absolute path.
+func (f FragmentFile) codeFileReference() (string, error) {
+	originalCodePath, isPrefixed, err := f.originalCodePath()
+	if err != nil {
+		return "", err
+	}
+	if originalCodePath == "" {
+		return f.CodePath, nil
+	}
+
+	exists, err := files.IsFileExist(originalCodePath)
+	if err != nil {
+		return "", err
+	}
+	if exists {
+		return "file://" + originalCodePath, nil
+	}
+	if isPrefixed {
+		return fmt.Sprintf("%s (%s)", f.CodePath, originalCodePath), nil
+	}
+
+	return originalCodePath, nil
+}
+
+// Resolves the original source file path from the fragment's code path.
+//
+// Returns the absolute path to the source file and reports whether the input path used a named
+// code-root prefix such as `$runtime/...`.
+//
+// Returns an error if the path uses a named code root that is not present in the configuration.
+func (f FragmentFile) originalCodePath() (string, bool, error) {
+	normalizedPath := filepath.ToSlash(filepath.Clean(f.CodePath))
+
+	if strings.HasPrefix(normalizedPath, NamedPathPrefix) {
+		withoutPrefix := strings.TrimPrefix(normalizedPath, NamedPathPrefix)
+		codeRootName, relativePath, _ := strings.Cut(withoutPrefix, "/")
+
+		for _, codeRoot := range f.Configuration.CodeRoots {
+			if strings.TrimSpace(codeRoot.Name) != codeRootName {
+				continue
+			}
+
+			return filepath.Join(resolvedRootPath(codeRoot.Path), filepath.FromSlash(relativePath)),
+				true, nil
+		}
+
+		return "", true, fmt.Errorf("code root with name `%s` not found for path `%s`",
+			codeRootName, f.CodePath)
+	}
+
+	if len(f.Configuration.CodeRoots) == 1 {
+		return filepath.Join(
+			resolvedRootPath(f.Configuration.CodeRoots[0].Path),
+			filepath.FromSlash(normalizedPath),
+		), false, nil
+	}
+
+	return "", false, nil
+}
+
+// Resolves the given path to an absolute path when possible.
+//
+// If absolute-path resolution fails, returns the original path.
+func resolvedRootPath(path string) string {
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+
+	return absolutePath
 }
 
 // Calculates and returns a hash string for FragmentFile.
