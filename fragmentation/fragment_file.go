@@ -163,7 +163,7 @@ func (f FragmentFile) codeFileReference() (string, error) {
 		return "", err
 	}
 	if originalCodePath == "" {
-		return fmt.Sprintf("%s", f.CodePath), nil
+		return f.CodePath, nil
 	}
 
 	exists, err := files.IsFileExist(originalCodePath)
@@ -177,7 +177,7 @@ func (f FragmentFile) codeFileReference() (string, error) {
 		return fmt.Sprintf("%s (%s)", f.CodePath, originalCodePath), nil
 	}
 
-	return fmt.Sprintf("%s", originalCodePath), nil
+	return originalCodePath, nil
 }
 
 // Resolves the original source file path from the fragment's code path.
@@ -198,12 +198,8 @@ func (f FragmentFile) originalCodePath() (string, bool, error) {
 				continue
 			}
 
-			absoluteRoot, err := filepath.Abs(codeRoot.Path)
-			if err != nil {
-				panic(err)
-			}
-
-			return filepath.Join(absoluteRoot, filepath.FromSlash(relativePath)), true, nil
+			return filepath.Join(resolvedRootPath(codeRoot.Path), filepath.FromSlash(relativePath)),
+				true, nil
 		}
 
 		return "", true, fmt.Errorf("code root with name `%s` not found for path `%s`",
@@ -211,15 +207,25 @@ func (f FragmentFile) originalCodePath() (string, bool, error) {
 	}
 
 	if len(f.Configuration.CodeRoots) == 1 {
-		absoluteRoot, err := filepath.Abs(f.Configuration.CodeRoots[0].Path)
-		if err != nil {
-			panic(err)
-		}
-
-		return filepath.Join(absoluteRoot, filepath.FromSlash(normalizedPath)), false, nil
+		return filepath.Join(
+			resolvedRootPath(f.Configuration.CodeRoots[0].Path),
+			filepath.FromSlash(normalizedPath),
+		), false, nil
 	}
 
 	return "", false, nil
+}
+
+// Resolves the given path to an absolute path when possible.
+//
+// If absolute-path resolution fails, returns the original path.
+func resolvedRootPath(path string) string {
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+
+	return absolutePath
 }
 
 // Calculates and returns a hash string for FragmentFile.
