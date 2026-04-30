@@ -2,7 +2,9 @@ name: Build and Commit Binaries
 
 on:
   push:
-    branches: [fix-workflow]
+    branches: [ fix-workflow ]
+    paths-ignore: # Prevents the workflow from running on binaries changes.
+      - 'bin/**'
 
 concurrency:
   group: building
@@ -11,17 +13,19 @@ concurrency:
 jobs:
 
   build:
-    # Prevents the workflow from running on non-human triggers.
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
+      #      #
+      #      #
+      #      #
+      #      #
+      #      - name: Setup SSH
+      #        uses: webfactory/ssh-agent@v0.9.0
+      #        with:
+      #          ssh-private-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
 
       # Checkout the repository via SSH deployment key.
       #
