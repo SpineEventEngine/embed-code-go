@@ -21,7 +21,6 @@ package cli
 import (
 	_type "embed-code/embed-code-go/type"
 	"flag"
-	"fmt"
 	"os"
 	"strings"
 
@@ -61,14 +60,13 @@ import (
 // Separator — a string that's inserted between multiple partitions of a single fragment.
 // The default value is "...".
 //
-// EmbedMappings — an additional optional list of configs, which will be executed together with the
-// main one. A config written here has higher priority and may overwrite the base one.
+// Embeddings — independent configurations for embedding multiple documentation targets.
 //
 // Info - specifies whether info-level logs should be shown.
 //
 // Stacktrace - specifies whether error stack traces should be shown.
 //
-// ConfigPath — a path to a yaml configuration file which contains the roots.
+// ConfigPath — a path to a yaml configuration file which contains roots or embeddings.
 //
 // Mode — defines the mode of embed-code execution.
 type Config struct {
@@ -79,17 +77,23 @@ type Config struct {
 	DocExcludes   _type.StringList    `yaml:"doc-excludes"`
 	FragmentsPath string              `yaml:"fragments-path"`
 	Separator     string              `yaml:"separator"`
-	EmbedMappings []EmbedMapping      `yaml:"embed-mappings"`
+	Embeddings    []EmbeddingConfig   `yaml:"embeddings"`
 	Info          bool                `yaml:"info"`
 	Stacktrace    bool                `yaml:"stacktrace"`
 	ConfigPath    string
 	Mode          string
 }
 
-// EmbedMapping is a pair of a source code path and a destination docs path to perform an embedding.
-type EmbedMapping struct {
-	CodePath _type.NamedPathList `yaml:"code-path"`
-	DocsPath string              `yaml:"docs-path"`
+// EmbeddingConfig contains a complete configuration for one embedding target.
+type EmbeddingConfig struct {
+	Name          string              `yaml:"name"`
+	CodePaths     _type.NamedPathList `yaml:"code-path"`
+	DocsPath      string              `yaml:"docs-path"`
+	CodeIncludes  _type.StringList    `yaml:"code-includes"`
+	DocIncludes   _type.StringList    `yaml:"doc-includes"`
+	DocExcludes   _type.StringList    `yaml:"doc-excludes"`
+	FragmentsPath string              `yaml:"fragments-path"`
+	Separator     string              `yaml:"separator"`
 }
 
 // EmbedCodeSamplesResult is result of the EmbedCodeSamples method.
@@ -193,8 +197,8 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	if len(configFields.CodeIncludes) > 0 {
 		args.CodeIncludes = configFields.CodeIncludes
 	}
-	if len(configFields.EmbedMappings) > 0 {
-		args.EmbedMappings = configFields.EmbedMappings
+	if len(configFields.Embeddings) > 0 {
+		args.Embeddings = configFields.Embeddings
 	}
 	if len(configFields.DocIncludes) > 0 {
 		args.DocIncludes = configFields.DocIncludes
@@ -219,32 +223,46 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 // userArgs — a Config with user-provided args.
 func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration {
 	embedCodeConfigs := make([]configuration.Configuration, 0)
-	excludedConfigs := make([]string, 0)
 
-	if len(userArgs.EmbedMappings) > 0 {
-		for _, mapping := range userArgs.EmbedMappings {
-			embedCodeConfig := configWithOptionalParams(userArgs)
-			embedCodeConfig.CodeRoots = mapping.CodePath
-			embedCodeConfig.DocumentationRoot = mapping.DocsPath
-
-			// As the top config may overwrite those files, we need to exclude it from the embedding
-			excludedConfigs = append(excludedConfigs, fmt.Sprintf("%s**/*.*", mapping.DocsPath))
-			embedCodeConfigs = append(embedCodeConfigs, embedCodeConfig)
+	if len(userArgs.Embeddings) > 0 {
+		for _, embedding := range userArgs.Embeddings {
+			embedCodeConfigs = append(embedCodeConfigs, configFromEmbedding(embedding))
 		}
+		return embedCodeConfigs
 	}
 
 	embedCodeConfig := configWithOptionalParams(userArgs)
 	embedCodeConfig.CodeRoots = userArgs.BaseCodePaths
 	embedCodeConfig.DocumentationRoot = userArgs.BaseDocsPath
 
-	if len(userArgs.DocExcludes) > 0 {
-		embedCodeConfig.DocExcludes = append(embedCodeConfig.DocExcludes, excludedConfigs...)
-	} else {
-		embedCodeConfig.DocExcludes = excludedConfigs
-	}
 	embedCodeConfigs = append(embedCodeConfigs, embedCodeConfig)
 
 	return embedCodeConfigs
+}
+
+// Creates a new Configuration from one complete embedding config.
+func configFromEmbedding(embedding EmbeddingConfig) configuration.Configuration {
+	embedCodeConfig := configuration.NewConfiguration()
+	embedCodeConfig.CodeRoots = embedding.CodePaths
+	embedCodeConfig.DocumentationRoot = embedding.DocsPath
+
+	if len(embedding.CodeIncludes) > 0 {
+		embedCodeConfig.CodeIncludes = embedding.CodeIncludes
+	}
+	if len(embedding.DocIncludes) > 0 {
+		embedCodeConfig.DocIncludes = embedding.DocIncludes
+	}
+	if len(embedding.DocExcludes) > 0 {
+		embedCodeConfig.DocExcludes = embedding.DocExcludes
+	}
+	if isNotEmpty(embedding.FragmentsPath) {
+		embedCodeConfig.FragmentsDir = embedding.FragmentsPath
+	}
+	if isNotEmpty(embedding.Separator) {
+		embedCodeConfig.Separator = embedding.Separator
+	}
+
+	return embedCodeConfig
 }
 
 // Creates a new Configuration with the filled optional properties from the user args.
