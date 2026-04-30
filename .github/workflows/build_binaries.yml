@@ -18,9 +18,8 @@ jobs:
 
     steps:
 
-      #
-      #
-      #
+      # Initializes an SSH agent and loads the deployment key so that subsequent git
+      # operations (fetch/push) authenticate via SSH.
       #
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -37,9 +36,6 @@ jobs:
         with:
           ssh-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
           persist-credentials: false
-
-      - name: Test SSH auth
-        run: ssh -T git@github.com || true
 
       - name: Set Up Go Environment
         uses: actions/setup-go@v5
