@@ -2,7 +2,7 @@ name: Build and Commit Binaries
 
 on:
   push:
-    branches: [ fix-workflow ]
+    branches: [ master ]
     paths-ignore: # Prevents the workflow from running on binaries changes.
       - 'bin/**'
 
@@ -18,19 +18,18 @@ jobs:
 
     steps:
 
-      # Initializes an SSH agent and loads the deployment key so that subsequent git
-      # operations (fetch/push) authenticate via SSH.
+      # Initializes an SSH agent and loads the Deploy Key.
+      # All subsequent git operations (fetch/push) are authenticated via SSH.
+      #
+      # This step uses Deploy Key to bypass the master branch protection rule,
+      # which allows to push changes to the master branch only via pull request.
       #
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
 
-      # Checkout the repository via SSH deployment key.
-      #
-      # This step uses deploy key to bypass the master branch protection rule,
-      # which allows to push changes only via pull request.
-      #
+      # Checkout the repository via SSH Deploy Key.
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
