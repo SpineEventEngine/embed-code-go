@@ -31,6 +31,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          ssh-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
           persist-credentials: false
 
       - name: Test SSH auth
