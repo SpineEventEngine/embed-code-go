@@ -2,7 +2,9 @@ name: Build and Commit Binaries
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
+    paths-ignore: # Prevents the workflow from running on binaries changes.
+      - 'bin/**'
 
 concurrency:
   group: building
@@ -11,14 +13,28 @@ concurrency:
 jobs:
 
   build:
-    # Prevents the workflow from running on non-human triggers.
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
+
+      # Initializes an SSH agent and loads the Deploy Key.
+      # All subsequent git operations (fetch/push) are authenticated via SSH.
+      #
+      # This step uses Deploy Key to bypass the master branch protection rule,
+      # which allows to push changes to the master branch only via pull request.
+      #
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
+
+      # Checkout the repository via SSH Deploy Key.
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.WORKFLOW_DEPLOY_KEY }}
+          persist-credentials: false
 
       - name: Set Up Go Environment
         uses: actions/setup-go@v5

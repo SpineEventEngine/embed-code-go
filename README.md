@@ -170,4 +170,17 @@ GOOS=windows GOARCH=amd64 go build -trimpath -o bin/embed-code-windows.exe main.
 GOOS=linux GOARCH=amd64 go build -trimpath -o bin/embed-code-linux main.go
 ```
 
+## Development Notes
+
+This repository is configured with the following GitHub workflows:
+- `check` — runs tests across different platforms.
+- `build_binaries` — builds binaries on push to the `master` branch.
+   > Note: This workflow uses a **Deploy Key** instead of the default GitHub Actions bot
+   > to bypass the `master` branch protection against direct pushes.
+   >
+   > If it is necessary to update the Deploy Key, follow these steps:
+   > 1. Generate an SSH key pair for GitHub: `ssh -i ~/.ssh/workflow_deploy_key -T git@github.com`.
+   > 2. Add the public key (`workflow_deploy_key.pub`) as a **Deploy Key** in GitHub with write access.
+   > 3. Add the private key (`workflow_deploy_key`) as a repository secret named `WORKFLOW_DEPLOY_KEY`.
+
 [embed-code-jekyll]: https://github.com/SpineEventEngine/embed-code
