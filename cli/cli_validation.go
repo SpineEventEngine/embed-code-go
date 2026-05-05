@@ -31,7 +31,7 @@ import (
 	"strings"
 )
 
-// IllegalFolderNameChars the string with chars that are not allowed for the folder name.
+// IllegalFolderNameChars contains characters that are not allowed in folder names.
 const IllegalFolderNameChars = `/\ *?:"<>|`
 
 // IsUsingConfigFile reports whether user configs are set with file.
@@ -82,7 +82,7 @@ func ValidateConfigFile(userConfig Config) error {
 	return errors.New("expected to use config file, but it does not exist")
 }
 
-// Validates if mode is set to check, embed, or analyze.
+// validateMode checks if mode is set to check, embed, or analyze.
 func validateMode(mode string) error {
 	isModeSet := isNotEmpty(mode)
 	if !isModeSet {
@@ -100,7 +100,7 @@ func validateMode(mode string) error {
 	return nil
 }
 
-// Validates if config is set correctly and does not have mutually exclusive params set.
+// validateConfig checks if config is set correctly and has no mutually exclusive params.
 func validateConfig(config Config) error {
 	if len(config.Embeddings) > 0 {
 		return validateEmbeddingConfigs(config)
@@ -133,7 +133,7 @@ func validateConfig(config Config) error {
 	return nil
 }
 
-// Validates the multi-target embedding configuration.
+// validateEmbeddingConfigs checks the multi-target embedding configuration.
 func validateEmbeddingConfigs(config Config) error {
 	isCodePathsSet, err := validatePaths(config.BaseCodePaths)
 	if err != nil {
@@ -164,7 +164,7 @@ func validateEmbeddingConfigs(config Config) error {
 	return nil
 }
 
-// Validates one embedding entry.
+// validateEmbeddingConfig checks one embedding entry.
 func validateEmbeddingConfig(embedding EmbeddingConfig, index int) error {
 	if isEmpty(embedding.Name) {
 		return fmt.Errorf("embedding #%d: `name` must be set", index+1)
@@ -254,8 +254,7 @@ func verifyDuplicateEmbeddingDocsPaths(embeddings []EmbeddingConfig) {
 	}
 }
 
-// Reports whether at least one of optional configs is set — code-includes, doc-includes, separator
-// or fragments-path.
+// validateOptionalParamsSet reports whether at least one optional config is set.
 func validateOptionalParamsSet(config Config) bool {
 	isCodeIncludesSet := len(config.CodeIncludes) > 0
 	isDocIncludesSet := len(config.DocIncludes) > 0
@@ -267,7 +266,7 @@ func validateOptionalParamsSet(config Config) bool {
 		isSeparatorSet || isDocExcludesSet
 }
 
-// Reports whether path is set or not. If it is set, checks if such path exists in a file system.
+// validatePathSet reports whether path is set and checks if it exists.
 func validatePathSet(path string) (bool, error) {
 	isPathSet := isNotEmpty(path)
 	if isPathSet {
@@ -286,7 +285,7 @@ func validatePathSet(path string) (bool, error) {
 	return false, nil
 }
 
-// Reports whether all paths are valid.
+// validatePaths reports whether all paths are valid.
 //
 // If paths are provided, checks whether each path exists in the file system.
 //
@@ -372,12 +371,12 @@ func verifyDuplicatePaths(pathCount map[string]int) error {
 	return nil
 }
 
-// Reports whether the given string is not empty.
+// isNotEmpty reports whether the given string is not empty.
 func isNotEmpty(s string) bool {
 	return !isEmpty(s)
 }
 
-// Reports whether the given string is empty.
+// isEmpty reports whether the given string is empty.
 func isEmpty(s string) bool {
 	return strings.TrimSpace(s) == ""
 }
