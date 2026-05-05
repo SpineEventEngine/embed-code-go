@@ -26,12 +26,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 	"slices"
 	"strings"
 )
 
-// IllegalFolderNameChars the string with chars that are not allowed for the folder name.
-const IllegalFolderNameChars = ` *?:"<>|`
+// IllegalFolderNameChars contains characters that are not allowed in folder names.
+const IllegalFolderNameChars = `/\ *?:"<>|`
 
 // IsUsingConfigFile reports whether user configs are set with file.
 func IsUsingConfigFile(config Config) bool {
@@ -81,7 +82,7 @@ func ValidateConfigFile(userConfig Config) error {
 	return errors.New("expected to use config file, but it does not exist")
 }
 
-// Validates if mode is set to check, embed, or analyze.
+// validateMode checks if mode is set to check, embed, or analyze.
 func validateMode(mode string) error {
 	isModeSet := isNotEmpty(mode)
 	if !isModeSet {
@@ -92,15 +93,19 @@ func validateMode(mode string) error {
 	isValidMode := slices.Contains(validModes, mode)
 
 	if !isValidMode {
-		return fmt.Errorf("invalid value for mode. it must be one of — %s, %s or %s",
+		return fmt.Errorf("invalid value for mode. it must be one of — `%s`, `%s` or `%s`",
 			ModeEmbed, ModeCheck, ModeAnalyze)
 	}
 
 	return nil
 }
 
-// Validates if config is set correctly and does not have mutually exclusive params set.
+// validateConfig checks if config is set correctly and has no mutually exclusive params.
 func validateConfig(config Config) error {
+	if len(config.Embeddings) > 0 {
+		return validateEmbeddingConfigs(config)
+	}
+
 	isCodePathsSet, err := validatePaths(config.BaseCodePaths)
 	if err != nil {
 		return err
@@ -122,14 +127,134 @@ func validateConfig(config Config) error {
 	isOneOfRootsSet := isCodePathsSet || isDocsPathSet
 
 	if isOneOfRootsSet && !isRootsSet {
-		return errors.New("code-path and docs-path must both be set")
+		return errors.New("`code-path` and `docs-path` must both be set")
 	}
 
 	return nil
 }
 
-// Reports whether at least one of optional configs is set — code-includes, doc-includes, separator
-// or fragments-path.
+// validateEmbeddingConfigs checks the multi-target embedding configuration.
+func validateEmbeddingConfigs(config Config) error {
+	isCodePathsSet, err := validatePaths(config.BaseCodePaths)
+	if err != nil {
+		return err
+	}
+	isDocsPathSet, err := validatePathSet(config.BaseDocsPath)
+	if err != nil {
+		return err
+	}
+	if isCodePathsSet || isDocsPathSet {
+		return errors.New("`code-path` and `docs-path` cannot be set when `embeddings` are set")
+	}
+	if validateOptionalParamsSet(config) {
+		return errors.New("root optional embedding options cannot be set when `embeddings` are set")
+	}
+
+	for i, embedding := range config.Embeddings {
+		if err = validateEmbeddingConfig(embedding, i); err != nil {
+			return err
+		}
+	}
+
+	if err = findEmbeddingNameDuplications(config.Embeddings); err != nil {
+		return err
+	}
+	verifyDuplicateEmbeddingDocsPaths(config.Embeddings)
+
+	return nil
+}
+
+// validateEmbeddingConfig checks one embedding entry.
+func validateEmbeddingConfig(embedding EmbeddingConfig, index int) error {
+	if isEmpty(embedding.Name) {
+		return fmt.Errorf("embedding #%d: `name` must be set", index+1)
+	}
+	if strings.ContainsAny(embedding.Name, IllegalFolderNameChars) {
+		return fmt.Errorf("embedding `%s`: `name` `%s` is not valid, "+
+			"those characters are not allowed `%s`",
+			embedding.Name, embedding.Name, IllegalFolderNameChars)
+	}
+
+	isCodePathsSet, err := validatePaths(embedding.CodePaths)
+	if err != nil {
+		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
+	}
+	if err = findCodeSourceDuplications(embedding.CodePaths); err != nil {
+		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
+	}
+
+	isDocsPathSet, err := validatePathSet(embedding.DocsPath)
+	if err != nil {
+		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
+	}
+	_, err = validatePathSet(embedding.FragmentsPath)
+	if err != nil {
+		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
+	}
+
+	isRootsSet := isCodePathsSet && isDocsPathSet
+	if !isRootsSet {
+		return fmt.Errorf("embedding `%s`: `code-path` and `docs-path` must both be set",
+			embedding.Name)
+	}
+
+	return nil
+}
+
+// findEmbeddingNameDuplications returns an error if multiple embeddings use the same name.
+func findEmbeddingNameDuplications(embeddings []EmbeddingConfig) error {
+	nameCount := make(map[string]int)
+	for _, embedding := range embeddings {
+		nameCount[embedding.Name]++
+	}
+
+	var errLines []string
+	for name, count := range nameCount {
+		if count > 1 {
+			errLines = append(errLines, "- "+name)
+		}
+	}
+
+	if len(errLines) > 0 {
+		slices.Sort(errLines)
+		return fmt.Errorf(
+			"duplicate embedding names detected:\n%s",
+			strings.Join(errLines, "\n"),
+		)
+	}
+	return nil
+}
+
+// verifyDuplicateEmbeddingDocsPaths logs a warning if multiple embeddings use the same docs path.
+func verifyDuplicateEmbeddingDocsPaths(embeddings []EmbeddingConfig) {
+	docsPathEmbeddings := make(map[string][]string)
+	for _, embedding := range embeddings {
+		docsPath := filepath.Clean(embedding.DocsPath)
+		docsPathEmbeddings[docsPath] = append(
+			docsPathEmbeddings[docsPath],
+			embedding.Name,
+		)
+	}
+
+	var warnLines []string
+	for docsPath, names := range docsPathEmbeddings {
+		if len(names) > 1 {
+			slices.Sort(names)
+			warnLines = append(warnLines, fmt.Sprintf("- `%s`: %s", docsPath, strings.Join(names, ", ")))
+		}
+	}
+
+	if len(warnLines) > 0 {
+		slices.Sort(warnLines)
+		slog.Warn(
+			"Multiple `embeddings` use the same `docs-path`. " +
+				"Make sure they are intended to process the same documentation root:\n" +
+				strings.Join(warnLines, "\n"),
+		)
+	}
+}
+
+// validateOptionalParamsSet reports whether at least one optional config is set.
 func validateOptionalParamsSet(config Config) bool {
 	isCodeIncludesSet := len(config.CodeIncludes) > 0
 	isDocIncludesSet := len(config.DocIncludes) > 0
@@ -141,7 +266,7 @@ func validateOptionalParamsSet(config Config) bool {
 		isSeparatorSet || isDocExcludesSet
 }
 
-// Reports whether path is set or not. If it is set, checks if such path exists in a file system.
+// validatePathSet reports whether path is set and checks if it exists.
 func validatePathSet(path string) (bool, error) {
 	isPathSet := isNotEmpty(path)
 	if isPathSet {
@@ -160,7 +285,7 @@ func validatePathSet(path string) (bool, error) {
 	return false, nil
 }
 
-// Reports whether all paths are valid.
+// validatePaths reports whether all paths are valid.
 //
 // If paths are provided, checks whether each path exists in the file system.
 //
@@ -246,12 +371,12 @@ func verifyDuplicatePaths(pathCount map[string]int) error {
 	return nil
 }
 
-// Reports whether the given string is not empty.
+// isNotEmpty reports whether the given string is not empty.
 func isNotEmpty(s string) bool {
 	return !isEmpty(s)
 }
 
-// Reports whether the given string is empty.
+// isEmpty reports whether the given string is empty.
 func isEmpty(s string) bool {
 	return strings.TrimSpace(s) == ""
 }
