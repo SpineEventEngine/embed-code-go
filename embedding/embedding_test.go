@@ -107,6 +107,42 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
+	It("should successfully embed with multi lined tag attributes", func() {
+		docPath := fmt.Sprintf("%s/multi-lined-valid-tag-attributes.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+
+		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
+
+	It("should report a missing closing tag", func() {
+		docPath := fmt.Sprintf("%s/missing-closing-tag.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		_, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(ContainSubstring(
+			"missing-closing-tag.md:3`: " +
+				"failed to parse an embedding instruction: " +
+				"the `<embed-code>` tag is not closed",
+		))
+	})
+
+	It("should report the XML parser error for an unclosed nested tag", func() {
+		docPath := fmt.Sprintf("%s/unclosed-nested-tag.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		_, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(ContainSubstring(
+			"unclosed-nested-tag.md:3`: " +
+				"failed to parse an embedding instruction: " +
+				"element <unexpected> closed by </embed-code>",
+		))
+	})
+
 	// TODO:olena-zmiiova:https://github.com/SpineEventEngine/embed-code/issues/65
 	It("should successfully embed to a file in a nested dir", func() {
 		Skip(
