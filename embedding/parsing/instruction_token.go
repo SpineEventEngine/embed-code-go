@@ -57,7 +57,7 @@ func (e EmbedInstructionTokenState) Accept(context *Context,
 	for !context.ReachedEOF() && context.EmbeddingInstruction == nil {
 		instructionBody = append(instructionBody, context.CurrentLine())
 
-		instruction, err := FromXML(strings.Join(instructionBody, ""), config)
+		instruction, err := FromXML(strings.Join(instructionBody, " "), config)
 		if err == nil {
 			context.SetEmbedding(&instruction)
 		}
