@@ -18,8 +18,8 @@
 
 package parsing
 
-// EmbeddingTag is a StartState of a tag where it requires to embed the code.
-const EmbeddingTag = "<embed-code"
+// EmbeddingTag is a name of a tag which marks where to embed the code.
+const EmbeddingTag = "embed-code"
 
 // TransitionMap is a type for mapping one State to a list of possible next States.
 type TransitionMap map[State][]State
