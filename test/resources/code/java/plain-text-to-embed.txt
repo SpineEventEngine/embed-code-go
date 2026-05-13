@@ -1,0 +1,7 @@
+This line contains foo in the middle
+This line ends with foo
+foo — this line starts with it
+
+This line contains bar in the middle
+bar — this line starts with it
+This line ends with bar

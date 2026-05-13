@@ -20,13 +20,9 @@ package fragmentation_test
 
 import (
 	"embed-code/embed-code-go/configuration"
-	"embed-code/embed-code-go/files"
 	"embed-code/embed-code-go/fragmentation"
 	_type "embed-code/embed-code-go/type"
 	"fmt"
-	"os"
-	"path/filepath"
-	"regexp"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -53,112 +49,57 @@ var _ = Describe("Fragmentation", func() {
 	var config configuration.Configuration
 
 	BeforeEach(func() {
+		fragmentation.ClearResolverCache()
 		config = configuration.NewConfiguration()
 		config.DocumentationRoot = "../test/resources/docs"
 		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
 	})
 
-	AfterEach(func() {
-		cleanupDir(config.FragmentsDir)
+	It("should fragment a file in memory", func() {
+		lines, fragments := doTestFragmentation(correctFragmentsFileName, config)
+
+		Expect(lines).ShouldNot(ContainElement(ContainSubstring("#docfragment")))
+		Expect(lines).ShouldNot(ContainElement(ContainSubstring("#enddocfragment")))
+		Expect(fragments).Should(HaveKey(fragmentation.DefaultFragmentName))
+		Expect(fragments).Should(HaveKey("Without License"))
+		Expect(fragments).Should(HaveKey("Hello class"))
+		Expect(fragments).Should(HaveKey("main()"))
 	})
 
-	It("should do file fragmentation successfully", func() {
-		frag := buildTestFragmentation(correctFragmentsFileName, config)
-		Expect(frag.WriteFragments()).Error().ShouldNot(HaveOccurred())
+	It("should resolve named fragments directly from source", func() {
+		content := resolveTestFragment(correctFragmentsFileName, "main()", config)
 
-		fragmentChild, _ := os.ReadDir(config.FragmentsDir)
-		Expect(fragmentChild).Should(HaveLen(1))
-		Expect(fragmentChild[0].Name()).Should(Equal("org"))
-
-		fragmentFiles := readFragmentsDir(config)
-		Expect(fragmentFiles).Should(HaveLen(4))
-
-		var isDefaultFragmentExist bool
-		for _, file := range fragmentFiles {
-			if file.Name() == correctFragmentsFileName {
-				isDefaultFragmentExist = true
-			} else {
-				Expect(file.Name()).Should(MatchRegexp(`Hello-\w+\.java`))
-			}
-		}
-
-		Expect(isDefaultFragmentExist).Should(BeTrue())
+		Expect(content).Should(Equal([]string{
+			"public static void main(String[] args) {",
+			indent + "System.out.println(\"Hello world\");",
+			"}",
+		}))
 	})
 
-	It("should do multi-source fragmentation successfully", func() {
-		config := configuration.NewConfiguration()
-		config.DocumentationRoot = "../test/resources/docs"
-		javaCodePathName := "java-code"
-		kotlinCodePathName := "kotlin-code"
-		config.CodeRoots = _type.NamedPathList{
-			_type.NamedPath{
-				Name: javaCodePathName,
-				Path: "../test/resources/code/java/org/example/multitest",
-			},
-			_type.NamedPath{
-				Name: kotlinCodePathName,
-				Path: "../test/resources/code/kotlin/org/example/multitest",
-			},
-		}
-		result := fragmentation.WriteFragmentFiles(config)
-		Expect(result.TotalSourceFiles).Should(Equal(2))
-		javaFragments, _ := os.ReadDir(
-			filepath.Join(config.FragmentsDir, fragmentation.NamedPathPrefix+javaCodePathName),
-		)
-		kotlinFragments, _ := os.ReadDir(
-			filepath.Join(config.FragmentsDir, fragmentation.NamedPathPrefix+kotlinCodePathName),
-		)
-		Expect(javaFragments).Should(HaveLen(2))
-		Expect(kotlinFragments).Should(HaveLen(2))
+	It("should resolve fragments without an end marker through the end of the file", func() {
+		content := resolveTestFragment(unclosedFragmentFileName, "Fragment that never ends", config)
+
+		Expect(content).Should(Equal([]string{
+			indent + indent + "System.out.println(\"Hello world\");",
+			indent + "}",
+			"}",
+		}))
 	})
 
-	It("should do fragmentation of a fragment without end", func() {
-		frag := buildTestFragmentation(unclosedFragmentFileName, config)
-		Expect(frag.WriteFragments()).Error().ShouldNot(HaveOccurred())
+	It("should fragment an empty file", func() {
+		lines, fragments := doTestFragmentation(emptyFileName, config)
 
-		fragmentFiles := readFragmentsDir(config)
-		Expect(fragmentFiles).Should(HaveLen(2))
-
-		fragmentFileName := findFragmentFile(fragmentFiles, unclosedFragmentFileName)
-		fragmentsDir := fragmentsDirPath(config.FragmentsDir)
-		content, err := os.ReadFile(filepath.Join(fragmentsDir, fragmentFileName))
-		if err != nil {
-			Fail(err.Error())
-		}
-
-		re := regexp.MustCompile(`[.\n\s]+}\n}\n`)
-		matchedStrings := re.FindStringSubmatch(string(content))
-
-		Expect(matchedStrings).Should(Not(BeEmpty()))
+		Expect(lines).Should(BeEmpty())
+		Expect(fragments).Should(HaveLen(1))
+		Expect(fragments).Should(HaveKey(fragmentation.DefaultFragmentName))
 	})
 
-	It("should not do fragmentation of an empty file", func() {
-		frag := buildTestFragmentation(emptyFileName, config)
-		Expect(frag.WriteFragments()).Error().ShouldNot(HaveOccurred())
-
-		fragmentFiles := readFragmentsDir(config)
-		Expect(fragmentFiles).Should(HaveLen(1))
-		fragmentsFilePath := fragmentsDirPath(config.FragmentsDir) + "/" + fragmentFiles[0].Name()
-
-		content, err := os.ReadFile(fragmentsFilePath)
-		if err != nil {
-			Fail(err.Error())
-		}
-
-		Expect(content).Should(BeEmpty())
-	})
-
-	It("should not do fragmentation of a binary file", func() {
-		config.CodeIncludes = []string{"**.jar"}
-
-		Expect(fragmentation.WriteFragmentFiles(config).TotalFragments).Should(Equal(0))
-		Expect(files.IsDirExist(config.FragmentsDir)).Should(BeFalse())
-	})
-
-	It("should not do fragmentation of an unopened fragment", func() {
+	It("should fail on an unopened fragment", func() {
 		frag := buildTestFragmentation(unopenedFragmentFileName, config)
 
-		Expect(frag.WriteFragments()).Error().Should(HaveOccurred())
+		_, _, err := frag.DoFragmentation()
+
+		Expect(err).Should(HaveOccurred())
 	})
 
 	Context("fragments parsing", func() {
@@ -203,20 +144,7 @@ var _ = Describe("Fragmentation", func() {
 	})
 
 	It("should correctly parse file into many partitions", func() {
-		frag := buildTestFragmentation(complexFragmentsFileName, config)
-		_, err := frag.WriteFragments()
-		Expect(err).ToNot(HaveOccurred())
-
-		fragmentFiles := readFragmentsDir(config)
-		Expect(fragmentFiles).Should(HaveLen(2))
-
-		fragmentFileName := findFragmentFile(fragmentFiles, complexFragmentsFileName)
-		fragmentDir := fragmentsDirPath(config.FragmentsDir)
-
-		content, err := files.ReadFile(fmt.Sprintf("%s/%s", fragmentDir, fragmentFileName))
-		if err != nil {
-			Fail(err.Error())
-		}
+		content := resolveTestFragment(complexFragmentsFileName, "Main", config)
 
 		expected := []string{
 			"public class Main {",
@@ -233,17 +161,10 @@ var _ = Describe("Fragmentation", func() {
 	})
 
 	It("should correctly parse file with several different fragments", func() {
-		frag := buildTestFragmentation(twoFragmentsFileName, config)
-		_, err := frag.WriteFragments()
-		Expect(err).ToNot(HaveOccurred())
+		mainContent := resolveTestFragment(twoFragmentsFileName, "Main", config)
+		helloContent := resolveTestFragment(twoFragmentsFileName, "Hello", config)
 
-		fragmentFiles := readFragmentsDir(config)
-		Expect(fragmentFiles).Should(HaveLen(3))
-
-		fragmentDir := fragmentsDirPath(config.FragmentsDir)
-		actual := readFragmentsContent(fragmentDir, fragmentFiles, twoFragmentsFileName)
-
-		expected := [][]string{
+		Expect([][]string{mainContent, helloContent}).Should(ConsistOf([][]string{
 			{
 				"public class TwoFragments {",
 				indent + config.Separator,
@@ -262,23 +183,14 @@ var _ = Describe("Fragmentation", func() {
 				indent + "System.out.println(coolText);",
 				"}",
 			},
-		}
-
-		Expect(actual).Should(ConsistOf(expected))
+		}))
 	})
 
 	It("should correctly parse file with several overlapping fragments", func() {
-		frag := buildTestFragmentation(overlappingFragmentsFileName, config)
-		_, err := frag.WriteFragments()
-		Expect(err).ToNot(HaveOccurred())
+		mainContent := resolveTestFragment(overlappingFragmentsFileName, "Main", config)
+		helloContent := resolveTestFragment(overlappingFragmentsFileName, "Hello", config)
 
-		fragmentFiles := readFragmentsDir(config)
-		Expect(fragmentFiles).Should(HaveLen(3))
-
-		fragmentDir := fragmentsDirPath(config.FragmentsDir)
-		actual := readFragmentsContent(fragmentDir, fragmentFiles, overlappingFragmentsFileName)
-
-		expected := [][]string{
+		Expect([][]string{mainContent, helloContent}).Should(ConsistOf([][]string{
 			{
 				"public class OverlappingFragments {",
 				indent + config.Separator,
@@ -301,9 +213,7 @@ var _ = Describe("Fragmentation", func() {
 				config.Separator,
 				"}",
 			},
-		}
-
-		Expect(actual).Should(ConsistOf(expected))
+		}))
 	})
 })
 
@@ -315,60 +225,29 @@ func buildTestFragmentation(testFileName string,
 	return fragmentation.NewFragmentation(testFilePath, codeRoot, config)
 }
 
-func readFragmentsDir(config configuration.Configuration) []os.DirEntry {
-	fragmentFiles, err := os.ReadDir(fragmentsDirPath(config.FragmentsDir))
-	if err != nil {
-		Fail(err.Error())
-	}
+func doTestFragmentation(
+	testFileName string,
+	config configuration.Configuration,
+) ([]string, map[string]fragmentation.Fragment) {
+	frag := buildTestFragmentation(testFileName, config)
 
-	return fragmentFiles
+	lines, fragments, err := frag.DoFragmentation()
+
+	Expect(err).ShouldNot(HaveOccurred())
+	return lines, fragments
 }
 
-// readFragmentsContent reads the contents of fragment files from a given directory.
-//
-// fragmentDir — path to the directory containing fragment files.
-// fragmentFiles — list of directory entries representing the fragment files.
-// skipFile — file name to skip (the default fragment file).
-//
-// Returns a slice of string slices, where each inner slice contains the lines
-// of a fragment file.
-//
-// This function fails the test immediately if any file cannot be read.
-func readFragmentsContent(
-	fragmentDir string, fragmentFiles []os.DirEntry, skipFile string,
-) [][]string {
-	var result [][]string
-	for _, file := range fragmentFiles {
-		if file.Name() == skipFile {
-			continue
-		}
+func resolveTestFragment(
+	testFileName string,
+	fragmentName string,
+	config configuration.Configuration,
+) []string {
+	content, err := fragmentation.ResolveContent(
+		fmt.Sprintf("org/example/%s", testFileName),
+		fragmentName,
+		config,
+	)
 
-		content, err := files.ReadFile(fmt.Sprintf("%s/%s", fragmentDir, file.Name()))
-		Expect(err).ShouldNot(HaveOccurred())
-
-		result = append(result, content)
-	}
-
-	return result
-}
-
-func fragmentsDirPath(path string) string {
-	return fmt.Sprintf("%s/org/example", path)
-}
-
-func findFragmentFile(files []os.DirEntry, fileName string) string {
-	for _, file := range files {
-		if file.Name() != fileName {
-			return file.Name()
-		}
-	}
-
-	return ""
-}
-
-func cleanupDir(dirPath string) {
-	err := os.RemoveAll(dirPath)
-	if err != nil {
-		Fail(err.Error())
-	}
+	Expect(err).ShouldNot(HaveOccurred())
+	return content
 }
