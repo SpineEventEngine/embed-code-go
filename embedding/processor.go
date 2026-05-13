@@ -302,12 +302,14 @@ func requiredDocs(config configuration.Configuration) []string {
 func getFilesByPatterns(root string, patterns []string) ([]string, error) {
 	var result []string
 	for _, pattern := range patterns {
-		globString := strings.Join([]string{root, pattern}, "/")
+		globString := filepath.Join(root, filepath.FromSlash(pattern))
 		matches, err := doublestar.FilepathGlob(globString)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, matches...)
+		for _, match := range matches {
+			result = append(result, filepath.ToSlash(match))
+		}
 	}
 
 	return result, nil
