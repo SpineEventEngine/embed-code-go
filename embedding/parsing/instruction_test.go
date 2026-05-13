@@ -301,8 +301,7 @@ func getXMLExtractionContent(fileName string, params TestInstructionParams,
 func buildConfigWithPreparedFragments() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = "../../test/resources/docs"
-	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../../test/resources/code"}}
-	config.FragmentsDir = "../../test/resources/prepared-fragments"
+	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../../test/resources/code/java"}}
 
 	return config
 }

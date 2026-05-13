@@ -28,7 +28,6 @@ const (
 	DefaultFragmentsDir = "./build/fragments"
 )
 
-var DefaultInclude = []string{"**/*.*"}
 var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 
 // Configuration contains the settings for the plugin to work.
@@ -52,15 +51,6 @@ type Configuration struct {
 
 	// DocumentationRoot is a root directory of the documentation files.
 	DocumentationRoot string
-
-	// CodeIncludes is a list of patterns for filtering the code files to be considered.
-	//
-	// Directories are never matched by these patterns.
-	//
-	// For example, ["**/*.java", "**/*.gradle"].
-	//
-	// The default value is "**/*".
-	CodeIncludes []string
 
 	// DocIncludes is a list of patterns for filtering files in which we should look for embedding
 	// instructions.
@@ -101,7 +91,6 @@ type Configuration struct {
 // NewConfiguration builds the default config.
 func NewConfiguration() Configuration {
 	return Configuration{
-		CodeIncludes: DefaultInclude,
 		DocIncludes:  DefaultDocIncludes,
 		FragmentsDir: DefaultFragmentsDir,
 		Separator:    DefaultSeparator,

@@ -107,6 +107,23 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
+	It("should embed directly from source without writing fragment files", func() {
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
+		config.FragmentsDir = "../test/lazy-fragments"
+		if err := os.RemoveAll(config.FragmentsDir); err != nil {
+			Fail(err.Error())
+		}
+		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+		exists, err := files.IsDirExist(config.FragmentsDir)
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(exists).Should(BeFalse())
+		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
+
 	It("should embed with multi lined tag attributes", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-valid-tag-attributes.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
@@ -160,7 +177,7 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
-	It("should not embed to a file matched the `code-excludes` pattern", func() {
+	It("should not embed to a file matched the `doc-excludes` pattern", func() {
 		config.DocExcludes = []string{"**/excluded-doc.*"}
 
 		docPath := fmt.Sprintf("%s/excluded-doc.md", config.DocumentationRoot)
@@ -174,8 +191,7 @@ var _ = Describe("Embedding", func() {
 func buildConfigWithPreparedFragments() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = temporaryTestDir
-	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code"}}
-	config.FragmentsDir = "../test/resources/prepared-fragments"
+	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
 
 	return config
 }
