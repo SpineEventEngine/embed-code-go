@@ -44,20 +44,6 @@ func CreateDefaultFragment() Fragment {
 	}
 }
 
-// WriteTo takes given lines, unites them into a text and writes it into given file.
-//
-// file — a FragmentFile to write the lines to.
-//
-// lines — a list of strings to write.
-//
-// separator — string to insert between multiple partitions of a single fragment.
-//
-// Creates the file if not exists and overwrites if exists.
-func (f Fragment) WriteTo(file FragmentFile, lines []string, separator string) {
-	text := f.text(lines, separator)
-	file.Write(text)
-}
-
 func (f Fragment) isDefault() bool {
 	return f.Name == DefaultFragmentName
 }
