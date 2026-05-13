@@ -107,7 +107,7 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
-	It("should successfully embed with multi lined tag attributes", func() {
+	It("should embed with multi lined tag attributes", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-valid-tag-attributes.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -129,7 +129,7 @@ var _ = Describe("Embedding", func() {
 		))
 	})
 
-	It("should report the XML parser error for an unclosed nested tag", func() {
+	It("should report the XML parser error", func() {
 		docPath := fmt.Sprintf("%s/unclosed-nested-tag.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 
