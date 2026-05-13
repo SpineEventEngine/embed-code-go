@@ -155,9 +155,9 @@ var _ = Describe("CLI validation", func() {
 
 		It("should fail validation when embeddings and root optional params are set at the same time", func() {
 			invalidConfig := cli.Config{
-				Mode:         cli.ModeCheck,
-				CodeIncludes: []string{"**/*.java"},
-				Embeddings:   []cli.EmbeddingConfig{baseEmbeddingConfig()},
+				Mode:        cli.ModeCheck,
+				DocIncludes: []string{"**/*.md"},
+				Embeddings:  []cli.EmbeddingConfig{baseEmbeddingConfig()},
 			}
 
 			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
