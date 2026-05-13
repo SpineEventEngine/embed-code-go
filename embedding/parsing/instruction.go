@@ -100,25 +100,15 @@ func NewInstruction(
 //
 // Returns an error if there was an error during reading the content.
 func (e Instruction) Content() ([]string, error) {
-	fragmentName := e.Fragment
-	if fragmentName == "" {
-		fragmentName = fragmentation.DefaultFragmentName
-	}
-	file := fragmentation.FragmentFile{
-		CodePath:      e.CodeFile,
-		FragmentName:  fragmentName,
-		Configuration: e.Configuration,
+	fileContent, err := fragmentation.ResolveContent(e.CodeFile, e.Fragment, e.Configuration)
+	if err != nil {
+		return nil, err
 	}
 	if e.StartPattern != nil || e.EndPattern != nil {
-		fileContent, err := file.Content()
-		if err != nil {
-			return nil, err
-		}
-
 		return e.matchingLines(fileContent), nil
 	}
 
-	return file.Content()
+	return fileContent, nil
 }
 
 // Returns string representation of Instruction.
