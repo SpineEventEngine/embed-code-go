@@ -20,15 +20,16 @@ package fragmentation
 
 import (
 	"crypto/sha256"
-	_type "embed-code/embed-code-go/type"
 	"encoding/hex"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
 	config "embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/files"
+	_type "embed-code/embed-code-go/type"
 )
 
 // FragmentFile is a file storing a single fragment from the file.
@@ -73,7 +74,9 @@ func NewFragmentFileFromAbsolute(
 	}
 
 	if strings.TrimSpace(codeRoot.Name) != "" {
-		relativePath = filepath.Join(NamedPathPrefix+codeRoot.Name, relativePath)
+		relativePath = path.Join(NamedPathPrefix+codeRoot.Name, filepath.ToSlash(relativePath))
+	} else {
+		relativePath = filepath.ToSlash(relativePath)
 	}
 
 	return FragmentFile{
@@ -143,10 +146,10 @@ func (f FragmentFile) absolutePath() string {
 	}
 
 	if f.FragmentName == DefaultFragmentName {
-		return filepath.Join(fragmentsAbsDir, f.CodePath)
+		return filepath.Join(fragmentsAbsDir, filepath.FromSlash(f.CodePath))
 	}
 
-	withoutExtension := strings.TrimSuffix(f.CodePath, fileExtension)
+	withoutExtension := filepath.FromSlash(strings.TrimSuffix(f.CodePath, fileExtension))
 	filename := fmt.Sprintf("%s-%s", withoutExtension, f.fragmentHash())
 
 	return filepath.Join(fragmentsAbsDir, filename+fileExtension)
