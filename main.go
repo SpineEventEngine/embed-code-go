@@ -69,9 +69,6 @@ const Version = "1.1.0"
 //     then the checking for up-to-date is performed. If it is set to 'embed', the embedding
 //     is performed.
 //     If it is set to 'analyze', the analyzing is performed;
-//   - code-includes — a comma-separated string of glob patterns for code files to include.
-//     For example:
-//     "**/*.java,**/*.gradle". Default value is "**/*.*";
 //   - doc-includes — a comma-separated string of glob patterns for docs files to include.
 //     For example:
 //     "docs/**/*.md,guides/*.html". Default value is "**/*.md,**/*.html";
@@ -146,16 +143,12 @@ func logError(message string, err error) {
 func embedByConfigs(configs []configuration.Configuration) {
 	var totalEmbeddedFiles []string
 	totalEmbeddings := 0
-	totalFragments := 0
 	for _, config := range configs {
 		result := cli.EmbedCodeSamples(config)
 		totalEmbeddedFiles = append(totalEmbeddedFiles, result.UpdatedTargetFiles...)
 		totalEmbeddings += result.TotalEmbeddings
-		totalFragments += result.TotalFragments
 	}
-	if len(totalEmbeddedFiles) == 0 &&
-		totalEmbeddings != 0 &&
-		totalFragments != 0 {
+	if len(totalEmbeddedFiles) == 0 && totalEmbeddings != 0 {
 		fmt.Println("All documentation files are already up to date. Nothing to update.")
 	}
 	if len(totalEmbeddedFiles) == 1 {

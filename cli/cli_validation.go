@@ -256,14 +256,12 @@ func verifyDuplicateEmbeddingDocsPaths(embeddings []EmbeddingConfig) {
 
 // validateOptionalParamsSet reports whether at least one optional config is set.
 func validateOptionalParamsSet(config Config) bool {
-	isCodeIncludesSet := len(config.CodeIncludes) > 0
 	isDocIncludesSet := len(config.DocIncludes) > 0
 	isDocExcludesSet := len(config.DocExcludes) > 0
 	isSeparatorSet := isNotEmpty(config.Separator)
 	isFragmentPathSet := isNotEmpty(config.FragmentsPath)
 
-	return isCodeIncludesSet || isDocIncludesSet || isFragmentPathSet ||
-		isSeparatorSet || isDocExcludesSet
+	return isDocIncludesSet || isFragmentPathSet || isSeparatorSet || isDocExcludesSet
 }
 
 // validatePathSet reports whether path is set and checks if it exists.
