@@ -175,6 +175,42 @@ var _ = Describe("CLI validation", func() {
 				"duplicate embedding names detected:\n- docs"))
 		})
 
+		It("should fail validation when code source names are duplicated", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.BaseCodePaths = _type.NamedPathList{
+				_type.NamedPath{Name: "samples", Path: codeResourcePath("java")},
+				_type.NamedPath{Name: "samples", Path: codeResourcePath("kotlin")},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"duplicate source code path names detected:\n- samples"))
+		})
+
+		It("should fail validation when multiple unnamed code sources are configured", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.BaseCodePaths = _type.NamedPathList{
+				_type.NamedPath{Path: codeResourcePath("java")},
+				_type.NamedPath{Path: codeResourcePath("kotlin")},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"only one unnamed source code path is allowed"))
+		})
+
+		It("should fail validation when named and unnamed code sources are mixed", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.BaseCodePaths = _type.NamedPathList{
+				_type.NamedPath{Name: "java", Path: codeResourcePath("java")},
+				_type.NamedPath{Path: codeResourcePath("kotlin")},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"named and unnamed source code paths cannot be mixed"))
+		})
+
 		It("should correctly convert embeddings to a few configs", func() {
 			config := cli.Config{
 				Mode:       cli.ModeCheck,
@@ -233,4 +269,15 @@ func configFilePath() string {
 	parentDir := filepath.Dir(currentDir)
 
 	return parentDir + "/test/resources/config_files/correct_config.yml"
+}
+
+// codeResourcePath builds an absolute path to a test source-code fixture directory.
+func codeResourcePath(name string) string {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	parentDir := filepath.Dir(currentDir)
+
+	return filepath.Join(parentDir, "test/resources/code", name)
 }
