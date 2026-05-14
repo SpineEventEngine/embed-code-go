@@ -123,6 +123,26 @@ var _ = Describe("Embedding", func() {
 		Expect(embedding.CheckUpToDate(config)).Should(ContainElement(docPath))
 	})
 
+	It("should report all check errors", func() {
+		config.DocIncludes = []string{"missing-closing-tag.md", "unclosed-nested-tag.md"}
+
+		var recovered any
+		func() {
+			defer func() {
+				recovered = recover()
+			}()
+			embedding.CheckUpToDate(config)
+		}()
+
+		Expect(recovered).ShouldNot(BeNil())
+		Expect(fmt.Sprint(recovered)).Should(And(
+			ContainSubstring("missing-closing-tag.md"),
+			ContainSubstring("the `<embed-code>` tag is not closed"),
+			ContainSubstring("unclosed-nested-tag.md"),
+			ContainSubstring("element <unexpected> closed by </embed-code>"),
+		))
+	})
+
 	It("should embed with multi lined tag attributes", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-valid-tag-attributes.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
