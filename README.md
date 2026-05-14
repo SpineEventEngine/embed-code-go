@@ -126,8 +126,9 @@ The available fields for the configuration file are:
       ```
       **Do not forget the dollar sign (`$`) before the path name.**
     
-      It is also possible to specify multiple paths with the same name,
-      but this may make source resolution ambiguous when they have the same relative path.
+      Code source names must be unique. A configuration may use either one unnamed
+      code source or one or more named code sources, but named and unnamed sources
+      cannot be mixed.
 
   * `docs-path`: (Mandatory) Path to the documentation root.
   * `doc-excludes`: (Optional) Glob patterns for documentation files to exclude.
