@@ -124,15 +124,25 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 
 // IsUpToDate reports whether the embedding of the target markdown is up-to-date with the code file.
 func (p Processor) IsUpToDate() bool {
-	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
-		return true
-	}
-	context, err := p.fillEmbeddingContext()
+	upToDate, err := p.isUpToDate()
 	if err != nil {
 		panic(err)
 	}
 
-	return !context.IsContentChanged()
+	return upToDate
+}
+
+// isUpToDate reports whether the target markdown is up-to-date and returns processing errors.
+func (p Processor) isUpToDate() (bool, error) {
+	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
+		return true, nil
+	}
+	context, err := p.fillEmbeddingContext()
+	if err != nil {
+		return false, err
+	}
+
+	return !context.IsContentChanged(), nil
 }
 
 // EmbedAll processes embedding for multiple documentation files based on provided config.
@@ -193,7 +203,12 @@ func configNameLabel(config configuration.Configuration) string {
 //
 // config — a configuration for embedding.
 func CheckUpToDate(config configuration.Configuration) []string {
-	return findChangedFiles(config)
+	changedFiles, checkErrors := findChangedFiles(config)
+	if len(checkErrors) > 0 {
+		panic(errors.Join(checkErrors...))
+	}
+
+	return changedFiles
 }
 
 // Iterates through the doc file line by line considering them as a states of an embedding.
@@ -262,17 +277,22 @@ func (p Processor) moveToNextState(state *parsing.State, context *parsing.Contex
 // Returns a list of documentation files that are not up-to-date with their code files.
 //
 // config — a configuration for embedding.
-func findChangedFiles(config configuration.Configuration) []string {
+func findChangedFiles(config configuration.Configuration) ([]string, []error) {
 	requiredDocPaths := requiredDocs(config)
 	var changedFiles []string
+	var checkErrors []error
 	for _, doc := range requiredDocPaths {
-		upToDate := NewProcessor(doc, config).IsUpToDate()
+		upToDate, err := NewProcessor(doc, config).isUpToDate()
+		if err != nil {
+			checkErrors = append(checkErrors, err)
+			continue
+		}
 		if !upToDate {
 			changedFiles = append(changedFiles, doc)
 		}
 	}
 
-	return changedFiles
+	return changedFiles, checkErrors
 }
 
 func requiredDocs(config configuration.Configuration) []string {
