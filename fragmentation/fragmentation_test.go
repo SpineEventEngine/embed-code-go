@@ -55,7 +55,7 @@ var _ = Describe("Fragmentation", func() {
 		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
 	})
 
-	It("should fragment a file in memory", func() {
+	It("should do file fragmentation successfully", func() {
 		lines, fragments := doTestFragmentation(correctFragmentsFileName, config)
 
 		Expect(lines).ShouldNot(ContainElement(ContainSubstring("#docfragment")))
@@ -66,7 +66,7 @@ var _ = Describe("Fragmentation", func() {
 		Expect(fragments).Should(HaveKey("main()"))
 	})
 
-	It("should resolve named fragments directly from source", func() {
+	It("should resolve named fragments", func() {
 		content := resolveTestFragment(correctFragmentsFileName, "main()", config)
 
 		Expect(content).Should(Equal([]string{
