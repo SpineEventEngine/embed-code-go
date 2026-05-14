@@ -118,11 +118,6 @@ func validateConfig(config Config) error {
 	if err != nil {
 		return err
 	}
-	_, err = validatePathSet(config.FragmentsPath)
-	if err != nil {
-		return err
-	}
-
 	isRootsSet := isCodePathsSet && isDocsPathSet
 	isOneOfRootsSet := isCodePathsSet || isDocsPathSet
 
@@ -187,11 +182,6 @@ func validateEmbeddingConfig(embedding EmbeddingConfig, index int) error {
 	if err != nil {
 		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
 	}
-	_, err = validatePathSet(embedding.FragmentsPath)
-	if err != nil {
-		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
-	}
-
 	isRootsSet := isCodePathsSet && isDocsPathSet
 	if !isRootsSet {
 		return fmt.Errorf("embedding `%s`: `code-path` and `docs-path` must both be set",
@@ -259,9 +249,8 @@ func validateOptionalParamsSet(config Config) bool {
 	isDocIncludesSet := len(config.DocIncludes) > 0
 	isDocExcludesSet := len(config.DocExcludes) > 0
 	isSeparatorSet := isNotEmpty(config.Separator)
-	isFragmentPathSet := isNotEmpty(config.FragmentsPath)
 
-	return isDocIncludesSet || isFragmentPathSet || isSeparatorSet || isDocExcludesSet
+	return isDocIncludesSet || isSeparatorSet || isDocExcludesSet
 }
 
 // validatePathSet reports whether path is set and checks if it exists.
@@ -345,7 +334,7 @@ func verifyDuplicateNames(nameDuplicates map[string][]string) {
 	if len(warnLines) > 0 {
 		slog.Warn(
 			"Duplicate code source names detected, it may lead to " +
-				"overwriting code fragments with the same relative path:\n" +
+				"ambiguous source resolution for the same relative path:\n" +
 				strings.Join(warnLines, "\n"),
 		)
 	}

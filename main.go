@@ -76,8 +76,6 @@ const Version = "1.2.0"
 //     the embedding.
 //     For example:
 //     "old-docs/**/*.md,old-guides/*.html". It is not set by default;
-//   - fragments-path — a path to a directory with code fragments. Default value is
-//     "./build/fragments";
 //   - separator — a string which is used as a separator between code fragments. Default value
 //     is "...".
 func main() {

@@ -65,7 +65,6 @@ The available arguments are:
   * `-docs-path`: (Optional) Path to the documentation root directory.
   * `-config-path`: (Optional) Path to a YAML configuration file containing `code-path` and `docs-path`.
   * `-doc-includes`: (Optional) Comma-separated glob patterns for documentation files to include. Defaults to `"**/*.md,**/*.html"`.
-  * `-fragments-path`: (Optional) Directory for storing code fragments. Defaults to `./build/fragments`.
   * `-separator`: (Optional) String used to separate joined code fragments. Defaults to `...`.
  
 Even though the `code-path`, `docs-path`, and `config-path` arguments are optional,
@@ -127,18 +126,14 @@ The available fields for the configuration file are:
       ```
       **Do not forget the dollar sign (`$`) before the path name.**
     
-      It is possible to specify a path without a name or with an empty name.
-      In this case, fragments will be stored in the root defined by `fragments-path`.
-
       It is also possible to specify multiple paths with the same name,
-      but this may lead to fragments being overwritten if they have the same relative path and name.
+      but this may make source resolution ambiguous when they have the same relative path.
 
   * `docs-path`: (Mandatory) Path to the documentation root.
   * `doc-excludes`: (Optional) Glob patterns for documentation files to exclude.
     It may be represented as a comma-separated string list or as a YAML sequence.
   * `doc-includes`: (Optional) Glob patterns for documentation files to include.
     It may be represented as a comma-separated string list or as a YAML sequence.
-  * `fragments-path`: (Optional) Directory for code fragments.
   * `separator`: (Optional) Separator for fragments.
   * `embeddings`: (Optional) A list of complete embedding configurations for multiple
     documentation targets. When `embeddings` is set, do not set root-level `code-path`
