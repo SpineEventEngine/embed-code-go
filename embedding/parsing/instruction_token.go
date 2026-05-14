@@ -19,6 +19,8 @@
 package parsing
 
 import (
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -28,6 +30,20 @@ import (
 // EmbedInstructionTokenState represents an embedding instruction token of a markdown.
 type EmbedInstructionTokenState struct{}
 
+// InstructionParseError reports a failed embedding instruction parse and its source line.
+type InstructionParseError struct {
+	Line   int
+	Reason string
+}
+
+// Error returns a user-facing description of an embedding instruction parse failure.
+func (e InstructionParseError) Error() string {
+	return fmt.Sprintf(
+		"failed to parse an embedding instruction: %s",
+		e.Reason,
+	)
+}
+
 // Recognize reports whether the current line in the parsing context starts with "<embed-code",
 // and if there is no ongoing embedding and the end of the file is not reached, it returns true.
 // Otherwise, it returns false.
@@ -35,7 +51,7 @@ type EmbedInstructionTokenState struct{}
 // context — a context of the parsing process.
 func (e EmbedInstructionTokenState) Recognize(context Context) bool {
 	line := context.CurrentLine()
-	isStatement := strings.HasPrefix(strings.TrimSpace(line), EmbeddingTag)
+	isStatement := strings.HasPrefix(strings.TrimSpace(line), "<"+EmbeddingTag)
 	if context.EmbeddingInstruction == nil && !context.ReachedEOF() && isStatement {
 		return true
 	}
@@ -54,20 +70,48 @@ func (e EmbedInstructionTokenState) Recognize(context Context) bool {
 func (e EmbedInstructionTokenState) Accept(context *Context,
 	config configuration.Configuration) error {
 	var instructionBody []string
+	startLine := context.CurrentIndex()
+	var parseErr error
 	for !context.ReachedEOF() && context.EmbeddingInstruction == nil {
-		instructionBody = append(instructionBody, context.CurrentLine())
+		line := context.CurrentLine()
+		instructionBody = append(instructionBody, line)
 
-		instruction, err := FromXML(strings.Join(instructionBody, ""), config)
+		instruction, err := FromXML(strings.Join(instructionBody, " "), config)
 		if err == nil {
 			context.SetEmbedding(&instruction)
+		} else {
+			parseErr = err
 		}
 
-		context.Result = append(context.Result, context.CurrentLine())
+		context.Result = append(context.Result, line)
 		context.ToNextLine()
 	}
 	if context.EmbeddingInstruction == nil {
-		return fmt.Errorf("failed to parse an embedding instruction. Context: %v", context)
+		return InstructionParseError{
+			Line:   startLine,
+			Reason: parseFailureReason(instructionBody, parseErr),
+		}
 	}
 
 	return nil
+}
+
+// parseFailureReason explains why an embedding instruction could not be parsed.
+func parseFailureReason(instructionBody []string, parseErr error) string {
+	instruction := strings.TrimSpace(strings.Join(instructionBody, " "))
+	if !strings.Contains(instruction, "/>") &&
+		!strings.Contains(instruction, "</"+EmbeddingTag+">") {
+		return fmt.Sprintf("the `<%s>` tag is not closed",
+			EmbeddingTag,
+		)
+	}
+	if parseErr != nil {
+		var syntaxErr *xml.SyntaxError
+		if errors.As(parseErr, &syntaxErr) {
+			return syntaxErr.Msg
+		}
+		return parseErr.Error()
+	}
+
+	return "invalid embedding instruction"
 }

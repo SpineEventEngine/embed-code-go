@@ -217,18 +217,31 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	for currentState != finishState {
 		accepted, newState, err := p.moveToNextState(&currentState, &context)
 		if err != nil {
-			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentEmbedding().SourceStartIndex-1, err)
+			return context, fmt.Errorf(errorStr, absDocPath, errorLine(context, err), err)
 		}
 		if !accepted {
 			currentState = &parsing.RegularLineState{}
 			context.ResolveUnacceptedEmbedding()
 
-			return context, fmt.Errorf(errorStr, absDocPath, context.CurrentEmbedding().SourceStartIndex-1, err)
+			return context, fmt.Errorf(errorStr, absDocPath, errorLine(context, err), err)
 		}
 		currentState = *newState
 	}
 
 	return context, nil
+}
+
+// errorLine returns the source line that should be used in the embedding error location.
+func errorLine(context parsing.Context, err error) int {
+	var parseErr parsing.InstructionParseError
+	if errors.As(err, &parseErr) {
+		return parseErr.Line
+	}
+	if context.EmbeddingsCount() > 0 {
+		return context.CurrentEmbedding().SourceStartIndex - 1
+	}
+
+	return context.CurrentIndex()
 }
 
 // Moves to the next state accordingly to a transition map from the current state. Reports whether
@@ -289,12 +302,14 @@ func requiredDocs(config configuration.Configuration) []string {
 func getFilesByPatterns(root string, patterns []string) ([]string, error) {
 	var result []string
 	for _, pattern := range patterns {
-		globString := strings.Join([]string{root, pattern}, "/")
+		globString := filepath.Join(root, filepath.FromSlash(pattern))
 		matches, err := doublestar.FilepathGlob(globString)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, matches...)
+		for _, match := range matches {
+			result = append(result, filepath.ToSlash(match))
+		}
 	}
 
 	return result, nil

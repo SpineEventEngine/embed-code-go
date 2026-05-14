@@ -3,7 +3,7 @@ package analyzing
 import (
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
@@ -38,7 +38,7 @@ func AnalyzeAll(config configuration.Configuration) {
 
 // Generates a path to a given file in the analytics directory.
 func pathToFile(fileName string) string {
-	return fmt.Sprintf("%s/%s", analyticsDir, fileName)
+	return filepath.Join(analyticsDir, fileName)
 }
 
 // Finds all documentation files for given config.
@@ -47,12 +47,14 @@ func findDocumentationFiles(config configuration.Configuration) []string {
 	docPatterns := config.DocIncludes
 	var documentationFiles []string
 	for _, pattern := range docPatterns {
-		globString := strings.Join([]string{documentationRoot, pattern}, "/")
+		globString := filepath.Join(documentationRoot, filepath.FromSlash(pattern))
 		matches, err := doublestar.FilepathGlob(globString)
 		if err != nil {
 			panic(err)
 		}
-		documentationFiles = append(documentationFiles, matches...)
+		for _, match := range matches {
+			documentationFiles = append(documentationFiles, filepath.ToSlash(match))
+		}
 	}
 
 	return documentationFiles
