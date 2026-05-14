@@ -318,7 +318,7 @@ func validateCodeSources(paths _type.NamedPathList) error {
 			nameCount[p.Name]++
 		}
 		pathCount[p.Path]++
-		pathNames[p.Path] = append(pathNames[p.Path], codeSourceDisplayName(p.Name))
+		pathNames[p.Path] = append(pathNames[p.Path], p.Name)
 	}
 
 	if err := verifyCodeSourceNames(nameCount); err != nil {
@@ -353,15 +353,6 @@ func verifyCodeSourceNames(nameCount map[string]int) error {
 		)
 	}
 	return nil
-}
-
-// codeSourceDisplayName returns a readable code source name for diagnostics.
-func codeSourceDisplayName(name string) string {
-	if isEmpty(name) {
-		return "(unnamed)"
-	}
-
-	return name
 }
 
 // warnDuplicatePaths logs a warning if multiple code sources use the same path.

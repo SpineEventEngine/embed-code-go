@@ -175,7 +175,7 @@ var _ = Describe("CLI validation", func() {
 				"duplicate embedding names detected:\n- docs"))
 		})
 
-		It("should fail validation when code source names are duplicated", func() {
+		It("should fail validation when source code path names are duplicated", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.BaseCodePaths = _type.NamedPathList{
 				_type.NamedPath{Name: "samples", Path: codeResourcePath("java")},
@@ -187,7 +187,7 @@ var _ = Describe("CLI validation", func() {
 				"duplicate source code path names detected:\n- samples"))
 		})
 
-		It("should fail validation when multiple unnamed code sources are configured", func() {
+		It("should fail validation when multiple unnamed sources code paths are configured", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.BaseCodePaths = _type.NamedPathList{
 				_type.NamedPath{Path: codeResourcePath("java")},
@@ -199,7 +199,7 @@ var _ = Describe("CLI validation", func() {
 				"only one unnamed source code path is allowed"))
 		})
 
-		It("should fail validation when named and unnamed code sources are mixed", func() {
+		It("should fail validation when named and unnamed source code paths are mixed", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.BaseCodePaths = _type.NamedPathList{
 				_type.NamedPath{Name: "java", Path: codeResourcePath("java")},

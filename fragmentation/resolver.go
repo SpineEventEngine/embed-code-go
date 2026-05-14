@@ -22,23 +22,22 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	config "embed-code/embed-code-go/configuration"
 	_type "embed-code/embed-code-go/type"
 )
 
+// resolverCacheLimit is the maximum number of source files retained in the resolver cache.
+const resolverCacheLimit = 100
+
+// cachedFragmentation stores cleaned source lines and parsed fragments for one source file.
 type cachedFragmentation struct {
 	lines     []string
 	fragments map[string]Fragment
 }
 
-var resolverCache = struct {
-	sync.RWMutex
-	files map[string]cachedFragmentation
-}{
-	files: make(map[string]cachedFragmentation),
-}
+// resolverCache stores source fragmentations already resolved during the current run.
+var resolverCache = newCache[cachedFragmentation](resolverCacheLimit)
 
 // ResolveContent returns source lines for the requested code file fragment.
 //
@@ -73,12 +72,10 @@ func ResolveContent(codePath string, fragmentName string, config config.Configur
 
 // ClearResolverCache removes cached source fragmentations.
 func ClearResolverCache() {
-	resolverCache.Lock()
-	defer resolverCache.Unlock()
-
-	resolverCache.files = make(map[string]cachedFragmentation)
+	resolverCache.clear()
 }
 
+// resolvedSource describes a source file resolved from a user-facing embedding path.
 type resolvedSource struct {
 	root         _type.NamedPath
 	relativePath string
@@ -137,9 +134,7 @@ func sourceFromRoot(root _type.NamedPath, relativePath string) (resolvedSource, 
 // cachedSourceFragments returns cached source fragmentation for a resolved source file.
 func cachedSourceFragments(source resolvedSource, config config.Configuration) (cachedFragmentation, error) {
 	cacheKey := source.absolutePath
-	resolverCache.RLock()
-	content, found := resolverCache.files[cacheKey]
-	resolverCache.RUnlock()
+	content, found := resolverCache.get(cacheKey)
 	if found {
 		return content, nil
 	}
@@ -154,9 +149,7 @@ func cachedSourceFragments(source resolvedSource, config config.Configuration) (
 		fragments: fragments,
 	}
 
-	resolverCache.Lock()
-	resolverCache.files[cacheKey] = content
-	resolverCache.Unlock()
+	resolverCache.set(cacheKey, content)
 
 	return content, nil
 }
