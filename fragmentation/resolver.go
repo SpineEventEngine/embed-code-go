@@ -37,7 +37,10 @@ type cachedFragmentation struct {
 }
 
 // resolverCache stores source fragmentations already resolved during the current run.
-var resolverCache = newCache[cachedFragmentation](resolverCacheLimit)
+var resolverCache = newCache[resolvedSource, cachedFragmentation](
+	resolverCacheLimit,
+	loadSourceFragments,
+)
 
 // ResolveContent returns source lines for the requested code file fragment.
 //
@@ -55,7 +58,7 @@ func ResolveContent(codePath string, fragmentName string, config config.Configur
 		return nil, unresolvedSourceError(codePath, fragmentName, config)
 	}
 
-	content, err := cachedSourceFragments(source, config)
+	content, err := cachedSourceFragments(source)
 	if err != nil {
 		return nil, err
 	}
@@ -132,26 +135,21 @@ func sourceFromRoot(root _type.NamedPath, relativePath string) (resolvedSource, 
 }
 
 // cachedSourceFragments returns cached source fragmentation for a resolved source file.
-func cachedSourceFragments(source resolvedSource, config config.Configuration) (cachedFragmentation, error) {
-	cacheKey := source.absolutePath
-	content, found := resolverCache.get(cacheKey)
-	if found {
-		return content, nil
-	}
+func cachedSourceFragments(source resolvedSource) (cachedFragmentation, error) {
+	return resolverCache.get(source)
+}
 
-	fragmentation := NewFragmentation(source.absolutePath, source.root, config)
+// loadSourceFragments reads and fragments the source file when it is not already cached.
+func loadSourceFragments(source resolvedSource) (cachedFragmentation, error) {
+	fragmentation := NewFragmentation(source.absolutePath, source.root, config.Configuration{})
 	lines, fragments, err := fragmentation.DoFragmentation()
 	if err != nil {
 		return cachedFragmentation{}, err
 	}
-	content = cachedFragmentation{
+	return cachedFragmentation{
 		lines:     lines,
 		fragments: fragments,
-	}
-
-	resolverCache.set(cacheKey, content)
-
-	return content, nil
+	}, nil
 }
 
 // fragmentLines renders a fragment into lines.

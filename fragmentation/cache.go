@@ -23,43 +23,63 @@ import (
 	"sync"
 )
 
-// cache stores a limited number of least-recently-used values by string key.
-type cache[T any] struct {
+// cache stores a limited number of least-recently-used values by key.
+type cache[K comparable, V any] struct {
 	sync.Mutex
 	limit   int
-	values  map[string]T
-	entries map[string]*list.Element
+	loader  func(K) (V, error)
+	values  map[K]V
+	entries map[K]*list.Element
 	order   *list.List
 }
 
-// newCache creates a cache with least-recently-used eviction.
-func newCache[T any](limit int) *cache[T] {
-	return &cache[T]{
+// newCache creates a cache with a loader and least-recently-used eviction.
+func newCache[K comparable, V any](limit int, loader func(K) (V, error)) *cache[K, V] {
+	return &cache[K, V]{
 		limit:   limit,
-		values:  make(map[string]T),
-		entries: make(map[string]*list.Element),
+		loader:  loader,
+		values:  make(map[K]V),
+		entries: make(map[K]*list.Element),
 		order:   list.New(),
 	}
 }
 
-// get returns a cached value and marks it as recently used.
-func (c *cache[T]) get(key string) (T, bool) {
+// get returns a cached value or loads it when missing.
+func (c *cache[K, V]) get(key K) (V, error) {
 	c.Lock()
-	defer c.Unlock()
-
 	value, found := c.values[key]
 	if found {
 		c.markUsed(key)
+		c.Unlock()
+
+		return value, nil
+	}
+	c.Unlock()
+
+	value, err := c.loader(key)
+	if err != nil {
+		return value, err
 	}
 
-	return value, found
+	c.Lock()
+	defer c.Unlock()
+	c.storeLoaded(key, value)
+
+	return value, nil
 }
 
-// set stores a value and evicts the least recently used value when the cache exceeds its limit.
-func (c *cache[T]) set(key string, value T) {
+// clear removes all cached values.
+func (c *cache[K, V]) clear() {
 	c.Lock()
 	defer c.Unlock()
 
+	c.values = make(map[K]V)
+	c.entries = make(map[K]*list.Element)
+	c.order.Init()
+}
+
+// storeLoaded stores a loaded value and evicts the least recently used value when needed.
+func (c *cache[K, V]) storeLoaded(key K, value V) {
 	c.values[key] = value
 	if entry, found := c.entries[key]; found {
 		c.order.MoveToBack(entry)
@@ -74,31 +94,21 @@ func (c *cache[T]) set(key string, value T) {
 	c.evictOldest()
 }
 
-// clear removes all cached values.
-func (c *cache[T]) clear() {
-	c.Lock()
-	defer c.Unlock()
-
-	c.values = make(map[string]T)
-	c.entries = make(map[string]*list.Element)
-	c.order.Init()
-}
-
 // markUsed moves a cache key to the most recently used position.
-func (c *cache[T]) markUsed(key string) {
+func (c *cache[K, V]) markUsed(key K) {
 	if entry, found := c.entries[key]; found {
 		c.order.MoveToBack(entry)
 	}
 }
 
 // evictOldest removes the least recently used cache entry.
-func (c *cache[T]) evictOldest() {
+func (c *cache[K, V]) evictOldest() {
 	oldestEntry := c.order.Front()
 	if oldestEntry == nil {
 		return
 	}
 
-	oldestKey := oldestEntry.Value.(string)
+	oldestKey := oldestEntry.Value.(K)
 	c.order.Remove(oldestEntry)
 	delete(c.entries, oldestKey)
 	delete(c.values, oldestKey)
