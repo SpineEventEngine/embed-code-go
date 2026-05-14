@@ -90,7 +90,7 @@ func BuildDocRelativePath(absolutePath string, config configuration.Configuratio
 		panic(err)
 	}
 
-	return relativePath
+	return filepath.ToSlash(relativePath)
 }
 
 // EnsureDirExists creates dir at given path (relative or absolute) if it doesn't exist.

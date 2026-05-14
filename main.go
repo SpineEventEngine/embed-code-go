@@ -28,7 +28,7 @@ import (
 )
 
 // Version of the embed-code application.
-const Version = "1.1.0"
+const Version = "1.1.1"
 
 // The entry point for embed-code.
 //

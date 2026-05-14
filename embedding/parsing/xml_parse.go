@@ -24,8 +24,6 @@ import (
 	"fmt"
 )
 
-const xmlStringHeader string = "embed-code"
-
 // Item needed for xml.Unmarshal parsing. The fields are filling up during the parsing.
 //
 // XMLName — a name of the tag in XML line.
@@ -74,9 +72,9 @@ func ParseXMLLine(xmlLine string) (map[string]string, error) {
 		return map[string]string{}, err
 	}
 
-	if root.XMLName.Local != xmlStringHeader {
+	if root.XMLName.Local != EmbeddingTag {
 		return map[string]string{},
-			fmt.Errorf("the provided line's header is not 'embed-code':\n%s", xmlLine)
+			fmt.Errorf("the provided line's header is not `%s`:\n%s", EmbeddingTag, xmlLine)
 	}
 
 	attributes := make(map[string]string)
