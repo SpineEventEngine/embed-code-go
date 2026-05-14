@@ -22,7 +22,6 @@ import (
 	_type "embed-code/embed-code-go/type"
 	"flag"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"embed-code/embed-code-go/analyzing"
@@ -48,9 +47,6 @@ import (
 // DocExcludes - a StringList with patterns for filtering documentation files
 // which should be excluded from the embedding process.
 //
-// FragmentsPath — a directory where fragmented code is stored. A temporary directory that should
-// not be tracked in VCS. The default value is: "./build/fragments".
-//
 // Separator — a string that's inserted between multiple partitions of a single fragment.
 // The default value is "...".
 //
@@ -68,7 +64,6 @@ type Config struct {
 	BaseDocsPath  string              `yaml:"docs-path"`
 	DocIncludes   _type.StringList    `yaml:"doc-includes"`
 	DocExcludes   _type.StringList    `yaml:"doc-excludes"`
-	FragmentsPath string              `yaml:"fragments-path"`
 	Separator     string              `yaml:"separator"`
 	Embeddings    []EmbeddingConfig   `yaml:"embeddings"`
 	Info          bool                `yaml:"info"`
@@ -79,13 +74,12 @@ type Config struct {
 
 // EmbeddingConfig contains a complete configuration for one embedding target.
 type EmbeddingConfig struct {
-	Name          string              `yaml:"name"`
-	CodePaths     _type.NamedPathList `yaml:"code-path"`
-	DocsPath      string              `yaml:"docs-path"`
-	DocIncludes   _type.StringList    `yaml:"doc-includes"`
-	DocExcludes   _type.StringList    `yaml:"doc-excludes"`
-	FragmentsPath string              `yaml:"fragments-path"`
-	Separator     string              `yaml:"separator"`
+	Name        string              `yaml:"name"`
+	CodePaths   _type.NamedPathList `yaml:"code-path"`
+	DocsPath    string              `yaml:"docs-path"`
+	DocIncludes _type.StringList    `yaml:"doc-includes"`
+	DocExcludes _type.StringList    `yaml:"doc-excludes"`
+	Separator   string              `yaml:"separator"`
 }
 
 // EmbedCodeSamplesResult is result of the EmbedCodeSamples method.
@@ -137,8 +131,6 @@ func ReadArgs() Config {
 		"a comma-separated string of glob patterns for docs files to include")
 	docExcludes := flag.String("doc-excludes", "",
 		"a comma-separated string of glob patterns for docs files to exclude")
-	fragmentsPath := flag.String("fragments-path", "",
-		"a path to a directory where fragmented code is stored")
 	separator := flag.String("separator", "",
 		"a string that's inserted between multiple partitions of a single fragment")
 	configPath := flag.String("config-path", "", "a path to a yaml configuration file")
@@ -156,7 +148,6 @@ func ReadArgs() Config {
 		BaseDocsPath:  *docsPath,
 		DocIncludes:   parseListArgument(*docIncludes),
 		DocExcludes:   parseListArgument(*docExcludes),
-		FragmentsPath: *fragmentsPath,
 		Separator:     *separator,
 		ConfigPath:    *configPath,
 		Mode:          *mode,
@@ -183,9 +174,6 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	}
 	if len(configFields.DocExcludes) > 0 {
 		args.DocExcludes = configFields.DocExcludes
-	}
-	if isNotEmpty(configFields.FragmentsPath) {
-		args.FragmentsPath = configFields.FragmentsPath
 	}
 	if isNotEmpty(configFields.Separator) {
 		args.Separator = configFields.Separator
@@ -231,10 +219,6 @@ func configFromEmbedding(embedding EmbeddingConfig) configuration.Configuration 
 	if len(embedding.DocExcludes) > 0 {
 		embedCodeConfig.DocExcludes = embedding.DocExcludes
 	}
-	if isNotEmpty(embedding.FragmentsPath) {
-		embedCodeConfig.FragmentsDir = embedding.FragmentsPath
-	}
-	embedCodeConfig.FragmentsDir = filepath.Join(embedCodeConfig.FragmentsDir, embedding.Name)
 	if isNotEmpty(embedding.Separator) {
 		embedCodeConfig.Separator = embedding.Separator
 	}
@@ -248,9 +232,6 @@ func configWithOptionalParams(userArgs Config) configuration.Configuration {
 
 	if len(userArgs.DocIncludes) > 0 {
 		embedCodeConfig.DocIncludes = userArgs.DocIncludes
-	}
-	if isNotEmpty(userArgs.FragmentsPath) {
-		embedCodeConfig.FragmentsDir = userArgs.FragmentsPath
 	}
 	if isNotEmpty(userArgs.Separator) {
 		embedCodeConfig.Separator = userArgs.Separator

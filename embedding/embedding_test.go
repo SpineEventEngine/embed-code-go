@@ -54,7 +54,7 @@ var _ = Describe("Embedding", func() {
 		if err != nil {
 			Fail("unexpected error during the test setup: " + err.Error())
 		}
-		config = buildConfigWithPreparedFragments()
+		config = buildConfigWithSourceFiles()
 
 		// Copying files not to edit them directly during the test run.
 		copyDirRecursive("../test/resources/docs", config.DocumentationRoot)
@@ -107,20 +107,12 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
-	It("should embed directly from source without writing fragment files", func() {
-		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
-		config.FragmentsDir = "../test/lazy-fragments"
-		if err := os.RemoveAll(config.FragmentsDir); err != nil {
-			Fail(err.Error())
-		}
+	It("should embed directly from source", func() {
 		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
-		exists, err := files.IsDirExist(config.FragmentsDir)
 
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(exists).Should(BeFalse())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
@@ -188,7 +180,7 @@ var _ = Describe("Embedding", func() {
 	})
 })
 
-func buildConfigWithPreparedFragments() configuration.Configuration {
+func buildConfigWithSourceFiles() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = temporaryTestDir
 	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
