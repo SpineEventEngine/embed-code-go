@@ -108,10 +108,7 @@ func main() {
 
 	switch userArgs.Mode {
 	case cli.ModeCheck:
-		for _, config := range configs {
-			cli.CheckCodeSamples(config)
-		}
-		fmt.Println("The documentation files are up-to-date with code files.")
+		checkByConfigs(configs)
 	case cli.ModeEmbed:
 		embedByConfigs(configs)
 		fmt.Println("Embedding process finished.")
@@ -137,6 +134,21 @@ func logError(message string, err error) {
 	slog.Error(fmt.Sprintf("%s: %v", message, err))
 }
 
+// checkByConfigs runs check for all configs and logs outdated documentation files.
+func checkByConfigs(configs []configuration.Configuration) {
+	var totalOutdatedFiles []string
+	for _, config := range configs {
+		totalOutdatedFiles = append(totalOutdatedFiles, cli.CheckCodeSamples(config)...)
+	}
+	if len(totalOutdatedFiles) == 0 {
+		fmt.Println("The documentation files are up-to-date with code files.")
+
+		return
+	}
+
+	printFiles("File outdated:", "Files outdated:", totalOutdatedFiles)
+}
+
 // embedByConfig runs the embedByConfig for all configs and logs the results.
 func embedByConfigs(configs []configuration.Configuration) {
 	var totalEmbeddedFiles []string
@@ -149,14 +161,19 @@ func embedByConfigs(configs []configuration.Configuration) {
 	if len(totalEmbeddedFiles) == 0 && totalEmbeddings != 0 {
 		fmt.Println("All documentation files are already up to date. Nothing to update.")
 	}
-	if len(totalEmbeddedFiles) == 1 {
-		fmt.Println("File updated:")
+	printFiles("File updated:", "Files updated:", totalEmbeddedFiles)
+}
+
+// printFiles prints file paths with the singular or plural heading.
+func printFiles(singularHeading string, pluralHeading string, files []string) {
+	if len(files) == 1 {
+		fmt.Println(singularHeading)
 	}
-	if len(totalEmbeddedFiles) > 1 {
-		fmt.Println("Files updated:")
+	if len(files) > 1 {
+		fmt.Println(pluralHeading)
 	}
-	for _, updatedDocFile := range totalEmbeddedFiles {
-		absPath, err := filepath.Abs(updatedDocFile)
+	for _, file := range files {
+		absPath, err := filepath.Abs(file)
 		if err != nil {
 			panic(err)
 		}

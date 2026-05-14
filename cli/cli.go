@@ -95,12 +95,11 @@ const (
 	ModeAnalyze = "analyze"
 )
 
-// CheckCodeSamples checks documentation to be up-to-date with code files. Raises
-// UnexpectedDiffError if not.
+// CheckCodeSamples returns documentation files that are not up-to-date with code files.
 //
 // config — a configuration for checking code samples.
-func CheckCodeSamples(config configuration.Configuration) {
-	embedding.CheckUpToDate(config)
+func CheckCodeSamples(config configuration.Configuration) []string {
+	return embedding.CheckUpToDate(config)
 }
 
 // EmbedCodeSamples embeds code fragments in documentation files.
@@ -108,7 +107,6 @@ func CheckCodeSamples(config configuration.Configuration) {
 // config — a configuration for embedding.
 func EmbedCodeSamples(config configuration.Configuration) EmbedCodeSamplesResult {
 	embeddingResult := embedding.EmbedAll(config)
-	embedding.CheckUpToDate(config)
 	return EmbedCodeSamplesResult{
 		embeddingResult,
 	}

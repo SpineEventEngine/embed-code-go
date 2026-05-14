@@ -116,6 +116,13 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
+	It("should report files that are not up to date", func() {
+		config.DocIncludes = []string{"doc.md"}
+		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
+
+		Expect(embedding.CheckUpToDate(config)).Should(ContainElement(docPath))
+	})
+
 	It("should embed with multi lined tag attributes", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-valid-tag-attributes.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)

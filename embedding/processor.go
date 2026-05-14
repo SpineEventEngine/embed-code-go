@@ -189,14 +189,11 @@ func configNameLabel(config configuration.Configuration) string {
 	return fmt.Sprintf(" for embedding `%s`", config.Name)
 }
 
-// CheckUpToDate raises an error if the documentation files are not up-to-date with code files.
+// CheckUpToDate returns documentation files that are not up-to-date with code files.
 //
 // config — a configuration for embedding.
-func CheckUpToDate(config configuration.Configuration) {
-	changedFiles := findChangedFiles(config)
-	if len(changedFiles) > 0 {
-		panic(UnexpectedDiffError{changedFiles})
-	}
+func CheckUpToDate(config configuration.Configuration) []string {
+	return findChangedFiles(config)
 }
 
 // Iterates through the doc file line by line considering them as a states of an embedding.
