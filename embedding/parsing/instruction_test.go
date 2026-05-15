@@ -56,7 +56,7 @@ var _ = Describe("Instruction", func() {
 		if err != nil {
 			Fail("unexpected error during the test setup: " + err.Error())
 		}
-		config = buildConfigWithPreparedFragments()
+		config = buildConfigWithSourceFiles()
 	})
 
 	It("should have an error while parsing malformed XML string", func() {
@@ -82,7 +82,7 @@ var _ = Describe("Instruction", func() {
 		Expect(parsing.FromXML(xmlString, config)).Error().ShouldNot(HaveOccurred())
 	})
 
-	It("should successfully read fragments directory", func() {
+	It("should successfully read source content", func() {
 		instructionParams := TestInstructionParams{
 			closeTag: true,
 		}
@@ -298,11 +298,10 @@ func getXMLExtractionContent(fileName string, params TestInstructionParams,
 	return readInstructionContent(instruction)
 }
 
-func buildConfigWithPreparedFragments() configuration.Configuration {
+func buildConfigWithSourceFiles() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = "../../test/resources/docs"
-	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../../test/resources/code"}}
-	config.FragmentsDir = "../../test/resources/prepared-fragments"
+	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../../test/resources/code/java"}}
 
 	return config
 }
