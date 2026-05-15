@@ -30,14 +30,14 @@ import (
 // resolverCacheLimit is the maximum number of source files retained in the resolver cache.
 const resolverCacheLimit = 100
 
-// cachedFragmentation stores cleaned source lines and parsed fragments for one source file.
-type cachedFragmentation struct {
+// fragmentedFile stores cleaned source lines and parsed fragments for one source file.
+type fragmentedFile struct {
 	lines     []string
 	fragments map[string]Fragment
 }
 
 // resolverCache stores source fragmentations already resolved during the current run.
-var resolverCache = newCache[resolvedSource, cachedFragmentation](
+var resolverCache = newCache[resolvedPath, fragmentedFile](
 	resolverCacheLimit,
 	loadSourceFragments,
 )
@@ -78,15 +78,15 @@ func ClearResolverCache() {
 	resolverCache.clear()
 }
 
-// resolvedSource describes a source file resolved from a user-facing embedding path.
-type resolvedSource struct {
+// resolvedPath is a source file path resolved from a user-facing embedding path.
+type resolvedPath struct {
 	root         _type.NamedPath
 	relativePath string
 	absolutePath string
 }
 
-// resolveSource resolves the user-facing code path to an included textual source file.
-func resolveSource(codePath string, config config.Configuration) (resolvedSource, bool, error) {
+// resolveSource resolves the user-facing code path to the source file.
+func resolveSource(codePath string, config config.Configuration) (resolvedPath, bool, error) {
 	codeRootName, relativePath, named := splitNamedPath(codePath)
 	for _, root := range config.CodeRoots {
 		if named && strings.TrimSpace(root.Name) != codeRootName {
@@ -95,7 +95,7 @@ func resolveSource(codePath string, config config.Configuration) (resolvedSource
 
 		source, err := sourceFromRoot(root, relativePath)
 		if err != nil {
-			return resolvedSource{}, false, err
+			return resolvedPath{}, false, err
 		}
 		if !shouldDoFragmentation(source.absolutePath) {
 			continue
@@ -104,7 +104,7 @@ func resolveSource(codePath string, config config.Configuration) (resolvedSource
 		return source, true, nil
 	}
 
-	return resolvedSource{}, false, nil
+	return resolvedPath{}, false, nil
 }
 
 // splitNamedPath separates a named-code-root prefix from a code path.
@@ -121,13 +121,13 @@ func splitNamedPath(codePath string) (string, string, bool) {
 }
 
 // sourceFromRoot builds a source path from a code root and a relative path.
-func sourceFromRoot(root _type.NamedPath, relativePath string) (resolvedSource, error) {
+func sourceFromRoot(root _type.NamedPath, relativePath string) (resolvedPath, error) {
 	rootAbs, err := filepath.Abs(root.Path)
 	if err != nil {
-		return resolvedSource{}, err
+		return resolvedPath{}, err
 	}
 
-	return resolvedSource{
+	return resolvedPath{
 		root:         root,
 		relativePath: filepath.FromSlash(relativePath),
 		absolutePath: filepath.Join(rootAbs, filepath.FromSlash(relativePath)),
@@ -135,18 +135,18 @@ func sourceFromRoot(root _type.NamedPath, relativePath string) (resolvedSource, 
 }
 
 // cachedSourceFragments returns cached source fragmentation for a resolved source file.
-func cachedSourceFragments(source resolvedSource) (cachedFragmentation, error) {
+func cachedSourceFragments(source resolvedPath) (fragmentedFile, error) {
 	return resolverCache.get(source)
 }
 
 // loadSourceFragments reads and fragments the source file when it is not already cached.
-func loadSourceFragments(source resolvedSource) (cachedFragmentation, error) {
+func loadSourceFragments(source resolvedPath) (fragmentedFile, error) {
 	fragmentation := NewFragmentation(source.absolutePath, source.root, config.Configuration{})
 	lines, fragments, err := fragmentation.DoFragmentation()
 	if err != nil {
-		return cachedFragmentation{}, err
+		return fragmentedFile{}, err
 	}
-	return cachedFragmentation{
+	return fragmentedFile{
 		lines:     lines,
 		fragments: fragments,
 	}, nil

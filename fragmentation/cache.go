@@ -23,7 +23,7 @@ import (
 	"sync"
 )
 
-// cache stores a limited number of least-recently-used values by key.
+// cache is a limited collection of recently used values by key.
 type cache[K comparable, V any] struct {
 	sync.Mutex
 	limit   int
