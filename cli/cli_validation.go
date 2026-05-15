@@ -110,7 +110,7 @@ func validateConfig(config Config) error {
 	if err != nil {
 		return err
 	}
-	err = findCodeSourceDuplications(config.BaseCodePaths)
+	err = validateCodeSources(config.BaseCodePaths)
 	if err != nil {
 		return err
 	}
@@ -118,11 +118,6 @@ func validateConfig(config Config) error {
 	if err != nil {
 		return err
 	}
-	_, err = validatePathSet(config.FragmentsPath)
-	if err != nil {
-		return err
-	}
-
 	isRootsSet := isCodePathsSet && isDocsPathSet
 	isOneOfRootsSet := isCodePathsSet || isDocsPathSet
 
@@ -179,7 +174,7 @@ func validateEmbeddingConfig(embedding EmbeddingConfig, index int) error {
 	if err != nil {
 		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
 	}
-	if err = findCodeSourceDuplications(embedding.CodePaths); err != nil {
+	if err = validateCodeSources(embedding.CodePaths); err != nil {
 		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
 	}
 
@@ -187,11 +182,6 @@ func validateEmbeddingConfig(embedding EmbeddingConfig, index int) error {
 	if err != nil {
 		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
 	}
-	_, err = validatePathSet(embedding.FragmentsPath)
-	if err != nil {
-		return fmt.Errorf("embedding `%s`: %w", embedding.Name, err)
-	}
-
 	isRootsSet := isCodePathsSet && isDocsPathSet
 	if !isRootsSet {
 		return fmt.Errorf("embedding `%s`: `code-path` and `docs-path` must both be set",
@@ -256,14 +246,11 @@ func verifyDuplicateEmbeddingDocsPaths(embeddings []EmbeddingConfig) {
 
 // validateOptionalParamsSet reports whether at least one optional config is set.
 func validateOptionalParamsSet(config Config) bool {
-	isCodeIncludesSet := len(config.CodeIncludes) > 0
 	isDocIncludesSet := len(config.DocIncludes) > 0
 	isDocExcludesSet := len(config.DocExcludes) > 0
 	isSeparatorSet := isNotEmpty(config.Separator)
-	isFragmentPathSet := isNotEmpty(config.FragmentsPath)
 
-	return isCodeIncludesSet || isDocIncludesSet || isFragmentPathSet ||
-		isSeparatorSet || isDocExcludesSet
+	return isDocIncludesSet || isSeparatorSet || isDocExcludesSet
 }
 
 // validatePathSet reports whether path is set and checks if it exists.
@@ -312,63 +299,79 @@ func validatePaths(paths _type.NamedPathList) (bool, error) {
 	return allPathsSet, nil
 }
 
-// findCodeSourceDuplications checks the provided code sources for duplicate names and paths.
-//
-// It logs a warning for duplicate names and returns an error for duplicate paths.
-func findCodeSourceDuplications(paths _type.NamedPathList) error {
-	nameDuplicates := make(map[string][]string)
+// validateCodeSources checks that code sources can be resolved unambiguously.
+func validateCodeSources(paths _type.NamedPathList) error {
+	nameCount := make(map[string]int)
 	pathCount := make(map[string]int)
+	pathNames := make(map[string][]string)
+	unnamedCount := 0
+	hasNamed := false
 
 	for _, p := range paths {
-		name := p.Name
-		if isEmpty(name) {
-			name = "(unnamed)"
+		if isEmpty(p.Path) {
+			continue
 		}
-		nameDuplicates[name] = append(nameDuplicates[name], p.Path)
+		if isEmpty(p.Name) {
+			unnamedCount++
+		} else {
+			hasNamed = true
+			nameCount[p.Name]++
+		}
 		pathCount[p.Path]++
+		pathNames[p.Path] = append(pathNames[p.Path], p.Name)
 	}
 
-	verifyDuplicateNames(nameDuplicates)
-	return verifyDuplicatePaths(pathCount)
+	if err := verifyCodeSourceNames(nameCount); err != nil {
+		return err
+	}
+	if unnamedCount > 1 {
+		return errors.New("only one unnamed source code path is allowed")
+	}
+	if hasNamed && unnamedCount > 0 {
+		return errors.New("named and unnamed source code paths cannot be mixed")
+	}
+
+	warnDuplicatePaths(pathCount, pathNames)
+
+	return nil
 }
 
-// verifyDuplicateNames logs a warning if multiple code sources share the same name.
-func verifyDuplicateNames(nameDuplicates map[string][]string) {
-	var warnLines []string
-	for name, ps := range nameDuplicates {
-		if len(ps) > 1 {
-			warnLines = append(warnLines, "- "+name)
-			for _, path := range ps {
-				warnLines = append(warnLines, "  - "+path)
-			}
-		}
-	}
-
-	if len(warnLines) > 0 {
-		slog.Warn(
-			"Duplicate code source names detected, it may lead to " +
-				"overwriting code fragments with the same relative path:\n" +
-				strings.Join(warnLines, "\n"),
-		)
-	}
-}
-
-// verifyDuplicatePaths returns an error if multiple code sources use the same path.
-func verifyDuplicatePaths(pathCount map[string]int) error {
+// verifyCodeSourceNames returns an error if multiple code sources share the same name.
+func verifyCodeSourceNames(nameCount map[string]int) error {
 	var errLines []string
-	for path, count := range pathCount {
+	for name, count := range nameCount {
 		if count > 1 {
-			errLines = append(errLines, "- "+path)
+			errLines = append(errLines, "- "+name)
 		}
 	}
 
 	if len(errLines) > 0 {
+		slices.Sort(errLines)
 		return fmt.Errorf(
-			"duplicate code source paths detected:\n%s",
+			"duplicate source code path names detected:\n%s",
 			strings.Join(errLines, "\n"),
 		)
 	}
 	return nil
+}
+
+// warnDuplicatePaths logs a warning if multiple code sources use the same path.
+func warnDuplicatePaths(pathCount map[string]int, pathNames map[string][]string) {
+	var warnLines []string
+	for path, count := range pathCount {
+		if count > 1 {
+			names := pathNames[path]
+			slices.Sort(names)
+			warnLines = append(warnLines, fmt.Sprintf("- %s: %s", path, strings.Join(names, ", ")))
+		}
+	}
+
+	if len(warnLines) > 0 {
+		slices.Sort(warnLines)
+		slog.Warn(
+			"Duplicate source code paths detected:\n" + strings.Join(warnLines, "\n"),
+		)
+	}
 }
 
 // isNotEmpty reports whether the given string is not empty.

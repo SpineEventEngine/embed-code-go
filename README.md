@@ -64,10 +64,7 @@ The available arguments are:
   * `-code-path`: (Optional) Path to the source code root directory.
   * `-docs-path`: (Optional) Path to the documentation root directory.
   * `-config-path`: (Optional) Path to a YAML configuration file containing `code-path` and `docs-path`.
-  * `-code-includes`: (Optional) Comma-separated glob patterns for source files to include (e.g., `"**/*.java,**/*.gradle"`). Defaults to `"**/*.*"`.
-  * `-code-excludes`: (Optional) Comma-separated glob patterns for source files to exclude.
   * `-doc-includes`: (Optional) Comma-separated glob patterns for documentation files to include. Defaults to `"**/*.md,**/*.html"`.
-  * `-fragments-path`: (Optional) Directory for storing code fragments. Defaults to `./build/fragments`.
   * `-separator`: (Optional) String used to separate joined code fragments. Defaults to `...`.
  
 Even though the `code-path`, `docs-path`, and `config-path` arguments are optional,
@@ -87,7 +84,6 @@ Optional settings can be defined in a YAML configuration file:
 ```yaml
 code-path: path/to/code/root
 docs-path: path/to/docs/root
-code-includes: "**/*.java,**/*.gradle"
 doc-excludes: "**/*-old.*,**/deprecated/*.*"
 ```
 
@@ -98,7 +94,6 @@ embeddings:
   - name: java
     code-path: path/to/code/root/java
     docs-path: path/to/java/docs
-    code-includes: "**/*.java"
   - name: kotlin
     code-path:
       - name: samples
@@ -131,20 +126,15 @@ The available fields for the configuration file are:
       ```
       **Do not forget the dollar sign (`$`) before the path name.**
     
-      It is possible to specify a path without a name or with an empty name.
-      In this case, fragments will be stored in the root defined by `fragments-path`.
-
-      It is also possible to specify multiple paths with the same name,
-      but this may lead to fragments being overwritten if they have the same relative path and name.
+      Code source names must be unique. A configuration may use either one unnamed
+      code source or one or more named code sources, but named and unnamed sources
+      cannot be mixed.
 
   * `docs-path`: (Mandatory) Path to the documentation root.
-  * `code-includes`: (Optional) Glob patterns for source files to include.
-    It may be represented as a comma-separated string list or as a YAML sequence.
   * `doc-excludes`: (Optional) Glob patterns for documentation files to exclude.
     It may be represented as a comma-separated string list or as a YAML sequence.
   * `doc-includes`: (Optional) Glob patterns for documentation files to include.
     It may be represented as a comma-separated string list or as a YAML sequence.
-  * `fragments-path`: (Optional) Directory for code fragments.
   * `separator`: (Optional) Separator for fragments.
   * `embeddings`: (Optional) A list of complete embedding configurations for multiple
     documentation targets. When `embeddings` is set, do not set root-level `code-path`

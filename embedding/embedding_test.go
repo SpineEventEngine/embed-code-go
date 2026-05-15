@@ -54,7 +54,7 @@ var _ = Describe("Embedding", func() {
 		if err != nil {
 			Fail("unexpected error during the test setup: " + err.Error())
 		}
-		config = buildConfigWithPreparedFragments()
+		config = buildConfigWithSourceFiles()
 
 		// Copying files not to edit them directly during the test run.
 		copyDirRecursive("../test/resources/docs", config.DocumentationRoot)
@@ -105,6 +105,42 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
 		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
+
+	It("should embed directly from source", func() {
+		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+
+		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
+
+	It("should report files that are not up to date", func() {
+		config.DocIncludes = []string{"doc.md"}
+		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
+
+		Expect(embedding.CheckUpToDate(config)).Should(ContainElement(docPath))
+	})
+
+	It("should report all check errors", func() {
+		config.DocIncludes = []string{"missing-closing-tag.md", "unclosed-nested-tag.md"}
+
+		var recovered any
+		func() {
+			defer func() {
+				recovered = recover()
+			}()
+			embedding.CheckUpToDate(config)
+		}()
+
+		Expect(recovered).ShouldNot(BeNil())
+		Expect(fmt.Sprint(recovered)).Should(And(
+			ContainSubstring("missing-closing-tag.md"),
+			ContainSubstring("the `<embed-code>` tag is not closed"),
+			ContainSubstring("unclosed-nested-tag.md"),
+			ContainSubstring("element <unexpected> closed by </embed-code>"),
+		))
 	})
 
 	It("should embed with multi lined tag attributes", func() {
@@ -160,7 +196,7 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
-	It("should not embed to a file matched the `code-excludes` pattern", func() {
+	It("should not embed to a file matched the `doc-excludes` pattern", func() {
 		config.DocExcludes = []string{"**/excluded-doc.*"}
 
 		docPath := fmt.Sprintf("%s/excluded-doc.md", config.DocumentationRoot)
@@ -171,11 +207,10 @@ var _ = Describe("Embedding", func() {
 	})
 })
 
-func buildConfigWithPreparedFragments() configuration.Configuration {
+func buildConfigWithSourceFiles() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = temporaryTestDir
-	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code"}}
-	config.FragmentsDir = "../test/resources/prepared-fragments"
+	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
 
 	return config
 }

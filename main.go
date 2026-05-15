@@ -28,7 +28,7 @@ import (
 )
 
 // Version of the embed-code application.
-const Version = "1.1.1"
+const Version = "1.2.0"
 
 // The entry point for embed-code.
 //
@@ -69,9 +69,6 @@ const Version = "1.1.1"
 //     then the checking for up-to-date is performed. If it is set to 'embed', the embedding
 //     is performed.
 //     If it is set to 'analyze', the analyzing is performed;
-//   - code-includes — a comma-separated string of glob patterns for code files to include.
-//     For example:
-//     "**/*.java,**/*.gradle". Default value is "**/*.*";
 //   - doc-includes — a comma-separated string of glob patterns for docs files to include.
 //     For example:
 //     "docs/**/*.md,guides/*.html". Default value is "**/*.md,**/*.html";
@@ -79,8 +76,6 @@ const Version = "1.1.1"
 //     the embedding.
 //     For example:
 //     "old-docs/**/*.md,old-guides/*.html". It is not set by default;
-//   - fragments-path — a path to a directory with code fragments. Default value is
-//     "./build/fragments";
 //   - separator — a string which is used as a separator between code fragments. Default value
 //     is "...".
 func main() {
@@ -113,10 +108,7 @@ func main() {
 
 	switch userArgs.Mode {
 	case cli.ModeCheck:
-		for _, config := range configs {
-			cli.CheckCodeSamples(config)
-		}
-		fmt.Println("The documentation files are up-to-date with code files.")
+		checkByConfigs(configs)
 	case cli.ModeEmbed:
 		embedByConfigs(configs)
 		fmt.Println("Embedding process finished.")
@@ -142,30 +134,46 @@ func logError(message string, err error) {
 	slog.Error(fmt.Sprintf("%s: %v", message, err))
 }
 
+// checkByConfigs runs check for all configs and logs outdated documentation files.
+func checkByConfigs(configs []configuration.Configuration) {
+	var totalOutdatedFiles []string
+	for _, config := range configs {
+		totalOutdatedFiles = append(totalOutdatedFiles, cli.CheckCodeSamples(config)...)
+	}
+	if len(totalOutdatedFiles) == 0 {
+		fmt.Println("The documentation files are up-to-date with code files.")
+
+		return
+	}
+
+	printFiles("File outdated:", "Files outdated:", totalOutdatedFiles)
+}
+
 // embedByConfig runs the embedByConfig for all configs and logs the results.
 func embedByConfigs(configs []configuration.Configuration) {
 	var totalEmbeddedFiles []string
 	totalEmbeddings := 0
-	totalFragments := 0
 	for _, config := range configs {
 		result := cli.EmbedCodeSamples(config)
 		totalEmbeddedFiles = append(totalEmbeddedFiles, result.UpdatedTargetFiles...)
 		totalEmbeddings += result.TotalEmbeddings
-		totalFragments += result.TotalFragments
 	}
-	if len(totalEmbeddedFiles) == 0 &&
-		totalEmbeddings != 0 &&
-		totalFragments != 0 {
+	if len(totalEmbeddedFiles) == 0 && totalEmbeddings != 0 {
 		fmt.Println("All documentation files are already up to date. Nothing to update.")
 	}
-	if len(totalEmbeddedFiles) == 1 {
-		fmt.Println("File updated:")
+	printFiles("File updated:", "Files updated:", totalEmbeddedFiles)
+}
+
+// printFiles prints file paths with the singular or plural heading.
+func printFiles(singularHeading string, pluralHeading string, files []string) {
+	if len(files) == 1 {
+		fmt.Println(singularHeading)
 	}
-	if len(totalEmbeddedFiles) > 1 {
-		fmt.Println("Files updated:")
+	if len(files) > 1 {
+		fmt.Println(pluralHeading)
 	}
-	for _, updatedDocFile := range totalEmbeddedFiles {
-		absPath, err := filepath.Abs(updatedDocFile)
+	for _, file := range files {
+		absPath, err := filepath.Abs(file)
 		if err != nil {
 			panic(err)
 		}

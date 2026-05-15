@@ -24,25 +24,17 @@ import (
 )
 
 const (
-	DefaultSeparator    = "..."
-	DefaultFragmentsDir = "./build/fragments"
+	DefaultSeparator = "..."
 )
 
-var DefaultInclude = []string{"**/*.*"}
 var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 
 // Configuration contains the settings for the plugin to work.
 //
-// It is used to get data for scanning for and doc files, to receive fragments' dir and separator
-// for partitions.
+// It is used to get data for scanning docs and resolving source files.
 // The example of creating the Configuration with default values:
 //
 //	var config = configuration.NewConfiguration()
-//
-// If there's need to modify the default configuration,
-// it can be done with just setting values to corresponding fields:
-//
-//	config.FragmentsDir = "foo/bar"
 type Configuration struct {
 	// Name identifies this configuration when it is built from an embeddings entry.
 	Name string
@@ -52,15 +44,6 @@ type Configuration struct {
 
 	// DocumentationRoot is a root directory of the documentation files.
 	DocumentationRoot string
-
-	// CodeIncludes is a list of patterns for filtering the code files to be considered.
-	//
-	// Directories are never matched by these patterns.
-	//
-	// For example, ["**/*.java", "**/*.gradle"].
-	//
-	// The default value is "**/*".
-	CodeIncludes []string
 
 	// DocIncludes is a list of patterns for filtering files in which we should look for embedding
 	// instructions.
@@ -86,12 +69,6 @@ type Configuration struct {
 	// Be the default, it is not set.
 	DocExcludes []string
 
-	// FragmentsDir is a directory where fragmented code is stored. A temporary directory that
-	// should not be tracked in VCS.
-	//
-	// The default value is: "./build/fragments".
-	FragmentsDir string
-
 	// Separator is a string that's inserted between multiple partitions of a single fragment.
 	//
 	// The default value is: "..." (three dots).
@@ -101,9 +78,7 @@ type Configuration struct {
 // NewConfiguration builds the default config.
 func NewConfiguration() Configuration {
 	return Configuration{
-		CodeIncludes: DefaultInclude,
-		DocIncludes:  DefaultDocIncludes,
-		FragmentsDir: DefaultFragmentsDir,
-		Separator:    DefaultSeparator,
+		DocIncludes: DefaultDocIncludes,
+		Separator:   DefaultSeparator,
 	}
 }
