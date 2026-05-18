@@ -151,7 +151,7 @@ func blockCommentAt(line string, position int, syntax Syntax) (BlockSyntax, bool
 
 // keepLineComment reports whether the mode retains the given line comment kind.
 func keepLineComment(lineSyntax LineSyntax, mode Mode) bool {
-	return mode == RetainEndOfLine || mode == RetainDocumentation && lineSyntax.Documentation
+	return mode == RetainInline || mode == RetainDocumentation && lineSyntax.Documentation
 }
 
 // keepBlockComment reports whether the mode retains the given block comment kind.

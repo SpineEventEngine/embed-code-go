@@ -122,13 +122,13 @@ Supported values:
 
 - `all` — retain all comments. This is the default.
 - `none` — strip all recognized comments.
-- `documentation` — retain documentation comments such as Javadoc, KDoc, and `///`.
-- `end-of-line` — retain line comments such as `//` and `#`.
+- `documentation` — retain documentation comments such as Javadoc, KDoc, JSDoc, and C# XML docs.
+- `inline` — retain line comments such as `//` and `#`.
 - `block` — retain block comments such as `/* */`.
 
 Comment filtering is selected by source file extension. The built-in registry covers Java,
-Groovy, Kotlin, KTS, C/C++, C#, JavaScript, TypeScript, YAML, XML, HTML, Go, and Basic-family
-files. Unknown extensions are embedded unchanged.
+Groovy, Kotlin, KTS, C#, JavaScript, TypeScript, YAML, XML, HTML, and Basic-family files.
+Unknown extensions are embedded unchanged.
 
 ## Advanced use cases
 
