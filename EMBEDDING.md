@@ -70,6 +70,7 @@ To embed a named fragment, add the following to your Markdown file:
 
 - **`file`**: The path to the source file relative to the `code-path` defined in your configuration.
 - **`fragment`**: The name of the fragment to embed. If omitted, the entire file will be embedded.
+- **`comments`**: Optional comment filtering mode. If omitted, all comments are retained.
 
 Fragment names can be any string, but avoid using double quotes (`"`) or characters reserved by XML.
 
@@ -102,6 +103,32 @@ Use `^` and `$` to disable this behavior and match the exact line start or end.
 
 If you need to match a literal `^` at the start of a line, use `^^`.
 Similarly, use `$$` to match a literal `$` at the end of a line.
+
+## Comment filtering
+
+Use the optional `comments` attribute to reduce comment noise in the embedded snippet:
+
+````markdown
+<embed-code
+  file="src/main/java/example/ValidatingBuilder.java"
+  start="public interface ValidatingBuilder"
+  end="^}"
+  comments="none"></embed-code>
+```java
+```
+````
+
+Supported values:
+
+- `all` — retain all comments. This is the default.
+- `none` — strip all recognized comments.
+- `documentation` — retain documentation comments such as Javadoc, KDoc, and `///`.
+- `end-of-line` — retain line comments such as `//` and `#`.
+- `block` — retain block comments such as `/* */`.
+
+Comment filtering is selected by source file extension. The built-in registry covers Java,
+Groovy, Kotlin, KTS, C/C++, C#, JavaScript, TypeScript, YAML, XML, HTML, Go, and Basic-family
+files. Unknown extensions are embedded unchanged.
 
 ## Advanced use cases
 
