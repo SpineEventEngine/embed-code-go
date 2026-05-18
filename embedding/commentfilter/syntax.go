@@ -68,15 +68,24 @@ func normalizeExtension(extension string) string {
 	return "." + normalized
 }
 
-var cLikeSyntax = Syntax{
+var javaStyleSyntax = Syntax{
 	Line: []LineSyntax{
-		{Prefix: "///", Documentation: true},
-		{Prefix: "//!", Documentation: true},
 		{Prefix: "//", Documentation: false},
 	},
 	Block: []BlockSyntax{
 		{Start: "/**", End: "*/", Documentation: true},
-		{Start: "/*!", End: "*/", Documentation: true},
+		{Start: "/*", End: "*/", Documentation: false},
+	},
+	QuoteChars: "\"'`",
+}
+
+var csharpSyntax = Syntax{
+	Line: []LineSyntax{
+		{Prefix: "///", Documentation: true},
+		{Prefix: "//", Documentation: false},
+	},
+	Block: []BlockSyntax{
+		{Start: "/**", End: "*/", Documentation: true},
 		{Start: "/*", End: "*/", Documentation: false},
 	},
 	QuoteChars: "\"'`",
@@ -104,23 +113,15 @@ var basicSyntax = Syntax{
 }
 
 var syntaxesByExtension = map[string]Syntax{
-	".java":       cLikeSyntax,
-	".groovy":     cLikeSyntax,
-	".kt":         cLikeSyntax,
-	".kts":        cLikeSyntax,
-	".c":          cLikeSyntax,
-	".cc":         cLikeSyntax,
-	".cpp":        cLikeSyntax,
-	".cxx":        cLikeSyntax,
-	".h":          cLikeSyntax,
-	".hh":         cLikeSyntax,
-	".hpp":        cLikeSyntax,
-	".cs":         cLikeSyntax,
-	".js":         cLikeSyntax,
-	".jsx":        cLikeSyntax,
-	".ts":         cLikeSyntax,
-	".tsx":        cLikeSyntax,
-	".go":         cLikeSyntax,
+	".java":       javaStyleSyntax,
+	".groovy":     javaStyleSyntax,
+	".kt":         javaStyleSyntax,
+	".kts":        javaStyleSyntax,
+	".cs":         csharpSyntax,
+	".js":         javaStyleSyntax,
+	".jsx":        javaStyleSyntax,
+	".ts":         javaStyleSyntax,
+	".tsx":        javaStyleSyntax,
 	".yml":        hashLineSyntax,
 	".yaml":       hashLineSyntax,
 	".xml":        xmlSyntax,
