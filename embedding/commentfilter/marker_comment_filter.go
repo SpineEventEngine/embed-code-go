@@ -31,6 +31,16 @@ type blockState struct {
 	keep   bool
 }
 
+type markerLineFilter struct {
+	filter     MarkerCommentFilter
+	line       string
+	mode       Mode
+	state      *blockState
+	result     strings.Builder
+	position   int
+	hadComment bool
+}
+
 // Filter removes or preserves recognized comments across all lines.
 func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
 	var filtered []string
@@ -48,68 +58,116 @@ func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
 
 // filterLine removes or preserves recognized comments from a single source line.
 func (f MarkerCommentFilter) filterLine(line string, mode Mode, state *blockState) (string, bool) {
-	var result strings.Builder
-	position := 0
-	hadComment := false
-
-	for position < len(line) {
-		if state.active {
-			hadComment = true
-			end := strings.Index(line[position:], state.block.End)
-			if end < 0 {
-				if state.keep {
-					result.WriteString(line[position:])
-				}
-				return result.String(), hadComment
-			}
-			endPosition := position + end + len(state.block.End)
-			if state.keep {
-				result.WriteString(line[position:endPosition])
-			}
-			position = endPosition
-			state.active = false
-			continue
-		}
-
-		if quoteEnd := quotedSegmentEnd(line, position, f.Syntax.QuoteChars); quoteEnd > position {
-			result.WriteString(line[position:quoteEnd])
-			position = quoteEnd
-			continue
-		}
-		if _, found := documentationInlineAt(line, position, f.Syntax); found {
-			hadComment = true
-			if mode == RetainDocumentation {
-				result.WriteString(line[position:])
-			}
-			break
-		}
-		if block, found := documentationBlockAt(line, position, f.Syntax); found {
-			hadComment = true
-			state.active = true
-			state.block = block
-			state.keep = mode == RetainDocumentation
-			continue
-		}
-		if _, found := inlineCommentAt(line, position, f.Syntax); found {
-			hadComment = true
-			if mode == RetainInline || mode == RetainRegular {
-				result.WriteString(line[position:])
-			}
-			break
-		}
-		if block, found := blockCommentAt(line, position, f.Syntax); found {
-			hadComment = true
-			state.active = true
-			state.block = block
-			state.keep = mode == RetainBlock || mode == RetainRegular
-			continue
-		}
-
-		result.WriteByte(line[position])
-		position++
+	filter := markerLineFilter{
+		filter: f,
+		line:   line,
+		mode:   mode,
+		state:  state,
 	}
 
-	return result.String(), hadComment
+	return filter.filterLine()
+}
+
+// filterLine walks the current line until it reaches its end or a line comment.
+func (f *markerLineFilter) filterLine() (string, bool) {
+	for f.position < len(f.line) {
+		if f.consumeActiveBlock() {
+			continue
+		}
+		if f.consumeQuotedSegment() {
+			continue
+		}
+		if consumed, stop := f.consumeComment(); consumed {
+			if stop {
+				break
+			}
+			continue
+		}
+		f.consumeCodeByte()
+	}
+
+	return f.result.String(), f.hadComment
+}
+
+// consumeActiveBlock consumes text while the scanner is inside a block comment.
+func (f *markerLineFilter) consumeActiveBlock() bool {
+	if !f.state.active {
+		return false
+	}
+	f.hadComment = true
+	end := strings.Index(f.line[f.position:], f.state.block.End)
+	if end < 0 {
+		if f.state.keep {
+			f.result.WriteString(f.line[f.position:])
+		}
+		f.position = len(f.line)
+		return true
+	}
+	endPosition := f.position + end + len(f.state.block.End)
+	if f.state.keep {
+		f.result.WriteString(f.line[f.position:endPosition])
+	}
+	f.position = endPosition
+	f.state.active = false
+
+	return true
+}
+
+// consumeQuotedSegment copies a quoted segment without scanning comment markers inside it.
+func (f *markerLineFilter) consumeQuotedSegment() bool {
+	quoteEnd := quotedSegmentEnd(f.line, f.position, f.filter.Syntax.QuoteChars)
+	if quoteEnd <= f.position {
+		return false
+	}
+	f.result.WriteString(f.line[f.position:quoteEnd])
+	f.position = quoteEnd
+
+	return true
+}
+
+// consumeComment consumes a comment and reports whether it consumed input and ended the line.
+func (f *markerLineFilter) consumeComment() (bool, bool) {
+	if _, found := documentationInlineAt(f.line, f.position, f.filter.Syntax); found {
+		f.consumeInlineComment(f.mode == RetainDocumentation)
+		return true, true
+	}
+	if block, found := documentationBlockAt(f.line, f.position, f.filter.Syntax); found {
+		f.startBlockComment(block, f.mode == RetainDocumentation)
+		return true, false
+	}
+	if _, found := inlineCommentAt(f.line, f.position, f.filter.Syntax); found {
+		f.consumeInlineComment(f.mode == RetainInline || f.mode == RetainRegular)
+		return true, true
+	}
+	if block, found := blockCommentAt(f.line, f.position, f.filter.Syntax); found {
+		f.startBlockComment(block, f.mode == RetainBlock || f.mode == RetainRegular)
+		return true, false
+	}
+
+	return false, false
+}
+
+// consumeInlineComment consumes the rest of the line as a line comment.
+func (f *markerLineFilter) consumeInlineComment(keep bool) {
+	f.hadComment = true
+	if keep {
+		f.result.WriteString(f.line[f.position:])
+	}
+	f.position = len(f.line)
+}
+
+// startBlockComment records the active block comment markers and whether to keep them.
+func (f *markerLineFilter) startBlockComment(block BlockSyntax, keep bool) {
+	f.hadComment = true
+	f.state.active = true
+	f.state.block = block
+	f.state.keep = keep
+}
+
+// consumeCodeByte copies one source byte that does not belong to a recognized comment.
+func (f *markerLineFilter) consumeCodeByte() {
+	f.result.WriteByte(f.line[f.position])
+	f.position++
 }
 
 // documentationInlineAt reports whether a documentation line comment starts at the position.
