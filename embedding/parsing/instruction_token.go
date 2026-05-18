@@ -78,6 +78,7 @@ func (e EmbedInstructionTokenState) Accept(context *Context,
 
 		instruction, err := FromXML(strings.Join(instructionBody, " "), config)
 		if err == nil {
+			instruction.DocumentationFile = context.MarkdownFilePath
 			context.SetEmbedding(&instruction)
 		} else {
 			parseErr = err

@@ -45,14 +45,17 @@ import (
 //
 // CommentMode — specifies which comments are retained in the embedded code.
 //
+// DocumentationFile — a documentation file containing the instruction.
+//
 // Configuration — a Configuration with all embed-code settings.
 type Instruction struct {
-	CodeFile      string
-	Fragment      string
-	StartPattern  *Pattern
-	EndPattern    *Pattern
-	CommentMode   commentfilter.Mode
-	Configuration configuration.Configuration
+	CodeFile          string
+	Fragment          string
+	StartPattern      *Pattern
+	EndPattern        *Pattern
+	CommentMode       commentfilter.Mode
+	DocumentationFile string
+	Configuration     configuration.Configuration
 }
 
 // NewInstruction creates an Instruction based on provided attributes and configuration.
@@ -118,7 +121,7 @@ func (e Instruction) Content() ([]string, error) {
 		fileContent = e.matchingLines(fileContent)
 	}
 
-	return commentfilter.Filter(fileContent, e.CodeFile, e.CommentMode), nil
+	return commentfilter.Filter(fileContent, e.CodeFile, e.CommentMode, e.DocumentationFile), nil
 }
 
 // Returns string representation of Instruction.

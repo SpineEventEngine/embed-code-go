@@ -19,7 +19,10 @@
 package commentfilter
 
 import (
+	"bytes"
+	"log/slog"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -201,15 +204,57 @@ func TestFilterUnsupportedExtension(t *testing.T) {
 		"sub call { } # inline",
 	}
 
-	assertFiltered(t, "service.pl", RetainNone, lines, lines)
+	assertFiltered(t, "service.pl", RetainAll, lines, lines)
+}
+
+// TestFilterWarnsAboutUselessMode verifies warnings for modes without language-specific meaning.
+func TestFilterWarnsAboutUselessMode(t *testing.T) {
+	output := captureWarnings(func() {
+		Filter([]string{"<!-- comment -->"}, "layout.xml", RetainDocumentation, "docs/guide.md")
+	})
+
+	if !strings.Contains(output, "documentation") ||
+		!strings.Contains(output, "layout.xml") ||
+		!strings.Contains(output, "file://") ||
+		!strings.Contains(output, "docs/guide.md") ||
+		!strings.Contains(output, "does not have a distinct meaning") {
+		t.Fatalf("warning output = %q", output)
+	}
+}
+
+// TestFilterWarnsAboutUnsupportedExtension verifies warnings for unsupported file extensions.
+func TestFilterWarnsAboutUnsupportedExtension(t *testing.T) {
+	output := captureWarnings(func() {
+		Filter([]string{"# comment"}, "service.pl", RetainNone, "docs/guide.md")
+	})
+
+	if !strings.Contains(output, "comment filtering is not supported for this file extension") ||
+		!strings.Contains(output, "file://") ||
+		!strings.Contains(output, "docs/guide.md") {
+		t.Fatalf("warning output = %q", output)
+	}
 }
 
 // assertFiltered verifies filtering output for one file path and mode.
 func assertFiltered(t *testing.T, filePath string, mode Mode, lines []string, expected []string) {
 	t.Helper()
 
-	got := Filter(lines, filePath, mode)
+	got := Filter(lines, filePath, mode, "docs/guide.md")
 	if !reflect.DeepEqual(got, expected) {
 		t.Fatalf("Filter() = %#v, expected %#v", got, expected)
 	}
+}
+
+// captureWarnings runs action and returns slog warning output.
+func captureWarnings(action func()) string {
+	var output bytes.Buffer
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&output, &slog.HandlerOptions{
+		Level: slog.LevelWarn,
+	})))
+	defer slog.SetDefault(previous)
+
+	action()
+
+	return output.String()
 }

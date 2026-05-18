@@ -19,6 +19,8 @@
 package commentfilter
 
 import (
+	"fmt"
+	"log/slog"
 	"path/filepath"
 	"strings"
 )
@@ -48,11 +50,23 @@ type Filterer interface {
 	Filter(lines []string, mode Mode) []string
 }
 
-// filterFor returns the comment filter registered for the given file path.
-func filterFor(filePath string) (Filterer, bool) {
+// filterEntry stores a comment filter and the modes that make sense for its language.
+type filterEntry struct {
+	filter      Filterer
+	usefulModes map[Mode]struct{}
+}
+
+// filterFor returns the comment filter registered for the given file path and warns on odd modes.
+func filterFor(filePath string, mode Mode, embeddingDocPath string) (Filterer, bool) {
 	extension := normalizeExtension(filepath.Ext(filePath))
-	filter, found := filtersByExtension[extension]
-	return filter, found
+	entry, found := filtersByExtension[extension]
+	if !found {
+		warnUnsupportedCommentsMode(filePath, mode, embeddingDocPath)
+		return nil, false
+	}
+	warnUselessCommentsMode(filePath, mode, embeddingDocPath, entry.usefulModes)
+
+	return entry.filter, true
 }
 
 // normalizeExtension returns a lowercase file extension with a leading dot.
@@ -100,36 +114,143 @@ var xmlSyntax = Syntax{
 	QuoteChars: "\"'",
 }
 
-var filtersByExtension = map[string]Filterer{
+var allCommentModes = usefulModes(
+	RetainAll,
+	RetainNone,
+	RetainDocumentation,
+	RetainRegular,
+	RetainInline,
+	RetainBlock,
+)
+
+var allOrNoneCommentModes = usefulModes(RetainAll, RetainNone)
+
+var regularAndDocCommentModes = usefulModes(
+	RetainAll,
+	RetainNone,
+	RetainDocumentation,
+	RetainRegular,
+)
+
+var filtersByExtension = map[string]filterEntry{
 	// Java/Kotlin
-	".java":   MarkerCommentFilter{Syntax: javaStyleSyntax},
-	".kt":     MarkerCommentFilter{Syntax: javaStyleSyntax},
-	".kts":    MarkerCommentFilter{Syntax: javaStyleSyntax},
-	".groovy": MarkerCommentFilter{Syntax: javaStyleSyntax},
+	".java":   newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
+	".kt":     newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
+	".kts":    newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
+	".groovy": newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
 
 	// C#
-	".cs": MarkerCommentFilter{Syntax: csharpSyntax},
+	".cs": newFilterEntry(MarkerCommentFilter{Syntax: csharpSyntax}, allCommentModes),
 
 	// JavaScript
-	".js":  MarkerCommentFilter{Syntax: javaStyleSyntax},
-	".jsx": MarkerCommentFilter{Syntax: javaStyleSyntax},
-	".ts":  MarkerCommentFilter{Syntax: javaStyleSyntax},
-	".tsx": MarkerCommentFilter{Syntax: javaStyleSyntax},
+	".js":  newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
+	".jsx": newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
+	".ts":  newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
+	".tsx": newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
 
 	// YAML
-	".yml":  MarkerCommentFilter{Syntax: hashLineSyntax},
-	".yaml": MarkerCommentFilter{Syntax: hashLineSyntax},
+	".yml":  newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
+	".yaml": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
 
 	// XML
-	".xml": MarkerCommentFilter{Syntax: xmlSyntax},
+	".xml": newFilterEntry(MarkerCommentFilter{Syntax: xmlSyntax}, allOrNoneCommentModes),
 
 	// HTML
-	".html": MarkerCommentFilter{Syntax: xmlSyntax},
-	".htm":  MarkerCommentFilter{Syntax: xmlSyntax},
+	".html": newFilterEntry(MarkerCommentFilter{Syntax: xmlSyntax}, allOrNoneCommentModes),
+	".htm":  newFilterEntry(MarkerCommentFilter{Syntax: xmlSyntax}, allOrNoneCommentModes),
 
 	// Visual Basic
-	".vb":       VisualBasicCommentFilter{},
-	".bas":      VisualBasicCommentFilter{},
-	".vbs":      VisualBasicCommentFilter{},
-	".vbscript": VisualBasicCommentFilter{},
+	".vb":       newFilterEntry(VisualBasicCommentFilter{}, regularAndDocCommentModes),
+	".bas":      newFilterEntry(VisualBasicCommentFilter{}, regularAndDocCommentModes),
+	".vbs":      newFilterEntry(VisualBasicCommentFilter{}, regularAndDocCommentModes),
+	".vbscript": newFilterEntry(VisualBasicCommentFilter{}, regularAndDocCommentModes),
+}
+
+// usefulModes creates a lookup set for comment modes that make sense for a language.
+func usefulModes(modes ...Mode) map[Mode]struct{} {
+	result := make(map[Mode]struct{}, len(modes))
+	for _, mode := range modes {
+		result[mode] = struct{}{}
+	}
+
+	return result
+}
+
+// newFilterEntry creates a filter registry entry.
+func newFilterEntry(filter Filterer, usefulModes map[Mode]struct{}) filterEntry {
+	return filterEntry{
+		filter:      filter,
+		usefulModes: usefulModes,
+	}
+}
+
+// warnUnsupportedCommentsMode logs when comments filtering is requested for an unsupported file.
+func warnUnsupportedCommentsMode(filePath string, mode Mode, embeddingDocPath string) {
+	if mode == RetainAll {
+		return
+	}
+	slog.Warn(
+		fmt.Sprintf(
+			"`comments=\"%s\"` was requested in `%s` for `%s`, "+
+				"but comment filtering is not supported for this file extension.",
+			mode,
+			fileURL(embeddingDocPath),
+			filePath,
+		),
+	)
+}
+
+// warnUselessCommentsMode logs when the selected mode has no distinct meaning for a file.
+func warnUselessCommentsMode(
+	filePath string,
+	mode Mode,
+	embeddingDocPath string,
+	usefulModes map[Mode]struct{},
+) {
+	if _, found := usefulModes[mode]; found {
+		return
+	}
+	slog.Warn(
+		fmt.Sprintf(
+			"`comments=\"%s\"` was requested in `%s` for `%s`, but this mode does not have "+
+				"a distinct meaning for this file type. Useful modes are: %s.",
+			mode,
+			fileURL(embeddingDocPath),
+			filePath,
+			formatModes(usefulModes),
+		),
+	)
+}
+
+// fileURL returns an absolute file URL for a local path.
+func fileURL(path string) string {
+	if path == "" {
+		return "file://<unknown>"
+	}
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return "file://" + path
+	}
+
+	return "file://" + absolutePath
+}
+
+// formatModes formats modes for a warning message.
+func formatModes(modes map[Mode]struct{}) string {
+	order := []Mode{
+		RetainAll,
+		RetainNone,
+		RetainDocumentation,
+		RetainRegular,
+		RetainInline,
+		RetainBlock,
+	}
+	var result []string
+	for _, mode := range order {
+		if _, found := modes[mode]; found {
+			result = append(result, fmt.Sprintf("`%s`", mode))
+		}
+	}
+
+	return strings.Join(result, ", ")
 }
