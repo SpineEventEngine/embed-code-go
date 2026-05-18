@@ -23,39 +23,36 @@ import (
 	"strings"
 )
 
-// LineSyntax describes a single-line comment marker.
-type LineSyntax struct {
-	Prefix        string
-	Documentation bool
-}
-
 // BlockSyntax describes a block comment marker pair.
 type BlockSyntax struct {
-	Start         string
-	End           string
-	Documentation bool
+	Start string
+	End   string
 }
 
-// Syntax describes comment markers and string delimiters for a language family.
+// DocumentationSyntax describes API documentation comment markers.
+type DocumentationSyntax struct {
+	Inline []string
+	Block  []BlockSyntax
+}
+
+// Syntax describes lexical comment markers and string delimiters for a language family.
 type Syntax struct {
-	Line       []LineSyntax
-	Block      []BlockSyntax
-	QuoteChars string
+	Inline        []string
+	Block         []BlockSyntax
+	Documentation DocumentationSyntax
+	QuoteChars    string
 }
 
-// SyntaxFor returns the comment syntax registered for the given file path.
-func SyntaxFor(filePath string) Syntax {
+// Filterer removes or preserves source comments according to the requested mode.
+type Filterer interface {
+	Filter(lines []string, mode Mode) []string
+}
+
+// filterFor returns the comment filter registered for the given file path.
+func filterFor(filePath string) (Filterer, bool) {
 	extension := normalizeExtension(filepath.Ext(filePath))
-	if syntax, found := syntaxesByExtension[extension]; found {
-		return syntax
-	}
-
-	return Syntax{}
-}
-
-// RegisterSyntax registers comment syntax for a source file extension.
-func RegisterSyntax(extension string, syntax Syntax) {
-	syntaxesByExtension[normalizeExtension(extension)] = syntax
+	filter, found := filtersByExtension[extension]
+	return filter, found
 }
 
 // normalizeExtension returns a lowercase file extension with a leading dot.
@@ -69,67 +66,70 @@ func normalizeExtension(extension string) string {
 }
 
 var javaStyleSyntax = Syntax{
-	Line: []LineSyntax{
-		{Prefix: "//", Documentation: false},
-	},
+	Inline: []string{"//"},
 	Block: []BlockSyntax{
-		{Start: "/**", End: "*/", Documentation: true},
-		{Start: "/*", End: "*/", Documentation: false},
+		{Start: "/*", End: "*/"},
+	},
+	Documentation: DocumentationSyntax{
+		Block: []BlockSyntax{{Start: "/**", End: "*/"}},
 	},
 	QuoteChars: "\"'`",
 }
 
 var csharpSyntax = Syntax{
-	Line: []LineSyntax{
-		{Prefix: "///", Documentation: true},
-		{Prefix: "//", Documentation: false},
-	},
+	Inline: []string{"//"},
 	Block: []BlockSyntax{
-		{Start: "/**", End: "*/", Documentation: true},
-		{Start: "/*", End: "*/", Documentation: false},
+		{Start: "/*", End: "*/"},
+	},
+	Documentation: DocumentationSyntax{
+		Inline: []string{"///"},
+		Block:  []BlockSyntax{{Start: "/**", End: "*/"}},
 	},
 	QuoteChars: "\"'`",
 }
 
 var hashLineSyntax = Syntax{
-	Line: []LineSyntax{
-		{Prefix: "#", Documentation: false},
-	},
+	Inline:     []string{"#"},
 	QuoteChars: "\"'",
 }
 
 var xmlSyntax = Syntax{
 	Block: []BlockSyntax{
-		{Start: "<!--", End: "-->", Documentation: false},
+		{Start: "<!--", End: "-->"},
 	},
 	QuoteChars: "\"'",
 }
 
-var basicSyntax = Syntax{
-	Line: []LineSyntax{
-		{Prefix: "'", Documentation: false},
-	},
-	QuoteChars: "\"",
-}
+var filtersByExtension = map[string]Filterer{
+	// Java/Kotlin
+	".java":   MarkerCommentFilter{Syntax: javaStyleSyntax},
+	".kt":     MarkerCommentFilter{Syntax: javaStyleSyntax},
+	".kts":    MarkerCommentFilter{Syntax: javaStyleSyntax},
+	".groovy": MarkerCommentFilter{Syntax: javaStyleSyntax},
 
-var syntaxesByExtension = map[string]Syntax{
-	".java":       javaStyleSyntax,
-	".groovy":     javaStyleSyntax,
-	".kt":         javaStyleSyntax,
-	".kts":        javaStyleSyntax,
-	".cs":         csharpSyntax,
-	".js":         javaStyleSyntax,
-	".jsx":        javaStyleSyntax,
-	".ts":         javaStyleSyntax,
-	".tsx":        javaStyleSyntax,
-	".yml":        hashLineSyntax,
-	".yaml":       hashLineSyntax,
-	".xml":        xmlSyntax,
-	".html":       xmlSyntax,
-	".htm":        xmlSyntax,
-	".vb":         basicSyntax,
-	".bas":        basicSyntax,
-	".vbs":        basicSyntax,
-	".vbscript":   basicSyntax,
-	".properties": hashLineSyntax,
+	// C#
+	".cs": MarkerCommentFilter{Syntax: csharpSyntax},
+
+	// JavaScript
+	".js":  MarkerCommentFilter{Syntax: javaStyleSyntax},
+	".jsx": MarkerCommentFilter{Syntax: javaStyleSyntax},
+	".ts":  MarkerCommentFilter{Syntax: javaStyleSyntax},
+	".tsx": MarkerCommentFilter{Syntax: javaStyleSyntax},
+
+	// YAML
+	".yml":  MarkerCommentFilter{Syntax: hashLineSyntax},
+	".yaml": MarkerCommentFilter{Syntax: hashLineSyntax},
+
+	// XML
+	".xml": MarkerCommentFilter{Syntax: xmlSyntax},
+
+	// HTML
+	".html": MarkerCommentFilter{Syntax: xmlSyntax},
+	".htm":  MarkerCommentFilter{Syntax: xmlSyntax},
+
+	// Visual Basic
+	".vb":       VisualBasicFilter{},
+	".bas":      VisualBasicFilter{},
+	".vbs":      VisualBasicFilter{},
+	".vbscript": VisualBasicFilter{},
 }

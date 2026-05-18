@@ -25,26 +25,31 @@ func Filter(lines []string, filePath string, mode Mode) []string {
 	if mode == RetainAll {
 		return lines
 	}
-	syntax := SyntaxFor(filePath)
-	if len(syntax.Line) == 0 && len(syntax.Block) == 0 {
+	filter, found := filterFor(filePath)
+	if !found {
 		return lines
 	}
 
-	return filterLines(lines, syntax, mode)
+	return filter.Filter(lines, mode)
+}
+
+// MarkerCommentFilter removes comments using lexical markers declared in Syntax.
+type MarkerCommentFilter struct {
+	Syntax Syntax
 }
 
 type blockState struct {
 	active bool
-	syntax BlockSyntax
+	block  BlockSyntax
 	keep   bool
 }
 
-// filterLines removes or preserves recognized comments across all lines.
-func filterLines(lines []string, syntax Syntax, mode Mode) []string {
+// Filter removes or preserves recognized comments across all lines.
+func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
 	var filtered []string
 	state := blockState{}
 	for _, line := range lines {
-		filteredLine, hadComment := filterLine(line, syntax, mode, &state)
+		filteredLine, hadComment := f.filterLine(line, mode, &state)
 		if hadComment && strings.TrimSpace(filteredLine) == "" {
 			continue
 		}
@@ -55,7 +60,7 @@ func filterLines(lines []string, syntax Syntax, mode Mode) []string {
 }
 
 // filterLine removes or preserves recognized comments from a single source line.
-func filterLine(line string, syntax Syntax, mode Mode, state *blockState) (string, bool) {
+func (f MarkerCommentFilter) filterLine(line string, mode Mode, state *blockState) (string, bool) {
 	var result strings.Builder
 	position := 0
 	hadComment := false
@@ -63,14 +68,14 @@ func filterLine(line string, syntax Syntax, mode Mode, state *blockState) (strin
 	for position < len(line) {
 		if state.active {
 			hadComment = true
-			end := strings.Index(line[position:], state.syntax.End)
+			end := strings.Index(line[position:], state.block.End)
 			if end < 0 {
 				if state.keep {
 					result.WriteString(line[position:])
 				}
 				return result.String(), hadComment
 			}
-			endPosition := position + end + len(state.syntax.End)
+			endPosition := position + end + len(state.block.End)
 			if state.keep {
 				result.WriteString(line[position:endPosition])
 			}
@@ -79,23 +84,37 @@ func filterLine(line string, syntax Syntax, mode Mode, state *blockState) (strin
 			continue
 		}
 
-		if quoteEnd := quotedSegmentEnd(line, position, syntax.QuoteChars); quoteEnd > position {
+		if quoteEnd := quotedSegmentEnd(line, position, f.Syntax.QuoteChars); quoteEnd > position {
 			result.WriteString(line[position:quoteEnd])
 			position = quoteEnd
 			continue
 		}
-		if lineSyntax, found := lineCommentAt(line, position, syntax); found {
+		if _, found := documentationInlineAt(line, position, f.Syntax); found {
 			hadComment = true
-			if keepLineComment(lineSyntax, mode) {
+			if mode == RetainDocumentation {
 				result.WriteString(line[position:])
 			}
 			break
 		}
-		if blockSyntax, found := blockCommentAt(line, position, syntax); found {
+		if block, found := documentationBlockAt(line, position, f.Syntax); found {
 			hadComment = true
 			state.active = true
-			state.syntax = blockSyntax
-			state.keep = keepBlockComment(blockSyntax, mode)
+			state.block = block
+			state.keep = mode == RetainDocumentation
+			continue
+		}
+		if _, found := inlineCommentAt(line, position, f.Syntax); found {
+			hadComment = true
+			if mode == RetainInline || mode == RetainRegular {
+				result.WriteString(line[position:])
+			}
+			break
+		}
+		if block, found := blockCommentAt(line, position, f.Syntax); found {
+			hadComment = true
+			state.active = true
+			state.block = block
+			state.keep = mode == RetainBlock || mode == RetainRegular
 			continue
 		}
 
@@ -127,34 +146,44 @@ func quotedSegmentEnd(line string, position int, quoteChars string) int {
 	return len(line)
 }
 
-// lineCommentAt reports whether a line comment starts at the given position.
-func lineCommentAt(line string, position int, syntax Syntax) (LineSyntax, bool) {
-	for _, lineSyntax := range syntax.Line {
-		if strings.HasPrefix(line[position:], lineSyntax.Prefix) {
-			return lineSyntax, true
-		}
-	}
+// documentationInlineAt reports whether a documentation line comment starts at the position.
+func documentationInlineAt(line string, position int, syntax Syntax) (string, bool) {
+	return prefixAt(line, position, syntax.Documentation.Inline)
+}
 
-	return LineSyntax{}, false
+// documentationBlockAt reports whether a documentation block comment starts at the position.
+func documentationBlockAt(line string, position int, syntax Syntax) (BlockSyntax, bool) {
+	return blockAt(line, position, syntax.Documentation.Block)
+}
+
+// inlineCommentAt reports whether an inline comment starts at the given position.
+func inlineCommentAt(line string, position int, syntax Syntax) (string, bool) {
+	return prefixAt(line, position, syntax.Inline)
 }
 
 // blockCommentAt reports whether a block comment starts at the given position.
 func blockCommentAt(line string, position int, syntax Syntax) (BlockSyntax, bool) {
-	for _, blockSyntax := range syntax.Block {
-		if strings.HasPrefix(line[position:], blockSyntax.Start) {
-			return blockSyntax, true
+	return blockAt(line, position, syntax.Block)
+}
+
+// prefixAt reports whether one of the given prefixes starts at the position.
+func prefixAt(line string, position int, prefixes []string) (string, bool) {
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(line[position:], prefix) {
+			return prefix, true
+		}
+	}
+
+	return "", false
+}
+
+// blockAt reports whether one of the given block markers starts at the position.
+func blockAt(line string, position int, blocks []BlockSyntax) (BlockSyntax, bool) {
+	for _, block := range blocks {
+		if strings.HasPrefix(line[position:], block.Start) {
+			return block, true
 		}
 	}
 
 	return BlockSyntax{}, false
-}
-
-// keepLineComment reports whether the mode retains the given line comment kind.
-func keepLineComment(lineSyntax LineSyntax, mode Mode) bool {
-	return mode == RetainInline || mode == RetainDocumentation && lineSyntax.Documentation
-}
-
-// keepBlockComment reports whether the mode retains the given block comment kind.
-func keepBlockComment(blockSyntax BlockSyntax, mode Mode) bool {
-	return mode == RetainBlock || mode == RetainDocumentation && blockSyntax.Documentation
 }

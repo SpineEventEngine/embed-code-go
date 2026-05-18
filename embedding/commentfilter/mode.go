@@ -30,6 +30,8 @@ const (
 	RetainNone Mode = "none"
 	// RetainDocumentation keeps only API documentation comments.
 	RetainDocumentation Mode = "documentation"
+	// RetainRegular keeps inline and block comments that are not documentation comments.
+	RetainRegular Mode = "regular"
 	// RetainInline keeps only inline comments such as `//` and `#`.
 	RetainInline Mode = "inline"
 	// RetainBlock keeps only block comments such as `/* */`.
@@ -41,10 +43,10 @@ func ParseMode(value string) (Mode, error) {
 	switch Mode(value) {
 	case "":
 		return RetainAll, nil
-	case RetainAll, RetainNone, RetainDocumentation, RetainInline, RetainBlock:
+	case RetainAll, RetainNone, RetainDocumentation, RetainRegular, RetainInline, RetainBlock:
 		return Mode(value), nil
 	default:
 		return "", fmt.Errorf("unsupported comments value `%s`; expected one of "+
-			"`all`, `none`, `documentation`, `inline`, or `block`", value)
+			"`all`, `none`, `documentation`, `regular`, `inline`, or `block`", value)
 	}
 }
