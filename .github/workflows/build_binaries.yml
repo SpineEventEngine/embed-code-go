@@ -2,7 +2,7 @@ name: Build and Commit Binaries
 
 on:
   push:
-#    branches: [ master ]
+    branches: [ master ]
     paths-ignore: # Prevents the workflow from running on binaries changes.
       - 'bin/**'
 
@@ -54,10 +54,10 @@ jobs:
           GOOS=darwin GOARCH=amd64 go build -trimpath -o bin/embed-code-macos main.go
           && chmod +x bin/embed-code-macos
 
-#      - name: Commit Built Files
-#        uses: EndBug/add-and-commit@v9
-#        with:
-#          add: './bin'
-#          message: 'Update binaries.'
-#          default_author: github_actions
-#          push: true
+      - name: Commit Built Files
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: './bin'
+          message: 'Update binaries.'
+          default_author: github_actions
+          push: true
