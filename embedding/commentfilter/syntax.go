@@ -57,14 +57,19 @@ type filterEntry struct {
 }
 
 // filterFor returns the comment filter registered for the given file path and warns on odd modes.
-func filterFor(filePath string, mode Mode, embeddingDocPath string) (Filterer, bool) {
+func filterFor(
+	filePath string,
+	mode Mode,
+	embeddingDocPath string,
+	embeddingLine int,
+) (Filterer, bool) {
 	extension := normalizeExtension(filepath.Ext(filePath))
 	entry, found := filtersByExtension[extension]
 	if !found {
-		warnUnsupportedCommentsMode(filePath, mode, embeddingDocPath)
+		warnUnsupportedCommentsMode(filePath, mode, embeddingDocPath, embeddingLine)
 		return nil, false
 	}
-	warnUselessCommentsMode(filePath, mode, embeddingDocPath, entry.usefulModes)
+	warnUselessCommentsMode(filePath, mode, embeddingDocPath, embeddingLine, entry.usefulModes)
 
 	return entry.filter, true
 }
@@ -185,7 +190,7 @@ func newFilterEntry(filter Filterer, usefulModes map[Mode]struct{}) filterEntry 
 }
 
 // warnUnsupportedCommentsMode logs when comments filtering is requested for an unsupported file.
-func warnUnsupportedCommentsMode(filePath string, mode Mode, embeddingDocPath string) {
+func warnUnsupportedCommentsMode(filePath string, mode Mode, embeddingDocPath string, embeddingLine int) {
 	if mode == RetainAll {
 		return
 	}
@@ -194,7 +199,7 @@ func warnUnsupportedCommentsMode(filePath string, mode Mode, embeddingDocPath st
 			"`comments=\"%s\"` was requested in `%s` for `%s`, "+
 				"but comment filtering is not supported for this file extension.",
 			mode,
-			fileURL(embeddingDocPath),
+			fileURL(embeddingDocPath, embeddingLine),
 			filePath,
 		),
 	)
@@ -205,6 +210,7 @@ func warnUselessCommentsMode(
 	filePath string,
 	mode Mode,
 	embeddingDocPath string,
+	embeddingLine int,
 	usefulModes map[Mode]struct{},
 ) {
 	if _, found := usefulModes[mode]; found {
@@ -215,15 +221,15 @@ func warnUselessCommentsMode(
 			"`comments=\"%s\"` was requested in `%s` for `%s`, but this mode does not have "+
 				"a distinct meaning for this file type. Useful modes are: %s.",
 			mode,
-			fileURL(embeddingDocPath),
+			fileURL(embeddingDocPath, embeddingLine),
 			filePath,
 			formatModes(usefulModes),
 		),
 	)
 }
 
-// fileURL returns an absolute file URL for a local path.
-func fileURL(path string) string {
+// fileURL returns an absolute file URL for a local path and line.
+func fileURL(path string, line int) string {
 	if path == "" {
 		return "file://<unknown>"
 	}
@@ -232,7 +238,12 @@ func fileURL(path string) string {
 		return "file://" + path
 	}
 
-	return "file://" + absolutePath
+	url := "file://" + absolutePath
+	if line > 0 {
+		url = fmt.Sprintf("%s:%d", url, line)
+	}
+
+	return url
 }
 
 // formatModes formats modes for a warning message.

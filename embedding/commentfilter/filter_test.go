@@ -210,13 +210,13 @@ func TestFilterUnsupportedExtension(t *testing.T) {
 // TestFilterWarnsAboutUselessMode verifies warnings for modes without language-specific meaning.
 func TestFilterWarnsAboutUselessMode(t *testing.T) {
 	output := captureWarnings(func() {
-		Filter([]string{"<!-- comment -->"}, "layout.xml", RetainDocumentation, "docs/guide.md")
+		Filter([]string{"<!-- comment -->"}, "layout.xml", RetainDocumentation, "docs/guide.md", 12)
 	})
 
 	if !strings.Contains(output, "documentation") ||
 		!strings.Contains(output, "layout.xml") ||
 		!strings.Contains(output, "file://") ||
-		!strings.Contains(output, "docs/guide.md") ||
+		!strings.Contains(output, "docs/guide.md:12") ||
 		!strings.Contains(output, "does not have a distinct meaning") {
 		t.Fatalf("warning output = %q", output)
 	}
@@ -225,12 +225,12 @@ func TestFilterWarnsAboutUselessMode(t *testing.T) {
 // TestFilterWarnsAboutUnsupportedExtension verifies warnings for unsupported file extensions.
 func TestFilterWarnsAboutUnsupportedExtension(t *testing.T) {
 	output := captureWarnings(func() {
-		Filter([]string{"# comment"}, "service.pl", RetainNone, "docs/guide.md")
+		Filter([]string{"# comment"}, "service.pl", RetainNone, "docs/guide.md", 12)
 	})
 
 	if !strings.Contains(output, "comment filtering is not supported for this file extension") ||
 		!strings.Contains(output, "file://") ||
-		!strings.Contains(output, "docs/guide.md") {
+		!strings.Contains(output, "docs/guide.md:12") {
 		t.Fatalf("warning output = %q", output)
 	}
 }
@@ -239,7 +239,7 @@ func TestFilterWarnsAboutUnsupportedExtension(t *testing.T) {
 func assertFiltered(t *testing.T, filePath string, mode Mode, lines []string, expected []string) {
 	t.Helper()
 
-	got := Filter(lines, filePath, mode, "docs/guide.md")
+	got := Filter(lines, filePath, mode, "docs/guide.md", 12)
 	if !reflect.DeepEqual(got, expected) {
 		t.Fatalf("Filter() = %#v, expected %#v", got, expected)
 	}

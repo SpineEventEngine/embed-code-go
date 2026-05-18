@@ -21,11 +21,17 @@ package commentfilter
 import "strings"
 
 // Filter returns source lines with comments retained according to the requested mode.
-func Filter(lines []string, filePath string, mode Mode, embeddingDocPath string) []string {
+func Filter(
+	lines []string,
+	filePath string,
+	mode Mode,
+	embeddingDocPath string,
+	embeddingLine int,
+) []string {
 	if mode == RetainAll {
 		return lines
 	}
-	filter, found := filterFor(filePath, mode, embeddingDocPath)
+	filter, found := filterFor(filePath, mode, embeddingDocPath, embeddingLine)
 	if !found {
 		return lines
 	}
