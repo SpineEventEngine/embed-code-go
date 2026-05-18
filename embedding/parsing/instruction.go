@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding/commentfilter"
 	"embed-code/embed-code-go/fragmentation"
 	"embed-code/embed-code-go/indent"
 )
@@ -42,12 +43,15 @@ import (
 // EndPattern — an optional glob-like pattern. If specified, lines after the matching one
 // are excluded.
 //
+// CommentMode — specifies which comments are retained in the embedded code.
+//
 // Configuration — a Configuration with all embed-code settings.
 type Instruction struct {
 	CodeFile      string
 	Fragment      string
 	StartPattern  *Pattern
 	EndPattern    *Pattern
+	CommentMode   commentfilter.Mode
 	Configuration configuration.Configuration
 }
 
@@ -60,6 +64,7 @@ type Instruction struct {
 //   - start — an optional glob-like pattern. If specified, lines before the matching one
 //     are excluded;
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
+//   - comments — an optional comment filtering mode. If omitted, all comments are retained.
 //
 // config — a Configuration with all embed-code settings.
 //
@@ -70,6 +75,10 @@ func NewInstruction(
 	fragment := attributes["fragment"]
 	startValue := attributes["start"]
 	endValue := attributes["end"]
+	commentMode, err := commentfilter.ParseMode(attributes["comments"])
+	if err != nil {
+		return Instruction{}, err
+	}
 
 	if fragment != "" && (startValue != "" || endValue != "") {
 		return Instruction{},
@@ -92,6 +101,7 @@ func NewInstruction(
 		Fragment:      fragment,
 		StartPattern:  start,
 		EndPattern:    end,
+		CommentMode:   commentMode,
 		Configuration: config,
 	}, nil
 }
@@ -105,16 +115,18 @@ func (e Instruction) Content() ([]string, error) {
 		return nil, err
 	}
 	if e.StartPattern != nil || e.EndPattern != nil {
-		return e.matchingLines(fileContent), nil
+		fileContent = e.matchingLines(fileContent)
 	}
 
-	return fileContent, nil
+	return commentfilter.Filter(fileContent, e.CodeFile, e.CommentMode), nil
 }
 
 // Returns string representation of Instruction.
 func (e Instruction) String() string {
-	return fmt.Sprintf("EmbeddingInstruction[file=`%s`, fragment=`%s`, start=`%s`, end=`%s`]",
-		e.CodeFile, e.Fragment, e.StartPattern, e.EndPattern)
+	return fmt.Sprintf(
+		"EmbeddingInstruction[file=`%s`, fragment=`%s`, start=`%s`, end=`%s`, comments=`%s`]",
+		e.CodeFile, e.Fragment, e.StartPattern, e.EndPattern, e.CommentMode,
+	)
 }
 
 // Filters and returns a subset of input lines based on start and end patterns.
