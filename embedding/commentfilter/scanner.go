@@ -18,21 +18,25 @@
 
 package commentfilter
 
-// Filter returns source lines with comments retained according to the requested mode.
-func Filter(
-	lines []string,
-	filePath string,
-	mode Mode,
-	embeddingDocPath string,
-	embeddingLine int,
-) []string {
-	if mode == RetainAll {
-		return lines
+import "strings"
+
+// quotedSegmentEnd returns the end offset of a quoted string starting at position.
+func quotedSegmentEnd(line string, position int, quoteChars string) int {
+	if position >= len(line) || !strings.ContainsRune(quoteChars, rune(line[position])) {
+		return position
 	}
-	filter, found := filterFor(filePath, mode, embeddingDocPath, embeddingLine)
-	if !found {
-		return lines
+	quote := line[position]
+	cursor := position + 1
+	for cursor < len(line) {
+		if line[cursor] == '\\' {
+			cursor += 2
+			continue
+		}
+		if line[cursor] == quote {
+			return cursor + 1
+		}
+		cursor++
 	}
 
-	return filter.Filter(lines, mode)
+	return len(line)
 }
