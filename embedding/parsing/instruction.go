@@ -47,6 +47,8 @@ import (
 //
 // DocumentationFile — a documentation file containing the instruction.
 //
+// DocumentationLine — a line containing the start of the instruction.
+//
 // Configuration — a Configuration with all embed-code settings.
 type Instruction struct {
 	CodeFile          string
@@ -55,6 +57,7 @@ type Instruction struct {
 	EndPattern        *Pattern
 	CommentMode       commentfilter.Mode
 	DocumentationFile string
+	DocumentationLine int
 	Configuration     configuration.Configuration
 }
 
@@ -121,7 +124,13 @@ func (e Instruction) Content() ([]string, error) {
 		fileContent = e.matchingLines(fileContent)
 	}
 
-	return commentfilter.Filter(fileContent, e.CodeFile, e.CommentMode, e.DocumentationFile), nil
+	return commentfilter.Filter(
+		fileContent,
+		e.CodeFile,
+		e.CommentMode,
+		e.DocumentationFile,
+		e.DocumentationLine,
+	), nil
 }
 
 // Returns string representation of Instruction.
