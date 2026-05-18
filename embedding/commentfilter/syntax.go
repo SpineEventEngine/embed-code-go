@@ -128,8 +128,8 @@ var filtersByExtension = map[string]Filterer{
 	".htm":  MarkerCommentFilter{Syntax: xmlSyntax},
 
 	// Visual Basic
-	".vb":       VisualBasicFilter{},
-	".bas":      VisualBasicFilter{},
-	".vbs":      VisualBasicFilter{},
-	".vbscript": VisualBasicFilter{},
+	".vb":       VisualBasicCommentFilter{},
+	".bas":      VisualBasicCommentFilter{},
+	".vbs":      VisualBasicCommentFilter{},
+	".vbscript": VisualBasicCommentFilter{},
 }
