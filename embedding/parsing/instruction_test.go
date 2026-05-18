@@ -36,6 +36,7 @@ type TestInstructionParams struct {
 	fragment  string
 	startGlob string
 	endGlob   string
+	comments  string
 	closeTag  bool
 }
 
@@ -82,6 +83,15 @@ var _ = Describe("Instruction", func() {
 		Expect(parsing.FromXML(xmlString, config)).Error().ShouldNot(HaveOccurred())
 	})
 
+	It("should have an error for unsupported comments mode", func() {
+		instructionParams := TestInstructionParams{
+			comments: "summary",
+		}
+		xmlString := buildInstruction("org/example/Comments.java", instructionParams)
+
+		Expect(parsing.FromXML(xmlString, config)).Error().Should(HaveOccurred())
+	})
+
 	It("should successfully read source content", func() {
 		instructionParams := TestInstructionParams{
 			closeTag: true,
@@ -96,6 +106,82 @@ var _ = Describe("Instruction", func() {
 
 		Expect(actualLines).Should(HaveLen(expectedLength))
 		Expect(actualLines[checkedLine]).Should(Equal(expectedLine))
+	})
+
+	It("should strip all recognized comments", func() {
+		instructionParams := TestInstructionParams{
+			comments: "none",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"org/example/Comments.java", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"package org.example;",
+			"",
+			"public interface Comments {",
+			"    String marker = \"http://example.org/*not-comment*/\";",
+			"",
+			"    String create(String name); ",
+			"}",
+		}))
+	})
+
+	It("should keep documentation comments only", func() {
+		instructionParams := TestInstructionParams{
+			comments: "documentation",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"org/example/Comments.java", instructionParams, config)
+
+		Expect(actualLines).Should(ContainElement("/**"))
+		Expect(actualLines).Should(ContainElement(" * Documents the public API."))
+		Expect(actualLines).ShouldNot(ContainElement("     * The block comment."))
+		Expect(actualLines).ShouldNot(ContainElement("    // Full-line inline comment."))
+	})
+
+	It("should keep inline comments only", func() {
+		instructionParams := TestInstructionParams{
+			comments: "inline",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"org/example/Comments.java", instructionParams, config)
+
+		Expect(actualLines).Should(ContainElement("    // Full-line inline comment."))
+		Expect(actualLines).Should(ContainElement("    String create(String name); // end-of-line inline comment."))
+		Expect(actualLines).ShouldNot(ContainElement("/**"))
+		Expect(actualLines).ShouldNot(ContainElement("     * The block comment."))
+	})
+
+	It("should keep block comments only", func() {
+		instructionParams := TestInstructionParams{
+			comments: "block",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"org/example/Comments.java", instructionParams, config)
+
+		Expect(actualLines).ShouldNot(ContainElement("/**"))
+		Expect(actualLines).ShouldNot(ContainElement(" * Documents the public API."))
+		Expect(actualLines).Should(ContainElement("     * The block comment."))
+		Expect(actualLines).ShouldNot(ContainElement("    // Full-line inline comment."))
+	})
+
+	It("should keep regular comments only", func() {
+		instructionParams := TestInstructionParams{
+			comments: "regular",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"org/example/Comments.java", instructionParams, config)
+
+		Expect(actualLines).ShouldNot(ContainElement("/**"))
+		Expect(actualLines).ShouldNot(ContainElement(" * Documents the public API."))
+		Expect(actualLines).Should(ContainElement("     * The block comment."))
+		Expect(actualLines).Should(ContainElement("    // Full-line inline comment."))
+		Expect(actualLines).Should(ContainElement("    String create(String name); // end-of-line inline comment."))
 	})
 
 	It("should have an error when parsing fragment with start glob", func() {
@@ -317,6 +403,10 @@ func buildInstruction(fileName string, params TestInstructionParams) string {
 	if len(params.endGlob) > 0 {
 		endAttr := xmlAttribute("end", params.endGlob)
 		instructionLine += " " + endAttr
+	}
+	if len(params.comments) > 0 {
+		commentsAttr := xmlAttribute("comments", params.comments)
+		instructionLine += " " + commentsAttr
 	}
 	if params.closeTag {
 		instructionLine += "></embed-code>"
