@@ -40,13 +40,17 @@ import (
 //
 // UnacceptedEmbeddings - a list of embedding instructions that are not accepted by the parser.
 type Context struct {
-	EmbeddingInstruction *Instruction
-	MarkdownFilePath     string
-	Result               []string
-	CodeFenceStarted     bool
-	CodeFenceIndentation int
-	EmbeddingsNotFound   []Instruction
-	UnacceptedEmbeddings []Instruction
+	EmbeddingInstruction     *Instruction
+	MarkdownFilePath         string
+	Result                   []string
+	CodeFenceStarted         bool
+	CodeFenceMarker          string
+	CodeFenceIndentation     int
+	MarkdownFenceStarted     bool
+	MarkdownFenceMarker      string
+	MarkdownFenceIndentation int
+	EmbeddingsNotFound       []Instruction
+	UnacceptedEmbeddings     []Instruction
 	// source - a list of strings representing the original markdown file.
 	source []string
 	// lineIndex - an index of the current line in the markdown file.

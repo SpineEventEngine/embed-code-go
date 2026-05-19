@@ -123,6 +123,14 @@ var _ = Describe("Embedding", func() {
 		Expect(embedding.CheckUpToDate(config)).Should(ContainElement(docPath))
 	})
 
+	It("should ignore embed-code samples inside markdown code fences", func() {
+		docPath := fmt.Sprintf("%s/embed-code-sample-in-fence.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
+
 	It("should report all check errors", func() {
 		config.DocIncludes = []string{"missing-closing-tag.md", "unclosed-nested-tag.md"}
 
