@@ -30,13 +30,13 @@ const (
 )
 
 // VisualBasicCommentFilter filters the Visual Basic comment forms:
-//   - documentation comments starting with `'''`;
+//   - documentation comments starting with `”'`;
 //   - apostrophe comments starting with `'`;
 //   - REM comments starting with `REM`.
 type VisualBasicCommentFilter struct{}
 
 // Filter removes or preserves Visual Basic comments according to mode.
-func (VisualBasicCommentFilter) Filter(lines []string, mode CommentFilterMode) []string {
+func (VisualBasicCommentFilter) Filter(lines []string, mode Mode) []string {
 	var filtered []string
 	for _, line := range lines {
 		filteredLine, hadComment := filterVisualBasicLine(line, mode)
@@ -50,7 +50,7 @@ func (VisualBasicCommentFilter) Filter(lines []string, mode CommentFilterMode) [
 }
 
 // filterVisualBasicLine removes or preserves one Visual Basic comment.
-func filterVisualBasicLine(line string, mode CommentFilterMode) (string, bool) {
+func filterVisualBasicLine(line string, mode Mode) (string, bool) {
 	var result strings.Builder
 	position := 0
 	for position < len(line) {

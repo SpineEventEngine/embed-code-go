@@ -34,7 +34,7 @@ type blockState struct {
 type markerLineFilter struct {
 	filter     MarkerCommentFilter
 	line       string
-	mode       CommentFilterMode
+	mode       Mode
 	state      *blockState
 	result     strings.Builder
 	position   int
@@ -42,7 +42,7 @@ type markerLineFilter struct {
 }
 
 // Filter removes or preserves recognized comments across all lines.
-func (f MarkerCommentFilter) Filter(lines []string, mode CommentFilterMode) []string {
+func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
 	var filtered []string
 	state := blockState{}
 	for _, line := range lines {
@@ -59,7 +59,7 @@ func (f MarkerCommentFilter) Filter(lines []string, mode CommentFilterMode) []st
 // filterLine removes or preserves recognized comments from a single source line.
 func (f MarkerCommentFilter) filterLine(
 	line string,
-	mode CommentFilterMode,
+	mode Mode,
 	state *blockState,
 ) (string, bool) {
 	filter := markerLineFilter{
@@ -127,6 +127,27 @@ func (f *markerLineFilter) consumeQuotedSegment() bool {
 	f.position = quoteEnd
 
 	return true
+}
+
+// quotedSegmentEnd returns the end offset of a quoted string starting at position.
+func quotedSegmentEnd(line string, position int, quoteChars string) int {
+	if position >= len(line) || !strings.ContainsRune(quoteChars, rune(line[position])) {
+		return position
+	}
+	quote := line[position]
+	cursor := position + 1
+	for cursor < len(line) {
+		if line[cursor] == '\\' {
+			cursor += 2
+			continue
+		}
+		if line[cursor] == quote {
+			return cursor + 1
+		}
+		cursor++
+	}
+
+	return len(line)
 }
 
 // consumeComment consumes a comment and reports whether it consumed input and ended the line.

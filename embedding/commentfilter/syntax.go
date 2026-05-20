@@ -47,19 +47,19 @@ type Syntax struct {
 
 // Filterer removes or preserves source comments according to the requested mode.
 type Filterer interface {
-	Filter(lines []string, mode CommentFilterMode) []string
+	Filter(lines []string, mode Mode) []string
 }
 
 // filterEntry stores a comment filter and the modes that make sense for its language.
 type filterEntry struct {
 	filter      Filterer
-	usefulModes []CommentFilterMode
+	usefulModes []Mode
 }
 
 // filterFor returns the comment filter registered for the given file path and warns on odd modes.
 func filterFor(
 	filePath string,
-	mode CommentFilterMode,
+	mode Mode,
 	embeddingDocPath string,
 	embeddingLine int,
 ) (Filterer, bool) {
@@ -146,7 +146,7 @@ var xmlSyntax = Syntax{
 	QuoteChars: "\"'",
 }
 
-var allCommentModes = []CommentFilterMode{
+var allCommentModes = []Mode{
 	RetainAll,
 	RetainNone,
 	RetainDocumentation,
@@ -155,16 +155,16 @@ var allCommentModes = []CommentFilterMode{
 	RetainBlock,
 }
 
-var allNoneCommentModes = []CommentFilterMode{RetainAll, RetainNone}
+var allNoneCommentModes = []Mode{RetainAll, RetainNone}
 
-var inlineBlockCommentModes = []CommentFilterMode{
+var inlineBlockCommentModes = []Mode{
 	RetainAll,
 	RetainNone,
 	RetainInline,
 	RetainBlock,
 }
 
-var regularDocCommentModes = []CommentFilterMode{
+var regularDocCommentModes = []Mode{
 	RetainAll,
 	RetainNone,
 	RetainDocumentation,
@@ -227,7 +227,7 @@ var filtersByExtension = map[string]filterEntry{
 }
 
 // newFilterEntry creates a filter registry entry.
-func newFilterEntry(filter Filterer, usefulModes []CommentFilterMode) filterEntry {
+func newFilterEntry(filter Filterer, usefulModes []Mode) filterEntry {
 	return filterEntry{
 		filter:      filter,
 		usefulModes: usefulModes,
@@ -237,7 +237,7 @@ func newFilterEntry(filter Filterer, usefulModes []CommentFilterMode) filterEntr
 // warnUnsupportedCommentsMode logs when comments filtering is requested for an unsupported file.
 func warnUnsupportedCommentsMode(
 	filePath string,
-	mode CommentFilterMode,
+	mode Mode,
 	embeddingDocPath string,
 	embeddingLine int,
 ) {
@@ -258,10 +258,10 @@ func warnUnsupportedCommentsMode(
 // warnUselessCommentsMode logs when the selected mode has no distinct meaning for a file.
 func warnUselessCommentsMode(
 	filePath string,
-	mode CommentFilterMode,
+	mode Mode,
 	embeddingDocPath string,
 	embeddingLine int,
-	usefulModes []CommentFilterMode,
+	usefulModes []Mode,
 ) {
 	if containsMode(usefulModes, mode) {
 		return
@@ -294,8 +294,8 @@ func fileURL(path string, line int) string {
 }
 
 // formatModes formats modes for a warning message.
-func formatModes(modes []CommentFilterMode) string {
-	order := []CommentFilterMode{
+func formatModes(modes []Mode) string {
+	order := []Mode{
 		RetainAll,
 		RetainNone,
 		RetainDocumentation,
@@ -314,7 +314,7 @@ func formatModes(modes []CommentFilterMode) string {
 }
 
 // containsMode reports whether the list includes the given mode.
-func containsMode(modes []CommentFilterMode, mode CommentFilterMode) bool {
+func containsMode(modes []Mode, mode Mode) bool {
 	for _, usefulMode := range modes {
 		if usefulMode == mode {
 			return true
