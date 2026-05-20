@@ -55,7 +55,7 @@ type Instruction struct {
 	Fragment          string
 	StartPattern      *Pattern
 	EndPattern        *Pattern
-	CommentMode       commentfilter.CommentFilterMode
+	CommentMode       commentfilter.Mode
 	DocumentationFile string
 	DocumentationLine int
 	Configuration     configuration.Configuration

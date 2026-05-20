@@ -22,7 +22,7 @@ package commentfilter
 func Filter(
 	lines []string,
 	filePath string,
-	mode CommentFilterMode,
+	mode Mode,
 	embeddingDocPath string,
 	embeddingLine int,
 ) []string {

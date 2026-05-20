@@ -457,7 +457,7 @@ var _ = Describe("Comment filter", func() {
 // assertFiltered verifies filtering output for one file path and mode.
 func assertFiltered(
 	filePath string,
-	mode CommentFilterMode,
+	mode Mode,
 	lines []string,
 	expected []string,
 ) {
