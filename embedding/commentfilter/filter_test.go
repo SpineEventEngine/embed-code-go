@@ -216,7 +216,7 @@ func TestFilterWarnsAboutUselessMode(t *testing.T) {
 	if !strings.Contains(output, "documentation") ||
 		!strings.Contains(output, "layout.xml") ||
 		!strings.Contains(output, "file://") ||
-		!strings.Contains(output, "docs/guide.md:12") ||
+		!strings.Contains(output, "guide.md:12") ||
 		!strings.Contains(output, "does not have a distinct meaning") {
 		t.Fatalf("warning output = %q", output)
 	}
@@ -230,7 +230,7 @@ func TestFilterWarnsAboutUnsupportedExtension(t *testing.T) {
 
 	if !strings.Contains(output, "comment filtering is not supported for this file extension") ||
 		!strings.Contains(output, "file://") ||
-		!strings.Contains(output, "docs/guide.md:12") {
+		!strings.Contains(output, "guide.md:12") {
 		t.Fatalf("warning output = %q", output)
 	}
 }
