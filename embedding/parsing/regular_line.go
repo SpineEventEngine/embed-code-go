@@ -18,7 +18,11 @@
 
 package parsing
 
-import "embed-code/embed-code-go/configuration"
+import (
+	"strings"
+
+	"embed-code/embed-code-go/configuration"
+)
 
 // RegularLineState represents a regular line of a markdown.
 type RegularLineState struct{}
@@ -33,8 +37,42 @@ func (r RegularLineState) Recognize(_ Context) bool {
 // context — a context of the parsing process.
 func (r RegularLineState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
+	updateMarkdownFenceContext(context, line)
 	context.Result = append(context.Result, line)
 	context.ToNextLine()
 
 	return nil
+}
+
+func updateMarkdownFenceContext(context *Context, line string) {
+	if context.EmbeddingInstruction != nil {
+		return
+	}
+	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
+	trimmedLine := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmedLine, "```") {
+		return
+	}
+	marker := codeFenceMarker(trimmedLine)
+	if len(marker) < 3 {
+		return
+	}
+	if !context.MarkdownFenceStarted {
+		context.MarkdownFenceStarted = true
+		context.MarkdownFenceMarker = marker
+		context.MarkdownFenceIndentation = leadingSpaces
+		return
+	}
+	if context.MarkdownFenceIndentation != leadingSpaces {
+		return
+	}
+	if marker[0] != context.MarkdownFenceMarker[0] || len(marker) < len(context.MarkdownFenceMarker) {
+		return
+	}
+	if strings.TrimSpace(trimmedLine[len(marker):]) != "" {
+		return
+	}
+	context.MarkdownFenceStarted = false
+	context.MarkdownFenceMarker = ""
+	context.MarkdownFenceIndentation = 0
 }

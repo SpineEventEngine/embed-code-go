@@ -52,7 +52,10 @@ func (e InstructionParseError) Error() string {
 func (e EmbedInstructionTokenState) Recognize(context Context) bool {
 	line := context.CurrentLine()
 	isStatement := strings.HasPrefix(strings.TrimSpace(line), "<"+EmbeddingTag)
-	if context.EmbeddingInstruction == nil && !context.ReachedEOF() && isStatement {
+	if context.EmbeddingInstruction == nil &&
+		!context.ReachedEOF() &&
+		!context.MarkdownFenceStarted &&
+		isStatement {
 		return true
 	}
 

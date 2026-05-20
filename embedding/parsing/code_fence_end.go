@@ -37,9 +37,19 @@ func (c CodeFenceEndState) Recognize(context Context) bool {
 	if context.ReachedEOF() {
 		return false
 	}
+	if !context.CodeFenceStarted {
+		return false
+	}
 	indentation := strings.Repeat(" ", context.CodeFenceIndentation)
+	line := strings.TrimPrefix(context.CurrentLine(), indentation)
+	if line == context.CurrentLine() && context.CodeFenceIndentation > 0 {
+		return false
+	}
+	if context.CodeFenceMarker == "" {
+		return false
+	}
 
-	return context.CodeFenceStarted && strings.HasPrefix(context.CurrentLine(), indentation+"```")
+	return isClosingCodeFence(line, context.CodeFenceMarker)
 }
 
 // Accept adds the current line to the result, resets certain context variables, and moves to
@@ -58,6 +68,7 @@ func (c CodeFenceEndState) Accept(context *Context, _ configuration.Configuratio
 		context.ResolveEmbeddingNotFound()
 	}
 	context.CodeFenceStarted = false
+	context.CodeFenceMarker = ""
 	context.CodeFenceIndentation = 0
 	context.ToNextLine()
 
@@ -80,4 +91,20 @@ func renderSample(context *Context) error {
 	}
 
 	return nil
+}
+
+func isClosingCodeFence(line string, marker string) bool {
+	if line == "" {
+		return false
+	}
+	markerChar := marker[0]
+	index := 0
+	for index < len(line) && line[index] == markerChar {
+		index++
+	}
+	if index < len(marker) {
+		return false
+	}
+
+	return strings.TrimSpace(line[index:]) == ""
 }

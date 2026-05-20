@@ -45,8 +45,10 @@ func (c CodeFenceStartState) Recognize(context Context) bool {
 // context — a context of the parsing process.
 func (c CodeFenceStartState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
+	trimmedLine := strings.TrimSpace(line)
 	context.Result = append(context.Result, line)
 	context.CodeFenceStarted = true
+	context.CodeFenceMarker = codeFenceMarker(trimmedLine)
 	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
 	context.CodeFenceIndentation = leadingSpaces
 	context.ToNextLine()
@@ -55,4 +57,17 @@ func (c CodeFenceStartState) Accept(context *Context, _ configuration.Configurat
 	context.SetCodeStart()
 
 	return nil
+}
+
+func codeFenceMarker(line string) string {
+	if line == "" {
+		return ""
+	}
+	markerChar := line[0]
+	index := 0
+	for index < len(line) && line[index] == markerChar {
+		index++
+	}
+
+	return line[:index]
 }
