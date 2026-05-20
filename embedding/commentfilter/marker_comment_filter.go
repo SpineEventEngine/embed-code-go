@@ -20,14 +20,34 @@ package commentfilter
 
 import "strings"
 
-// MarkerCommentFilter removes comments using lexical markers declared in Syntax.
+// BlockMarker describes a block comment marker pair.
+type BlockMarker struct {
+	Start string
+	End   string
+}
+
+// DocumentationMarker describes API documentation comment markers.
+type DocumentationMarker struct {
+	Inline []string
+	Block  []BlockMarker
+}
+
+// CommentMarker describes lexical comment markers and string delimiters for a language family.
+type CommentMarker struct {
+	Inline        []string
+	Block         []BlockMarker
+	Documentation DocumentationMarker
+	QuoteChars    string
+}
+
+// MarkerCommentFilter removes comments using lexical markers declared in CommentMarker.
 type MarkerCommentFilter struct {
-	Syntax Syntax
+	Syntax CommentMarker
 }
 
 type blockState struct {
 	active bool
-	block  BlockSyntax
+	block  BlockMarker
 	keep   bool
 }
 
@@ -182,7 +202,7 @@ func (f *markerLineFilter) consumeInlineComment(keep bool) {
 }
 
 // startBlockComment records the active block comment markers and whether to keep them.
-func (f *markerLineFilter) startBlockComment(block BlockSyntax, keep bool) {
+func (f *markerLineFilter) startBlockComment(block BlockMarker, keep bool) {
 	f.hadComment = true
 	f.state.active = true
 	f.state.block = block
@@ -207,12 +227,12 @@ func prefixAt(line string, position int, prefixes []string) (string, bool) {
 }
 
 // blockAt reports whether one of the given block markers starts at the position.
-func blockAt(line string, position int, blocks []BlockSyntax) (BlockSyntax, bool) {
+func blockAt(line string, position int, blocks []BlockMarker) (BlockMarker, bool) {
 	for _, block := range blocks {
 		if strings.HasPrefix(line[position:], block.Start) {
 			return block, true
 		}
 	}
 
-	return BlockSyntax{}, false
+	return BlockMarker{}, false
 }
