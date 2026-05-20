@@ -84,7 +84,18 @@ func normalizeExtension(extension string) string {
 	return "." + normalized
 }
 
-var javaStyleSyntax = Syntax{
+var javaSyntax = Syntax{
+	Inline: []string{"//"},
+	Block: []BlockSyntax{
+		{Start: "/*", End: "*/"},
+	},
+	Documentation: DocumentationSyntax{
+		Block: []BlockSyntax{{Start: "/**", End: "*/"}},
+	},
+	QuoteChars: "\"'",
+}
+
+var jsSyntax = Syntax{
 	Inline: []string{"//"},
 	Block: []BlockSyntax{
 		{Start: "/*", End: "*/"},
@@ -162,10 +173,10 @@ var regularDocCommentModes = []CommentFilterMode{
 
 var filtersByExtension = map[string]filterEntry{
 	// Java/Kotlin
-	".java":   newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
-	".kt":     newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
-	".kts":    newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
-	".groovy": newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
+	".java":   newFilterEntry(MarkerCommentFilter{Syntax: javaSyntax}, allCommentModes),
+	".kt":     newFilterEntry(MarkerCommentFilter{Syntax: javaSyntax}, allCommentModes),
+	".kts":    newFilterEntry(MarkerCommentFilter{Syntax: javaSyntax}, allCommentModes),
+	".groovy": newFilterEntry(MarkerCommentFilter{Syntax: javaSyntax}, allCommentModes),
 
 	// C#
 	".cs": newFilterEntry(MarkerCommentFilter{Syntax: csharpSyntax}, allCommentModes),
@@ -181,10 +192,10 @@ var filtersByExtension = map[string]filterEntry{
 	".hxx": newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
 
 	// JavaScript
-	".js":  newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
-	".jsx": newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
-	".ts":  newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
-	".tsx": newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
+	".js":  newFilterEntry(MarkerCommentFilter{Syntax: jsSyntax}, allCommentModes),
+	".jsx": newFilterEntry(MarkerCommentFilter{Syntax: jsSyntax}, allCommentModes),
+	".ts":  newFilterEntry(MarkerCommentFilter{Syntax: jsSyntax}, allCommentModes),
+	".tsx": newFilterEntry(MarkerCommentFilter{Syntax: jsSyntax}, allCommentModes),
 
 	// Go
 	".go": newFilterEntry(MarkerCommentFilter{Syntax: goSyntax}, inlineBlockCommentModes),

@@ -117,6 +117,23 @@ var _ = Describe("Comment filter", func() {
 		})
 	})
 
+	Describe("JavaScript and TypeScript", func() {
+		It("should strip comments without treating template literals as comments", func() {
+			lines := []string{
+				"// module comment",
+				"const url = `http://example.org/*not-comment*/`;",
+				"const value = 42; // inline comment",
+			}
+
+			expected := []string{
+				"const url = `http://example.org/*not-comment*/`;",
+				"const value = 42; ",
+			}
+
+			assertFiltered("sample.ts", RetainNone, lines, expected)
+		})
+	})
+
 	Describe("C#", func() {
 		It("should keep XML documentation comments", func() {
 			lines := []string{
