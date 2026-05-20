@@ -30,7 +30,7 @@ const (
 )
 
 // VisualBasicCommentFilter filters the Visual Basic comment forms:
-//   - documentation comments starting with `”'`;
+//   - documentation comments starting with `'''`;
 //   - apostrophe comments starting with `'`;
 //   - REM comments starting with `REM`.
 type VisualBasicCommentFilter struct{}

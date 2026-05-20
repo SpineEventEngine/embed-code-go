@@ -131,19 +131,19 @@ func (f *markerLineFilter) consumeQuotedSegment() bool {
 
 // consumeComment consumes a comment and reports whether it consumed input and ended the line.
 func (f *markerLineFilter) consumeComment() (bool, bool) {
-	if _, found := documentationInlineAt(f.line, f.position, f.filter.Syntax); found {
+	if _, found := prefixAt(f.line, f.position, f.filter.Syntax.Documentation.Inline); found {
 		f.consumeInlineComment(f.mode == RetainDocumentation)
 		return true, true
 	}
-	if block, found := documentationBlockAt(f.line, f.position, f.filter.Syntax); found {
+	if block, found := blockAt(f.line, f.position, f.filter.Syntax.Documentation.Block); found {
 		f.startBlockComment(block, f.mode == RetainDocumentation)
 		return true, false
 	}
-	if _, found := inlineCommentAt(f.line, f.position, f.filter.Syntax); found {
+	if _, found := prefixAt(f.line, f.position, f.filter.Syntax.Inline); found {
 		f.consumeInlineComment(f.mode == RetainInline || f.mode == RetainRegular)
 		return true, true
 	}
-	if block, found := blockCommentAt(f.line, f.position, f.filter.Syntax); found {
+	if block, found := blockAt(f.line, f.position, f.filter.Syntax.Block); found {
 		f.startBlockComment(block, f.mode == RetainBlock || f.mode == RetainRegular)
 		return true, false
 	}
@@ -172,26 +172,6 @@ func (f *markerLineFilter) startBlockComment(block BlockSyntax, keep bool) {
 func (f *markerLineFilter) consumeCodeByte() {
 	f.result.WriteByte(f.line[f.position])
 	f.position++
-}
-
-// documentationInlineAt reports whether a documentation line comment starts at the position.
-func documentationInlineAt(line string, position int, syntax Syntax) (string, bool) {
-	return prefixAt(line, position, syntax.Documentation.Inline)
-}
-
-// documentationBlockAt reports whether a documentation block comment starts at the position.
-func documentationBlockAt(line string, position int, syntax Syntax) (BlockSyntax, bool) {
-	return blockAt(line, position, syntax.Documentation.Block)
-}
-
-// inlineCommentAt reports whether an inline comment starts at the given position.
-func inlineCommentAt(line string, position int, syntax Syntax) (string, bool) {
-	return prefixAt(line, position, syntax.Inline)
-}
-
-// blockCommentAt reports whether a block comment starts at the given position.
-func blockCommentAt(line string, position int, syntax Syntax) (BlockSyntax, bool) {
-	return blockAt(line, position, syntax.Block)
 }
 
 // prefixAt reports whether one of the given prefixes starts at the position.
