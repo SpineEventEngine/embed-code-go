@@ -25,6 +25,18 @@ import (
 	"strings"
 )
 
+// EmbeddingCommentFilter filters comments for one embed-code instruction.
+type EmbeddingCommentFilter struct {
+	filePath         string
+	embeddingDocPath string
+	embeddingLine    int
+}
+
+// CommentFilter strips source comments according to the requested mode.
+type CommentFilter interface {
+	Filter(lines []string, mode Mode) []string
+}
+
 // Filter returns source lines with comments stripped according to the requested mode.
 func Filter(
 	lines []string,
@@ -33,10 +45,21 @@ func Filter(
 	embeddingDocPath string,
 	embeddingLine int,
 ) []string {
+	filter := EmbeddingCommentFilter{
+		filePath:         filePath,
+		embeddingDocPath: embeddingDocPath,
+		embeddingLine:    embeddingLine,
+	}
+
+	return filter.Filter(lines, mode)
+}
+
+// Filter strips comments using the filter registered in the filtersByExtension.
+func (f EmbeddingCommentFilter) Filter(lines []string, mode Mode) []string {
 	if mode == RetainAll {
 		return lines
 	}
-	filter, found := filterFor(filePath, mode, embeddingDocPath, embeddingLine)
+	filter, found := filterFor(f.filePath, mode, f.embeddingDocPath, f.embeddingLine)
 	if !found {
 		return lines
 	}
@@ -50,7 +73,7 @@ func filterFor(
 	mode Mode,
 	embeddingDocPath string,
 	embeddingLine int,
-) (Filterer, bool) {
+) (CommentFilter, bool) {
 	extension := normalizeExtension(filepath.Ext(filePath))
 	entry, found := filtersByExtension[extension]
 	if !found {
