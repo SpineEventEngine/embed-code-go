@@ -45,10 +45,14 @@ jobs:
         run: GOOS=windows GOARCH=amd64 go build -trimpath -o bin/embed-code-windows.exe main.go
 
       - name: Build embed_code.go for Ubuntu
-        run: GOOS=linux GOARCH=amd64 go build -trimpath -o bin/embed-code-linux main.go
+        run: >
+          GOOS=linux GOARCH=amd64 go build -trimpath -o bin/embed-code-linux main.go
+          && chmod +x bin/embed-code-linux
 
       - name: Build embed_code.go for MacOS
-        run: GOOS=darwin GOARCH=amd64 go build -trimpath -o bin/embed-code-macos main.go
+        run: >
+          GOOS=darwin GOARCH=amd64 go build -trimpath -o bin/embed-code-macos main.go
+          && chmod +x bin/embed-code-macos
 
       - name: Commit Built Files
         uses: EndBug/add-and-commit@v9
