@@ -47,19 +47,19 @@ type Syntax struct {
 
 // Filterer removes or preserves source comments according to the requested mode.
 type Filterer interface {
-	Filter(lines []string, mode Mode) []string
+	Filter(lines []string, mode CommentFilterMode) []string
 }
 
 // filterEntry stores a comment filter and the modes that make sense for its language.
 type filterEntry struct {
 	filter      Filterer
-	usefulModes map[Mode]struct{}
+	usefulModes []CommentFilterMode
 }
 
 // filterFor returns the comment filter registered for the given file path and warns on odd modes.
 func filterFor(
 	filePath string,
-	mode Mode,
+	mode CommentFilterMode,
 	embeddingDocPath string,
 	embeddingLine int,
 ) (Filterer, bool) {
@@ -107,6 +107,14 @@ var csharpSyntax = Syntax{
 	QuoteChars: "\"'`",
 }
 
+var goSyntax = Syntax{
+	Inline: []string{"//"},
+	Block: []BlockSyntax{
+		{Start: "/*", End: "*/"},
+	},
+	QuoteChars: "\"'`",
+}
+
 var hashLineSyntax = Syntax{
 	Inline:     []string{"#"},
 	QuoteChars: "\"'",
@@ -119,23 +127,30 @@ var xmlSyntax = Syntax{
 	QuoteChars: "\"'",
 }
 
-var allCommentModes = usefulModes(
+var allCommentModes = []CommentFilterMode{
 	RetainAll,
 	RetainNone,
 	RetainDocumentation,
 	RetainRegular,
 	RetainInline,
 	RetainBlock,
-)
+}
 
-var allOrNoneCommentModes = usefulModes(RetainAll, RetainNone)
+var allNoneCommentModes = []CommentFilterMode{RetainAll, RetainNone}
 
-var regularAndDocCommentModes = usefulModes(
+var inlineBlockCommentModes = []CommentFilterMode{
+	RetainAll,
+	RetainNone,
+	RetainInline,
+	RetainBlock,
+}
+
+var regularDocCommentModes = []CommentFilterMode{
 	RetainAll,
 	RetainNone,
 	RetainDocumentation,
 	RetainRegular,
-)
+}
 
 var filtersByExtension = map[string]filterEntry{
 	// Java/Kotlin
@@ -153,41 +168,34 @@ var filtersByExtension = map[string]filterEntry{
 	".ts":  newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
 	".tsx": newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
 
+	// Go
+	".go": newFilterEntry(MarkerCommentFilter{Syntax: goSyntax}, inlineBlockCommentModes),
+
 	// Python
-	".py":  newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
-	".pyi": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
-	".pyw": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
+	".py":  newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allNoneCommentModes),
+	".pyi": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allNoneCommentModes),
+	".pyw": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allNoneCommentModes),
 
 	// YAML
-	".yml":  newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
-	".yaml": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
+	".yml":  newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allNoneCommentModes),
+	".yaml": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allNoneCommentModes),
 
 	// XML
-	".xml": newFilterEntry(MarkerCommentFilter{Syntax: xmlSyntax}, allOrNoneCommentModes),
+	".xml": newFilterEntry(MarkerCommentFilter{Syntax: xmlSyntax}, allNoneCommentModes),
 
 	// HTML
-	".html": newFilterEntry(MarkerCommentFilter{Syntax: xmlSyntax}, allOrNoneCommentModes),
-	".htm":  newFilterEntry(MarkerCommentFilter{Syntax: xmlSyntax}, allOrNoneCommentModes),
+	".html": newFilterEntry(MarkerCommentFilter{Syntax: xmlSyntax}, allNoneCommentModes),
+	".htm":  newFilterEntry(MarkerCommentFilter{Syntax: xmlSyntax}, allNoneCommentModes),
 
 	// Visual Basic
-	".vb":       newFilterEntry(VisualBasicCommentFilter{}, regularAndDocCommentModes),
-	".bas":      newFilterEntry(VisualBasicCommentFilter{}, regularAndDocCommentModes),
-	".vbs":      newFilterEntry(VisualBasicCommentFilter{}, regularAndDocCommentModes),
-	".vbscript": newFilterEntry(VisualBasicCommentFilter{}, regularAndDocCommentModes),
-}
-
-// usefulModes creates a lookup set for comment modes that make sense for a language.
-func usefulModes(modes ...Mode) map[Mode]struct{} {
-	result := make(map[Mode]struct{}, len(modes))
-	for _, mode := range modes {
-		result[mode] = struct{}{}
-	}
-
-	return result
+	".vb":       newFilterEntry(VisualBasicCommentFilter{}, regularDocCommentModes),
+	".bas":      newFilterEntry(VisualBasicCommentFilter{}, regularDocCommentModes),
+	".vbs":      newFilterEntry(VisualBasicCommentFilter{}, regularDocCommentModes),
+	".vbscript": newFilterEntry(VisualBasicCommentFilter{}, regularDocCommentModes),
 }
 
 // newFilterEntry creates a filter registry entry.
-func newFilterEntry(filter Filterer, usefulModes map[Mode]struct{}) filterEntry {
+func newFilterEntry(filter Filterer, usefulModes []CommentFilterMode) filterEntry {
 	return filterEntry{
 		filter:      filter,
 		usefulModes: usefulModes,
@@ -195,7 +203,12 @@ func newFilterEntry(filter Filterer, usefulModes map[Mode]struct{}) filterEntry 
 }
 
 // warnUnsupportedCommentsMode logs when comments filtering is requested for an unsupported file.
-func warnUnsupportedCommentsMode(filePath string, mode Mode, embeddingDocPath string, embeddingLine int) {
+func warnUnsupportedCommentsMode(
+	filePath string,
+	mode CommentFilterMode,
+	embeddingDocPath string,
+	embeddingLine int,
+) {
 	if mode == RetainAll {
 		return
 	}
@@ -213,12 +226,12 @@ func warnUnsupportedCommentsMode(filePath string, mode Mode, embeddingDocPath st
 // warnUselessCommentsMode logs when the selected mode has no distinct meaning for a file.
 func warnUselessCommentsMode(
 	filePath string,
-	mode Mode,
+	mode CommentFilterMode,
 	embeddingDocPath string,
 	embeddingLine int,
-	usefulModes map[Mode]struct{},
+	usefulModes []CommentFilterMode,
 ) {
-	if _, found := usefulModes[mode]; found {
+	if containsMode(usefulModes, mode) {
 		return
 	}
 	slog.Warn(
@@ -252,8 +265,8 @@ func fileURL(path string, line int) string {
 }
 
 // formatModes formats modes for a warning message.
-func formatModes(modes map[Mode]struct{}) string {
-	order := []Mode{
+func formatModes(modes []CommentFilterMode) string {
+	order := []CommentFilterMode{
 		RetainAll,
 		RetainNone,
 		RetainDocumentation,
@@ -263,10 +276,21 @@ func formatModes(modes map[Mode]struct{}) string {
 	}
 	var result []string
 	for _, mode := range order {
-		if _, found := modes[mode]; found {
+		if containsMode(modes, mode) {
 			result = append(result, fmt.Sprintf("`%s`", mode))
 		}
 	}
 
 	return strings.Join(result, ", ")
+}
+
+// containsMode reports whether the list includes the given mode.
+func containsMode(modes []CommentFilterMode, mode CommentFilterMode) bool {
+	for _, usefulMode := range modes {
+		if usefulMode == mode {
+			return true
+		}
+	}
+
+	return false
 }

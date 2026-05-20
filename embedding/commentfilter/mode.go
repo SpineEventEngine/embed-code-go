@@ -20,31 +20,31 @@ package commentfilter
 
 import "fmt"
 
-// Mode controls which source comments are retained in embedded snippets.
-type Mode string
+// CommentFilterMode controls which source comments are retained in embedded snippets.
+type CommentFilterMode string
 
 const (
 	// RetainAll keeps all comments in the embedded source.
-	RetainAll Mode = "all"
+	RetainAll CommentFilterMode = "all"
 	// RetainNone removes all comments recognized for the source language.
-	RetainNone Mode = "none"
+	RetainNone CommentFilterMode = "none"
 	// RetainDocumentation keeps only API documentation comments.
-	RetainDocumentation Mode = "documentation"
+	RetainDocumentation CommentFilterMode = "documentation"
 	// RetainRegular keeps inline and block comments that are not documentation comments.
-	RetainRegular Mode = "regular"
+	RetainRegular CommentFilterMode = "regular"
 	// RetainInline keeps only inline comments such as `//` and `#`.
-	RetainInline Mode = "inline"
+	RetainInline CommentFilterMode = "inline"
 	// RetainBlock keeps only block comments such as `/* */`.
-	RetainBlock Mode = "block"
+	RetainBlock CommentFilterMode = "block"
 )
 
-// ParseMode converts an embed-code `comments` attribute value into a Mode.
-func ParseMode(value string) (Mode, error) {
-	switch Mode(value) {
+// ParseMode converts an embed-code `comments` attribute value into a CommentFilterMode.
+func ParseMode(value string) (CommentFilterMode, error) {
+	switch CommentFilterMode(value) {
 	case "":
 		return RetainAll, nil
 	case RetainAll, RetainNone, RetainDocumentation, RetainRegular, RetainInline, RetainBlock:
-		return Mode(value), nil
+		return CommentFilterMode(value), nil
 	default:
 		return "", fmt.Errorf("unsupported comments value `%s`; expected one of "+
 			"`all`, `none`, `documentation`, `regular`, `inline`, or `block`", value)

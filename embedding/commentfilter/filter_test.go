@@ -141,6 +141,67 @@ func TestFilterCSharp(t *testing.T) {
 	})
 }
 
+// TestFilterGo verifies Go comment filtering without documentation support.
+func TestFilterGo(t *testing.T) {
+	t.Run("none", func(t *testing.T) {
+		lines := []string{
+			"// package comment",
+			"package sample",
+			"",
+			"/* block comment */",
+			"const slash = '/'",
+			"const url = \"http://example.org\"",
+			"const raw = `/* not a comment */`",
+			"func create() {} // inline comment",
+		}
+
+		expected := []string{
+			"package sample",
+			"",
+			"const slash = '/'",
+			"const url = \"http://example.org\"",
+			"const raw = `/* not a comment */`",
+			"func create() {} ",
+		}
+
+		assertFiltered(t, "sample.go", RetainNone, lines, expected)
+	})
+
+	t.Run("inline", func(t *testing.T) {
+		lines := []string{
+			"// package comment",
+			"package sample",
+			"/* block comment */",
+			"func create() {} // inline comment",
+		}
+
+		expected := []string{
+			"// package comment",
+			"package sample",
+			"func create() {} // inline comment",
+		}
+
+		assertFiltered(t, "sample.go", RetainInline, lines, expected)
+	})
+
+	t.Run("block", func(t *testing.T) {
+		lines := []string{
+			"// package comment",
+			"package sample",
+			"/* block comment */",
+			"func create() {} // inline comment",
+		}
+
+		expected := []string{
+			"package sample",
+			"/* block comment */",
+			"func create() {} ",
+		}
+
+		assertFiltered(t, "sample.go", RetainBlock, lines, expected)
+	})
+}
+
 // TestFilterPython verifies Python line comment filtering.
 func TestFilterPython(t *testing.T) {
 	t.Run("none", func(t *testing.T) {
@@ -254,7 +315,13 @@ func TestFilterWarnsAboutUnsupportedExtension(t *testing.T) {
 }
 
 // assertFiltered verifies filtering output for one file path and mode.
-func assertFiltered(t *testing.T, filePath string, mode Mode, lines []string, expected []string) {
+func assertFiltered(
+	t *testing.T,
+	filePath string,
+	mode CommentFilterMode,
+	lines []string,
+	expected []string,
+) {
 	t.Helper()
 
 	got := Filter(lines, filePath, mode, "docs/guide.md", 12)
