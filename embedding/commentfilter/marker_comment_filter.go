@@ -34,7 +34,7 @@ type blockState struct {
 type markerLineFilter struct {
 	filter     MarkerCommentFilter
 	line       string
-	mode       Mode
+	mode       CommentFilterMode
 	state      *blockState
 	result     strings.Builder
 	position   int
@@ -42,7 +42,7 @@ type markerLineFilter struct {
 }
 
 // Filter removes or preserves recognized comments across all lines.
-func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
+func (f MarkerCommentFilter) Filter(lines []string, mode CommentFilterMode) []string {
 	var filtered []string
 	state := blockState{}
 	for _, line := range lines {
@@ -57,7 +57,11 @@ func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
 }
 
 // filterLine removes or preserves recognized comments from a single source line.
-func (f MarkerCommentFilter) filterLine(line string, mode Mode, state *blockState) (string, bool) {
+func (f MarkerCommentFilter) filterLine(
+	line string,
+	mode CommentFilterMode,
+	state *blockState,
+) (string, bool) {
 	filter := markerLineFilter{
 		filter: f,
 		line:   line,
