@@ -74,14 +74,9 @@ var filtersByExtension = map[string]filterEntry{
 	".vbscript": filterConfig(VisualBasicCommentFilter{}, documentationModes),
 }
 
-// Filterer removes or preserves source comments according to the requested mode.
-type Filterer interface {
-	Filter(lines []string, mode Mode) []string
-}
-
 // filterEntry stores a comment filter and supported modes for its language.
 type filterEntry struct {
-	filter         Filterer
+	filter         CommentFilter
 	supportedModes []Mode
 }
 
@@ -179,7 +174,7 @@ var documentationModes = []Mode{
 }
 
 // filterConfig creates a filter registry entry.
-func filterConfig(filter Filterer, supportedModes []Mode) filterEntry {
+func filterConfig(filter CommentFilter, supportedModes []Mode) filterEntry {
 	return filterEntry{
 		filter:         filter,
 		supportedModes: supportedModes,
