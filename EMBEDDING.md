@@ -138,6 +138,7 @@ The table below lists the supported languages and useful `comments` modes for th
 | Java, Kotlin, Groovy   | `.java`, `.kt`, `.kts`, `.groovy`       | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
 | C#                     | `.cs`                                   | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
 | JavaScript, TypeScript | `.js`, `.jsx`, `.ts`, `.tsx`            | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| Python                 | `.py`, `.pyi`, `.pyw`                   | `all`, `none`                                                |
 | YAML                   | `.yml`, `.yaml`                         | `all`, `none`                                                |
 | XML, HTML              | `.xml`, `.html`, `.htm`                 | `all`, `none`                                                |
 | Visual Basic           | `.vb`, `.bas`, `.vbs`, `.vbscript`      | `all`, `none`, `documentation`, `regular`                    |

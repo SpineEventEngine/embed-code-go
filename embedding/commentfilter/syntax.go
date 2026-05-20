@@ -153,6 +153,11 @@ var filtersByExtension = map[string]filterEntry{
 	".ts":  newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
 	".tsx": newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),
 
+	// Python
+	".py":  newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
+	".pyi": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
+	".pyw": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
+
 	// YAML
 	".yml":  newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
 	".yaml": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allOrNoneCommentModes),
