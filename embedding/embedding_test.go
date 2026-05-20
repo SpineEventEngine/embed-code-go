@@ -25,6 +25,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"embed-code/embed-code-go/configuration"
@@ -128,6 +129,19 @@ var _ = Describe("Embedding", func() {
 		processor := embedding.NewProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+		Expect(processor.IsUpToDate()).Should(BeTrue())
+	})
+
+	It("should detect markdown fences by triple-or-more backticks only", func() {
+		docPath := fmt.Sprintf("%s/triple-backticks-only-fence.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+
+		docContent, err := os.ReadFile(docPath)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(strings.Count(string(docContent), "System.out.println(\"Hello world\");")).
+			Should(Equal(2))
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 

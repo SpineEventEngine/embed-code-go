@@ -50,6 +50,9 @@ func updateMarkdownFenceContext(context *Context, line string) {
 	}
 	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
 	trimmedLine := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmedLine, "```") {
+		return
+	}
 	marker := codeFenceMarker(trimmedLine)
 	if len(marker) < 3 {
 		return
