@@ -80,7 +80,9 @@ func filterFor(
 		warnUnsupportedFileType(filePath, mode, embeddingDocPath, embeddingLine)
 		return nil, false
 	}
-	warnUnsupportedCommentsMode(filePath, mode, embeddingDocPath, embeddingLine, entry.supportedModes)
+	if warnUnsupportedCommentsMode(filePath, mode, embeddingDocPath, embeddingLine, entry.supportedModes) {
+		return nil, false
+	}
 
 	return entry.filter, true
 }
@@ -123,9 +125,9 @@ func warnUnsupportedCommentsMode(
 	embeddingDocPath string,
 	embeddingLine int,
 	supportedModes []Mode,
-) {
+) bool {
 	if containsMode(supportedModes, mode) {
-		return
+		return false
 	}
 	var wrappedModes []string
 	for _, mode := range supportedModes {
@@ -142,6 +144,8 @@ func warnUnsupportedCommentsMode(
 			strings.Join(wrappedModes, ", "),
 		),
 	)
+
+	return true
 }
 
 // fileURL returns an absolute file URL for a local path and line.
