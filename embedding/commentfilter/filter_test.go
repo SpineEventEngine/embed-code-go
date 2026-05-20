@@ -141,6 +141,24 @@ func TestFilterCSharp(t *testing.T) {
 	})
 }
 
+// TestFilterPython verifies Python line comment filtering.
+func TestFilterPython(t *testing.T) {
+	t.Run("none", func(t *testing.T) {
+		lines := []string{
+			"# module comment",
+			"name = 'hash # literal'",
+			"value = 1 # inline comment",
+		}
+
+		expected := []string{
+			"name = 'hash # literal'",
+			"value = 1 ",
+		}
+
+		assertFiltered(t, "module.py", RetainNone, lines, expected)
+	})
+}
+
 // TestFilterVisualBasic verifies Visual Basic comment filtering.
 func TestFilterVisualBasic(t *testing.T) {
 	t.Run("none", func(t *testing.T) {
