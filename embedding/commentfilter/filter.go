@@ -18,7 +18,7 @@
 
 package commentfilter
 
-// Filter returns source lines with comments retained according to the requested mode.
+// Filter returns source lines with comments stripped according to the requested mode.
 func Filter(
 	lines []string,
 	filePath string,

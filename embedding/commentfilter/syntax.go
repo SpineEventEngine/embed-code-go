@@ -237,7 +237,7 @@ func warnUselessCommentsMode(
 	slog.Warn(
 		fmt.Sprintf(
 			"`comments=\"%s\"` was requested in `%s` for `%s`, but this mode does not have "+
-				"a distinct meaning for this file type. Useful modes are: %s.",
+				"a distinct meaning for this file type. Supported modes are: %s.",
 			mode,
 			fileURL(embeddingDocPath, embeddingLine),
 			filePath,
@@ -248,9 +248,6 @@ func warnUselessCommentsMode(
 
 // fileURL returns an absolute file URL for a local path and line.
 func fileURL(path string, line int) string {
-	if path == "" {
-		return "file://<unknown>"
-	}
 	absolutePath, err := filepath.Abs(path)
 	if err != nil {
 		return "file://" + path

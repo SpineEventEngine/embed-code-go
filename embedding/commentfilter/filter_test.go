@@ -21,313 +21,314 @@ package commentfilter
 import (
 	"bytes"
 	"log/slog"
-	"reflect"
-	"strings"
 	"testing"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-// TestFilterYaml verifies YAML line comment filtering.
-func TestFilterYaml(t *testing.T) {
-	lines := []string{
-		"name: test # inline",
-		"# standalone",
-		"value: \"# literal\"",
-	}
-
-	expected := []string{
-		"name: test ",
-		"value: \"# literal\"",
-	}
-
-	assertFiltered(t, "config.yml", RetainNone, lines, expected)
+// TestCommentFilter runs the comment filter test suite.
+func TestCommentFilter(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Comment Filter Suite")
 }
 
-// TestFilterXml verifies XML block comment filtering.
-func TestFilterXml(t *testing.T) {
-	lines := []string{
-		"<root>",
-		"  <!-- hidden -->",
-		"  <item name=\"<!-- literal -->\"/>",
-		"</root>",
-	}
+var _ = Describe("Comment filter", func() {
+	Describe("YAML", func() {
+		It("should strip all comments", func() {
+			lines := []string{
+				"name: test # inline",
+				"# standalone",
+				"value: \"# literal\"",
+			}
 
-	expected := []string{
-		"<root>",
-		"  <item name=\"<!-- literal -->\"/>",
-		"</root>",
-	}
+			expected := []string{
+				"name: test ",
+				"value: \"# literal\"",
+			}
 
-	assertFiltered(t, "layout.xml", RetainNone, lines, expected)
-}
-
-// TestFilterJavaStyle verifies Java-family marker-based filtering.
-func TestFilterJavaStyle(t *testing.T) {
-	t.Run("documentation", func(t *testing.T) {
-		lines := []string{
-			"/** API docs. */",
-			"// implementation note",
-			"fun call() = \"// literal\"",
-		}
-
-		expected := []string{
-			"/** API docs. */",
-			"fun call() = \"// literal\"",
-		}
-
-		assertFiltered(t, "api.kt", RetainDocumentation, lines, expected)
+			assertFiltered("config.yml", RetainNone, lines, expected)
+		})
 	})
 
-	t.Run("block", func(t *testing.T) {
-		lines := []string{
-			"/** API docs. */",
-			"/* implementation note */",
-			"String create();",
-		}
+	Describe("XML", func() {
+		It("should strip all comments", func() {
+			lines := []string{
+				"<root>",
+				"  <!-- hidden -->",
+				"  <item name=\"<!-- literal -->\"/>",
+				"</root>",
+			}
 
-		expected := []string{
-			"/* implementation note */",
-			"String create();",
-		}
+			expected := []string{
+				"<root>",
+				"  <item name=\"<!-- literal -->\"/>",
+				"</root>",
+			}
 
-		assertFiltered(t, "Api.java", RetainBlock, lines, expected)
+			assertFiltered("layout.xml", RetainNone, lines, expected)
+		})
 	})
 
-	t.Run("regular", func(t *testing.T) {
-		lines := []string{
-			"/** API docs. */",
-			"/* implementation note */",
-			"String create(); // inline note",
-		}
+	Describe("Java-style languages", func() {
+		It("should keep documentation comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"// implementation note",
+				"fun call() = \"// literal\"",
+			}
 
-		expected := []string{
-			"/* implementation note */",
-			"String create(); // inline note",
-		}
+			expected := []string{
+				"/** API docs. */",
+				"fun call() = \"// literal\"",
+			}
 
-		assertFiltered(t, "Api.java", RetainRegular, lines, expected)
-	})
-}
+			assertFiltered("api.kt", RetainDocumentation, lines, expected)
+		})
 
-// TestFilterCSharp verifies C# XML documentation comment filtering.
-func TestFilterCSharp(t *testing.T) {
-	t.Run("documentation", func(t *testing.T) {
-		lines := []string{
-			"/// <summary>Creates a value.</summary>",
-			"// implementation note",
-			"public string Create() => \"// literal\";",
-		}
+		It("should keep block comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"String create();",
+			}
 
-		expected := []string{
-			"/// <summary>Creates a value.</summary>",
-			"public string Create() => \"// literal\";",
-		}
+			expected := []string{
+				"/* implementation note */",
+				"String create();",
+			}
 
-		assertFiltered(t, "Api.cs", RetainDocumentation, lines, expected)
-	})
+			assertFiltered("Api.java", RetainBlock, lines, expected)
+		})
 
-	t.Run("inline", func(t *testing.T) {
-		lines := []string{
-			"/// <summary>Creates a value.</summary>",
-			"// implementation note",
-			"public string Create() => \"// literal\";",
-		}
+		It("should keep regular comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"String create(); // inline note",
+			}
 
-		expected := []string{
-			"// implementation note",
-			"public string Create() => \"// literal\";",
-		}
+			expected := []string{
+				"/* implementation note */",
+				"String create(); // inline note",
+			}
 
-		assertFiltered(t, "Api.cs", RetainInline, lines, expected)
-	})
-}
-
-// TestFilterGo verifies Go comment filtering without documentation support.
-func TestFilterGo(t *testing.T) {
-	t.Run("none", func(t *testing.T) {
-		lines := []string{
-			"// package comment",
-			"package sample",
-			"",
-			"/* block comment */",
-			"const slash = '/'",
-			"const url = \"http://example.org\"",
-			"const raw = `/* not a comment */`",
-			"func create() {} // inline comment",
-		}
-
-		expected := []string{
-			"package sample",
-			"",
-			"const slash = '/'",
-			"const url = \"http://example.org\"",
-			"const raw = `/* not a comment */`",
-			"func create() {} ",
-		}
-
-		assertFiltered(t, "sample.go", RetainNone, lines, expected)
+			assertFiltered("Api.java", RetainRegular, lines, expected)
+		})
 	})
 
-	t.Run("inline", func(t *testing.T) {
-		lines := []string{
-			"// package comment",
-			"package sample",
-			"/* block comment */",
-			"func create() {} // inline comment",
-		}
+	Describe("C#", func() {
+		It("should keep XML documentation comments", func() {
+			lines := []string{
+				"/// <summary>Creates a value.</summary>",
+				"// implementation note",
+				"public string Create() => \"// literal\";",
+			}
 
-		expected := []string{
-			"// package comment",
-			"package sample",
-			"func create() {} // inline comment",
-		}
+			expected := []string{
+				"/// <summary>Creates a value.</summary>",
+				"public string Create() => \"// literal\";",
+			}
 
-		assertFiltered(t, "sample.go", RetainInline, lines, expected)
+			assertFiltered("Api.cs", RetainDocumentation, lines, expected)
+		})
+
+		It("should keep inline comments", func() {
+			lines := []string{
+				"/// <summary>Creates a value.</summary>",
+				"// implementation note",
+				"public string Create() => \"// literal\";",
+			}
+
+			expected := []string{
+				"// implementation note",
+				"public string Create() => \"// literal\";",
+			}
+
+			assertFiltered("Api.cs", RetainInline, lines, expected)
+		})
 	})
 
-	t.Run("block", func(t *testing.T) {
-		lines := []string{
-			"// package comment",
-			"package sample",
-			"/* block comment */",
-			"func create() {} // inline comment",
-		}
+	Describe("Go", func() {
+		It("should strip all comments without treating literals as comments", func() {
+			lines := []string{
+				"// package comment",
+				"package sample",
+				"",
+				"/* block comment */",
+				"const slash = '/'",
+				"const url = \"http://example.org\"",
+				"const raw = `/* not a comment */`",
+				"func create() {} // inline comment",
+			}
 
-		expected := []string{
-			"package sample",
-			"/* block comment */",
-			"func create() {} ",
-		}
+			expected := []string{
+				"package sample",
+				"",
+				"const slash = '/'",
+				"const url = \"http://example.org\"",
+				"const raw = `/* not a comment */`",
+				"func create() {} ",
+			}
 
-		assertFiltered(t, "sample.go", RetainBlock, lines, expected)
-	})
-}
+			assertFiltered("sample.go", RetainNone, lines, expected)
+		})
 
-// TestFilterPython verifies Python line comment filtering.
-func TestFilterPython(t *testing.T) {
-	t.Run("none", func(t *testing.T) {
-		lines := []string{
-			"# module comment",
-			"name = 'hash # literal'",
-			"value = 1 # inline comment",
-		}
+		It("should keep inline comments", func() {
+			lines := []string{
+				"// package comment",
+				"package sample",
+				"/* block comment */",
+				"func create() {} // inline comment",
+			}
 
-		expected := []string{
-			"name = 'hash # literal'",
-			"value = 1 ",
-		}
+			expected := []string{
+				"// package comment",
+				"package sample",
+				"func create() {} // inline comment",
+			}
 
-		assertFiltered(t, "module.py", RetainNone, lines, expected)
-	})
-}
+			assertFiltered("sample.go", RetainInline, lines, expected)
+		})
 
-// TestFilterVisualBasic verifies Visual Basic comment filtering.
-func TestFilterVisualBasic(t *testing.T) {
-	t.Run("none", func(t *testing.T) {
-		lines := []string{
-			"' file comment",
-			"REM module comment",
-			"Dim text = \"REM not a comment\"",
-			"Dim value = 1 ' inline",
-			"Dim ready = True : Rem after statement separator",
-			"Dim reminder = 1",
-		}
+		It("should keep block comments", func() {
+			lines := []string{
+				"// package comment",
+				"package sample",
+				"/* block comment */",
+				"func create() {} // inline comment",
+			}
 
-		expected := []string{
-			"Dim text = \"REM not a comment\"",
-			"Dim value = 1 ",
-			"Dim ready = True : ",
-			"Dim reminder = 1",
-		}
+			expected := []string{
+				"package sample",
+				"/* block comment */",
+				"func create() {} ",
+			}
 
-		assertFiltered(t, "Module.vb", RetainNone, lines, expected)
-	})
-
-	t.Run("regular", func(t *testing.T) {
-		lines := []string{
-			"''' <summary>Creates a value.</summary>",
-			"' file comment",
-			"REM module comment",
-			"Dim value = 1 ' inline",
-		}
-
-		expected := []string{
-			"' file comment",
-			"REM module comment",
-			"Dim value = 1 ' inline",
-		}
-
-		assertFiltered(t, "Module.vb", RetainRegular, lines, expected)
+			assertFiltered("sample.go", RetainBlock, lines, expected)
+		})
 	})
 
-	t.Run("documentation", func(t *testing.T) {
-		lines := []string{
-			"''' <summary>Creates a value.</summary>",
-			"' implementation note",
-			"REM module comment",
-			"Public Function Create() As String",
-		}
+	Describe("Python", func() {
+		It("should strip all comments", func() {
+			lines := []string{
+				"# module comment",
+				"name = 'hash # literal'",
+				"value = 1 # inline comment",
+			}
 
-		expected := []string{
-			"''' <summary>Creates a value.</summary>",
-			"Public Function Create() As String",
-		}
+			expected := []string{
+				"name = 'hash # literal'",
+				"value = 1 ",
+			}
 
-		assertFiltered(t, "Module.vb", RetainDocumentation, lines, expected)
-	})
-}
-
-// TestFilterUnsupportedExtension verifies unsupported files are returned unchanged.
-func TestFilterUnsupportedExtension(t *testing.T) {
-	lines := []string{
-		"# docs",
-		"sub call { } # inline",
-	}
-
-	assertFiltered(t, "service.pl", RetainAll, lines, lines)
-}
-
-// TestFilterWarnsAboutUselessMode verifies warnings for modes without language-specific meaning.
-func TestFilterWarnsAboutUselessMode(t *testing.T) {
-	output := captureWarnings(func() {
-		Filter([]string{"<!-- comment -->"}, "layout.xml", RetainDocumentation, "docs/guide.md", 12)
+			assertFiltered("module.py", RetainNone, lines, expected)
+		})
 	})
 
-	if !strings.Contains(output, "documentation") ||
-		!strings.Contains(output, "layout.xml") ||
-		!strings.Contains(output, "file://") ||
-		!strings.Contains(output, "guide.md:12") ||
-		!strings.Contains(output, "does not have a distinct meaning") {
-		t.Fatalf("warning output = %q", output)
-	}
-}
+	Describe("Visual Basic", func() {
+		It("should strip all comments", func() {
+			lines := []string{
+				"' file comment",
+				"REM module comment",
+				"Dim text = \"REM not a comment\"",
+				"Dim value = 1 ' inline",
+				"Dim ready = True : Rem after statement separator",
+				"Dim reminder = 1",
+			}
 
-// TestFilterWarnsAboutUnsupportedExtension verifies warnings for unsupported file extensions.
-func TestFilterWarnsAboutUnsupportedExtension(t *testing.T) {
-	output := captureWarnings(func() {
-		Filter([]string{"# comment"}, "service.pl", RetainNone, "docs/guide.md", 12)
+			expected := []string{
+				"Dim text = \"REM not a comment\"",
+				"Dim value = 1 ",
+				"Dim ready = True : ",
+				"Dim reminder = 1",
+			}
+
+			assertFiltered("Module.vb", RetainNone, lines, expected)
+		})
+
+		It("should keep regular comments", func() {
+			lines := []string{
+				"''' <summary>Creates a value.</summary>",
+				"' file comment",
+				"REM module comment",
+				"Dim value = 1 ' inline",
+			}
+
+			expected := []string{
+				"' file comment",
+				"REM module comment",
+				"Dim value = 1 ' inline",
+			}
+
+			assertFiltered("Module.vb", RetainRegular, lines, expected)
+		})
+
+		It("should keep documentation comments", func() {
+			lines := []string{
+				"''' <summary>Creates a value.</summary>",
+				"' implementation note",
+				"REM module comment",
+				"Public Function Create() As String",
+			}
+
+			expected := []string{
+				"''' <summary>Creates a value.</summary>",
+				"Public Function Create() As String",
+			}
+
+			assertFiltered("Module.vb", RetainDocumentation, lines, expected)
+		})
 	})
 
-	if !strings.Contains(output, "comment filtering is not supported for this file extension") ||
-		!strings.Contains(output, "file://") ||
-		!strings.Contains(output, "guide.md:12") {
-		t.Fatalf("warning output = %q", output)
-	}
-}
+	Describe("unsupported extensions", func() {
+		It("should return unsupported files unchanged", func() {
+			lines := []string{
+				"# docs",
+				"sub call { } # inline",
+			}
+
+			assertFiltered("service.pl", RetainAll, lines, lines)
+		})
+
+		It("should warn about unsupported comment modes", func() {
+			output := captureWarnings(func() {
+				Filter([]string{"# comment"}, "service.pl", RetainNone, "docs/guide.md", 12)
+			})
+
+			Expect(output).Should(ContainSubstring(
+				"comment filtering is not supported for this file extension",
+			))
+			Expect(output).Should(ContainSubstring("file://"))
+			Expect(output).Should(ContainSubstring("guide.md:12"))
+		})
+	})
+
+	Describe("warnings", func() {
+		It("should warn about modes without language-specific meaning", func() {
+			output := captureWarnings(func() {
+				Filter([]string{"<!-- comment -->"}, "layout.xml", RetainDocumentation, "docs/guide.md", 12)
+			})
+
+			Expect(output).Should(ContainSubstring("documentation"))
+			Expect(output).Should(ContainSubstring("layout.xml"))
+			Expect(output).Should(ContainSubstring("file://"))
+			Expect(output).Should(ContainSubstring("guide.md:12"))
+			Expect(output).Should(ContainSubstring("does not have a distinct meaning"))
+		})
+	})
+})
 
 // assertFiltered verifies filtering output for one file path and mode.
 func assertFiltered(
-	t *testing.T,
 	filePath string,
 	mode CommentFilterMode,
 	lines []string,
 	expected []string,
 ) {
-	t.Helper()
-
 	got := Filter(lines, filePath, mode, "docs/guide.md", 12)
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("Filter() = %#v, expected %#v", got, expected)
-	}
+
+	Expect(got).Should(Equal(expected))
 }
 
 // captureWarnings runs action and returns slog warning output.
