@@ -147,6 +147,7 @@ var xmlSyntax = CommentMarker{
 	QuoteChars: "\"'",
 }
 
+// allModes lists all comment filtering modes.
 var allModes = []Mode{
 	RetainAll,
 	RetainNone,
@@ -156,8 +157,11 @@ var allModes = []Mode{
 	RetainBlock,
 }
 
+// noneMode lists modes for languages whose comments are not separated into supported subtypes.
 var noneMode = []Mode{RetainAll, RetainNone}
 
+// regularModes lists modes for languages that distinguish inline and block comments,
+// but do not expose documentation comments as a separate supported type.
 var regularModes = []Mode{
 	RetainAll,
 	RetainNone,
@@ -165,6 +169,8 @@ var regularModes = []Mode{
 	RetainBlock,
 }
 
+// documentationModes lists modes for languages that distinguish documentation and regular comments,
+// but do not expose inline and block comments as separate supported types.
 var documentationModes = []Mode{
 	RetainAll,
 	RetainNone,
