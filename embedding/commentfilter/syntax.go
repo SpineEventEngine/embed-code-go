@@ -266,6 +266,11 @@ func warnUselessCommentsMode(
 	if containsMode(usefulModes, mode) {
 		return
 	}
+	var wrappedModes []string
+	for _, mode := range usefulModes {
+		wrappedModes = append(wrappedModes, fmt.Sprintf("`%s`", mode))
+	}
+
 	slog.Warn(
 		fmt.Sprintf(
 			"`comments=\"%s\"` was requested in `%s` for `%s`, but this mode does not have "+
@@ -273,7 +278,7 @@ func warnUselessCommentsMode(
 			mode,
 			fileURL(embeddingDocPath, embeddingLine),
 			filePath,
-			formatModes(usefulModes),
+			strings.Join(wrappedModes, ", "),
 		),
 	)
 }
@@ -291,26 +296,6 @@ func fileURL(path string, line int) string {
 	}
 
 	return url
-}
-
-// formatModes formats modes for a warning message.
-func formatModes(modes []Mode) string {
-	order := []Mode{
-		RetainAll,
-		RetainNone,
-		RetainDocumentation,
-		RetainRegular,
-		RetainInline,
-		RetainBlock,
-	}
-	var result []string
-	for _, mode := range order {
-		if containsMode(modes, mode) {
-			result = append(result, fmt.Sprintf("`%s`", mode))
-		}
-	}
-
-	return strings.Join(result, ", ")
 }
 
 // containsMode reports whether the list includes the given mode.
