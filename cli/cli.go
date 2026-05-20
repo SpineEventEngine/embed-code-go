@@ -24,7 +24,6 @@ import (
 	"os"
 	"strings"
 
-	"embed-code/embed-code-go/analyzing"
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 
@@ -90,9 +89,8 @@ type EmbedCodeSamplesResult struct {
 }
 
 const (
-	ModeCheck   = "check"
-	ModeEmbed   = "embed"
-	ModeAnalyze = "analyze"
+	ModeCheck = "check"
+	ModeEmbed = "embed"
 )
 
 // CheckCodeSamples returns documentation files that are not up-to-date with code files.
@@ -110,13 +108,6 @@ func EmbedCodeSamples(config configuration.Configuration) EmbedCodeSamplesResult
 	return EmbedCodeSamplesResult{
 		embeddingResult,
 	}
-}
-
-// AnalyzeCodeSamples analyzes code fragments in documentation files.
-//
-// config — a configuration for embedding.
-func AnalyzeCodeSamples(config configuration.Configuration) {
-	analyzing.AnalyzeAll(config)
 }
 
 // ReadArgs reads user-specified args from the command line.

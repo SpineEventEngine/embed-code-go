@@ -52,7 +52,6 @@ var _ = Describe("CLI validation", func() {
 			},
 
 			Entry("with check mode", cli.ModeCheck),
-			Entry("with analyze mode", cli.ModeAnalyze),
 			Entry("with embed mode", cli.ModeEmbed),
 		)
 
