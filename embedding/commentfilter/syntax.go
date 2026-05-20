@@ -107,6 +107,14 @@ var csharpSyntax = Syntax{
 	QuoteChars: "\"'`",
 }
 
+var cStyleSyntax = Syntax{
+	Inline: []string{"//"},
+	Block: []BlockSyntax{
+		{Start: "/*", End: "*/"},
+	},
+	QuoteChars: "\"'",
+}
+
 var goSyntax = Syntax{
 	Inline: []string{"//"},
 	Block: []BlockSyntax{
@@ -161,6 +169,16 @@ var filtersByExtension = map[string]filterEntry{
 
 	// C#
 	".cs": newFilterEntry(MarkerCommentFilter{Syntax: csharpSyntax}, allCommentModes),
+
+	// C/C++
+	".c":   newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
+	".h":   newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
+	".cc":  newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
+	".cpp": newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
+	".cxx": newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
+	".hh":  newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
+	".hpp": newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
+	".hxx": newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
 
 	// JavaScript
 	".js":  newFilterEntry(MarkerCommentFilter{Syntax: javaStyleSyntax}, allCommentModes),

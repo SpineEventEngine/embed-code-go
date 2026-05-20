@@ -149,6 +149,64 @@ var _ = Describe("Comment filter", func() {
 		})
 	})
 
+	Describe("C and C++", func() {
+		It("should strip all comments without treating literals as comments", func() {
+			lines := []string{
+				"// header comment",
+				"#include <stdio.h>",
+				"",
+				"/* block comment */",
+				"const char slash = '/';",
+				"const char* url = \"http://example.org\";",
+				"int create() { return 1; } // inline comment",
+			}
+
+			expected := []string{
+				"#include <stdio.h>",
+				"",
+				"const char slash = '/';",
+				"const char* url = \"http://example.org\";",
+				"int create() { return 1; } ",
+			}
+
+			assertFiltered("sample.cpp", RetainNone, lines, expected)
+		})
+
+		It("should keep inline comments", func() {
+			lines := []string{
+				"// header comment",
+				"int create();",
+				"/* block comment */",
+				"int count(); // inline comment",
+			}
+
+			expected := []string{
+				"// header comment",
+				"int create();",
+				"int count(); // inline comment",
+			}
+
+			assertFiltered("sample.cpp", RetainInline, lines, expected)
+		})
+
+		It("should keep block comments", func() {
+			lines := []string{
+				"// header comment",
+				"int create();",
+				"/* block comment */",
+				"int count(); // inline comment",
+			}
+
+			expected := []string{
+				"int create();",
+				"/* block comment */",
+				"int count(); ",
+			}
+
+			assertFiltered("sample.hpp", RetainBlock, lines, expected)
+		})
+	})
+
 	Describe("Go", func() {
 		It("should strip all comments without treating literals as comments", func() {
 			lines := []string{
