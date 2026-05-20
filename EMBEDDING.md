@@ -131,9 +131,9 @@ Unknown extensions are embedded unchanged.
 
 Not all languages has difference between documentation/regular or inline/block comments.
 
-The table below lists the supported languages and useful `comments` modes for them:
+The table below lists the supported languages and supported `comments` modes for them:
 
-| Language               | Extensions                                              | Useful `comments` modes                                      |
+| Language               | Extensions                                              | Supported `comments` modes                                   |
 |------------------------|---------------------------------------------------------|--------------------------------------------------------------|
 | Java, Kotlin, Groovy   | `.java`, `.kt`, `.kts`, `.groovy`                       | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
 | C#                     | `.cs`                                                   | `all`, `none`, `documentation`, `regular`, `inline`, `block` |

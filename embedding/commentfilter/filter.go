@@ -122,13 +122,13 @@ func warnUnsupportedCommentsMode(
 	mode Mode,
 	embeddingDocPath string,
 	embeddingLine int,
-	usefulModes []Mode,
+	supportedModes []Mode,
 ) {
-	if containsMode(usefulModes, mode) {
+	if containsMode(supportedModes, mode) {
 		return
 	}
 	var wrappedModes []string
-	for _, mode := range usefulModes {
+	for _, mode := range supportedModes {
 		wrappedModes = append(wrappedModes, fmt.Sprintf("`%s`", mode))
 	}
 
@@ -161,8 +161,8 @@ func fileURL(path string, line int) string {
 
 // containsMode reports whether the list includes the given mode.
 func containsMode(modes []Mode, mode Mode) bool {
-	for _, usefulMode := range modes {
-		if usefulMode == mode {
+	for _, supportedMode := range modes {
+		if supportedMode == mode {
 			return true
 		}
 	}
