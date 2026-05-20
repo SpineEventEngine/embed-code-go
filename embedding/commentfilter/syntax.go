@@ -200,6 +200,9 @@ var filtersByExtension = map[string]filterEntry{
 	// Go
 	".go": newFilterEntry(MarkerCommentFilter{Syntax: goSyntax}, inlineBlockCommentModes),
 
+	// Protobuf
+	".proto": newFilterEntry(MarkerCommentFilter{Syntax: cStyleSyntax}, inlineBlockCommentModes),
+
 	// Python
 	".py":  newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allNoneCommentModes),
 	".pyi": newFilterEntry(MarkerCommentFilter{Syntax: hashLineSyntax}, allNoneCommentModes),

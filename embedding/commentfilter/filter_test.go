@@ -284,6 +284,66 @@ var _ = Describe("Comment filter", func() {
 		})
 	})
 
+	Describe("Protobuf", func() {
+		It("should strip all comments without treating literals as comments", func() {
+			lines := []string{
+				"// file comment",
+				"syntax = \"proto3\";",
+				"",
+				"/* message comment */",
+				"message Sample {",
+				"  string url = 1 [default = 'http://example.org'];",
+				"  int32 count = 2; // inline comment",
+				"}",
+			}
+
+			expected := []string{
+				"syntax = \"proto3\";",
+				"",
+				"message Sample {",
+				"  string url = 1 [default = 'http://example.org'];",
+				"  int32 count = 2; ",
+				"}",
+			}
+
+			assertFiltered("sample.proto", RetainNone, lines, expected)
+		})
+
+		It("should keep inline comments", func() {
+			lines := []string{
+				"// file comment",
+				"syntax = \"proto3\";",
+				"/* message comment */",
+				"message Sample {} // inline comment",
+			}
+
+			expected := []string{
+				"// file comment",
+				"syntax = \"proto3\";",
+				"message Sample {} // inline comment",
+			}
+
+			assertFiltered("sample.proto", RetainInline, lines, expected)
+		})
+
+		It("should keep block comments", func() {
+			lines := []string{
+				"// file comment",
+				"syntax = \"proto3\";",
+				"/* message comment */",
+				"message Sample {} // inline comment",
+			}
+
+			expected := []string{
+				"syntax = \"proto3\";",
+				"/* message comment */",
+				"message Sample {} ",
+			}
+
+			assertFiltered("sample.proto", RetainBlock, lines, expected)
+		})
+	})
+
 	Describe("Python", func() {
 		It("should strip all comments", func() {
 			lines := []string{
