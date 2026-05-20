@@ -20,7 +20,7 @@ package commentfilter
 
 import "fmt"
 
-// Mode CommentFilterMode controls which source comments are retained in embedded snippets.
+// Mode controls which source comments are affected by the comment filter.
 type Mode string
 
 const (
@@ -38,7 +38,7 @@ const (
 	RetainBlock Mode = "block"
 )
 
-// ParseMode converts an embed-code `comments` attribute value into a CommentFilterMode.
+// ParseMode converts an embed-code `comments` attribute value into a comment filter Mode.
 func ParseMode(value string) (Mode, error) {
 	switch Mode(value) {
 	case "":

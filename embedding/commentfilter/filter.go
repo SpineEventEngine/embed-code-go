@@ -18,6 +18,13 @@
 
 package commentfilter
 
+import (
+	"fmt"
+	"log/slog"
+	"path/filepath"
+	"strings"
+)
+
 // Filter returns source lines with comments stripped according to the requested mode.
 func Filter(
 	lines []string,
@@ -35,4 +42,107 @@ func Filter(
 	}
 
 	return filter.Filter(lines, mode)
+}
+
+// filterFor returns the comment filter registered for the given file path and warns on odd modes.
+func filterFor(
+	filePath string,
+	mode Mode,
+	embeddingDocPath string,
+	embeddingLine int,
+) (Filterer, bool) {
+	extension := normalizeExtension(filepath.Ext(filePath))
+	entry, found := filtersByExtension[extension]
+	if !found {
+		warnUnsupportedFileType(filePath, mode, embeddingDocPath, embeddingLine)
+		return nil, false
+	}
+	warnUnsupportedCommentsMode(filePath, mode, embeddingDocPath, embeddingLine, entry.supportedModes)
+
+	return entry.filter, true
+}
+
+// normalizeExtension returns a lowercase file extension with a leading dot.
+func normalizeExtension(extension string) string {
+	normalized := strings.ToLower(extension)
+	if normalized == "" || strings.HasPrefix(normalized, ".") {
+		return normalized
+	}
+
+	return "." + normalized
+}
+
+// warnUnsupportedFileType logs when comments filtering is requested for an unsupported file.
+func warnUnsupportedFileType(
+	filePath string,
+	mode Mode,
+	embeddingDocPath string,
+	embeddingLine int,
+) {
+	if mode == RetainAll {
+		return
+	}
+	slog.Warn(
+		fmt.Sprintf(
+			"`comments=\"%s\"` was requested in `%s` for `%s`, "+
+				"but comment filtering is not supported for this file extension.",
+			mode,
+			fileURL(embeddingDocPath, embeddingLine),
+			filePath,
+		),
+	)
+}
+
+// warnUnsupportedCommentsMode logs when the selected mode is not supported for a file.
+func warnUnsupportedCommentsMode(
+	filePath string,
+	mode Mode,
+	embeddingDocPath string,
+	embeddingLine int,
+	usefulModes []Mode,
+) {
+	if containsMode(usefulModes, mode) {
+		return
+	}
+	var wrappedModes []string
+	for _, mode := range usefulModes {
+		wrappedModes = append(wrappedModes, fmt.Sprintf("`%s`", mode))
+	}
+
+	slog.Warn(
+		fmt.Sprintf(
+			"`comments=\"%s\"` was requested in `%s` for `%s`, but this mode does not have "+
+				"a distinct meaning for this file type. Supported modes are: %s.",
+			mode,
+			fileURL(embeddingDocPath, embeddingLine),
+			filePath,
+			strings.Join(wrappedModes, ", "),
+		),
+	)
+}
+
+// fileURL returns an absolute file URL for a local path and line.
+func fileURL(path string, line int) string {
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return "file://" + path
+	}
+
+	url := "file://" + absolutePath
+	if line > 0 {
+		url = fmt.Sprintf("%s:%d", url, line)
+	}
+
+	return url
+}
+
+// containsMode reports whether the list includes the given mode.
+func containsMode(modes []Mode, mode Mode) bool {
+	for _, usefulMode := range modes {
+		if usefulMode == mode {
+			return true
+		}
+	}
+
+	return false
 }
