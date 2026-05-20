@@ -33,8 +33,8 @@ const Version = "1.2.0"
 // The entry point for embed-code.
 //
 // There are two modes, which are chosen by 'mode' arg. If it is set to 'check',
-// then the checking for up-to-date is performed. If it is set to 'embed', the embedding is
-// performed.
+// then the checking for up-to-date is performed. If it is set to 'embed',
+// the embedding is performed.
 //
 // EmbeddingInstruction is the process that consists of the following steps:
 //   - the code fragments are extracted from the code files;
