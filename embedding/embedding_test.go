@@ -184,12 +184,12 @@ var _ = Describe("Embedding", func() {
 			),
 			ContainSubstring(
 				"` matches the start pattern "+
-					"`Pattern *doesNotExistStart*`",
+					"`*doesNotExistStart*`",
 			),
 			ContainSubstring("missing-end-pattern.md:3"),
 			ContainSubstring(
 				"` matches the end pattern "+
-					"`Pattern *doesNotExistEnd*`",
+					"`*doesNotExistEnd*`",
 			),
 		))
 	})

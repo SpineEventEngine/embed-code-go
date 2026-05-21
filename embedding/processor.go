@@ -232,9 +232,11 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 			return context, fmt.Errorf(errorStr, absDocPath, errorLine(context, err), err)
 		}
 		if !accepted {
-			err = unacceptedTransitionError(context, err)
+			err = unacceptedTransitionError(context)
 			currentState = &parsing.RegularLineState{}
-			context.ResolveUnacceptedEmbedding()
+			if context.EmbeddingInstruction != nil {
+				context.ResolveUnacceptedEmbedding()
+			}
 
 			return context, fmt.Errorf(errorStr, absDocPath, errorLine(context, err), err)
 		}
@@ -270,10 +272,7 @@ func errorLine(context parsing.Context, err error) int {
 }
 
 // unacceptedTransitionError explains why the parser could not accept the current state.
-func unacceptedTransitionError(context parsing.Context, err error) error {
-	if err != nil {
-		return err
-	}
+func unacceptedTransitionError(context parsing.Context) error {
 	if context.EmbeddingInstruction != nil && context.CodeFenceStarted {
 		return parsing.UnclosedCodeFenceError{
 			Line: context.EmbeddingInstruction.DocumentationLine,
