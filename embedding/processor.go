@@ -258,6 +258,10 @@ func errorLine(context parsing.Context, err error) int {
 	if errors.As(err, &unclosedFenceErr) {
 		return unclosedFenceErr.Line
 	}
+	var patternErr parsing.PatternNotFoundError
+	if errors.As(err, &patternErr) {
+		return patternErr.Line
+	}
 	if context.EmbeddingsCount() > 0 {
 		return context.CurrentEmbedding().SourceStartIndex - 1
 	}

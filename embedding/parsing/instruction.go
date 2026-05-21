@@ -61,6 +61,24 @@ type Instruction struct {
 	Configuration     configuration.Configuration
 }
 
+// PatternNotFoundError reports that a start or end pattern did not match the code file.
+type PatternNotFoundError struct {
+	Line              int
+	CodeFileReference string
+	Kind              string
+	Pattern           *Pattern
+}
+
+// Error returns a user-facing description of an unmatched start or end pattern.
+func (e PatternNotFoundError) Error() string {
+	return fmt.Sprintf(
+		"no line in code file `%s` matches the %s pattern `%s`",
+		e.CodeFileReference,
+		e.Kind,
+		e.Pattern,
+	)
+}
+
 // NewInstruction creates an Instruction based on provided attributes and configuration.
 //
 // attributes — a map with string-typed both keys and values. Possible keys are:
@@ -116,12 +134,19 @@ func NewInstruction(
 //
 // Returns an error if there was an error during reading the content.
 func (e Instruction) Content() ([]string, error) {
+	codeFileReference, err := fragmentation.ResolveCodeFileReference(e.CodeFile, e.Configuration)
+	if err != nil {
+		return nil, err
+	}
 	fileContent, err := fragmentation.ResolveContent(e.CodeFile, e.Fragment, e.Configuration)
 	if err != nil {
 		return nil, err
 	}
 	if e.StartPattern != nil || e.EndPattern != nil {
-		fileContent = e.matchingLines(fileContent)
+		fileContent, err = e.matchingLines(fileContent, codeFileReference)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return commentfilter.Filter(
@@ -144,19 +169,29 @@ func (e Instruction) String() string {
 // Filters and returns a subset of input lines based on start and end patterns.
 //
 // lines — a list of strings representing the input lines.
-func (e Instruction) matchingLines(lines []string) []string {
+func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]string, error) {
 	startPosition := 0
 	if e.StartPattern != nil {
-		startPosition = e.matchGlob(e.StartPattern, lines, 0)
+		var err error
+		startPosition, err = e.matchGlob(e.StartPattern, lines, 0, "start",
+			codeFileReference)
+		if err != nil {
+			return nil, err
+		}
 	}
 	endPosition := len(lines) - 1
 	if e.EndPattern != nil {
-		endPosition = e.matchGlob(e.EndPattern, lines, startPosition)
+		var err error
+		endPosition, err = e.matchGlob(e.EndPattern, lines, startPosition, "end",
+			codeFileReference)
+		if err != nil {
+			return nil, err
+		}
 	}
 	requiredLines := lines[startPosition : endPosition+1]
 	indentation := indent.MaxCommonIndentation(requiredLines)
 
-	return indent.CutIndent(requiredLines, indentation)
+	return indent.CutIndent(requiredLines, indentation), nil
 }
 
 // Returns the index of a first line that matches given pattern.
@@ -166,15 +201,21 @@ func (e Instruction) matchingLines(lines []string) []string {
 // lines — a list of lines to search in.
 //
 // startFrom — an index from which to start searching.
-func (e Instruction) matchGlob(pattern *Pattern, lines []string, startFrom int) int {
+func (e Instruction) matchGlob(pattern *Pattern, lines []string, startFrom int,
+	kind string, codeFileReference string) (int, error) {
 	lineCount := len(lines)
 	resultLine := startFrom
 	for resultLine < lineCount {
 		line := lines[resultLine]
 		if pattern.Match(line) {
-			return resultLine
+			return resultLine, nil
 		}
 		resultLine++
 	}
-	panic(fmt.Sprintf("there is no line matching `%s`", pattern))
+	return 0, PatternNotFoundError{
+		Line:              e.DocumentationLine,
+		CodeFileReference: codeFileReference,
+		Kind:              kind,
+		Pattern:           pattern,
+	}
 }

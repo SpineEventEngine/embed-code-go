@@ -165,6 +165,35 @@ var _ = Describe("Embedding", func() {
 		))
 	})
 
+	It("should report all pattern matching errors", func() {
+		config.DocIncludes = []string{"missing-start-pattern.md", "missing-end-pattern.md"}
+
+		var recovered any
+		func() {
+			defer func() {
+				recovered = recover()
+			}()
+			embedding.CheckUpToDate(config)
+		}()
+
+		Expect(recovered).ShouldNot(BeNil())
+		Expect(fmt.Sprint(recovered)).Should(And(
+			ContainSubstring("missing-start-pattern.md:3"),
+			ContainSubstring(
+				"no line in code file `file://",
+			),
+			ContainSubstring(
+				"` matches the start pattern "+
+					"`Pattern *doesNotExistStart*`",
+			),
+			ContainSubstring("missing-end-pattern.md:3"),
+			ContainSubstring(
+				"` matches the end pattern "+
+					"`Pattern *doesNotExistEnd*`",
+			),
+		))
+	})
+
 	It("should embed with multi lined tag attributes", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-valid-tag-attributes.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
