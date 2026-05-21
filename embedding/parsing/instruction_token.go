@@ -36,12 +36,22 @@ type InstructionParseError struct {
 	Reason string
 }
 
+// MissingCodeFenceError reports that an embedding instruction is not followed by a code fence.
+type MissingCodeFenceError struct {
+	Line int
+}
+
 // Error returns a user-facing description of an embedding instruction parse failure.
 func (e InstructionParseError) Error() string {
 	return fmt.Sprintf(
 		"failed to parse an embedding instruction: %s",
 		e.Reason,
 	)
+}
+
+// Error returns a user-facing description of a missing code fence after an instruction.
+func (e MissingCodeFenceError) Error() string {
+	return "expected a markdown code fence after the embedding instruction"
 }
 
 // Recognize reports whether the current line in the parsing context starts with "<embed-code",
