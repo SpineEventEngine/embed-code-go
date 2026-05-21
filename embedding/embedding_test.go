@@ -165,6 +165,35 @@ var _ = Describe("Embedding", func() {
 		))
 	})
 
+	It("should report all pattern matching errors", func() {
+		config.DocIncludes = []string{"missing-start-pattern.md", "missing-end-pattern.md"}
+
+		var recovered any
+		func() {
+			defer func() {
+				recovered = recover()
+			}()
+			embedding.CheckUpToDate(config)
+		}()
+
+		Expect(recovered).ShouldNot(BeNil())
+		Expect(fmt.Sprint(recovered)).Should(And(
+			ContainSubstring("missing-start-pattern.md:3"),
+			ContainSubstring(
+				"no line in code file `file://",
+			),
+			ContainSubstring(
+				"` matches the start pattern "+
+					"`*doesNotExistStart*`",
+			),
+			ContainSubstring("missing-end-pattern.md:3"),
+			ContainSubstring(
+				"` matches the end pattern "+
+					"`*doesNotExistEnd*`",
+			),
+		))
+	})
+
 	It("should embed with multi lined tag attributes", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-valid-tag-attributes.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
@@ -198,6 +227,32 @@ var _ = Describe("Embedding", func() {
 			"unclosed-nested-tag.md:3`: " +
 				"failed to parse an embedding instruction: " +
 				"element <unexpected> closed by </embed-code>",
+		))
+	})
+
+	It("should report a missing code fence after the instruction", func() {
+		docPath := fmt.Sprintf("%s/missing-code-fence.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		_, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(ContainSubstring(
+			"missing-code-fence.md:3`: " +
+				"expected a markdown code fence after the embedding instruction",
+		))
+	})
+
+	It("should report an unclosed code fence after the instruction", func() {
+		docPath := fmt.Sprintf("%s/unclosed-code-fence.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		_, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(ContainSubstring(
+			"unclosed-code-fence.md:3`: " +
+				"the markdown code fence after the embedding instruction is not closed",
 		))
 	})
 
