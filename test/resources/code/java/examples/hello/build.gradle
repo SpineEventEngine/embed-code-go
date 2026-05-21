@@ -1,0 +1,11 @@
+plugins {
+    id 'java'
+}
+
+spine.enableJava().server()
+
+tasks.register('hello') {
+    doLast {
+        println 'Hello'
+    }
+}
