@@ -356,7 +356,7 @@ var _ = Describe("Instruction", func() {
 
 		Expect(err).Should(MatchError(
 			fmt.Sprintf(
-				"no line in code file `file://%s` matches the start pattern `Pattern foo bar`",
+				"no line in code file `file://%s` matches the start pattern `foo bar`",
 				absTestCodeFile("org/example/Hello.java"),
 			),
 		))
@@ -374,7 +374,7 @@ var _ = Describe("Instruction", func() {
 
 		Expect(err).Should(MatchError(
 			fmt.Sprintf(
-				"no line in code file `file://%s` matches the end pattern `Pattern foo bar`",
+				"no line in code file `file://%s` matches the end pattern `foo bar`",
 				absTestCodeFile("org/example/Hello.java"),
 			),
 		))

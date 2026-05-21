@@ -160,10 +160,7 @@ func (c *Context) ResolveEmbeddingNotFound() {
 //
 // Also appends it to the list of such embeddings for logging.
 func (c *Context) ResolveUnacceptedEmbedding() {
-	currentEmbedding := c.CurrentEmbedding()
-	currentEmbedding.SourceEndIndex = c.lineIndex
-	currentEmbedding.resultEndIndex = len(c.Result)
-	currentEmbeddingInstruction := currentEmbedding.embeddingInstruction
+	currentEmbeddingInstruction := c.CurrentEmbedding().embeddingInstruction
 	c.UnacceptedEmbeddings = append(c.UnacceptedEmbeddings, currentEmbeddingInstruction)
 	c.embeddings = c.embeddings[:c.currentEmbeddingIndex()]
 	c.EmbeddingInstruction = nil

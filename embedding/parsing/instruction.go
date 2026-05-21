@@ -71,11 +71,16 @@ type PatternNotFoundError struct {
 
 // Error returns a user-facing description of an unmatched start or end pattern.
 func (e PatternNotFoundError) Error() string {
+	pattern := ""
+	if e.Pattern != nil {
+		pattern = e.Pattern.sourceGlob
+	}
+
 	return fmt.Sprintf(
 		"no line in code file `%s` matches the %s pattern `%s`",
 		e.CodeFileReference,
 		e.Kind,
-		e.Pattern,
+		pattern,
 	)
 }
 
@@ -134,15 +139,15 @@ func NewInstruction(
 //
 // Returns an error if there was an error during reading the content.
 func (e Instruction) Content() ([]string, error) {
-	codeFileReference, err := fragmentation.ResolveCodeFileReference(e.CodeFile, e.Configuration)
-	if err != nil {
-		return nil, err
-	}
 	fileContent, err := fragmentation.ResolveContent(e.CodeFile, e.Fragment, e.Configuration)
 	if err != nil {
 		return nil, err
 	}
 	if e.StartPattern != nil || e.EndPattern != nil {
+		codeFileReference, err := fragmentation.ResolveCodeFileReference(e.CodeFile, e.Configuration)
+		if err != nil {
+			return nil, err
+		}
 		fileContent, err = e.matchingLines(fileContent, codeFileReference)
 		if err != nil {
 			return nil, err
