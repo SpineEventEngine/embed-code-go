@@ -308,6 +308,20 @@ var _ = Describe("Instruction", func() {
 		Expect(actualLines[1]).Should(MatchRegexp(expectedLastLinePattern))
 	})
 
+	It("should embed one line when start and end globs match the same line", func() {
+		instructionParams := TestInstructionParams{
+			startGlob: "*spine.enableJava()*",
+			endGlob:   "*.server()",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"examples/hello/build.gradle", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"spine.enableJava().server()",
+		}))
+	})
+
 	It("should successfully parse XML by globs with line starts", func() {
 		instructionParams := TestInstructionParams{
 			startGlob: "^foo",

@@ -291,7 +291,7 @@ func unacceptedTransitionError(context parsing.Context) error {
 // it successfully moved to the next state and returns the new state.
 func (p Processor) moveToNextState(state *parsing.State, context *parsing.Context) (
 	bool, *parsing.State, error) {
-	for _, nextState := range parsing.Transitions[*state] {
+	for _, nextState := range p.TransitionsMap[*state] {
 		if nextState.Recognize(*context) {
 			err := nextState.Accept(context, p.Config)
 			if err != nil {
