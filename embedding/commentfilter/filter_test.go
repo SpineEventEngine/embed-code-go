@@ -451,6 +451,16 @@ var _ = Describe("Comment filter", func() {
 			Expect(output).Should(ContainSubstring("guide.md:12"))
 			Expect(output).Should(ContainSubstring("does not have a distinct meaning"))
 		})
+
+		It("should leave content unchanged when mode is not supported for file type", func() {
+			lines := []string{
+				"<root>",
+				"  <!-- hidden -->",
+				"</root>",
+			}
+
+			assertFiltered("layout.xml", RetainDocumentation, lines, lines)
+		})
 	})
 })
 

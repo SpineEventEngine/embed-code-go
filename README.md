@@ -18,7 +18,7 @@ For the details of the usage in the documentation and the code, please refer to 
 
 ## Running
 
-Embed Code operates in three modes:
+Embed Code operates in two modes:
 
 1. **Embedding**: Scans documentation files for `<embed-code>` tags and performs the requested embeddings,
    overwriting the content of the target documentation files.
@@ -26,14 +26,9 @@ Embed Code operates in three modes:
 2. **Up-to-Date Check**: Compares the content under `<embed-code>` tags with the corresponding source code fragments.
    If they differ, the tool reports which files are out-of-date.
 
-3. **Analysis**: Verifies that all embeddings have matching source code fragments.
-   Any issues are logged to `build/analytics/problem-files.txt`.
- 
-
 The mode is selected using the mandatory `-mode` argument:
 - `embed`: Performs the embedding process.
 - `check`: Checks if embeddings are up-to-date.
-- `analyze`: Runs the analysis process.
 
 The tool can be run as a pre-compiled binary or via the Go compiler (requires Go [installed](#installation)).
 Binaries are located in the `./bin` directory.
@@ -60,7 +55,7 @@ go run ./main.go [arguments]
 ### Arguments
 
 The available arguments are:
-  * `-mode`: (Mandatory) The execution mode: `embed`, `check`, or `analyze`.
+  * `-mode`: (Mandatory) The execution mode: `embed` or `check`.
   * `-code-path`: (Optional) Path to the source code root directory.
   * `-docs-path`: (Optional) Path to the documentation root directory.
   * `-config-path`: (Optional) Path to a YAML configuration file containing `code-path` and `docs-path`.

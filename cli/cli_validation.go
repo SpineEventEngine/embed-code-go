@@ -82,19 +82,19 @@ func ValidateConfigFile(userConfig Config) error {
 	return errors.New("expected to use config file, but it does not exist")
 }
 
-// validateMode checks if mode is set to check, embed, or analyze.
+// validateMode checks if mode is set to check or embed.
 func validateMode(mode string) error {
 	isModeSet := isNotEmpty(mode)
 	if !isModeSet {
 		return errors.New("mode must be set")
 	}
 
-	validModes := []string{ModeEmbed, ModeAnalyze, ModeCheck}
+	validModes := []string{ModeEmbed, ModeCheck}
 	isValidMode := slices.Contains(validModes, mode)
 
 	if !isValidMode {
-		return fmt.Errorf("invalid value for mode. it must be one of — `%s`, `%s` or `%s`",
-			ModeEmbed, ModeCheck, ModeAnalyze)
+		return fmt.Errorf("invalid value for mode. it must be one of — `%s` or `%s`",
+			ModeEmbed, ModeCheck)
 	}
 
 	return nil
