@@ -178,8 +178,9 @@ func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]
 	startPosition := 0
 	if e.StartPattern != nil {
 		var err error
-		startPosition, err = e.matchGlob(e.StartPattern, lines, 0, "start",
-			codeFileReference)
+		startPosition, err = e.matchGlob(
+			e.StartPattern, lines, 0, "start", codeFileReference,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -187,8 +188,9 @@ func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]
 	endPosition := len(lines) - 1
 	if e.EndPattern != nil {
 		var err error
-		endPosition, err = e.matchGlob(e.EndPattern, lines, startPosition, "end",
-			codeFileReference)
+		endPosition, err = e.matchGlob(
+			e.EndPattern, lines, startPosition, "end", codeFileReference,
+		)
 		if err != nil {
 			return nil, err
 		}
