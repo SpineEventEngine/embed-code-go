@@ -214,6 +214,19 @@ var _ = Describe("Embedding", func() {
 		))
 	})
 
+	It("should report an unclosed code fence after the instruction", func() {
+		docPath := fmt.Sprintf("%s/unclosed-code-fence.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		_, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(ContainSubstring(
+			"unclosed-code-fence.md:3`: " +
+				"the markdown code fence after the embedding instruction is not closed",
+		))
+	})
+
 	// TODO:olena-zmiiova:https://github.com/SpineEventEngine/embed-code/issues/65
 	It("should successfully embed to a file in a nested dir", func() {
 		Skip(
