@@ -73,6 +73,19 @@ func ResolveContent(codePath string, fragmentName string, config config.Configur
 	return fragmentLines(fragment, content.lines, config.Separator), nil
 }
 
+// ResolveCodeFileReference returns a user-facing reference to the source file.
+func ResolveCodeFileReference(codePath string, config config.Configuration) (string, error) {
+	source, found, err := resolveSource(codePath, config)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return "file://" + source.absolutePath, nil
+	}
+
+	return codeFileReference(codePath, config)
+}
+
 // ClearResolverCache removes cached source fragmentations.
 func ClearResolverCache() {
 	resolverCache.clear()

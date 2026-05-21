@@ -22,6 +22,7 @@ import (
 	_type "embed-code/embed-code-go/type"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -343,7 +344,7 @@ var _ = Describe("Instruction", func() {
 		Expect(actualLines[5]).Should(Equal(expectedLastLine))
 	})
 
-	It("should panic when start glob does not match", func() {
+	It("should report an error when start glob does not match", func() {
 		instructionParams := TestInstructionParams{
 			startGlob: "foo bar",
 			endGlob:   "*main*",
@@ -351,15 +352,17 @@ var _ = Describe("Instruction", func() {
 		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 		instruction := createInstructionFromXML(xmlString, config)
 
-		Expect(func() {
-			_, err := instruction.Content()
-			if err != nil {
-				return
-			}
-		}).To(Panic())
+		_, err := instruction.Content()
+
+		Expect(err).Should(MatchError(
+			fmt.Sprintf(
+				"no line in code file `file://%s` matches the start pattern `Pattern foo bar`",
+				absTestCodeFile("org/example/Hello.java"),
+			),
+		))
 	})
 
-	It("should panic when end glob does not match", func() {
+	It("should report an error when end glob does not match", func() {
 		instructionParams := TestInstructionParams{
 			startGlob: "*main*",
 			endGlob:   "foo bar",
@@ -367,12 +370,14 @@ var _ = Describe("Instruction", func() {
 		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 		instruction := createInstructionFromXML(xmlString, config)
 
-		Expect(func() {
-			_, err := instruction.Content()
-			if err != nil {
-				return
-			}
-		}).To(Panic())
+		_, err := instruction.Content()
+
+		Expect(err).Should(MatchError(
+			fmt.Sprintf(
+				"no line in code file `file://%s` matches the end pattern `Pattern foo bar`",
+				absTestCodeFile("org/example/Hello.java"),
+			),
+		))
 	})
 })
 
@@ -434,6 +439,15 @@ func readInstructionContent(instruction parsing.Instruction) []string {
 	}
 
 	return lines
+}
+
+func absTestCodeFile(path string) string {
+	absolutePath, err := filepath.Abs(filepath.Join("../../test/resources/code/java", path))
+	if err != nil {
+		Fail("unexpected error while resolving test code file: " + err.Error())
+	}
+
+	return absolutePath
 }
 
 func xmlAttribute(name string, value string) string {
