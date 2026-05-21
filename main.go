@@ -32,9 +32,9 @@ const Version = "1.2.0"
 
 // The entry point for embed-code.
 //
-// There are three modes, which are chosen by 'mode' arg. If it is set to 'check',
-// then the checking for up-to-date is performed. If it is set to 'embed', the embedding is
-// performed. If it is set to 'analyze', the analyzing is performed.
+// There are two modes, which are chosen by 'mode' arg. If it is set to 'check',
+// then the checking for up-to-date is performed. If it is set to 'embed',
+// the embedding is performed.
 //
 // EmbeddingInstruction is the process that consists of the following steps:
 //   - the code fragments are extracted from the code files;
@@ -65,10 +65,9 @@ const Version = "1.2.0"
 //   - code-path — a path to a root directory with code files;
 //   - docs-path — a path to a root directory with docs files;
 //   - config-path — a path to a yaml configuration file;
-//   - mode — string which represents the mode of embed-code execution. if it is set to 'check',
+//   - mode — string which represents the mode of embed-code execution. If it is set to 'check',
 //     then the checking for up-to-date is performed. If it is set to 'embed', the embedding
 //     is performed.
-//     If it is set to 'analyze', the analyzing is performed;
 //   - doc-includes — a comma-separated string of glob patterns for docs files to include.
 //     For example:
 //     "docs/**/*.md,guides/*.html". Default value is "**/*.md,**/*.html";
@@ -112,11 +111,6 @@ func main() {
 	case cli.ModeEmbed:
 		embedByConfigs(configs)
 		fmt.Println("Embedding process finished.")
-	case cli.ModeAnalyze:
-		for _, config := range configs {
-			cli.AnalyzeCodeSamples(config)
-		}
-		fmt.Println("Analysis is completed, analytics files can be found in /build/analytics folder.")
 	}
 }
 
