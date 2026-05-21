@@ -47,6 +47,7 @@ type Item struct {
 //   - start — an optional glob-like pattern. If specified, lines before the matching one
 //     are excluded;
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
+//   - comments — an optional comment filtering mode. If omitted, all comments are retained.
 //
 // config — a Configuration with all embed-code settings.
 //
