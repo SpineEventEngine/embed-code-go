@@ -254,6 +254,10 @@ func errorLine(context parsing.Context, err error) int {
 	if errors.As(err, &missingFenceErr) {
 		return missingFenceErr.Line
 	}
+	var unclosedFenceErr parsing.UnclosedCodeFenceError
+	if errors.As(err, &unclosedFenceErr) {
+		return unclosedFenceErr.Line
+	}
 	if context.EmbeddingsCount() > 0 {
 		return context.CurrentEmbedding().SourceStartIndex - 1
 	}
@@ -265,6 +269,11 @@ func errorLine(context parsing.Context, err error) int {
 func unacceptedTransitionError(context parsing.Context, err error) error {
 	if err != nil {
 		return err
+	}
+	if context.EmbeddingInstruction != nil && context.CodeFenceStarted {
+		return parsing.UnclosedCodeFenceError{
+			Line: context.EmbeddingInstruction.DocumentationLine,
+		}
 	}
 	if context.EmbeddingInstruction != nil && !context.CodeFenceStarted {
 		return parsing.MissingCodeFenceError{

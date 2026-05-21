@@ -41,6 +41,11 @@ type MissingCodeFenceError struct {
 	Line int
 }
 
+// UnclosedCodeFenceError reports that an embedding code fence is not closed.
+type UnclosedCodeFenceError struct {
+	Line int
+}
+
 // Error returns a user-facing description of an embedding instruction parse failure.
 func (e InstructionParseError) Error() string {
 	return fmt.Sprintf(
@@ -52,6 +57,11 @@ func (e InstructionParseError) Error() string {
 // Error returns a user-facing description of a missing code fence after an instruction.
 func (e MissingCodeFenceError) Error() string {
 	return "expected a markdown code fence after the embedding instruction"
+}
+
+// Error returns a user-facing description of an unclosed embedding code fence.
+func (e UnclosedCodeFenceError) Error() string {
+	return "the markdown code fence after the embedding instruction is not closed"
 }
 
 // Recognize reports whether the current line in the parsing context starts with "<embed-code",
