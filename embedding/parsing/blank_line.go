@@ -32,8 +32,7 @@ type BlankLineState struct{}
 // Checks if the current line is empty and not part of a code fence, and if there is an embedding.
 // If these conditions are met, it returns true. Otherwise, it returns false.
 func (b BlankLineState) Recognize(context Context) bool {
-	isEmptyString := strings.TrimSpace(context.CurrentLine()) == ""
-	if !context.ReachedEOF() && isEmptyString {
+	if !context.ReachedEOF() && strings.TrimSpace(context.CurrentLine()) == "" {
 		return !context.CodeFenceStarted && context.EmbeddingInstruction != nil
 	}
 

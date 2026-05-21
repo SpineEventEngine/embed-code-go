@@ -232,6 +232,7 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 			return context, fmt.Errorf(errorStr, absDocPath, errorLine(context, err), err)
 		}
 		if !accepted {
+			err = unacceptedTransitionError(context, err)
 			currentState = &parsing.RegularLineState{}
 			context.ResolveUnacceptedEmbedding()
 
@@ -249,11 +250,29 @@ func errorLine(context parsing.Context, err error) int {
 	if errors.As(err, &parseErr) {
 		return parseErr.Line
 	}
+	var missingFenceErr parsing.MissingCodeFenceError
+	if errors.As(err, &missingFenceErr) {
+		return missingFenceErr.Line
+	}
 	if context.EmbeddingsCount() > 0 {
 		return context.CurrentEmbedding().SourceStartIndex - 1
 	}
 
 	return context.CurrentIndex()
+}
+
+// unacceptedTransitionError explains why the parser could not accept the current state.
+func unacceptedTransitionError(context parsing.Context, err error) error {
+	if err != nil {
+		return err
+	}
+	if context.EmbeddingInstruction != nil && !context.CodeFenceStarted {
+		return parsing.MissingCodeFenceError{
+			Line: context.EmbeddingInstruction.DocumentationLine,
+		}
+	}
+
+	return fmt.Errorf("unexpected parser state at line %d", context.CurrentIndex())
 }
 
 // Moves to the next state accordingly to a transition map from the current state. Reports whether

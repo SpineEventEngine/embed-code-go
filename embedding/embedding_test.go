@@ -201,6 +201,19 @@ var _ = Describe("Embedding", func() {
 		))
 	})
 
+	It("should report a missing code fence after the instruction", func() {
+		docPath := fmt.Sprintf("%s/missing-code-fence.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		_, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(ContainSubstring(
+			"missing-code-fence.md:3`: " +
+				"expected a markdown code fence after the embedding instruction",
+		))
+	})
+
 	// TODO:olena-zmiiova:https://github.com/SpineEventEngine/embed-code/issues/65
 	It("should successfully embed to a file in a nested dir", func() {
 		Skip(
