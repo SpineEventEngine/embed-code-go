@@ -134,7 +134,7 @@ func logError(message string, err error) {
 	slog.Error(fmt.Sprintf("%s: %v", message, err))
 }
 
-// checkByConfigs runs check for all configs and logs outdated documentation files.
+// checkByConfigs runs check for all configs and panics if documentation files are outdated.
 func checkByConfigs(configs []configuration.Configuration) {
 	var totalOutdatedFiles []string
 	for _, config := range configs {
@@ -146,7 +146,8 @@ func checkByConfigs(configs []configuration.Configuration) {
 		return
 	}
 
-	printFiles("File outdated:", "Files outdated:", totalOutdatedFiles)
+	printFiles("File to update:", "Files to update:", totalOutdatedFiles)
+	panic("the documentation files are not up-to-date with code files")
 }
 
 // embedByConfig runs the embedByConfig for all configs and logs the results.

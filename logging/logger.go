@@ -94,10 +94,34 @@ func (h *Handler) WithGroup(name string) slog.Handler {
 //	defer HandlePanic(withStacktrace)
 func HandlePanic(withStacktrace bool) {
 	if r := recover(); r != nil {
-		fmt.Printf("Panic: %v\n", r)
+		fmt.Println(formatPanicMessage(r))
 		if withStacktrace {
 			debug.PrintStack()
 		}
 		os.Exit(1)
 	}
+}
+
+// formatPanicMessage formats panic values for console output.
+func formatPanicMessage(recovered any) string {
+	err, ok := recovered.(error)
+	if !ok {
+		return fmt.Sprintf("panic: %v", recovered)
+	}
+
+	joined, ok := err.(interface {
+		Unwrap() []error
+	})
+	if !ok || len(joined.Unwrap()) <= 1 {
+		return fmt.Sprintf("panic: %v", err)
+	}
+
+	var builder strings.Builder
+	builder.WriteString("panic:")
+	for _, wrappedErr := range joined.Unwrap() {
+		builder.WriteString("\n- ")
+		builder.WriteString(wrappedErr.Error())
+	}
+
+	return builder.String()
 }

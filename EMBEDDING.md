@@ -70,6 +70,7 @@ To embed a named fragment, add the following to your Markdown file:
 
 - **`file`**: The path to the source file relative to the `code-path` defined in your configuration.
 - **`fragment`**: The name of the fragment to embed. If omitted, the entire file will be embedded.
+- **`comments`**: Optional comment filtering mode. If omitted, all comments are retained.
 
 Fragment names can be any string, but avoid using double quotes (`"`) or characters reserved by XML.
 
@@ -102,6 +103,48 @@ Use `^` and `$` to disable this behavior and match the exact line start or end.
 
 If you need to match a literal `^` at the start of a line, use `^^`.
 Similarly, use `$$` to match a literal `$` at the end of a line.
+
+## Comment filtering
+
+Use the optional `comments` attribute to reduce comment noise in the embedded snippet:
+
+````markdown
+<embed-code
+  file="src/main/java/example/ValidatingBuilder.java"
+  start="public interface ValidatingBuilder"
+  end="^}"
+  comments="none"></embed-code>
+```java
+```
+````
+
+Supported values:
+
+- `all` — retain all comments. This is the default.
+- `none` — strip all recognized comments.
+- `documentation` — retain documentation comments such as Javadoc.
+- `regular` — retain non-documentation line and block comments.
+- `inline` — retain non-documentation line comments such as `//`.
+- `block` — retain non-documentation block comments such as `/* */`.
+
+Unknown extensions are embedded unchanged.
+
+Not all languages has difference between documentation/regular or inline/block comments.
+
+The table below lists the supported languages and supported `comments` modes for them:
+
+| Language               | Extensions                                              | Supported `comments` modes                                   |
+|------------------------|---------------------------------------------------------|--------------------------------------------------------------|
+| Java, Kotlin, Groovy   | `.java`, `.kt`, `.kts`, `.groovy`                       | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| C#                     | `.cs`                                                   | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| C, C++                 | `.c`, `.h`, `.cc`, `.cpp`, `.cxx`,`.hh`, `.hpp`, `.hxx` | `all`, `none`, `inline`, `block`                             |
+| JavaScript, TypeScript | `.js`, `.jsx`, `.ts`, `.tsx`                            | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| Go                     | `.go`                                                   | `all`, `none`, `inline`, `block`                             |
+| Protobuf               | `.proto`                                                | `all`, `none`, `inline`, `block`                             |
+| Python                 | `.py`, `.pyi`, `.pyw`                                   | `all`, `none`                                                |
+| YAML                   | `.yml`, `.yaml`                                         | `all`, `none`                                                |
+| XML, HTML              | `.xml`, `.html`, `.htm`                                 | `all`, `none`                                                |
+| Visual Basic           | `.vb`, `.bas`, `.vbs`, `.vbscript`                      | `all`, `none`, `documentation`, `regular`                    |
 
 ## Advanced use cases
 
