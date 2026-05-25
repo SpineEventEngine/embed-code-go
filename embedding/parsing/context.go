@@ -163,7 +163,7 @@ func (c *Context) ResolveUnacceptedEmbedding() {
 	currentEmbeddingInstruction := c.CurrentEmbedding().embeddingInstruction
 	c.UnacceptedEmbeddings = append(c.UnacceptedEmbeddings, currentEmbeddingInstruction)
 	c.embeddings = c.embeddings[:c.currentEmbeddingIndex()]
-	c.SetEmbedding(nil)
+	c.EmbeddingInstruction = nil
 }
 
 // SetEmbedding sets an embedding to Context. Also sets fileContainsEmbedding flag.
