@@ -87,6 +87,16 @@ Alternatively, you can specify a fragment using `start` and `end` patterns:
 Patterns match the first and last lines of the desired fragment.
 If a pattern is omitted, the fragment will start at the beginning or end at the end of the file, respectively.
 
+To embed a single line, use `line` with the same pattern syntax:
+
+````markdown
+<embed-code file="java/lang/String.java" line="public String()"></embed-code>
+```java
+```
+````
+
+The `line` attribute cannot be combined with `start`, `end`, or `fragment`.
+
 ### Pattern syntax
 
 The tool supports an extended glob syntax for matching lines:

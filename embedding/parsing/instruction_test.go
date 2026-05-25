@@ -37,6 +37,7 @@ type TestInstructionParams struct {
 	fragment  string
 	startGlob string
 	endGlob   string
+	lineGlob  string
 	comments  string
 	closeTag  bool
 }
@@ -205,6 +206,36 @@ var _ = Describe("Instruction", func() {
 		Expect(parsing.FromXML(xmlString, config)).Error().Should(HaveOccurred())
 	})
 
+	It("should have an error when parsing fragment with line glob", func() {
+		instructionParams := TestInstructionParams{
+			fragment: "fragment",
+			lineGlob: "public void hello()",
+		}
+		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
+
+		Expect(parsing.FromXML(xmlString, config)).Error().Should(HaveOccurred())
+	})
+
+	It("should have an error when parsing line glob with start glob", func() {
+		instructionParams := TestInstructionParams{
+			startGlob: "public class*",
+			lineGlob:  "public void hello()",
+		}
+		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
+
+		Expect(parsing.FromXML(xmlString, config)).Error().Should(HaveOccurred())
+	})
+
+	It("should have an error when parsing line glob with end glob", func() {
+		instructionParams := TestInstructionParams{
+			endGlob:  "*System.out*",
+			lineGlob: "public void hello()",
+		}
+		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
+
+		Expect(parsing.FromXML(xmlString, config)).Error().Should(HaveOccurred())
+	})
+
 	It("should successfully parse XML from start to end glob", func() {
 		instructionParams := TestInstructionParams{
 			startGlob: "public class*",
@@ -255,6 +286,19 @@ var _ = Describe("Instruction", func() {
 
 		Expect(actualLines).Should(HaveLen(expectedLength))
 		Expect(actualLines[0]).Should(Equal(expectedFirstLine))
+	})
+
+	It("should embed only the matching line when line glob is specified", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: "*class*",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"org/example/Hello.java", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"public class Hello {",
+		}))
 	})
 
 	It("should successfully parse XML by only end glob", func() {
@@ -308,7 +352,7 @@ var _ = Describe("Instruction", func() {
 		Expect(actualLines[1]).Should(MatchRegexp(expectedLastLinePattern))
 	})
 
-		It("should embed one line when the start and end globs match the same line", func() {
+	It("should embed one line when the start and end globs match the same line", func() {
 		instructionParams := TestInstructionParams{
 			startGlob: "*spine.enableJava()*",
 			endGlob:   "*.server()",
@@ -422,6 +466,10 @@ func buildInstruction(fileName string, params TestInstructionParams) string {
 	if len(params.endGlob) > 0 {
 		endAttr := xmlAttribute("end", params.endGlob)
 		instructionLine += " " + endAttr
+	}
+	if len(params.lineGlob) > 0 {
+		lineAttr := xmlAttribute("line", params.lineGlob)
+		instructionLine += " " + lineAttr
 	}
 	if len(params.comments) > 0 {
 		commentsAttr := xmlAttribute("comments", params.comments)
