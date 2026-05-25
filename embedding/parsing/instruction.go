@@ -43,6 +43,8 @@ import (
 // EndPattern — an optional glob-like pattern. If specified, lines after the matching one
 // are excluded.
 //
+// LinePattern — an optional glob-like pattern. If specified, only the matching line is embedded.
+//
 // CommentMode — specifies which comments are retained in the embedded code.
 //
 // DocumentationFile — a documentation file containing the instruction.
@@ -55,6 +57,7 @@ type Instruction struct {
 	Fragment          string
 	StartPattern      *Pattern
 	EndPattern        *Pattern
+	LinePattern       *Pattern
 	CommentMode       commentfilter.Mode
 	DocumentationFile string
 	DocumentationLine int
@@ -93,6 +96,7 @@ func (e PatternNotFoundError) Error() string {
 //   - start — an optional glob-like pattern. If specified, lines before the matching one
 //     are excluded;
 //   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
+//   - line — an optional glob-like pattern. If specified, only the matching line is embedded.
 //   - comments — an optional comment filtering mode. If omitted, all comments are retained.
 //
 // config — a Configuration with all embed-code settings.
@@ -104,16 +108,22 @@ func NewInstruction(
 	fragment := attributes["fragment"]
 	startValue := attributes["start"]
 	endValue := attributes["end"]
+	lineValue := attributes["line"]
 	commentMode, err := commentfilter.ParseMode(attributes["comments"])
 	if err != nil {
 		return Instruction{}, err
 	}
 
-	if fragment != "" && (startValue != "" || endValue != "") {
+	if fragment != "" && (startValue != "" || endValue != "" || lineValue != "") {
 		return Instruction{},
-			fmt.Errorf("<embed-code> must NOT specify both a fragment name and start/end patterns")
+			fmt.Errorf("<embed-code> must NOT specify both a fragment name and start/end/line patterns")
+	}
+	if lineValue != "" && (startValue != "" || endValue != "") {
+		return Instruction{},
+			fmt.Errorf("<embed-code> must NOT specify both a line pattern and start/end patterns")
 	}
 	var end *Pattern
+	var line *Pattern
 	var start *Pattern
 
 	if startValue != "" {
@@ -124,12 +134,17 @@ func NewInstruction(
 		endPattern := NewPattern(endValue)
 		end = &endPattern
 	}
+	if lineValue != "" {
+		linePattern := NewPattern(lineValue)
+		line = &linePattern
+	}
 
 	return Instruction{
 		CodeFile:      codeFile,
 		Fragment:      fragment,
 		StartPattern:  start,
 		EndPattern:    end,
+		LinePattern:   line,
 		CommentMode:   commentMode,
 		Configuration: config,
 	}, nil
@@ -143,7 +158,7 @@ func (e Instruction) Content() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	if e.StartPattern != nil || e.EndPattern != nil {
+	if e.StartPattern != nil || e.EndPattern != nil || e.LinePattern != nil {
 		codeFileReference, err := fragmentation.ResolveCodeFileReference(e.CodeFile, e.Configuration)
 		if err != nil {
 			return nil, err
@@ -166,15 +181,28 @@ func (e Instruction) Content() ([]string, error) {
 // Returns string representation of Instruction.
 func (e Instruction) String() string {
 	return fmt.Sprintf(
-		"EmbeddingInstruction[file=`%s`, fragment=`%s`, start=`%s`, end=`%s`, comments=`%s`]",
-		e.CodeFile, e.Fragment, e.StartPattern, e.EndPattern, e.CommentMode,
+		"EmbeddingInstruction[file=`%s`, fragment=`%s`, start=`%s`, end=`%s`, line=`%s`, comments=`%s`]",
+		e.CodeFile, e.Fragment, e.StartPattern, e.EndPattern, e.LinePattern, e.CommentMode,
 	)
 }
 
-// Filters and returns a subset of input lines based on start and end patterns.
+// Filters and returns a subset of input lines based on start, end, or line patterns.
 //
 // lines — a list of strings representing the input lines.
 func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]string, error) {
+	if e.LinePattern != nil {
+		linePosition, err := e.matchGlob(
+			e.LinePattern, lines, 0, "line", codeFileReference,
+		)
+		if err != nil {
+			return nil, err
+		}
+		requiredLines := []string{lines[linePosition]}
+		indentation := indent.MaxCommonIndentation(requiredLines)
+
+		return indent.CutIndent(requiredLines, indentation), nil
+	}
+
 	startPosition := 0
 	if e.StartPattern != nil {
 		var err error
