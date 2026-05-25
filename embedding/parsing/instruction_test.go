@@ -308,7 +308,7 @@ var _ = Describe("Instruction", func() {
 		Expect(actualLines[1]).Should(MatchRegexp(expectedLastLinePattern))
 	})
 
-	It("should embed one line when start and end globs match the same line", func() {
+		It("should embed one line when the start and end globs match the same line", func() {
 		instructionParams := TestInstructionParams{
 			startGlob: "*spine.enableJava()*",
 			endGlob:   "*.server()",
