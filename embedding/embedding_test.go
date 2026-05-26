@@ -197,6 +197,36 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
+	It("should embed a method with escaped newline patterns", func() {
+		config.DocIncludes = []string{"escaped-newline-pattern.md"}
+		docPath := fmt.Sprintf("%s/escaped-newline-pattern.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+
+		docContent, err := os.ReadFile(docPath)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(string(docContent)).Should(ContainSubstring("@Test\n" +
+			"@DisplayName(\"adds two values\")"))
+		Expect(string(docContent)).Should(ContainSubstring("assertEquals(2, value);\n}"))
+		Expect(string(docContent)).ShouldNot(ContainSubstring("subtractsTwoValues"))
+	})
+
+	It("should embed a method with exact escaped newline patterns", func() {
+		config.DocIncludes = []string{"escaped-newline-exact-pattern.md"}
+		docPath := fmt.Sprintf("%s/escaped-newline-exact-pattern.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+
+		docContent, err := os.ReadFile(docPath)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(string(docContent)).Should(ContainSubstring("@Test\n" +
+			"@DisplayName(\"adds two values\")"))
+		Expect(string(docContent)).Should(ContainSubstring("assertEquals(2, value);\n}"))
+		Expect(string(docContent)).ShouldNot(ContainSubstring("subtractsTwoValues"))
+	})
+
 	It("should report a missing closing tag", func() {
 		docPath := fmt.Sprintf("%s/missing-closing-tag.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)

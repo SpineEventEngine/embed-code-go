@@ -39,6 +39,7 @@ type Pattern struct {
 
 const (
 	anyCharacterSequence = "*"
+	escapedLineSeparator = `\n`
 	lineStart            = "^"
 	lineEnd              = "$"
 )
@@ -98,6 +99,37 @@ func (p Pattern) Match(line string) bool {
 	g := glob.MustCompile(p.pattern)
 
 	return g.Match(line)
+}
+
+// HasLineSeparator reports whether the pattern contains an escaped line separator.
+func (p Pattern) HasLineSeparator() bool {
+	return strings.Contains(p.sourceGlob, escapedLineSeparator)
+}
+
+// MatchLineSequence reports whether source lines match the escaped-line-separated pattern.
+func (p Pattern) MatchLineSequence(lines []string) bool {
+	patternLines := p.linePatterns()
+	if len(patternLines) != len(lines) {
+		return false
+	}
+	for i, patternLine := range patternLines {
+		pattern := NewPattern(patternLine)
+		if !pattern.Match(lines[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// linePatterns returns trimmed pattern lines separated by an escaped newline.
+func (p Pattern) linePatterns() []string {
+	patternLines := strings.Split(p.sourceGlob, escapedLineSeparator)
+	for i, line := range patternLines {
+		patternLines[i] = strings.TrimSpace(line)
+	}
+
+	return patternLines
 }
 
 // Returns string representation of Pattern.

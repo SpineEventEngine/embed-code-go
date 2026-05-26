@@ -238,14 +238,23 @@ func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]
 // startFrom — an index from which to start searching.
 func (e Instruction) matchGlob(pattern *Pattern, lines []string, startFrom int,
 	kind string, codeFileReference string) (int, error) {
-	lineCount := len(lines)
-	resultLine := startFrom
-	for resultLine < lineCount {
-		line := lines[resultLine]
-		if pattern.Match(line) {
-			return resultLine, nil
+	if kind != "line" && pattern.HasLineSeparator() {
+		start, end, found := matchLineSequence(pattern, lines, startFrom)
+		if found {
+			if kind == "end" {
+				return end, nil
+			}
+			return start, nil
 		}
-		resultLine++
+		return 0, PatternNotFoundError{
+			Line:              e.DocumentationLine,
+			CodeFileReference: codeFileReference,
+			Kind:              kind,
+			Pattern:           pattern,
+		}
+	}
+	if line, found := matchSingleLine(pattern, lines, startFrom); found {
+		return line, nil
 	}
 	return 0, PatternNotFoundError{
 		Line:              e.DocumentationLine,
@@ -253,4 +262,33 @@ func (e Instruction) matchGlob(pattern *Pattern, lines []string, startFrom int,
 		Kind:              kind,
 		Pattern:           pattern,
 	}
+}
+
+// matchSingleLine returns the first source line matching the pattern.
+func matchSingleLine(pattern *Pattern, lines []string, startFrom int) (int, bool) {
+	lineCount := len(lines)
+	resultLine := startFrom
+	for resultLine < lineCount {
+		line := lines[resultLine]
+		if pattern.Match(line) {
+			return resultLine, true
+		}
+		resultLine++
+	}
+
+	return 0, false
+}
+
+// matchLineSequence returns the first source-line range matching an escaped-line pattern.
+func matchLineSequence(pattern *Pattern, lines []string, startFrom int) (int, int, bool) {
+	lineCount := len(pattern.linePatterns())
+	lastStart := len(lines) - lineCount
+	for start := startFrom; start <= lastStart; start++ {
+		end := start + lineCount
+		if pattern.MatchLineSequence(lines[start:end]) {
+			return start, end - 1, true
+		}
+	}
+
+	return 0, 0, false
 }
