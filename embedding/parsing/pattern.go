@@ -39,10 +39,10 @@ type Pattern struct {
 
 const (
 	anyCharacterSequence = "*"
-	escapedLineSeparator = `\\n`
 	lineStart            = "^"
 	lineEnd              = "$"
-	patternLineSeparator = `\n`
+	lineSeparator        = `\n`
+	escapedLineSeparator = `\\n`
 )
 
 // NewPattern creates a new Pattern based on provided glob string.
@@ -52,6 +52,12 @@ const (
 //
 // The modified pattern is the original one, but enclosed with the "*" wildcards,
 // unless start of the line or end of the line wildcards were specified.
+//
+// A multi-line pattern uses "\n" as a separator between consecutive source-line
+// patterns. For example, "Test \n adds two values" matches a line matching "Test"
+// followed by a line matching "adds two values". Each part separated by "\n" is
+// converted to Pattern separately and follows the same wildcard rules.
+// Use "\\n" to match literal "\n" text instead of starting the next pattern line.
 //
 // glob — a string that represents a pattern that can include such wildcards:
 //   - "*" — matches any sequence of characters;
@@ -136,11 +142,11 @@ func (p Pattern) linePatterns() ([]string, bool) {
 		case strings.HasPrefix(remaining, escapedLineSeparator):
 			line.WriteString(escapedLineSeparator)
 			i += len(escapedLineSeparator)
-		case strings.HasPrefix(remaining, patternLineSeparator):
+		case strings.HasPrefix(remaining, lineSeparator):
 			patternLines = append(patternLines, strings.TrimSpace(line.String()))
 			line.Reset()
 			hasSeparator = true
-			i += len(patternLineSeparator)
+			i += len(lineSeparator)
 		default:
 			line.WriteByte(p.sourceGlob[i])
 			i++
