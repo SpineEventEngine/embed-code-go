@@ -227,6 +227,21 @@ var _ = Describe("Embedding", func() {
 		Expect(string(docContent)).ShouldNot(ContainSubstring("subtractsTwoValues"))
 	})
 
+	It("should embed matching lines with an escaped newline line pattern", func() {
+		config.DocIncludes = []string{"escaped-newline-line-pattern.md"}
+		docPath := fmt.Sprintf("%s/escaped-newline-line-pattern.md", config.DocumentationRoot)
+		processor := embedding.NewProcessor(docPath, config)
+
+		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+
+		docContent, err := os.ReadFile(docPath)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(string(docContent)).Should(ContainSubstring("@Test\n" +
+			"@DisplayName(\"adds two values\")"))
+		Expect(string(docContent)).ShouldNot(ContainSubstring("void addsTwoValues"))
+		Expect(string(docContent)).ShouldNot(ContainSubstring("subtractsTwoValues"))
+	})
+
 	It("should embed a line with an escaped newline literal pattern", func() {
 		config.DocIncludes = []string{"escaped-newline-literal-pattern.md"}
 		docPath := fmt.Sprintf("%s/escaped-newline-literal-pattern.md", config.DocumentationRoot)

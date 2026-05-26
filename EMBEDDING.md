@@ -113,7 +113,7 @@ Use `^` and `$` to disable this behavior and match the exact line start or end.
 
 #### Multi-line patterns
 
-Use `\n` inside a `start` or `end` pattern to match consecutive source lines.
+Use `\n` inside a `start`, `end`, or `line` pattern to match consecutive source lines.
 Spaces around `\n` are ignored, and each pattern line uses the same glob syntax as a
 regular one-line pattern.
 
