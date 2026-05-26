@@ -20,6 +20,8 @@ package parsing
 
 import (
 	"fmt"
+	"log/slog"
+	"strings"
 
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/commentfilter"
@@ -158,15 +160,21 @@ func (e Instruction) Content() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	codeFileReference, referenceErr := fragmentation.ResolveCodeFileReference(
+		e.CodeFile,
+		e.Configuration,
+	)
 	if e.StartPattern != nil || e.EndPattern != nil || e.LinePattern != nil {
-		codeFileReference, err := fragmentation.ResolveCodeFileReference(e.CodeFile, e.Configuration)
-		if err != nil {
-			return nil, err
+		if referenceErr != nil {
+			return nil, referenceErr
 		}
 		fileContent, err = e.matchingLines(fileContent, codeFileReference)
 		if err != nil {
 			return nil, err
 		}
+	}
+	if referenceErr == nil {
+		slog.Info(e.contentLogMessage(codeFileReference))
 	}
 
 	return commentfilter.Filter(
@@ -176,6 +184,41 @@ func (e Instruction) Content() ([]string, error) {
 		e.DocumentationFile,
 		e.DocumentationLine,
 	), nil
+}
+
+// contentLogMessage describes the source content selected by this instruction.
+func (e Instruction) contentLogMessage(codeFileReference string) string {
+	switch {
+	case e.Fragment != "":
+		return fmt.Sprintf("Extracted fragment `%s` from `%s`.",
+			e.Fragment, codeFileReference)
+	case e.LinePattern != nil:
+		return fmt.Sprintf("Extracted line-pattern embedding from `%s` using %s.",
+			codeFileReference, patternLabel("line", e.LinePattern))
+	case e.StartPattern != nil || e.EndPattern != nil:
+		return fmt.Sprintf("Extracted start/end-pattern embedding from `%s` using %s.",
+			codeFileReference, rangePatternLabel(e.StartPattern, e.EndPattern))
+	default:
+		return fmt.Sprintf("Extracted source file `%s`.", codeFileReference)
+	}
+}
+
+// rangePatternLabel formats the start and end patterns set on an instruction.
+func rangePatternLabel(start *Pattern, end *Pattern) string {
+	var labels []string
+	if start != nil {
+		labels = append(labels, patternLabel("start", start))
+	}
+	if end != nil {
+		labels = append(labels, patternLabel("end", end))
+	}
+
+	return strings.Join(labels, " and ")
+}
+
+// patternLabel formats a pattern for human-readable logs.
+func patternLabel(kind string, pattern *Pattern) string {
+	return fmt.Sprintf("%s pattern `%s`", kind, pattern.sourceGlob)
 }
 
 // Returns string representation of Instruction.

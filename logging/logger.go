@@ -23,6 +23,7 @@ import (
 	"golang.org/x/net/context"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 )
@@ -84,6 +85,16 @@ func (h *Handler) WithGroup(name string) slog.Handler {
 	newHandler := *h
 	newHandler.groups = append(append([]string{}, h.groups...), name)
 	return &newHandler
+}
+
+// FileReference returns a clickable file URL when the path can be made absolute.
+func FileReference(path string) string {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+
+	return "file://" + absPath
 }
 
 // HandlePanic is a handler for the panic.
