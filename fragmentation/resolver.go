@@ -20,10 +20,12 @@ package fragmentation
 
 import (
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"strings"
 
 	config "embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/logging"
 	_type "embed-code/embed-code-go/type"
 )
 
@@ -55,6 +57,10 @@ func ResolveContent(codePath string, fragmentName string, config config.Configur
 		return nil, err
 	}
 	if !found {
+		slog.Info(fmt.Sprintf(
+			"Could not find source file `%s` in the configured source code folders.",
+			codePath,
+		))
 		return nil, unresolvedSourceError(codePath, fragmentName, config)
 	}
 
@@ -66,11 +72,22 @@ func ResolveContent(codePath string, fragmentName string, config config.Configur
 	fragment, found := content.fragments[fragmentName]
 	if !found {
 		codeFileReference := "file://" + source.absolutePath
+		slog.Info(missingFragmentLogMessage(fragmentName, source.absolutePath))
 		return nil, fmt.Errorf("fragment `%s` from code file `%s` not found",
 			fragmentName, codeFileReference)
 	}
 
 	return fragmentLines(fragment, content.lines, config.Separator), nil
+}
+
+// missingFragmentLogMessage describes a missing fragment without exposing internal names.
+func missingFragmentLogMessage(fragmentName string, sourcePath string) string {
+	sourceReference := logging.FileReference(sourcePath)
+	if fragmentName == DefaultFragmentName {
+		return fmt.Sprintf("Could not load source file `%s`.", sourceReference)
+	}
+
+	return fmt.Sprintf("Could not find fragment `%s` in `%s`.", fragmentName, sourceReference)
 }
 
 // ResolveCodeFileReference returns a user-facing reference to the source file.

@@ -233,6 +233,16 @@ var _ = Describe("CLI validation", func() {
 			Expect(embedConfigs[2].Separator).To(Equal("---"))
 		})
 
+		It("should copy command line doc excludes to the runtime config", func() {
+			config := baseCliConfig()
+			config.DocExcludes = []string{"old-docs/**/*.md", "drafts/**/*"}
+
+			embedConfigs := cli.BuildEmbedCodeConfiguration(config)
+
+			Expect(embedConfigs).To(HaveLen(1))
+			Expect(embedConfigs[0].DocExcludes).To(Equal([]string(config.DocExcludes)))
+		})
+
 	})
 
 })

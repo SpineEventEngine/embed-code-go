@@ -82,6 +82,11 @@ func main() {
 	userArgs := cli.ReadArgs()
 	configureLogging(userArgs)
 	defer logging.HandlePanic(userArgs.Stacktrace)
+	source := "command line arguments"
+	if cli.IsUsingConfigFile(userArgs) {
+		source = fmt.Sprintf("configuration file `%s`", logging.FileReference(userArgs.ConfigPath))
+	}
+	slog.Info(fmt.Sprintf("Started embed-code in `%s` mode using %s.", userArgs.Mode, source))
 
 	if cli.IsUsingConfigFile(userArgs) {
 		err := cli.ValidateConfigFile(userArgs)
@@ -124,8 +129,18 @@ func configureLogging(config cli.Config) {
 	slog.SetDefault(logger)
 }
 
+// logError writes a user-facing error through the configured logger.
 func logError(message string, err error) {
 	slog.Error(fmt.Sprintf("%s: %v", message, err))
+}
+
+// configNameLabel formats a configuration name for human-readable log messages.
+func configNameLabel(config configuration.Configuration) string {
+	if config.Name == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(" for `%s`", config.Name)
 }
 
 // checkByConfigs runs check for all configs and panics if documentation files are outdated.
