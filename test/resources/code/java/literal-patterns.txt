@@ -1,0 +1,4 @@
+Use * to multiply
+The total is $5
+The value ends with $
+^ starts with caret

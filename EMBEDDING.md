@@ -111,8 +111,75 @@ The tool supports an extended glob syntax for matching lines:
 By default, patterns imply a wildcard (`*`) at both the start and end.
 Use `^` and `$` to disable this behavior and match the exact line start or end.
 
-If you need to match a literal `^` at the start of a line, use `^^`.
-Similarly, use `$$` to match a literal `$` at the end of a line.
+#### Multi-line patterns
+
+Use `\n` inside a `start` or `end` pattern to match consecutive source lines.
+Spaces around `\n` are ignored, and each pattern line uses the same glob syntax as a
+regular one-line pattern.
+
+````markdown
+<embed-code
+  file="src/test/java/example/CalculatorTest.java"
+  start="Test \n adds two values"
+  end="assertEquals(2, value); \n }"></embed-code>
+```java
+```
+````
+
+This matches a source range like:
+
+```java
+@Test
+@DisplayName("adds two values")
+void addsTwoValues() {
+    int value = 1 + 1;
+
+    assertEquals(2, value);
+}
+```
+
+The `start` pattern above is interpreted as two consecutive line patterns:
+`Test` and `adds two values`. Because ordinary patterns imply `*` at both ends,
+these match `@Test` and `@DisplayName("adds two values")`.
+
+Use `^` and `$` on each pattern line when you need exact line matching:
+
+````markdown
+<embed-code
+  file="src/test/java/example/CalculatorTest.java"
+  start="^    @Test$ \n ^    @DisplayName(\"adds two values\")$"
+  end="^        assertEquals(2, value);$ \n ^    }$"></embed-code>
+```java
+```
+````
+
+Without `\n`, a `start`, `end`, or `line` pattern matches only one source line.
+
+#### Escaping
+
+Use a backslash to match glob control characters literally. For example:
+
+- `\*` matches a literal `*`.
+- `\?` matches a literal `?`.
+- `\[` matches a literal `[`.
+
+Since `^` is only special at the start of a pattern, use `^^` to match a literal
+`^` there. Since `$` is only special at the end of a pattern, use `$$` to match a
+literal `$` there.
+
+To match literal `\n` text in a source line, write it as `\\n` in the pattern.
+
+````markdown
+<embed-code
+  file="src/test/java/example/LineSeparator.java"
+  line="LINE_SEPARATOR = \"\\n\""></embed-code>
+```java
+```
+````
+
+You may write quote characters in patterns as `\"` instead of the XML entity `&quot;`.
+For example, `line="println(\"Hello\")"` is equivalent to
+`line="println(&quot;Hello&quot;)"`.
 
 ## Comment filtering
 
