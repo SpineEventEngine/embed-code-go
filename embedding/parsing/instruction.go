@@ -281,7 +281,8 @@ func matchSingleLine(pattern *Pattern, lines []string, startFrom int) (int, bool
 
 // matchLineSequence returns the first source-line range matching an escaped-line pattern.
 func matchLineSequence(pattern *Pattern, lines []string, startFrom int) (int, int, bool) {
-	lineCount := len(pattern.linePatterns())
+	patternLines, _ := pattern.linePatterns()
+	lineCount := len(patternLines)
 	lastStart := len(lines) - lineCount
 	for start := startFrom; start <= lastStart; start++ {
 		end := start + lineCount

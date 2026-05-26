@@ -85,6 +85,15 @@ var _ = Describe("Instruction", func() {
 		Expect(parsing.FromXML(xmlString, config)).Error().ShouldNot(HaveOccurred())
 	})
 
+	It("should parse backslash-escaped quotes in XML attributes", func() {
+		xmlString := `<embed-code file="org/example/Hello.java" line="println(\"Hello world\")"/>`
+
+		attributes, err := parsing.ParseXMLLine(xmlString)
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(attributes["line"]).Should(Equal(`println("Hello world")`))
+	})
+
 	It("should have an error for unsupported comments mode", func() {
 		instructionParams := TestInstructionParams{
 			comments: "summary",

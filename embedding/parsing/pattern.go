@@ -39,9 +39,10 @@ type Pattern struct {
 
 const (
 	anyCharacterSequence = "*"
-	escapedLineSeparator = `\n`
+	escapedLineSeparator = `\\n`
 	lineStart            = "^"
 	lineEnd              = "$"
+	patternLineSeparator = `\n`
 )
 
 // NewPattern creates a new Pattern based on provided glob string.
@@ -103,12 +104,14 @@ func (p Pattern) Match(line string) bool {
 
 // HasLineSeparator reports whether the pattern contains an escaped line separator.
 func (p Pattern) HasLineSeparator() bool {
-	return strings.Contains(p.sourceGlob, escapedLineSeparator)
+	_, hasSeparator := p.linePatterns()
+
+	return hasSeparator
 }
 
 // MatchLineSequence reports whether source lines match the escaped-line-separated pattern.
 func (p Pattern) MatchLineSequence(lines []string) bool {
-	patternLines := p.linePatterns()
+	patternLines, _ := p.linePatterns()
 	if len(patternLines) != len(lines) {
 		return false
 	}
@@ -123,13 +126,29 @@ func (p Pattern) MatchLineSequence(lines []string) bool {
 }
 
 // linePatterns returns trimmed pattern lines separated by an escaped newline.
-func (p Pattern) linePatterns() []string {
-	patternLines := strings.Split(p.sourceGlob, escapedLineSeparator)
-	for i, line := range patternLines {
-		patternLines[i] = strings.TrimSpace(line)
+func (p Pattern) linePatterns() ([]string, bool) {
+	var patternLines []string
+	var line strings.Builder
+	hasSeparator := false
+	for i := 0; i < len(p.sourceGlob); {
+		remaining := p.sourceGlob[i:]
+		switch {
+		case strings.HasPrefix(remaining, escapedLineSeparator):
+			line.WriteString(escapedLineSeparator)
+			i += len(escapedLineSeparator)
+		case strings.HasPrefix(remaining, patternLineSeparator):
+			patternLines = append(patternLines, strings.TrimSpace(line.String()))
+			line.Reset()
+			hasSeparator = true
+			i += len(patternLineSeparator)
+		default:
+			line.WriteByte(p.sourceGlob[i])
+			i++
+		}
 	}
+	patternLines = append(patternLines, strings.TrimSpace(line.String()))
 
-	return patternLines
+	return patternLines, hasSeparator
 }
 
 // Returns string representation of Pattern.
