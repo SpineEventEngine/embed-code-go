@@ -112,7 +112,7 @@ func (p Processor) Embed() (*parsing.Context, error) {
 		slog.Info(fmt.Sprintf("Updated `%s` after processing %d embedding(s).",
 			logging.FileReference(p.DocFilePath), context.EmbeddingsCount()))
 	} else {
-		slog.Info(fmt.Sprintf("No changes needed for `%s`.", logging.FileReference(p.DocFilePath)))
+		slog.Info(fmt.Sprintf("Documentation is up-to-date in `%s`.", logging.FileReference(p.DocFilePath)))
 	}
 
 	return &context, nil
