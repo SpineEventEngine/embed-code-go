@@ -310,6 +310,45 @@ var _ = Describe("Instruction", func() {
 		}))
 	})
 
+	It("should embed a line with an escaped asterisk pattern", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: `Use \* to multiply`,
+		}
+
+		actualLines := getXMLExtractionContent(
+			"literal-patterns.txt", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"Use * to multiply",
+		}))
+	})
+
+	It("should embed a line starting with a literal caret pattern", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: "^^ starts with caret",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"literal-patterns.txt", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"^ starts with caret",
+		}))
+	})
+
+	It("should embed a line ending with a literal dollar pattern", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: "The value ends with $$",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"literal-patterns.txt", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"The value ends with $",
+		}))
+	})
+
 	It("should successfully parse XML by only end glob", func() {
 		instructionParams := TestInstructionParams{
 			endGlob: "package*",
