@@ -22,6 +22,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"encoding/xml"
 	"fmt"
+	"strings"
 )
 
 // Item needed for xml.Unmarshal parsing. The fields are filling up during the parsing.
@@ -69,7 +70,7 @@ func FromXML(line string, config configuration.Configuration) (Instruction, erro
 // Returns a map of key-value pairs. If the provided line is not valid, returns an error.
 func ParseXMLLine(xmlLine string) (map[string]string, error) {
 	var root Item
-	err := xml.Unmarshal([]byte(xmlLine), &root)
+	err := xml.Unmarshal([]byte(quoteEscapedXMLLine(xmlLine)), &root)
 	if err != nil {
 		return map[string]string{}, err
 	}
@@ -85,4 +86,9 @@ func ParseXMLLine(xmlLine string) (map[string]string, error) {
 	}
 
 	return attributes, nil
+}
+
+// quoteEscapedXMLLine converts backslash-escaped quotes into XML entities.
+func quoteEscapedXMLLine(xmlLine string) string {
+	return strings.ReplaceAll(xmlLine, `\"`, "&quot;")
 }
