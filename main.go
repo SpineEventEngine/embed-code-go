@@ -24,11 +24,10 @@ import (
 	"embed-code/embed-code-go/logging"
 	"fmt"
 	"log/slog"
-	"path/filepath"
 )
 
 // Version of the embed-code application.
-const Version = "1.2.1"
+const Version = "1.2.2"
 
 // The entry point for embed-code.
 //
@@ -82,6 +81,11 @@ func main() {
 	userArgs := cli.ReadArgs()
 	configureLogging(userArgs)
 	defer logging.HandlePanic(userArgs.Stacktrace)
+	source := "command line arguments"
+	if cli.IsUsingConfigFile(userArgs) {
+		source = fmt.Sprintf("configuration file `%s`", logging.FileReference(userArgs.ConfigPath))
+	}
+	slog.Info(fmt.Sprintf("Started embed-code in `%s` mode using %s.", userArgs.Mode, source))
 
 	if cli.IsUsingConfigFile(userArgs) {
 		err := cli.ValidateConfigFile(userArgs)
@@ -124,6 +128,7 @@ func configureLogging(config cli.Config) {
 	slog.SetDefault(logger)
 }
 
+// logError writes a user-facing error through the configured logger.
 func logError(message string, err error) {
 	slog.Error(fmt.Sprintf("%s: %v", message, err))
 }
@@ -168,10 +173,6 @@ func printFiles(singularHeading string, pluralHeading string, files []string) {
 		fmt.Println(pluralHeading)
 	}
 	for _, file := range files {
-		absPath, err := filepath.Abs(file)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("- file://%s.\n", absPath)
+		fmt.Printf("- %s.\n", logging.FileReference(file))
 	}
 }

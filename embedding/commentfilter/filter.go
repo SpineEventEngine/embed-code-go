@@ -19,6 +19,7 @@
 package commentfilter
 
 import (
+	"embed-code/embed-code-go/logging"
 	"fmt"
 	"log/slog"
 	"path/filepath"
@@ -112,7 +113,7 @@ func warnUnsupportedFileType(
 			"`comments=\"%s\"` was requested in `%s` for `%s`, "+
 				"but comment filtering is not supported for this file extension.",
 			mode,
-			fileURL(embeddingDocPath, embeddingLine),
+			logging.FileReferenceWithLine(embeddingDocPath, embeddingLine),
 			filePath,
 		),
 	)
@@ -139,28 +140,13 @@ func warnUnsupportedCommentsMode(
 			"`comments=\"%s\"` was requested in `%s` for `%s`, but this mode does not have "+
 				"a distinct meaning for this file type. Supported modes are: %s.",
 			mode,
-			fileURL(embeddingDocPath, embeddingLine),
+			logging.FileReferenceWithLine(embeddingDocPath, embeddingLine),
 			filePath,
 			strings.Join(wrappedModes, ", "),
 		),
 	)
 
 	return true
-}
-
-// fileURL returns an absolute file URL for a local path and line.
-func fileURL(path string, line int) string {
-	absolutePath, err := filepath.Abs(path)
-	if err != nil {
-		return "file://" + path
-	}
-
-	url := "file://" + absolutePath
-	if line > 0 {
-		url = fmt.Sprintf("%s:%d", url, line)
-	}
-
-	return url
 }
 
 // containsMode reports whether the list includes the given mode.
