@@ -28,6 +28,7 @@ import (
 
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/parsing"
+	"embed-code/embed-code-go/logging"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -476,8 +477,8 @@ var _ = Describe("Instruction", func() {
 
 		Expect(err).Should(MatchError(
 			fmt.Sprintf(
-				"no line in code file `file://%s` matches the start pattern `foo bar`",
-				absTestCodeFile("org/example/Hello.java"),
+				"no line in code file `%s` matches the start pattern `foo bar`",
+				logging.FileReference(absTestCodeFile("org/example/Hello.java")),
 			),
 		))
 	})
@@ -494,8 +495,8 @@ var _ = Describe("Instruction", func() {
 
 		Expect(err).Should(MatchError(
 			fmt.Sprintf(
-				"no line in code file `file://%s` matches the end pattern `foo bar`",
-				absTestCodeFile("org/example/Hello.java"),
+				"no line in code file `%s` matches the end pattern `foo bar`",
+				logging.FileReference(absTestCodeFile("org/example/Hello.java")),
 			),
 		))
 	})
