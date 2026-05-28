@@ -177,7 +177,7 @@ To match literal `\n` text in a source line, write it as `\\n` in the pattern.
 ```
 ````
 
-It s possible to write quote characters in patterns as `\"` instead of the XML entity `&quot;`.
+It's possible to write quote characters in patterns as `\"` instead of the XML entity `&quot;`.
 For example, `line="println(\"Hello\")"` is equivalent to `line="println(&quot;Hello&quot;)"`.
 
 ## Comment filtering
