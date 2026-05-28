@@ -21,6 +21,8 @@ package parsing
 import (
 	"fmt"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/gobwas/glob"
 )
@@ -157,6 +159,7 @@ func (p Pattern) linePatterns() ([]string, bool) {
 	var patternLines []string
 	var line strings.Builder
 	hasSeparator := false
+	trimLeft := false
 	for i := 0; i < len(p.sourceGlob); {
 		remaining := p.sourceGlob[i:]
 		switch {
@@ -164,16 +167,27 @@ func (p Pattern) linePatterns() ([]string, bool) {
 			line.WriteString(escapedLineSeparator)
 			i += len(escapedLineSeparator)
 		case strings.HasPrefix(remaining, lineSeparator):
-			patternLines = append(patternLines, strings.TrimSpace(line.String()))
+			patternLines = append(patternLines, strings.TrimRightFunc(line.String(), unicode.IsSpace))
 			line.Reset()
 			hasSeparator = true
+			trimLeft = true
 			i += len(lineSeparator)
+		case trimLeft:
+			r, size := utf8.DecodeRuneInString(remaining)
+			if !unicode.IsSpace(r) {
+				trimLeft = false
+				line.WriteByte(p.sourceGlob[i])
+				i++
+				continue
+			}
+			i += size
 		default:
+			trimLeft = false
 			line.WriteByte(p.sourceGlob[i])
 			i++
 		}
 	}
-	patternLines = append(patternLines, strings.TrimSpace(line.String()))
+	patternLines = append(patternLines, line.String())
 
 	return patternLines, hasSeparator
 }
