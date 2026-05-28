@@ -171,8 +171,8 @@ To match literal `\n` text in a source line, write it as `\\n` in the pattern.
 
 ````markdown
 <embed-code
-  file="src/test/java/example/LineSeparator.java"
-  line="LINE_SEPARATOR = \"\\n\""></embed-code>
+  file="src/test/java/example/MessageTemplate.java"
+  line="MY_STRING = \"\\n\""></embed-code>
 ```java
 ```
 ````
