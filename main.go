@@ -133,15 +133,6 @@ func logError(message string, err error) {
 	slog.Error(fmt.Sprintf("%s: %v", message, err))
 }
 
-// configNameLabel formats a configuration name for human-readable log messages.
-func configNameLabel(config configuration.Configuration) string {
-	if config.Name == "" {
-		return ""
-	}
-
-	return fmt.Sprintf(" for `%s`", config.Name)
-}
-
 // checkByConfigs runs check for all configs and panics if documentation files are outdated.
 func checkByConfigs(configs []configuration.Configuration) {
 	var totalOutdatedFiles []string
