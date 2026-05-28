@@ -252,7 +252,7 @@ var _ = Describe("Embedding", func() {
 		docContent, err := os.ReadFile(docPath)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(string(docContent)).Should(ContainSubstring(
-			"private static final String LINE_SEPARATOR = \"\\n\";",
+			"private static final String MY_STRING = \"\\n\";",
 		))
 	})
 

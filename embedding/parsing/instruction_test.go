@@ -349,6 +349,20 @@ var _ = Describe("Instruction", func() {
 		}))
 	})
 
+	It("should preserve pattern spaces that are not adjacent to a line separator", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: "^  padded text  $ \\n ^Use \\* to multiply$",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"literal-patterns.txt", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"  padded text  ",
+			"Use * to multiply",
+		}))
+	})
+
 	It("should successfully parse XML by only end glob", func() {
 		instructionParams := TestInstructionParams{
 			endGlob: "package*",
