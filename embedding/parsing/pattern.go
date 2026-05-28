@@ -21,13 +21,16 @@ package parsing
 import (
 	"fmt"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/gobwas/glob"
 )
 
 // Pattern represents a glob-like pattern to match a line of a source file.
 //
-// Contains both original glob string and modified pattern suitable for matching.
+// Contains both original glob string, modified pattern suitable for matching,
+// and a compiled matcher for the modified pattern.
 //
 // sourceGlob — a glob-like string, e.g. "*main*" or "^main".
 //
@@ -35,12 +38,15 @@ import (
 type Pattern struct {
 	sourceGlob string
 	pattern    string
+	matcher    glob.Glob
 }
 
 const (
 	anyCharacterSequence = "*"
 	lineStart            = "^"
 	lineEnd              = "$"
+	lineSeparator        = `\n`
+	escapedLineSeparator = `\\n`
 )
 
 // NewPattern creates a new Pattern based on provided glob string.
@@ -50,6 +56,12 @@ const (
 //
 // The modified pattern is the original one, but enclosed with the "*" wildcards,
 // unless start of the line or end of the line wildcards were specified.
+//
+// A multi-line pattern uses "\n" as a separator between consecutive source-line
+// patterns. For example, "Test \n adds two values" matches a line matching "Test"
+// followed by a line matching "adds two values". Each part separated by "\n" is
+// converted to Pattern separately and follows the same wildcard rules.
+// Use "\\n" to match literal "\n" text instead of starting the next pattern line.
 //
 // glob — a string that represents a pattern that can include such wildcards:
 //   - "*" — matches any sequence of characters;
@@ -65,19 +77,19 @@ const (
 //	p := NewPattern("^.txt")
 //	fmt.Println("Original glob:", p.sourceGlob) // "*.txt"
 //	fmt.Println("Modified pattern:", p.pattern) // ".txt*"
-func NewPattern(glob string) Pattern {
-	pattern := glob
+func NewPattern(globString string) Pattern {
+	pattern := globString
 
-	startOfLine := strings.HasPrefix(glob, lineStart)
-	if !startOfLine && !strings.HasPrefix(glob, anyCharacterSequence) {
+	startOfLine := strings.HasPrefix(globString, lineStart)
+	if !startOfLine && !strings.HasPrefix(globString, anyCharacterSequence) {
 		pattern = anyCharacterSequence + pattern
 	}
 	if startOfLine {
 		pattern = pattern[1:]
 	}
 
-	endOfLine := strings.HasSuffix(glob, lineEnd)
-	if !endOfLine && !strings.HasSuffix(glob, anyCharacterSequence) {
+	endOfLine := strings.HasSuffix(globString, lineEnd)
+	if !endOfLine && !strings.HasSuffix(globString, anyCharacterSequence) {
 		pattern += anyCharacterSequence
 	}
 	if endOfLine {
@@ -86,8 +98,9 @@ func NewPattern(glob string) Pattern {
 	}
 
 	return Pattern{
-		sourceGlob: glob,
+		sourceGlob: globString,
 		pattern:    pattern,
+		matcher:    glob.MustCompile(pattern),
 	}
 }
 
@@ -95,9 +108,88 @@ func NewPattern(glob string) Pattern {
 //
 // line — a line to check the match for.
 func (p Pattern) Match(line string) bool {
-	g := glob.MustCompile(p.pattern)
+	if p.matcher == nil {
+		return glob.MustCompile(p.pattern).Match(line)
+	}
 
-	return g.Match(line)
+	return p.matcher.Match(line)
+}
+
+// HasLineSeparator reports whether the pattern contains an escaped line separator.
+func (p Pattern) HasLineSeparator() bool {
+	_, hasSeparator := p.linePatterns()
+
+	return hasSeparator
+}
+
+// MatchLineSequence reports whether source lines match the escaped-line-separated pattern.
+func (p Pattern) MatchLineSequence(lines []string) bool {
+	patterns := p.lineSequencePatterns()
+
+	return matchLineSequencePatterns(patterns, lines)
+}
+
+// matchLineSequencePatterns reports whether compiled Patterns match source lines in order.
+func matchLineSequencePatterns(patterns []Pattern, lines []string) bool {
+	if len(patterns) != len(lines) {
+		return false
+	}
+	for i, pattern := range patterns {
+		if !pattern.Match(lines[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// lineSequencePatterns returns the Patterns for each part of a multi-line pattern.
+func (p Pattern) lineSequencePatterns() []Pattern {
+	patternLines, _ := p.linePatterns()
+	patterns := make([]Pattern, 0, len(patternLines))
+	for _, patternLine := range patternLines {
+		patterns = append(patterns, NewPattern(patternLine))
+	}
+
+	return patterns
+}
+
+// linePatterns returns trimmed pattern lines separated by an escaped newline.
+func (p Pattern) linePatterns() ([]string, bool) {
+	var patternLines []string
+	var line strings.Builder
+	hasSeparator := false
+	trimLeft := false
+	for i := 0; i < len(p.sourceGlob); {
+		remaining := p.sourceGlob[i:]
+		switch {
+		case strings.HasPrefix(remaining, escapedLineSeparator):
+			line.WriteString(escapedLineSeparator)
+			i += len(escapedLineSeparator)
+		case strings.HasPrefix(remaining, lineSeparator):
+			patternLines = append(patternLines, strings.TrimRightFunc(line.String(), unicode.IsSpace))
+			line.Reset()
+			hasSeparator = true
+			trimLeft = true
+			i += len(lineSeparator)
+		case trimLeft:
+			r, size := utf8.DecodeRuneInString(remaining)
+			if !unicode.IsSpace(r) {
+				trimLeft = false
+				line.WriteByte(p.sourceGlob[i])
+				i++
+				continue
+			}
+			i += size
+		default:
+			trimLeft = false
+			line.WriteByte(p.sourceGlob[i])
+			i++
+		}
+	}
+	patternLines = append(patternLines, line.String())
+
+	return patternLines, hasSeparator
 }
 
 // Returns string representation of Pattern.
