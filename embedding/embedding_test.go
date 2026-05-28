@@ -330,7 +330,12 @@ var _ = Describe("Embedding", func() {
 		docPath := fmt.Sprintf("%s/excluded-doc.md", config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 
-		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
+		context, err := processor.Embed()
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(context).ShouldNot(BeNil())
+		Expect(context.EmbeddingsCount()).Should(Equal(0))
+		Expect(context.IsContainsEmbedding()).Should(BeFalse())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 })

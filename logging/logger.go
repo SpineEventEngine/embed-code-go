@@ -22,8 +22,11 @@ import (
 	"fmt"
 	"golang.org/x/net/context"
 	"log/slog"
+	"net/url"
 	"os"
+	"path/filepath"
 	"runtime/debug"
+	"strconv"
 	"strings"
 )
 
@@ -84,6 +87,63 @@ func (h *Handler) WithGroup(name string) slog.Handler {
 	newHandler := *h
 	newHandler.groups = append(append([]string{}, h.groups...), name)
 	return &newHandler
+}
+
+// FileReference returns a clickable file URL when the path can be made absolute.
+func FileReference(path string) string {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+
+	return fileURLFromAbsolutePath(absPath)
+}
+
+// FileReferenceWithLine returns a clickable file URL with an optional line suffix.
+func FileReferenceWithLine(path string, line int) string {
+	reference := FileReference(path)
+	if line <= 0 {
+		return reference
+	}
+
+	return reference + ":" + strconv.Itoa(line)
+}
+
+// fileURLFromAbsolutePath formats an absolute local path as an OS-neutral file URL.
+func fileURLFromAbsolutePath(path string) string {
+	normalizedPath := filepath.ToSlash(strings.ReplaceAll(path, "\\", "/"))
+	if isWindowsDrivePath(normalizedPath) {
+		return (&url.URL{
+			Scheme: "file",
+			Path:   "/" + normalizedPath,
+		}).String()
+	}
+	if strings.HasPrefix(normalizedPath, "//") {
+		withoutSlashes := strings.TrimPrefix(normalizedPath, "//")
+		host, pathAfterHost, _ := strings.Cut(withoutSlashes, "/")
+
+		return (&url.URL{
+			Scheme: "file",
+			Host:   host,
+			Path:   "/" + pathAfterHost,
+		}).String()
+	}
+
+	return (&url.URL{
+		Scheme: "file",
+		Path:   normalizedPath,
+	}).String()
+}
+
+// isWindowsDrivePath reports whether a slash-normalized path starts with a drive letter.
+func isWindowsDrivePath(path string) bool {
+	if len(path) < 2 || path[1] != ':' {
+		return false
+	}
+
+	driveLetter := path[0]
+	return (driveLetter >= 'A' && driveLetter <= 'Z') ||
+		(driveLetter >= 'a' && driveLetter <= 'z')
 }
 
 // HandlePanic is a handler for the panic.

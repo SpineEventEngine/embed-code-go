@@ -21,11 +21,14 @@ package cli
 import (
 	_type "embed-code/embed-code-go/type"
 	"flag"
+	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
+	"embed-code/embed-code-go/logging"
 
 	"gopkg.in/yaml.v3"
 )
@@ -152,6 +155,10 @@ func ReadArgs() Config {
 // Returns filled Config.
 func FillArgsFromConfigFile(args Config) (Config, error) {
 	configFields := readConfigFields(args.ConfigPath)
+	slog.Info(fmt.Sprintf(
+		"Loaded config file `%s`. Found %d embedding setup(s).",
+		logging.FileReference(args.ConfigPath), len(configFields.Embeddings),
+	))
 	args.BaseDocsPath = configFields.BaseDocsPath
 	args.BaseCodePaths = configFields.BaseCodePaths
 
@@ -181,6 +188,11 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 
 	if len(userArgs.Embeddings) > 0 {
 		for _, embedding := range userArgs.Embeddings {
+			slog.Info(fmt.Sprintf(
+				"Processing the `%s` embedding setup. Documentation folder: `%s`. %s.",
+				embedding.Name, logging.FileReference(embedding.DocsPath),
+				sourceFoldersLabel(embedding.CodePaths),
+			))
 			embedCodeConfigs = append(embedCodeConfigs, configFromEmbedding(embedding))
 		}
 		return embedCodeConfigs
@@ -189,13 +201,17 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 	embedCodeConfig := configWithOptionalParams(userArgs)
 	embedCodeConfig.CodeRoots = userArgs.BaseCodePaths
 	embedCodeConfig.DocumentationRoot = userArgs.BaseDocsPath
+	slog.Info(fmt.Sprintf(
+		"Preparing command line settings. Documentation folder: `%s`. %s.",
+		logging.FileReference(userArgs.BaseDocsPath), sourceFoldersLabel(userArgs.BaseCodePaths),
+	))
 
 	embedCodeConfigs = append(embedCodeConfigs, embedCodeConfig)
 
 	return embedCodeConfigs
 }
 
-// Creates a new Configuration from one complete embedding config.
+// configFromEmbedding creates a new Configuration from one complete embedding config.
 func configFromEmbedding(embedding EmbeddingConfig) configuration.Configuration {
 	embedCodeConfig := configuration.NewConfiguration()
 	embedCodeConfig.Name = embedding.Name
@@ -215,12 +231,15 @@ func configFromEmbedding(embedding EmbeddingConfig) configuration.Configuration 
 	return embedCodeConfig
 }
 
-// Creates a new Configuration with the filled optional properties from the user args.
+// configWithOptionalParams creates a new Configuration with optional properties from user args.
 func configWithOptionalParams(userArgs Config) configuration.Configuration {
 	embedCodeConfig := configuration.NewConfiguration()
 
 	if len(userArgs.DocIncludes) > 0 {
 		embedCodeConfig.DocIncludes = userArgs.DocIncludes
+	}
+	if len(userArgs.DocExcludes) > 0 {
+		embedCodeConfig.DocExcludes = userArgs.DocExcludes
 	}
 	if isNotEmpty(userArgs.Separator) {
 		embedCodeConfig.Separator = userArgs.Separator
@@ -229,7 +248,29 @@ func configWithOptionalParams(userArgs Config) configuration.Configuration {
 	return embedCodeConfig
 }
 
-// Returns a list of strings from given comma-separated string listArgument.
+// sourceFoldersLabel formats source folders for human-readable log messages.
+func sourceFoldersLabel(paths _type.NamedPathList) string {
+	if len(paths) == 0 {
+		return "No source code folders configured"
+	}
+
+	var labels []string
+	for _, path := range paths {
+		label := fmt.Sprintf("`%s`", logging.FileReference(path.Path))
+		if strings.TrimSpace(path.Name) != "" {
+			label = fmt.Sprintf("`%s` as `%s`", logging.FileReference(path.Path), path.Name)
+		}
+		labels = append(labels, label)
+	}
+
+	if len(labels) == 1 {
+		return "Source code folder: " + labels[0]
+	}
+
+	return "Source code folders: " + strings.Join(labels, ", ")
+}
+
+// parseListArgument returns a list of strings from given comma-separated string listArgument.
 func parseListArgument(listArgument string) []string {
 	splitArgs := strings.Split(listArgument, ",")
 	parsedArgs := make([]string, 0)
@@ -242,7 +283,7 @@ func parseListArgument(listArgument string) []string {
 	return parsedArgs
 }
 
-// Reads the file from provided configFilePath and returns a ConfigFields struct.
+// readConfigFields reads the provided config file and returns parsed fields.
 //
 // configFilePath — a path to a yaml configuration file.
 //
