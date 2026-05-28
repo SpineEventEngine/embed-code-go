@@ -24,7 +24,6 @@ import (
 	"embed-code/embed-code-go/logging"
 	"fmt"
 	"log/slog"
-	"path/filepath"
 )
 
 // Version of the embed-code application.
@@ -183,10 +182,6 @@ func printFiles(singularHeading string, pluralHeading string, files []string) {
 		fmt.Println(pluralHeading)
 	}
 	for _, file := range files {
-		absPath, err := filepath.Abs(file)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("- file://%s.\n", absPath)
+		fmt.Printf("- %s.\n", logging.FileReference(file))
 	}
 }

@@ -71,7 +71,7 @@ func ResolveContent(codePath string, fragmentName string, config config.Configur
 
 	fragment, found := content.fragments[fragmentName]
 	if !found {
-		codeFileReference := "file://" + source.absolutePath
+		codeFileReference := logging.FileReference(source.absolutePath)
 		slog.Info(missingFragmentLogMessage(fragmentName, source.absolutePath))
 		return nil, fmt.Errorf("fragment `%s` from code file `%s` not found",
 			fragmentName, codeFileReference)
@@ -97,7 +97,7 @@ func ResolveCodeFileReference(codePath string, config config.Configuration) (str
 		return "", err
 	}
 	if found {
-		return "file://" + source.absolutePath, nil
+		return logging.FileReference(source.absolutePath), nil
 	}
 
 	return codeFileReference(codePath, config)
@@ -219,10 +219,10 @@ func codeFileReference(codePath string, config config.Configuration) (string, er
 			return "", err
 		}
 		if named {
-			return fmt.Sprintf("%s (%s)", codePath, source.absolutePath), nil
+			return fmt.Sprintf("%s (%s)", codePath, logging.FileReference(source.absolutePath)), nil
 		}
 		if len(config.CodeRoots) == 1 {
-			return source.absolutePath, nil
+			return logging.FileReference(source.absolutePath), nil
 		}
 	}
 
