@@ -191,6 +191,18 @@ func (e Instruction) String() string {
 // lines — a list of strings representing the input lines.
 func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]string, error) {
 	if e.LinePattern != nil {
+		if e.LinePattern.HasLineSeparator() {
+			startPosition, endPosition, err := e.matchLineSequence(
+				e.LinePattern, lines, 0, "line", codeFileReference,
+			)
+			if err != nil {
+				return nil, err
+			}
+			requiredLines := lines[startPosition : endPosition+1]
+			indentation := indent.MaxCommonIndentation(requiredLines)
+
+			return indent.CutIndent(requiredLines, indentation), nil
+		}
 		linePosition, err := e.matchGlob(
 			e.LinePattern, lines, 0, "line", codeFileReference,
 		)
@@ -238,14 +250,20 @@ func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]
 // startFrom — an index from which to start searching.
 func (e Instruction) matchGlob(pattern *Pattern, lines []string, startFrom int,
 	kind string, codeFileReference string) (int, error) {
-	lineCount := len(lines)
-	resultLine := startFrom
-	for resultLine < lineCount {
-		line := lines[resultLine]
-		if pattern.Match(line) {
-			return resultLine, nil
+	if pattern.HasLineSeparator() {
+		start, end, err := e.matchLineSequence(
+			pattern, lines, startFrom, kind, codeFileReference,
+		)
+		if err != nil {
+			return 0, err
 		}
-		resultLine++
+		if kind == "end" {
+			return end, nil
+		}
+		return start, nil
+	}
+	if line, found := matchSingleLine(pattern, lines, startFrom); found {
+		return line, nil
 	}
 	return 0, PatternNotFoundError{
 		Line:              e.DocumentationLine,
@@ -253,4 +271,50 @@ func (e Instruction) matchGlob(pattern *Pattern, lines []string, startFrom int,
 		Kind:              kind,
 		Pattern:           pattern,
 	}
+}
+
+// matchSingleLine returns the first source line matching the pattern.
+func matchSingleLine(pattern *Pattern, lines []string, startFrom int) (int, bool) {
+	lineCount := len(lines)
+	resultLine := startFrom
+	for resultLine < lineCount {
+		line := lines[resultLine]
+		if pattern.Match(line) {
+			return resultLine, true
+		}
+		resultLine++
+	}
+
+	return 0, false
+}
+
+// matchLineSequence returns the first line range matching the pattern or a not-found error.
+func (e Instruction) matchLineSequence(pattern *Pattern, lines []string, startFrom int,
+	kind string, codeFileReference string) (int, int, error) {
+	start, end, found := matchLineSequence(pattern, lines, startFrom)
+	if found {
+		return start, end, nil
+	}
+
+	return 0, 0, PatternNotFoundError{
+		Line:              e.DocumentationLine,
+		CodeFileReference: codeFileReference,
+		Kind:              kind,
+		Pattern:           pattern,
+	}
+}
+
+// matchLineSequence returns the first source-line range matching an escaped-line pattern.
+func matchLineSequence(pattern *Pattern, lines []string, startFrom int) (int, int, bool) {
+	patterns := pattern.lineSequencePatterns()
+	lineCount := len(patterns)
+	lastStart := len(lines) - lineCount
+	for start := startFrom; start <= lastStart; start++ {
+		end := start + lineCount
+		if matchLineSequencePatterns(patterns, lines[start:end]) {
+			return start, end - 1, true
+		}
+	}
+
+	return 0, 0, false
 }

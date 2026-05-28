@@ -85,6 +85,15 @@ var _ = Describe("Instruction", func() {
 		Expect(parsing.FromXML(xmlString, config)).Error().ShouldNot(HaveOccurred())
 	})
 
+	It("should parse backslash-escaped quotes in XML attributes", func() {
+		xmlString := `<embed-code file="org/example/Hello.java" line="println(\"Hello world\")"/>`
+
+		attributes, err := parsing.ParseXMLLine(xmlString)
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(attributes["line"]).Should(Equal(`println("Hello world")`))
+	})
+
 	It("should have an error for unsupported comments mode", func() {
 		instructionParams := TestInstructionParams{
 			comments: "summary",
@@ -298,6 +307,59 @@ var _ = Describe("Instruction", func() {
 
 		Expect(actualLines).Should(Equal([]string{
 			"public class Hello {",
+		}))
+	})
+
+	It("should embed a line with an escaped asterisk pattern", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: `Use \* to multiply`,
+		}
+
+		actualLines := getXMLExtractionContent(
+			"literal-patterns.txt", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"Use * to multiply",
+		}))
+	})
+
+	It("should embed a line starting with a literal caret pattern", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: "^^ starts with caret",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"literal-patterns.txt", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"^ starts with caret",
+		}))
+	})
+
+	It("should embed a line ending with a literal dollar pattern", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: "The value ends with $$",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"literal-patterns.txt", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"The value ends with $",
+		}))
+	})
+
+	It("should preserve pattern spaces that are not adjacent to a line separator", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: "^  padded text  $ \\n ^Use \\* to multiply$",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"literal-patterns.txt", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"  padded text  ",
+			"Use * to multiply",
 		}))
 	})
 
