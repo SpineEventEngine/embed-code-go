@@ -349,12 +349,12 @@ func (e Instruction) matchLineSequence(pattern *Pattern, lines []string, startFr
 
 // matchLineSequence returns the first source-line range matching an escaped-line pattern.
 func matchLineSequence(pattern *Pattern, lines []string, startFrom int) (int, int, bool) {
-	patternLines, _ := pattern.linePatterns()
-	lineCount := len(patternLines)
+	patterns := pattern.lineSequencePatterns()
+	lineCount := len(patterns)
 	lastStart := len(lines) - lineCount
 	for start := startFrom; start <= lastStart; start++ {
 		end := start + lineCount
-		if pattern.MatchLineSequence(lines[start:end]) {
+		if matchLineSequencePatterns(patterns, lines[start:end]) {
 			return start, end - 1, true
 		}
 	}

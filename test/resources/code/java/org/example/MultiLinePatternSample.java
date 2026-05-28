@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 class MultiLinePatternSample {
 
-    private static final String LINE_SEPARATOR = "\n";
+    private static final String MY_STRING = "\n";
 
     @Test
     @DisplayName("adds two values")
