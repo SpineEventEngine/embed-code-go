@@ -88,14 +88,17 @@ func newProcessor(
 	}
 }
 
-// Embed Constructs embedding and modifies the doc file if embedding is needed.
+// Embed constructs embedding and modifies the doc file if embedding is needed.
 //
+// Returns an empty context without parsing the file when it is excluded by configuration.
 // If any problems faced, an error is returned.
 func (p Processor) Embed() (*parsing.Context, error) {
 	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
 		slog.Info(fmt.Sprintf("Skipping `%s`; it is excluded by the configuration.",
 			logging.FileReference(p.DocFilePath)))
-		return nil, nil
+		context := parsing.NewEmptyContext(p.DocFilePath)
+
+		return &context, nil
 	}
 
 	slog.Info(fmt.Sprintf("Started processing doc file `%s`.", logging.FileReference(p.DocFilePath)))

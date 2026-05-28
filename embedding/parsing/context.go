@@ -97,6 +97,15 @@ func NewContext(markdownFile string) Context {
 	}
 }
 
+// NewEmptyContext creates a Context for a documentation file that was not parsed.
+func NewEmptyContext(markdownFile string) Context {
+	return Context{
+		MarkdownFilePath: markdownFile,
+		Result:           make([]string, 0),
+		lineIndex:        0,
+	}
+}
+
 // CurrentLine returns the line of source code at the current ParsingContext.lineIndex.
 func (c *Context) CurrentLine() string {
 	return c.source[c.lineIndex]
