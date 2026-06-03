@@ -36,23 +36,22 @@ const (
 )
 
 // WriteLinesToFile writes lines to the file at given file path (relative or absolute).
-func WriteLinesToFile(filepath string, lines []string) {
+func WriteLinesToFile(filepath string, lines []string) error {
 	file, err := os.Create(filepath)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	defer func(file *os.File) {
-		if err = file.Close(); err != nil {
-			panic(err)
-		}
-	}(file)
 
 	for _, s := range lines {
 		_, err := file.WriteString(s + "\n")
 		if err != nil {
-			panic(err)
+			_ = file.Close()
+
+			return err
 		}
 	}
+
+	return file.Close()
 }
 
 // ReadFile reads and returns all lines from the file at given file path (relative or absolute).
@@ -65,9 +64,6 @@ func ReadFile(filepath string) ([]string, error) {
 	var lines []string
 	defer func(file *os.File) {
 		err = file.Close()
-		if err != nil {
-			panic(err)
-		}
 	}(file)
 
 	reader := bufio.NewReader(file)
@@ -84,13 +80,13 @@ func ReadFile(filepath string) ([]string, error) {
 }
 
 // BuildDocRelativePath builds a relative path for documentation file with a given config.
-func BuildDocRelativePath(absolutePath string, config configuration.Configuration) string {
+func BuildDocRelativePath(absolutePath string, config configuration.Configuration) (string, error) {
 	relativePath, err := filepath.Rel(config.DocumentationRoot, absolutePath)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return filepath.ToSlash(relativePath)
+	return filepath.ToSlash(relativePath), nil
 }
 
 // EnsureDirExists creates dir at given path (relative or absolute) if it doesn't exist.

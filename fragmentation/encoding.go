@@ -28,17 +28,17 @@ const lastASCIIchar = 127
 // IsEncodedAsText reports whether the file stored at filePath is encoded as a text.
 //
 // If file encoded in ASCII or UTF-8, it is meant to be a text file.
-func IsEncodedAsText(filePath string) bool {
+func IsEncodedAsText(filePath string) (bool, error) {
 	// Read the entire file into memory.
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
 	isUTF8Encoded := utf8.Valid(content)
 	isASCIIEncoded := areASCIIEncoded(content)
 
-	return isUTF8Encoded || isASCIIEncoded
+	return isUTF8Encoded || isASCIIEncoded, nil
 }
 
 // Reports whether given bytes are ASCII-encoded.

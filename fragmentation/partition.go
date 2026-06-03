@@ -18,6 +18,8 @@
 
 package fragmentation
 
+import "fmt"
+
 // Partition a code fragment partition.
 //
 // A fragment may consist of a few partitions, collected from different points in the code file.
@@ -44,26 +46,32 @@ func NewPartition() Partition {
 
 // Select returns the partition-related lines from given lines.
 // If EndPosition is not set, returns all the lines started from StartPosition.
-func (p Partition) Select(lines []string) []string {
+func (p Partition) Select(lines []string) ([]string, error) {
 	startPosition := p.StartPosition
 	endPosition := p.EndPosition
 
 	// Verifying lines actually have those indexes.
 	hasStartPosition := safeAccess(lines, startPosition)
 	if !hasStartPosition {
-		panic("an unexpected error occurred. the given lines don't have start position")
+		return nil, fmt.Errorf(
+			"fragment partition start position %d is outside source lines",
+			startPosition,
+		)
 	}
 
 	if endPosition < 0 {
-		return lines[startPosition:]
+		return lines[startPosition:], nil
 	}
 
 	hasEndPosition := safeAccess(lines, endPosition)
 	if !hasEndPosition {
-		panic("an unexpected error occurred. the given lines don't have end position")
+		return nil, fmt.Errorf(
+			"fragment partition end position %d is outside source lines",
+			endPosition,
+		)
 	}
 
-	return lines[startPosition : endPosition+1]
+	return lines[startPosition : endPosition+1], nil
 }
 
 func safeAccess(slice []string, index int) bool {
