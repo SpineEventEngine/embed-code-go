@@ -24,6 +24,8 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
+const minCodeFenceMarkerLength = 3
+
 // RegularLineState represents a regular line of a markdown.
 type RegularLineState struct{}
 
@@ -54,13 +56,14 @@ func updateMarkdownFenceContext(context *Context, line string) {
 		return
 	}
 	marker := codeFenceMarker(trimmedLine)
-	if len(marker) < 3 {
+	if len(marker) < minCodeFenceMarkerLength {
 		return
 	}
 	if !context.MarkdownFenceStarted {
 		context.MarkdownFenceStarted = true
 		context.MarkdownFenceMarker = marker
 		context.MarkdownFenceIndentation = leadingSpaces
+
 		return
 	}
 	if context.MarkdownFenceIndentation != leadingSpaces {

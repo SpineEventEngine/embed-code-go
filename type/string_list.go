@@ -20,8 +20,9 @@ package _type
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // StringList is a list of strings.
@@ -43,7 +44,6 @@ type StringList []string
 //	    - c
 func (s *StringList) UnmarshalYAML(value *yaml.Node) error {
 	switch value.Kind {
-
 	case yaml.ScalarNode:
 		parts := strings.Split(value.Value, ",")
 		res := make([]string, 0, len(parts))
@@ -53,6 +53,7 @@ func (s *StringList) UnmarshalYAML(value *yaml.Node) error {
 			}
 		}
 		*s = res
+
 		return nil
 
 	case yaml.SequenceNode:
@@ -61,6 +62,7 @@ func (s *StringList) UnmarshalYAML(value *yaml.Node) error {
 			res = append(res, strings.TrimSpace(n.Value))
 		}
 		*s = res
+
 		return nil
 	default:
 		return fmt.Errorf("invalid format for string list")

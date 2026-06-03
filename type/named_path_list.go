@@ -20,8 +20,9 @@ package _type
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // NamedPath represents a path that may optionally have a name.
@@ -56,11 +57,11 @@ type NamedPathList []NamedPath
 //	      path: "../runtime"
 func (pathList *NamedPathList) UnmarshalYAML(value *yaml.Node) error {
 	switch value.Kind {
-
 	case yaml.ScalarNode:
 		*pathList = []NamedPath{
 			{Path: strings.TrimSpace(value.Value)},
 		}
+
 		return nil
 
 	case yaml.SequenceNode:
@@ -68,7 +69,6 @@ func (pathList *NamedPathList) UnmarshalYAML(value *yaml.Node) error {
 
 		for _, node := range value.Content {
 			switch node.Kind {
-
 			case yaml.ScalarNode:
 				result = append(result, NamedPath{
 					Path: strings.TrimSpace(node.Value),
@@ -87,6 +87,7 @@ func (pathList *NamedPathList) UnmarshalYAML(value *yaml.Node) error {
 		}
 
 		*pathList = result
+
 		return nil
 	default:
 		return fmt.Errorf("invalid format for named paths")

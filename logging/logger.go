@@ -20,7 +20,6 @@ package logging
 
 import (
 	"fmt"
-	"golang.org/x/net/context"
 	"log/slog"
 	"net/url"
 	"os"
@@ -28,7 +27,11 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+
+	"golang.org/x/net/context"
 )
+
+const fileScheme = "file"
 
 // Handler is a custom slog.Handler that formats log records for simple console output.
 //
@@ -70,8 +73,10 @@ func (h *Handler) Handle(_ context.Context, record slog.Record) error {
 
 	record.Attrs(func(attr slog.Attr) bool {
 		fmt.Printf(" %s%s=%v\n", prefix, attr.Key, attr.Value)
+
 		return true
 	})
+
 	return nil
 }
 
@@ -79,6 +84,7 @@ func (h *Handler) Handle(_ context.Context, record slog.Record) error {
 func (h *Handler) WithAttrs(attributes []slog.Attr) slog.Handler {
 	newHandler := *h
 	newHandler.attributes = append(append([]slog.Attr{}, h.attributes...), attributes...)
+
 	return &newHandler
 }
 
@@ -86,6 +92,7 @@ func (h *Handler) WithAttrs(attributes []slog.Attr) slog.Handler {
 func (h *Handler) WithGroup(name string) slog.Handler {
 	newHandler := *h
 	newHandler.groups = append(append([]string{}, h.groups...), name)
+
 	return &newHandler
 }
 
@@ -114,7 +121,7 @@ func fileURLFromAbsolutePath(path string) string {
 	normalizedPath := filepath.ToSlash(strings.ReplaceAll(path, "\\", "/"))
 	if isWindowsDrivePath(normalizedPath) {
 		return (&url.URL{
-			Scheme: "file",
+			Scheme: fileScheme,
 			Path:   "/" + normalizedPath,
 		}).String()
 	}
@@ -123,14 +130,14 @@ func fileURLFromAbsolutePath(path string) string {
 		host, pathAfterHost, _ := strings.Cut(withoutSlashes, "/")
 
 		return (&url.URL{
-			Scheme: "file",
+			Scheme: fileScheme,
 			Host:   host,
 			Path:   "/" + pathAfterHost,
 		}).String()
 	}
 
 	return (&url.URL{
-		Scheme: "file",
+		Scheme: fileScheme,
 		Path:   normalizedPath,
 	}).String()
 }
@@ -142,6 +149,7 @@ func isWindowsDrivePath(path string) bool {
 	}
 
 	driveLetter := path[0]
+
 	return (driveLetter >= 'A' && driveLetter <= 'Z') ||
 		(driveLetter >= 'a' && driveLetter <= 'z')
 }
@@ -164,15 +172,15 @@ func HandlePanic(withStacktrace bool) {
 
 // formatPanicMessage formats panic values for console output.
 func formatPanicMessage(recovered any) string {
-	err, ok := recovered.(error)
-	if !ok {
+	err, isError := recovered.(error)
+	if !isError {
 		return fmt.Sprintf("panic: %v", recovered)
 	}
 
-	joined, ok := err.(interface {
+	joined, isJoined := err.(interface {
 		Unwrap() []error
 	})
-	if !ok || len(joined.Unwrap()) <= 1 {
+	if !isJoined || len(joined.Unwrap()) <= 1 {
 		return fmt.Sprintf("panic: %v", err)
 	}
 

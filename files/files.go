@@ -20,12 +20,8 @@
 package files
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
-
-	"embed-code/embed-code-go/configuration"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -34,77 +30,6 @@ const (
 	ReadWriteExecPermission uint32 = 0777
 	WritePermission         uint32 = 0600
 )
-
-// WriteLinesToFile writes lines to the file at given file path (relative or absolute).
-func WriteLinesToFile(filepath string, lines []string) error {
-	file, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-
-	for _, s := range lines {
-		_, err := file.WriteString(s + "\n")
-		if err != nil {
-			_ = file.Close()
-
-			return err
-		}
-	}
-
-	return file.Close()
-}
-
-// ReadFile reads and returns all lines from the file at given file path (relative or absolute).
-func ReadFile(filepath string) ([]string, error) {
-	file, err := os.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-
-	var lines []string
-	defer func(file *os.File) {
-		err = file.Close()
-	}(file)
-
-	reader := bufio.NewReader(file)
-
-	for {
-		line, _, err := reader.ReadLine()
-		if err != nil {
-			break
-		}
-		lines = append(lines, string(line))
-	}
-
-	return lines, nil
-}
-
-// BuildDocRelativePath builds a relative path for documentation file with a given config.
-func BuildDocRelativePath(absolutePath string, config configuration.Configuration) (string, error) {
-	relativePath, err := filepath.Rel(config.DocumentationRoot, absolutePath)
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.ToSlash(relativePath), nil
-}
-
-// EnsureDirExists creates dir at given path (relative or absolute) if it doesn't exist.
-// Does nothing if exists.
-func EnsureDirExists(path string) error {
-	exist, err := IsDirExist(path)
-	if err != nil {
-		return err
-	}
-	if !exist {
-		err = os.MkdirAll(path, os.FileMode(ReadWriteExecPermission))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
 
 // IsFileExist reports whether the given path (relative or absolute) to a file exists in the
 // file system.
@@ -147,13 +72,12 @@ func IsDirExist(path string) (bool, error) {
 func validatePathExists(path string) (bool, os.FileInfo, error) {
 	// Getting matches for the given path if it is a glob format. Otherwise, does nothing.
 	matches, err := doublestar.FilepathGlob(path)
+	if err != nil {
+		return false, nil, err
+	}
 
 	if len(matches) == 0 {
 		return false, nil, nil
-	}
-
-	if err != nil {
-		return false, nil, err
 	}
 
 	firstMatch := matches[0]

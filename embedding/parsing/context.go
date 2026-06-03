@@ -58,7 +58,7 @@ type Context struct {
 	// fileContainsEmbedding - a flag indicating whether the file contains an embedding instruction.
 	fileContainsEmbedding bool
 	// embeddings - a list of embedding instructions found in the markdown file.
-	embeddings []ParsingContext
+	embeddings []EmbeddingContext
 }
 
 // EmbeddingsCount returns number of found embeddings.
@@ -66,7 +66,7 @@ func (c *Context) EmbeddingsCount() int {
 	return len(c.embeddings)
 }
 
-// ParsingContext contains the information about the position in the source and the
+// EmbeddingContext contains the information about the position in the source and the
 // resulting Markdown files.
 //
 // embeddingInstruction - an Instruction, containing all the needed embedding information.
@@ -78,7 +78,7 @@ func (c *Context) EmbeddingsCount() int {
 // resultStartIndex - an index of the StartState line in the result markdown file.
 //
 // resultEndIndex - an index of the end line in the result markdown file.
-type ParsingContext struct {
+type EmbeddingContext struct {
 	embeddingInstruction Instruction
 	SourceStartIndex     int
 	SourceEndIndex       int
@@ -111,16 +111,17 @@ func NewEmptyContext(markdownFile string) Context {
 	}
 }
 
-// CurrentLine returns the line of source code at the current ParsingContext.lineIndex.
+// CurrentLine returns the line of source code at the current Context line index.
 func (c *Context) CurrentLine() string {
 	return c.source[c.lineIndex]
 }
 
+// CurrentIndex returns the current one-based source line number.
 func (c *Context) CurrentIndex() int {
 	return c.lineIndex + 1
 }
 
-// ToNextLine increments ParsingContext.lineIndex field by 1.
+// ToNextLine advances the parser to the next source line.
 func (c *Context) ToNextLine() {
 	c.lineIndex++
 }
@@ -190,7 +191,7 @@ func (c *Context) SetEmbedding(embedding *Instruction) {
 		c.CurrentEmbedding().resultEndIndex = resultIndex
 	} else {
 		c.fileContainsEmbedding = true
-		context := ParsingContext{
+		context := EmbeddingContext{
 			embeddingInstruction: *embedding,
 		}
 
@@ -216,23 +217,27 @@ func (c *Context) GetResult() []string {
 
 // Returns a string representation of Context.
 func (c *Context) String() string {
-	return fmt.Sprintf("ParsingContext[embedding=`%s`, file=`%s`, line=`%d`]",
+	return fmt.Sprintf("Context[embedding=`%s`, file=`%s`, line=`%d`]",
 		c.EmbeddingInstruction, c.MarkdownFilePath, c.lineIndex)
 }
 
-func (c *Context) CurrentEmbedding() *ParsingContext {
+// CurrentEmbedding returns the embedding currently being parsed.
+func (c *Context) CurrentEmbedding() *EmbeddingContext {
 	return &c.embeddings[c.currentEmbeddingIndex()]
 }
 
+// currentEmbeddingIndex returns the index of the latest embedding.
 func (c *Context) currentEmbeddingIndex() int {
 	return len(c.embeddings) - 1
 }
 
-func (c *Context) readEmbeddingSource(context ParsingContext) []string {
+// readEmbeddingSource returns original Markdown lines for one embedding.
+func (c *Context) readEmbeddingSource(context EmbeddingContext) []string {
 	return c.source[context.SourceStartIndex:context.SourceEndIndex]
 }
 
-func (c *Context) readEmbeddingResult(context ParsingContext) []string {
+// readEmbeddingResult returns generated Markdown lines for one embedding.
+func (c *Context) readEmbeddingResult(context EmbeddingContext) []string {
 	return c.Result[context.resultStartIndex:context.resultEndIndex]
 }
 

@@ -25,6 +25,8 @@ import (
 	"strings"
 )
 
+var quotedNamePattern = regexp.MustCompile("\"(.*)\"")
+
 const (
 	FragmentStart = "#docfragment"
 	FragmentEnd   = "#enddocfragment"
@@ -89,14 +91,10 @@ func lookup(line string, prefix string) ([]string, error) {
 
 // Returns the unquoted name from given quotedName.
 func unquoteName(quotedName string) (string, error) {
-	r, compilationErr := regexp.Compile("\"(.*)\"")
-	if compilationErr != nil {
-		return "", fmt.Errorf("failed to unquote name `%s`: %s", quotedName, compilationErr)
-	}
-	nameQuoted := r.FindString(quotedName)
+	nameQuoted := quotedNamePattern.FindString(quotedName)
 	nameCleaned, err := strconv.Unquote(nameQuoted)
 	if err != nil {
-		return "", fmt.Errorf("failed to unquote name `%s`: %s", quotedName, err)
+		return "", fmt.Errorf("failed to unquote name `%s`: %w", quotedName, err)
 	}
 
 	return nameCleaned, nil
