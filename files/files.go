@@ -27,8 +27,10 @@ import (
 )
 
 const (
-	ReadWriteExecPermission uint32 = 0777
-	WritePermission         uint32 = 0600
+	// DocumentationFilePermission is the mode used when writing documentation data files.
+	DocumentationFilePermission uint32 = 0644
+	// WritePermission is the mode used for private writable files in tests and fixtures.
+	WritePermission uint32 = 0600
 )
 
 // IsFileExist reports whether the given path (relative or absolute) to a file exists in the
