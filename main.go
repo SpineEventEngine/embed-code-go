@@ -152,7 +152,7 @@ func formatError(message string, err error) string {
 	return builder.String()
 }
 
-// flattenedErrors returns the leaf errors from an error joined with errors.Join.
+// flattenedErrors returns the leaf errors from a joined error joined.
 func flattenedErrors(err error) []error {
 	joined, ok := err.(interface {
 		Unwrap() []error
