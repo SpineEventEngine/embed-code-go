@@ -1,40 +1,41 @@
 # This file holds the configs for the linters, and it should be placed in the current working directory.
+version: "2"
 run:
-  timeout: 5m
-  tests: true
+  go: 1.22.1
   modules-download-mode: readonly
+  tests: true
   allow-parallel-runners: true
-  go: '1.22.1'
 linters:
   enable:
     # Reference doc with available linters and description for the linters below: https://golangci-lint.run/usage/linters/
     # Default
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
     - unused
+
     # Bug linters
     - errorlint
     - gosec
     - gosmopolitan
     - nilerr
     - testifylint
+
     # Comment linters
     - godot
+
     # Complexity linters
     - cyclop
     - funlen
     - gocognit
     - gocyclo
     - nestif
-    # Format linters
-    - gofmt
-    - goimports
+
     # Meta linters
     - gocritic
     - revive
     - staticcheck
+
     # Style linters
     - copyloopvar
     - dogsled
@@ -53,19 +54,39 @@ linters:
     - nilnil
     - nlreturn
     - nonamedreturns
-    - stylecheck
     - unconvert
     - unparam
     - usestdlibvars
     - varnamelen
     - wastedassign
     - whitespace
+
     # Test linters
     - ginkgolinter
-    - tenv
     - testableexamples
     - testpackage
-  fast: false
+  settings:
+    lll:
+      line-length: 100
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - revive
+        path: _test\.go
+        text: 'dot-imports: should not use dot imports'
+      - linters:
+          - goconst
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
   # Default values allow for the showing of only 50 issues.
   # Setting it to 0 disables the default config and shows all issues at once.
@@ -73,16 +94,14 @@ issues:
   # Default values allow showing only 3 repeating issues.
   # Setting it to 0 disables the default config and shows all repeating issues at once.
   max-same-issues: 0
-  exclude-rules:
-    # As we use external test libs, tests will be hard to read if we have package reference everywhere.
-    - linters:
-        - revive
-      text: "dot-imports: should not use dot imports"
-      path: _test\.go
-    # We may have repeating lines in tests and it should be valid.
-    - linters:
-        - goconst
-      path: _test\.go
-linters-settings:
-  lll:
-    line-length: 100
+formatters:
+  enable:
+    # Format linters.
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
