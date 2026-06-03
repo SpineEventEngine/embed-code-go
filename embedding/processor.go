@@ -118,7 +118,7 @@ func (p Processor) Embed() (*parsing.Context, error) {
 	}
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		data := []byte(strings.Join(context.GetResult(), "\n"))
-		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.ReadWriteExecPermission))
+		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.DocumentationFilePermission))
 		if err != nil {
 			return &context, err
 		}
