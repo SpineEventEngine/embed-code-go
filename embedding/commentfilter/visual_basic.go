@@ -57,18 +57,21 @@ func filterVisualBasicLine(line string, mode Mode) (string, bool) {
 		if quoteEnd := quotedSegmentEnd(line, position, "\""); quoteEnd > position {
 			result.WriteString(line[position:quoteEnd])
 			position = quoteEnd
+
 			continue
 		}
 		if strings.HasPrefix(line[position:], docPrefix) {
 			if mode == RetainDocumentation {
 				result.WriteString(line[position:])
 			}
+
 			return result.String(), true
 		}
 		if line[position] == commentPrefix || remCommentAt(line, position) {
 			if mode == RetainInline || mode == RetainRegular {
 				result.WriteString(line[position:])
 			}
+
 			return result.String(), true
 		}
 		result.WriteByte(line[position])
@@ -87,6 +90,7 @@ func remCommentAt(line string, position int) bool {
 		) {
 		return false
 	}
+
 	return remPrefixBoundary(line, position) &&
 		remSuffixBoundary(line, position+len(rem))
 }
@@ -97,6 +101,7 @@ func remPrefixBoundary(line string, position int) bool {
 		if unicode.IsSpace(rune(line[cursor])) {
 			continue
 		}
+
 		return line[cursor] == ':'
 	}
 

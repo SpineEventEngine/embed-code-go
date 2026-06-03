@@ -60,12 +60,12 @@ func (f EmbeddingCommentFilter) Filter(lines []string, mode Mode) []string {
 	if mode == RetainAll {
 		return lines
 	}
-	filter, found := filterFor(f.filePath, mode, f.embeddingDocPath, f.embeddingLine)
+	entry, found := filterFor(f.filePath, mode, f.embeddingDocPath, f.embeddingLine)
 	if !found {
 		return lines
 	}
 
-	return filter.Filter(lines, mode)
+	return entry.filter.Filter(lines, mode)
 }
 
 // filterFor returns the comment filter registered for the given file path and warns on odd modes.
@@ -74,18 +74,25 @@ func filterFor(
 	mode Mode,
 	embeddingDocPath string,
 	embeddingLine int,
-) (CommentFilter, bool) {
+) (filterEntry, bool) {
 	extension := normalizeExtension(filepath.Ext(filePath))
 	entry, found := filtersByExtension[extension]
 	if !found {
 		warnUnsupportedFileType(filePath, mode, embeddingDocPath, embeddingLine)
-		return nil, false
+
+		return filterEntry{}, false
 	}
-	if warnUnsupportedCommentsMode(filePath, mode, embeddingDocPath, embeddingLine, entry.supportedModes) {
-		return nil, false
+	if warnUnsupportedCommentsMode(
+		filePath,
+		mode,
+		embeddingDocPath,
+		embeddingLine,
+		entry.supportedModes,
+	) {
+		return filterEntry{}, false
 	}
 
-	return entry.filter, true
+	return entry, true
 }
 
 // normalizeExtension returns a lowercase file extension with a leading dot.

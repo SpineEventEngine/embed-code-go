@@ -16,12 +16,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package commentfilter
+package commentfilter_test
 
 import (
 	"bytes"
 	"log/slog"
 	"testing"
+
+	. "embed-code/embed-code-go/embedding/commentfilter"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

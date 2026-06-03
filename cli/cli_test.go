@@ -137,7 +137,7 @@ var _ = Describe("CLI validation", func() {
 				"`code-path` and `docs-path` cannot be set when `embeddings` are set"))
 		})
 
-		It("should fail validation when embeddings and root optional params are set at the same time", func() {
+		It("should reject embeddings with root optional params", func() {
 			invalidConfig := cli.Config{
 				Mode:        cli.ModeCheck,
 				DocIncludes: []string{"**/*.md"},
@@ -263,6 +263,7 @@ func baseCliConfig() cli.Config {
 
 func baseEmbeddingConfig() cli.EmbeddingConfig {
 	baseConfig := baseCliConfig()
+
 	return cli.EmbeddingConfig{
 		Name:      "docs",
 		CodePaths: baseConfig.BaseCodePaths,

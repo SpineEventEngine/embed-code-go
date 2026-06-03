@@ -135,6 +135,7 @@ func parseFailureReason(instructionBody []string, parseErr error) string {
 		if errors.As(parseErr, &syntaxErr) {
 			return syntaxErr.Msg
 		}
+
 		return parseErr.Error()
 	}
 

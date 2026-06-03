@@ -18,6 +18,13 @@
 
 package commentfilter
 
+const (
+	cStyleBlockCommentStart = "/*"
+	cStyleBlockCommentEnd   = "*/"
+	cStyleDocCommentStart   = "/**"
+	jsQuoteChars            = "\"'`"
+)
+
 // filtersByExtension is a mapping of the file extension to its comment filter.
 var filtersByExtension = map[string]filterEntry{
 	// Java/Kotlin
@@ -83,10 +90,10 @@ type filterEntry struct {
 var javaSyntax = CommentMarker{
 	Inline: []string{"//"},
 	Block: []BlockMarker{
-		{Start: "/*", End: "*/"},
+		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
 	},
 	Documentation: DocumentationMarker{
-		Block: []BlockMarker{{Start: "/**", End: "*/"}},
+		Block: []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
 	},
 	QuoteChars: "\"'",
 }
@@ -94,30 +101,30 @@ var javaSyntax = CommentMarker{
 var jsSyntax = CommentMarker{
 	Inline: []string{"//"},
 	Block: []BlockMarker{
-		{Start: "/*", End: "*/"},
+		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
 	},
 	Documentation: DocumentationMarker{
-		Block: []BlockMarker{{Start: "/**", End: "*/"}},
+		Block: []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
 	},
-	QuoteChars: "\"'`",
+	QuoteChars: jsQuoteChars,
 }
 
 var csharpSyntax = CommentMarker{
 	Inline: []string{"//"},
 	Block: []BlockMarker{
-		{Start: "/*", End: "*/"},
+		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
 	},
 	Documentation: DocumentationMarker{
 		Inline: []string{"///"},
-		Block:  []BlockMarker{{Start: "/**", End: "*/"}},
+		Block:  []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
 	},
-	QuoteChars: "\"'`",
+	QuoteChars: jsQuoteChars,
 }
 
 var cStyleSyntax = CommentMarker{
 	Inline: []string{"//"},
 	Block: []BlockMarker{
-		{Start: "/*", End: "*/"},
+		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
 	},
 	QuoteChars: "\"'",
 }
@@ -125,9 +132,9 @@ var cStyleSyntax = CommentMarker{
 var goSyntax = CommentMarker{
 	Inline: []string{"//"},
 	Block: []BlockMarker{
-		{Start: "/*", End: "*/"},
+		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
 	},
-	QuoteChars: "\"'`",
+	QuoteChars: jsQuoteChars,
 }
 
 var hashLineSyntax = CommentMarker{

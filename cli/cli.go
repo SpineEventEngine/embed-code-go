@@ -202,6 +202,7 @@ func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration 
 			))
 			embedCodeConfigs = append(embedCodeConfigs, configFromEmbedding(embedding))
 		}
+
 		return embedCodeConfigs
 	}
 
