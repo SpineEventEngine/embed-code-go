@@ -207,11 +207,13 @@ func findEmbeddingNameDuplications(embeddings []EmbeddingConfig) error {
 
 	if len(errLines) > 0 {
 		slices.Sort(errLines)
+
 		return fmt.Errorf(
 			"duplicate embedding names detected:\n%s",
 			strings.Join(errLines, "\n"),
 		)
 	}
+
 	return nil
 }
 
@@ -296,6 +298,7 @@ func validatePaths(paths _type.NamedPathList) (bool, error) {
 			allPathsSet = false
 		}
 	}
+
 	return allPathsSet, nil
 }
 
@@ -307,18 +310,18 @@ func validateCodeSources(paths _type.NamedPathList) error {
 	unnamedCount := 0
 	hasNamed := false
 
-	for _, p := range paths {
-		if isEmpty(p.Path) {
+	for _, pathEntry := range paths {
+		if isEmpty(pathEntry.Path) {
 			continue
 		}
-		if isEmpty(p.Name) {
+		if isEmpty(pathEntry.Name) {
 			unnamedCount++
 		} else {
 			hasNamed = true
-			nameCount[p.Name]++
+			nameCount[pathEntry.Name]++
 		}
-		pathCount[p.Path]++
-		pathNames[p.Path] = append(pathNames[p.Path], p.Name)
+		pathCount[pathEntry.Path]++
+		pathNames[pathEntry.Path] = append(pathNames[pathEntry.Path], pathEntry.Name)
 	}
 
 	if err := verifyCodeSourceNames(nameCount); err != nil {
@@ -347,11 +350,13 @@ func verifyCodeSourceNames(nameCount map[string]int) error {
 
 	if len(errLines) > 0 {
 		slices.Sort(errLines)
+
 		return fmt.Errorf(
 			"duplicate source code path names detected:\n%s",
 			strings.Join(errLines, "\n"),
 		)
 	}
+
 	return nil
 }
 

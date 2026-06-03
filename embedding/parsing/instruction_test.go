@@ -162,7 +162,9 @@ var _ = Describe("Instruction", func() {
 			"org/example/Comments.java", instructionParams, config)
 
 		Expect(actualLines).Should(ContainElement("    // Full-line inline comment."))
-		Expect(actualLines).Should(ContainElement("    String create(String name); // end-of-line inline comment."))
+		Expect(actualLines).Should(ContainElement(
+			"    String create(String name); // end-of-line inline comment.",
+		))
 		Expect(actualLines).ShouldNot(ContainElement("/**"))
 		Expect(actualLines).ShouldNot(ContainElement("     * The block comment."))
 	})
@@ -193,7 +195,9 @@ var _ = Describe("Instruction", func() {
 		Expect(actualLines).ShouldNot(ContainElement(" * Documents the public API."))
 		Expect(actualLines).Should(ContainElement("     * The block comment."))
 		Expect(actualLines).Should(ContainElement("    // Full-line inline comment."))
-		Expect(actualLines).Should(ContainElement("    String create(String name); // end-of-line inline comment."))
+		Expect(actualLines).Should(ContainElement(
+			"    String create(String name); // end-of-line inline comment.",
+		))
 	})
 
 	It("should have an error when parsing fragment with start glob", func() {

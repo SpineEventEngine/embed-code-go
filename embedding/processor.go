@@ -125,7 +125,10 @@ func (p Processor) Embed() (*parsing.Context, error) {
 		slog.Info(fmt.Sprintf("Updated `%s` after processing %d embedding(s).",
 			logging.FileReference(p.DocFilePath), context.EmbeddingsCount()))
 	} else {
-		slog.Info(fmt.Sprintf("Documentation is up-to-date in `%s`.", logging.FileReference(p.DocFilePath)))
+		slog.Info(fmt.Sprintf(
+			"Documentation is up-to-date in `%s`.",
+			logging.FileReference(p.DocFilePath),
+		))
 	}
 
 	return &context, nil
@@ -163,6 +166,7 @@ func (p Processor) isUpToDate() (bool, error) {
 	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
 		slog.Info(fmt.Sprintf("Skipping `%s`; it is excluded by the configuration.",
 			logging.FileReference(p.DocFilePath)))
+
 		return true, nil
 	}
 	slog.Info(fmt.Sprintf("Checking `%s`.", logging.FileReference(p.DocFilePath)))
@@ -201,6 +205,7 @@ func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
 		context, err := processor.Embed()
 		if err != nil {
 			embeddingErrors = append(embeddingErrors, err)
+
 			continue
 		}
 		totalEmbeddings += context.EmbeddingsCount()
@@ -226,6 +231,7 @@ func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
 				logging.FileReference(config.DocumentationRoot), configNameLabel(config)),
 		)
 	}
+
 	return EmbedAllResult{
 		TargetFiles:        requiredDocPaths,
 		TotalEmbeddings:    totalEmbeddings,
@@ -238,6 +244,7 @@ func configNameLabel(config configuration.Configuration) string {
 	if config.Name == "" {
 		return ""
 	}
+
 	return fmt.Sprintf(" for `%s` embedding setup", config.Name)
 }
 
@@ -366,6 +373,7 @@ func findChangedFiles(config configuration.Configuration) ([]string, []error) {
 		).isUpToDate()
 		if err != nil {
 			checkErrors = append(checkErrors, err)
+
 			continue
 		}
 		if !upToDate {
@@ -397,12 +405,14 @@ func requiredDocs(config configuration.Configuration) ([]string, error) {
 			len(includedDocs), logging.FileReference(documentationRoot),
 			patternsLabel(includedPatterns),
 		))
+
 		return includedDocs, nil
 	}
 
 	result := removeElements(includedDocs, excludedDocs)
 	slog.Info(fmt.Sprintf(
-		"Found %d documentation file(s) from `%s` matching include pattern(s) %s and exclude pattern(s) %s.",
+		"Found %d documentation file(s) from `%s` matching include pattern(s) %s "+
+			"and exclude pattern(s) %s.",
 		len(result), logging.FileReference(documentationRoot), patternsLabel(includedPatterns),
 		patternsLabel(excludedPatterns),
 	))

@@ -80,7 +80,7 @@ const Version = "1.2.2"
 //   - separator — a string which is used as a separator between code fragments. Default value
 //     is "...".
 func main() {
-	fmt.Println(fmt.Sprintf("Running embed-code v%s.", Version))
+	fmt.Printf("Running embed-code v%s.\n", Version)
 	userArgs := cli.ReadArgs()
 	configureLogging(userArgs)
 	defer logging.HandlePanic(userArgs.Stacktrace)
@@ -183,6 +183,7 @@ func checkByConfigs(configs []configuration.Configuration) error {
 		outdatedFiles, err := cli.CheckCodeSamples(config)
 		if err != nil {
 			checkErrors = append(checkErrors, err)
+
 			continue
 		}
 		totalOutdatedFiles = append(totalOutdatedFiles, outdatedFiles...)
@@ -210,6 +211,7 @@ func embedByConfigs(configs []configuration.Configuration) error {
 		result, err := cli.EmbedCodeSamples(config)
 		if err != nil {
 			embeddingErrors = append(embeddingErrors, err)
+
 			continue
 		}
 		totalEmbeddedFiles = append(totalEmbeddedFiles, result.UpdatedTargetFiles...)

@@ -224,6 +224,7 @@ func buildTestFragmentation(testFileName string,
 	frag, err := fragmentation.NewFragmentation(testFilePath, codeRoot, config)
 
 	Expect(err).ShouldNot(HaveOccurred())
+
 	return frag
 }
 
@@ -236,6 +237,7 @@ func doTestFragmentation(
 	lines, fragments, err := frag.DoFragmentation()
 
 	Expect(err).ShouldNot(HaveOccurred())
+
 	return lines, fragments
 }
 
@@ -251,5 +253,6 @@ func resolveTestFragment(
 	)
 
 	Expect(err).ShouldNot(HaveOccurred())
+
 	return content
 }

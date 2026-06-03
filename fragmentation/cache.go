@@ -45,6 +45,8 @@ func newCache[K comparable, V any](limit int, loader func(K) (V, error)) *cache[
 }
 
 // get returns a cached value or loads it when missing.
+//
+//nolint:ireturn // The cache is generic, so returning V preserves the stored value type.
 func (c *cache[K, V]) get(key K) (V, error) {
 	c.Lock()
 	value, found := c.values[key]
@@ -83,6 +85,7 @@ func (c *cache[K, V]) storeLoaded(key K, value V) {
 	c.values[key] = value
 	if entry, found := c.entries[key]; found {
 		c.order.MoveToBack(entry)
+
 		return
 	}
 
@@ -108,7 +111,12 @@ func (c *cache[K, V]) evictOldest() {
 		return
 	}
 
-	oldestKey := oldestEntry.Value.(K)
+	oldestKey, isKey := oldestEntry.Value.(K)
+	if !isKey {
+		c.order.Remove(oldestEntry)
+
+		return
+	}
 	c.order.Remove(oldestEntry)
 	delete(c.entries, oldestKey)
 	delete(c.values, oldestKey)
