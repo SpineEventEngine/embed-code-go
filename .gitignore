@@ -1,0 +1,12 @@
+# IDE metadata.
+.idea/
+*.iml
+
+# OS metadata.
+.DS_Store
+
+# Go build and test outputs.
+/dist/
+/out/
+**/build/
+coverage.out
