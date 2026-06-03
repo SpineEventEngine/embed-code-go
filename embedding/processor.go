@@ -63,14 +63,24 @@ type EmbedAllResult struct {
 
 // NewProcessor creates and returns new Processor with given docFile and config.
 func NewProcessor(docFile string, config configuration.Configuration) Processor {
-	return newProcessor(docFile, config, parsing.Transitions, requiredDocs(config))
+	requiredDocPaths, err := requiredDocs(config)
+	if err != nil {
+		panic(err)
+	}
+
+	return newProcessor(docFile, config, parsing.Transitions, requiredDocPaths)
 }
 
 // NewProcessorWithTransitions Creates and returns new Processor with given docFile, config
 // and transitions.
 func NewProcessorWithTransitions(docFile string, config configuration.Configuration,
 	transitions parsing.TransitionMap) Processor {
-	return newProcessor(docFile, config, transitions, requiredDocs(config))
+	requiredDocPaths, err := requiredDocs(config)
+	if err != nil {
+		panic(err)
+	}
+
+	return newProcessor(docFile, config, transitions, requiredDocPaths)
 }
 
 // newProcessor creates a Processor with a precomputed documentation file list.
@@ -178,8 +188,11 @@ func (p Processor) isUpToDate() (bool, error) {
 // creates an EmbeddingProcessor for each file, and embeds code fragments in them.
 //
 // config — a configuration for embedding.
-func EmbedAll(config configuration.Configuration) EmbedAllResult {
-	requiredDocPaths := requiredDocs(config)
+func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
+	requiredDocPaths, err := requiredDocs(config)
+	if err != nil {
+		return EmbedAllResult{}, err
+	}
 	totalEmbeddings := 0
 	var updatedTargetFiles []string
 	var embeddingErrors []error
@@ -196,7 +209,7 @@ func EmbedAll(config configuration.Configuration) EmbedAllResult {
 		}
 	}
 	if len(embeddingErrors) > 0 {
-		panic(errors.Join(embeddingErrors...))
+		return EmbedAllResult{}, errors.Join(embeddingErrors...)
 	}
 	if totalEmbeddings > 0 {
 		slog.Info(
@@ -217,7 +230,7 @@ func EmbedAll(config configuration.Configuration) EmbedAllResult {
 		TargetFiles:        requiredDocPaths,
 		TotalEmbeddings:    totalEmbeddings,
 		UpdatedTargetFiles: updatedTargetFiles,
-	}
+	}, nil
 }
 
 // configNameLabel formats a configuration name for summary log messages.
@@ -231,13 +244,13 @@ func configNameLabel(config configuration.Configuration) string {
 // CheckUpToDate returns documentation files that are not up-to-date with code files.
 //
 // config — a configuration for embedding.
-func CheckUpToDate(config configuration.Configuration) []string {
+func CheckUpToDate(config configuration.Configuration) ([]string, error) {
 	changedFiles, checkErrors := findChangedFiles(config)
 	if len(checkErrors) > 0 {
-		panic(errors.Join(checkErrors...))
+		return nil, errors.Join(checkErrors...)
 	}
 
-	return changedFiles
+	return changedFiles, nil
 }
 
 // Iterates through the doc file line by line considering them as a states of an embedding.
@@ -334,11 +347,14 @@ func (p Processor) moveToNextState(state *parsing.State, context *parsing.Contex
 	return false, state, nil
 }
 
-// Returns a list of documentation files that are not up-to-date with their code files.
+// findChangedFiles returns documentation files that are not up-to-date with their code files.
 //
 // config — a configuration for embedding.
 func findChangedFiles(config configuration.Configuration) ([]string, []error) {
-	requiredDocPaths := requiredDocs(config)
+	requiredDocPaths, err := requiredDocs(config)
+	if err != nil {
+		return nil, []error{err}
+	}
 	var changedFiles []string
 	var checkErrors []error
 	for _, doc := range requiredDocPaths {
@@ -356,19 +372,19 @@ func findChangedFiles(config configuration.Configuration) ([]string, []error) {
 }
 
 // requiredDocs returns documentation files matched by includes minus excludes.
-func requiredDocs(config configuration.Configuration) []string {
+func requiredDocs(config configuration.Configuration) ([]string, error) {
 	documentationRoot := config.DocumentationRoot
 	includedPatterns := config.DocIncludes
 	excludedPatterns := config.DocExcludes
 
 	includedDocs, err := getFilesByPatterns(documentationRoot, includedPatterns)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	excludedDocs, err := getFilesByPatterns(documentationRoot, excludedPatterns)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	if len(excludedDocs) == 0 {
 		slog.Info(fmt.Sprintf(
@@ -376,7 +392,7 @@ func requiredDocs(config configuration.Configuration) []string {
 			len(includedDocs), logging.FileReference(documentationRoot),
 			patternsLabel(includedPatterns),
 		))
-		return includedDocs
+		return includedDocs, nil
 	}
 
 	result := removeElements(includedDocs, excludedDocs)
@@ -386,7 +402,7 @@ func requiredDocs(config configuration.Configuration) []string {
 		patternsLabel(excludedPatterns),
 	))
 
-	return result
+	return result, nil
 }
 
 // patternsLabel formats glob patterns for human-readable log messages.

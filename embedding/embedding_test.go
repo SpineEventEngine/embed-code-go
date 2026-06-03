@@ -116,7 +116,10 @@ var _ = Describe("Embedding", func() {
 		config.DocIncludes = []string{"doc.md"}
 		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
 
-		Expect(embedding.CheckUpToDate(config)).Should(ContainElement(docPath))
+		outdatedFiles, err := embedding.CheckUpToDate(config)
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(outdatedFiles).Should(ContainElement(docPath))
 	})
 
 	It("should ignore embed-code samples inside markdown code fences", func() {
@@ -143,16 +146,10 @@ var _ = Describe("Embedding", func() {
 	It("should report all check errors", func() {
 		config.DocIncludes = []string{"missing-closing-tag.md", "unclosed-nested-tag.md"}
 
-		var recovered any
-		func() {
-			defer func() {
-				recovered = recover()
-			}()
-			embedding.CheckUpToDate(config)
-		}()
+		_, err := embedding.CheckUpToDate(config)
 
-		Expect(recovered).ShouldNot(BeNil())
-		Expect(fmt.Sprint(recovered)).Should(And(
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(And(
 			ContainSubstring("missing-closing-tag.md"),
 			ContainSubstring("the `<embed-code>` tag is not closed"),
 			ContainSubstring("unclosed-nested-tag.md"),
@@ -163,16 +160,10 @@ var _ = Describe("Embedding", func() {
 	It("should report all pattern matching errors", func() {
 		config.DocIncludes = []string{"missing-start-pattern.md", "missing-end-pattern.md"}
 
-		var recovered any
-		func() {
-			defer func() {
-				recovered = recover()
-			}()
-			embedding.CheckUpToDate(config)
-		}()
+		_, err := embedding.CheckUpToDate(config)
 
-		Expect(recovered).ShouldNot(BeNil())
-		Expect(fmt.Sprint(recovered)).Should(And(
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(And(
 			ContainSubstring("missing-start-pattern.md:3"),
 			ContainSubstring(
 				"no line in code file `file://",
@@ -317,10 +308,9 @@ var _ = Describe("Embedding", func() {
 			config.DocumentationRoot)
 		processor := embedding.NewProcessor(docPath, config)
 
-		Expect(func() {
-			embedding.EmbedAll(config)
-		}).NotTo(Panic())
+		_, err := embedding.EmbedAll(config)
 
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 

@@ -99,18 +99,22 @@ const (
 // CheckCodeSamples returns documentation files that are not up-to-date with code files.
 //
 // config — a configuration for checking code samples.
-func CheckCodeSamples(config configuration.Configuration) []string {
+func CheckCodeSamples(config configuration.Configuration) ([]string, error) {
 	return embedding.CheckUpToDate(config)
 }
 
 // EmbedCodeSamples embeds code fragments in documentation files.
 //
 // config — a configuration for embedding.
-func EmbedCodeSamples(config configuration.Configuration) EmbedCodeSamplesResult {
-	embeddingResult := embedding.EmbedAll(config)
+func EmbedCodeSamples(config configuration.Configuration) (EmbedCodeSamplesResult, error) {
+	embeddingResult, err := embedding.EmbedAll(config)
+	if err != nil {
+		return EmbedCodeSamplesResult{}, err
+	}
+
 	return EmbedCodeSamplesResult{
 		embeddingResult,
-	}
+	}, nil
 }
 
 // ReadArgs reads user-specified args from the command line.
@@ -154,7 +158,10 @@ func ReadArgs() Config {
 //
 // Returns filled Config.
 func FillArgsFromConfigFile(args Config) (Config, error) {
-	configFields := readConfigFields(args.ConfigPath)
+	configFields, err := readConfigFields(args.ConfigPath)
+	if err != nil {
+		return args, err
+	}
 	slog.Info(fmt.Sprintf(
 		"Loaded config file `%s`. Found %d embedding setup(s).",
 		logging.FileReference(args.ConfigPath), len(configFields.Embeddings),
@@ -288,17 +295,17 @@ func parseListArgument(listArgument string) []string {
 // configFilePath — a path to a yaml configuration file.
 //
 // Returns a filled ConfigFields struct.
-func readConfigFields(configFilePath string) Config {
+func readConfigFields(configFilePath string) (Config, error) {
 	content, err := os.ReadFile(configFilePath)
 	if err != nil {
-		panic(err)
+		return Config{}, err
 	}
 
 	configFields := Config{}
 	err = yaml.Unmarshal(content, &configFields)
 	if err != nil {
-		panic(err)
+		return Config{}, err
 	}
 
-	return configFields
+	return configFields, nil
 }
