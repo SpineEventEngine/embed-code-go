@@ -160,31 +160,32 @@ func (p Pattern) linePatterns() ([]string, bool) {
 	var line strings.Builder
 	hasSeparator := false
 	trimLeft := false
-	for i := 0; i < len(p.sourceGlob); {
-		remaining := p.sourceGlob[i:]
+	for cursor := 0; cursor < len(p.sourceGlob); {
+		remaining := p.sourceGlob[cursor:]
 		switch {
 		case strings.HasPrefix(remaining, escapedLineSeparator):
 			line.WriteString(escapedLineSeparator)
-			i += len(escapedLineSeparator)
+			cursor += len(escapedLineSeparator)
 		case strings.HasPrefix(remaining, lineSeparator):
 			patternLines = append(patternLines, strings.TrimRightFunc(line.String(), unicode.IsSpace))
 			line.Reset()
 			hasSeparator = true
 			trimLeft = true
-			i += len(lineSeparator)
+			cursor += len(lineSeparator)
 		case trimLeft:
 			r, size := utf8.DecodeRuneInString(remaining)
 			if !unicode.IsSpace(r) {
 				trimLeft = false
-				line.WriteByte(p.sourceGlob[i])
-				i++
+				line.WriteByte(p.sourceGlob[cursor])
+				cursor++
+
 				continue
 			}
-			i += size
+			cursor += size
 		default:
 			trimLeft = false
-			line.WriteByte(p.sourceGlob[i])
-			i++
+			line.WriteByte(p.sourceGlob[cursor])
+			cursor++
 		}
 	}
 	patternLines = append(patternLines, line.String())

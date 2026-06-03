@@ -116,40 +116,45 @@ func NewInstruction(
 		return Instruction{}, err
 	}
 
-	if fragment != "" && (startValue != "" || endValue != "" || lineValue != "") {
-		return Instruction{},
-			fmt.Errorf("<embed-code> must NOT specify both a fragment name and start/end/line patterns")
-	}
-	if lineValue != "" && (startValue != "" || endValue != "") {
-		return Instruction{},
-			fmt.Errorf("<embed-code> must NOT specify both a line pattern and start/end patterns")
-	}
-	var end *Pattern
-	var line *Pattern
-	var start *Pattern
-
-	if startValue != "" {
-		startPattern := NewPattern(startValue)
-		start = &startPattern
-	}
-	if endValue != "" {
-		endPattern := NewPattern(endValue)
-		end = &endPattern
-	}
-	if lineValue != "" {
-		linePattern := NewPattern(lineValue)
-		line = &linePattern
+	if err = validateExclusiveAttributes(fragment, startValue, endValue, lineValue); err != nil {
+		return Instruction{}, err
 	}
 
 	return Instruction{
 		CodeFile:      codeFile,
 		Fragment:      fragment,
-		StartPattern:  start,
-		EndPattern:    end,
-		LinePattern:   line,
+		StartPattern:  patternFromValue(startValue),
+		EndPattern:    patternFromValue(endValue),
+		LinePattern:   patternFromValue(lineValue),
 		CommentMode:   commentMode,
 		Configuration: config,
 	}, nil
+}
+
+// validateExclusiveAttributes reports mutually exclusive instruction attributes.
+func validateExclusiveAttributes(fragment string, start string, end string, line string) error {
+	if fragment != "" && (start != "" || end != "" || line != "") {
+		return fmt.Errorf(
+			"<embed-code> must NOT specify both a fragment name and start/end/line patterns",
+		)
+	}
+	if line != "" && (start != "" || end != "") {
+		return fmt.Errorf(
+			"<embed-code> must NOT specify both a line pattern and start/end patterns",
+		)
+	}
+
+	return nil
+}
+
+// patternFromValue creates a Pattern pointer for a non-empty attribute value.
+func patternFromValue(value string) *Pattern {
+	if value == "" {
+		return nil
+	}
+	pattern := NewPattern(value)
+
+	return &pattern
 }
 
 // Content reads and returns the lines for specified fragment from the code.
@@ -303,11 +308,13 @@ func (e Instruction) matchGlob(pattern *Pattern, lines []string, startFrom int,
 		if kind == "end" {
 			return end, nil
 		}
+
 		return start, nil
 	}
 	if line, found := matchSingleLine(pattern, lines, startFrom); found {
 		return line, nil
 	}
+
 	return 0, PatternNotFoundError{
 		Line:              e.DocumentationLine,
 		CodeFileReference: codeFileReference,

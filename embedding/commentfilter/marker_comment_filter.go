@@ -105,6 +105,7 @@ func (f *markerLineFilter) filterLine() (string, bool) {
 			if stop {
 				break
 			}
+
 			continue
 		}
 		f.consumeCodeByte()
@@ -125,6 +126,7 @@ func (f *markerLineFilter) consumeActiveBlock() bool {
 			f.result.WriteString(f.line[f.position:])
 		}
 		f.position = len(f.line)
+
 		return true
 	}
 	endPosition := f.position + end + len(f.state.block.End)
@@ -159,6 +161,7 @@ func quotedSegmentEnd(line string, position int, quoteChars string) int {
 	for cursor < len(line) {
 		if line[cursor] == '\\' {
 			cursor += 2
+
 			continue
 		}
 		if line[cursor] == quote {
@@ -172,20 +175,24 @@ func quotedSegmentEnd(line string, position int, quoteChars string) int {
 
 // consumeComment consumes a comment and reports whether it consumed input and ended the line.
 func (f *markerLineFilter) consumeComment() (bool, bool) {
-	if _, found := prefixAt(f.line, f.position, f.filter.Syntax.Documentation.Inline); found {
+	if prefixAt(f.line, f.position, f.filter.Syntax.Documentation.Inline) {
 		f.consumeInlineComment(f.mode == RetainDocumentation)
+
 		return true, true
 	}
 	if block, found := blockAt(f.line, f.position, f.filter.Syntax.Documentation.Block); found {
 		f.startBlockComment(block, f.mode == RetainDocumentation)
+
 		return true, false
 	}
-	if _, found := prefixAt(f.line, f.position, f.filter.Syntax.Inline); found {
+	if prefixAt(f.line, f.position, f.filter.Syntax.Inline) {
 		f.consumeInlineComment(f.mode == RetainInline || f.mode == RetainRegular)
+
 		return true, true
 	}
 	if block, found := blockAt(f.line, f.position, f.filter.Syntax.Block); found {
 		f.startBlockComment(block, f.mode == RetainBlock || f.mode == RetainRegular)
+
 		return true, false
 	}
 
@@ -216,14 +223,14 @@ func (f *markerLineFilter) consumeCodeByte() {
 }
 
 // prefixAt reports whether one of the given prefixes starts at the position.
-func prefixAt(line string, position int, prefixes []string) (string, bool) {
+func prefixAt(line string, position int, prefixes []string) bool {
 	for _, prefix := range prefixes {
 		if strings.HasPrefix(line[position:], prefix) {
-			return prefix, true
+			return true
 		}
 	}
 
-	return "", false
+	return false
 }
 
 // blockAt reports whether one of the given block markers starts at the position.

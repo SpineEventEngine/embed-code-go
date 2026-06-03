@@ -47,7 +47,11 @@ var resolverCache = newCache[resolvedPath, fragmentedFile](
 // ResolveContent returns source lines for the requested code file fragment.
 //
 // Named fragments are extracted directly from the source file on demand and cached by source file.
-func ResolveContent(codePath string, fragmentName string, config config.Configuration) ([]string, error) {
+func ResolveContent(
+	codePath string,
+	fragmentName string,
+	config config.Configuration,
+) ([]string, error) {
 	if fragmentName == "" {
 		fragmentName = DefaultFragmentName
 	}
@@ -61,6 +65,7 @@ func ResolveContent(codePath string, fragmentName string, config config.Configur
 			"Could not find source file `%s` in the configured source code folders.",
 			codePath,
 		))
+
 		return nil, unresolvedSourceError(codePath, fragmentName, config)
 	}
 
@@ -73,6 +78,7 @@ func ResolveContent(codePath string, fragmentName string, config config.Configur
 	if !found {
 		codeFileReference := logging.FileReference(source.absolutePath)
 		slog.Info(missingFragmentLogMessage(fragmentName, source.absolutePath))
+
 		return nil, fmt.Errorf("fragment `%s` from code file `%s` not found",
 			fragmentName, codeFileReference)
 	}
@@ -183,6 +189,7 @@ func loadSourceFragments(source resolvedPath) (fragmentedFile, error) {
 	if err != nil {
 		return fragmentedFile{}, err
 	}
+
 	return fragmentedFile{
 		lines:     lines,
 		fragments: fragments,
@@ -203,7 +210,11 @@ func fragmentLines(fragment Fragment, lines []string, separator string) ([]strin
 }
 
 // unresolvedSourceError builds an error for a code path that cannot be resolved from sources.
-func unresolvedSourceError(codePath string, fragmentName string, config config.Configuration) error {
+func unresolvedSourceError(
+	codePath string,
+	fragmentName string,
+	config config.Configuration,
+) error {
 	codeFileReference, err := codeFileReference(codePath, config)
 	if err != nil {
 		return err

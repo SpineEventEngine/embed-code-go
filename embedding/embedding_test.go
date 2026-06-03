@@ -345,6 +345,7 @@ func newProcessor(
 	processor, err := embedding.NewProcessor(docPath, config)
 
 	Expect(err).ShouldNot(HaveOccurred())
+
 	return processor
 }
 
@@ -356,6 +357,7 @@ func newProcessorWithTransitions(
 	processor, err := embedding.NewProcessorWithTransitions(docPath, config, transitions)
 
 	Expect(err).ShouldNot(HaveOccurred())
+
 	return processor
 }
 
