@@ -62,25 +62,25 @@ type EmbedAllResult struct {
 }
 
 // NewProcessor creates and returns new Processor with given docFile and config.
-func NewProcessor(docFile string, config configuration.Configuration) Processor {
+func NewProcessor(docFile string, config configuration.Configuration) (Processor, error) {
 	requiredDocPaths, err := requiredDocs(config)
 	if err != nil {
-		panic(err)
+		return Processor{}, err
 	}
 
-	return newProcessor(docFile, config, parsing.Transitions, requiredDocPaths)
+	return newProcessor(docFile, config, parsing.Transitions, requiredDocPaths), nil
 }
 
 // NewProcessorWithTransitions Creates and returns new Processor with given docFile, config
 // and transitions.
 func NewProcessorWithTransitions(docFile string, config configuration.Configuration,
-	transitions parsing.TransitionMap) Processor {
+	transitions parsing.TransitionMap) (Processor, error) {
 	requiredDocPaths, err := requiredDocs(config)
 	if err != nil {
-		panic(err)
+		return Processor{}, err
 	}
 
-	return newProcessor(docFile, config, transitions, requiredDocPaths)
+	return newProcessor(docFile, config, transitions, requiredDocPaths), nil
 }
 
 // newProcessor creates a Processor with a precomputed documentation file list.
@@ -152,7 +152,7 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 func (p Processor) IsUpToDate() bool {
 	upToDate, err := p.isUpToDate()
 	if err != nil {
-		panic(err)
+		return false
 	}
 
 	return upToDate
@@ -260,7 +260,10 @@ func CheckUpToDate(config configuration.Configuration) ([]string, error) {
 //
 // Returns a parsing.Context and an error if any occurs.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
-	context := parsing.NewContext(p.DocFilePath)
+	context, err := parsing.NewContext(p.DocFilePath)
+	if err != nil {
+		return context, err
+	}
 	absDocPath, _ := filepath.Abs(p.DocFilePath)
 	errorStr := "failed to embed code fragment into doc file `file://%s:%d`: %s"
 
@@ -358,7 +361,9 @@ func findChangedFiles(config configuration.Configuration) ([]string, []error) {
 	var changedFiles []string
 	var checkErrors []error
 	for _, doc := range requiredDocPaths {
-		upToDate, err := newProcessor(doc, config, parsing.Transitions, requiredDocPaths).isUpToDate()
+		upToDate, err := newProcessor(
+			doc, config, parsing.Transitions, requiredDocPaths,
+		).isUpToDate()
 		if err != nil {
 			checkErrors = append(checkErrors, err)
 			continue

@@ -221,8 +221,10 @@ func buildTestFragmentation(testFileName string,
 	config configuration.Configuration) fragmentation.Fragmentation {
 	codeRoot := config.CodeRoots[0]
 	testFilePath := fmt.Sprintf("%s/org/example/%s", codeRoot.Path, testFileName)
+	frag, err := fragmentation.NewFragmentation(testFilePath, codeRoot, config)
 
-	return fragmentation.NewFragmentation(testFilePath, codeRoot, config)
+	Expect(err).ShouldNot(HaveOccurred())
+	return frag
 }
 
 func doTestFragmentation(

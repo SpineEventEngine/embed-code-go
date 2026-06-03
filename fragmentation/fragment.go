@@ -53,11 +53,14 @@ func (f Fragment) isDefault() bool {
 // lines — a list with every line of the file.
 //
 // separator — string to insert between multiple partitions of a single fragment.
-func (f Fragment) text(lines []string, separator string) string {
+func (f Fragment) text(lines []string, separator string) (string, error) {
 	if f.isDefault() {
-		return strings.Join(lines, "\n")
+		return strings.Join(lines, "\n"), nil
 	}
-	partitionsTexts := f.obtainPartitionTexts(lines)
+	partitionsTexts, err := f.obtainPartitionTexts(lines)
+	if err != nil {
+		return "", err
+	}
 	var fragmentText []string
 	for _, partition := range partitionsTexts {
 		fragmentText = append(fragmentText, partition...)
@@ -76,7 +79,7 @@ func (f Fragment) text(lines []string, separator string) string {
 		text += strings.Join(cutIndentLines, "\n") + "\n"
 	}
 
-	return text
+	return text, nil
 }
 
 // Calculates and returns a list which contains corresponding lines for every partition.
@@ -84,14 +87,17 @@ func (f Fragment) text(lines []string, separator string) string {
 // lines — a list with every line of the file.
 //
 // partitions — a list with partitions to select lines from.
-func (f Fragment) obtainPartitionTexts(lines []string) [][]string {
+func (f Fragment) obtainPartitionTexts(lines []string) ([][]string, error) {
 	var partitionLines [][]string
 	for _, part := range f.Partitions {
-		partitionText := part.Select(lines)
+		partitionText, err := part.Select(lines)
+		if err != nil {
+			return nil, err
+		}
 		partitionLines = append(partitionLines, partitionText)
 	}
 
-	return partitionLines
+	return partitionLines, nil
 }
 
 // Returns string indent for separator.

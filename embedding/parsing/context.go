@@ -88,13 +88,18 @@ type ParsingContext struct {
 
 // NewContext Creates and returns a new Context struct with initial values for markdownFile, source,
 // lineIndex, and result.
-func NewContext(markdownFile string) Context {
+func NewContext(markdownFile string) (Context, error) {
+	source, err := readLines(markdownFile)
+	if err != nil {
+		return Context{}, err
+	}
+
 	return Context{
 		MarkdownFilePath: markdownFile,
 		Result:           make([]string, 0),
-		source:           readLines(markdownFile),
+		source:           source,
 		lineIndex:        0,
-	}
+	}, nil
 }
 
 // NewEmptyContext creates a Context for a documentation file that was not parsed.
@@ -231,16 +236,16 @@ func (c *Context) readEmbeddingResult(context ParsingContext) []string {
 	return c.Result[context.resultStartIndex:context.resultEndIndex]
 }
 
-// Returns the content of a file placed at filepath as a list of strings.
-func readLines(filepath string) []string {
+// readLines returns the content of a file placed at filepath as a list of strings.
+func readLines(filepath string) ([]string, error) {
 	bytes, err := os.ReadFile(filepath)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	str := string(bytes)
 	lines := regexp.MustCompile("\r?\n").Split(str, -1)
 
-	return lines
+	return lines, nil
 }
 
 func isStringSlicesEqual(first, second []string) bool {
