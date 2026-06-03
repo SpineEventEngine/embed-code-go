@@ -72,25 +72,25 @@ func NewFragmentation(
 	codeFileRelative string,
 	codeRoot _type.NamedPath,
 	config config.Configuration,
-) Fragmentation {
+) (Fragmentation, error) {
 	fragmentation := Fragmentation{}
 
 	fragmentation.SourcesRoot = codeRoot
 	_, err := filepath.Abs(codeRoot.Path)
 	if err != nil {
-		panic(err)
+		return Fragmentation{}, err
 	}
 
 	absoluteCodeFile, err := filepath.Abs(codeFileRelative)
-	fragmentation.CodeFile = absoluteCodeFile
 	if err != nil {
-		panic(err)
+		return Fragmentation{}, err
 	}
+	fragmentation.CodeFile = absoluteCodeFile
 
 	fragmentation.Configuration = config
 	fragmentation.fragmentBuilders = make(map[string]*FragmentBuilder)
 
-	return fragmentation
+	return fragmentation, nil
 }
 
 // DoFragmentation splits the file into fragments.
@@ -102,14 +102,11 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 
 	file, err := os.Open(f.CodeFile)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 
 	defer func(file *os.File) {
 		err = file.Close()
-		if err != nil {
-			panic(err)
-		}
 	}(file)
 
 	scanner := bufio.NewScanner(file)
@@ -125,6 +122,9 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 			)
 		}
 	}
+	if err = scanner.Err(); err != nil {
+		return nil, nil, err
+	}
 
 	fragments := make(map[string]Fragment)
 	for k, v := range f.fragmentBuilders {
@@ -139,16 +139,16 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 //   - it exists by the given path
 //   - it is a file (not a dir)
 //   - it is textual-encoded.
-func shouldDoFragmentation(filePath string) bool {
+func shouldDoFragmentation(filePath string) (bool, error) {
 	exists, err := files.IsFileExist(filePath)
 	if err != nil {
-		return false
+		return false, err
 	}
 	if exists {
 		return IsEncodedAsText(filePath)
 	}
 
-	return false
+	return false, nil
 }
 
 // Parses a single line of input and performs the following actions:

@@ -22,8 +22,11 @@ import (
 	"embed-code/embed-code-go/cli"
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/logging"
+	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"strings"
 )
 
 // Version of the embed-code application.
@@ -90,30 +93,28 @@ func main() {
 	if cli.IsUsingConfigFile(userArgs) {
 		err := cli.ValidateConfigFile(userArgs)
 		if err != nil {
-			logError("The provided config file is not valid", err)
-
-			return
+			exitWithError("The provided config file is not valid", err)
 		}
 		userArgs, err = cli.FillArgsFromConfigFile(userArgs)
 		if err != nil {
-			logError("Received an issue while reading config file", err)
-
-			return
+			exitWithError("Received an issue while reading config file", err)
 		}
 	}
 	err := cli.ValidateConfig(userArgs)
 	if err != nil {
-		logError("User arguments are not valid", err)
-
-		return
+		exitWithError("User arguments are not valid", err)
 	}
 	configs := cli.BuildEmbedCodeConfiguration(userArgs)
 
 	switch userArgs.Mode {
 	case cli.ModeCheck:
-		checkByConfigs(configs)
+		if err := checkByConfigs(configs); err != nil {
+			exitWithError("Check failed", err)
+		}
 	case cli.ModeEmbed:
-		embedByConfigs(configs)
+		if err := embedByConfigs(configs); err != nil {
+			exitWithError("Embedding failed", err)
+		}
 		fmt.Println("Embedding process finished.")
 	}
 }
@@ -130,38 +131,99 @@ func configureLogging(config cli.Config) {
 
 // logError writes a user-facing error through the configured logger.
 func logError(message string, err error) {
-	slog.Error(fmt.Sprintf("%s: %v", message, err))
+	slog.Error(formatError(message, err))
 }
 
-// checkByConfigs runs check for all configs and panics if documentation files are outdated.
-func checkByConfigs(configs []configuration.Configuration) {
-	var totalOutdatedFiles []string
-	for _, config := range configs {
-		totalOutdatedFiles = append(totalOutdatedFiles, cli.CheckCodeSamples(config)...)
+// formatError formats single errors inline and joined errors as a bullet list.
+func formatError(message string, err error) string {
+	errs := flattenedErrors(err)
+	if len(errs) <= 1 {
+		return fmt.Sprintf("%s: %v", message, err)
 	}
-	if len(totalOutdatedFiles) == 0 {
+
+	var builder strings.Builder
+	builder.WriteString(message)
+	builder.WriteString(":")
+	for _, nestedErr := range errs {
+		builder.WriteString("\n- ")
+		builder.WriteString(nestedErr.Error())
+	}
+
+	return builder.String()
+}
+
+// flattenedErrors returns the leaf errors from a joined error joined.
+func flattenedErrors(err error) []error {
+	joined, ok := err.(interface {
+		Unwrap() []error
+	})
+	if !ok {
+		return []error{err}
+	}
+
+	var result []error
+	for _, nestedErr := range joined.Unwrap() {
+		result = append(result, flattenedErrors(nestedErr)...)
+	}
+
+	return result
+}
+
+// exitWithError writes a user-facing error and exits with a failing status.
+func exitWithError(message string, err error) {
+	logError(message, err)
+	os.Exit(1)
+}
+
+// checkByConfigs runs check for all configs and reports documentation files that are outdated.
+func checkByConfigs(configs []configuration.Configuration) error {
+	var totalOutdatedFiles []string
+	var checkErrors []error
+	for _, config := range configs {
+		outdatedFiles, err := cli.CheckCodeSamples(config)
+		if err != nil {
+			checkErrors = append(checkErrors, err)
+			continue
+		}
+		totalOutdatedFiles = append(totalOutdatedFiles, outdatedFiles...)
+	}
+	if len(totalOutdatedFiles) > 0 {
+		printFiles("File to update:", "Files to update:", totalOutdatedFiles)
+		checkErrors = append(checkErrors,
+			fmt.Errorf("the documentation files are not up-to-date with code files"))
+	}
+	if len(checkErrors) == 0 {
 		fmt.Println("The documentation files are up-to-date with code files.")
 
-		return
+		return nil
 	}
 
-	printFiles("File to update:", "Files to update:", totalOutdatedFiles)
-	panic("the documentation files are not up-to-date with code files")
+	return errors.Join(checkErrors...)
 }
 
-// embedByConfig runs the embedByConfig for all configs and logs the results.
-func embedByConfigs(configs []configuration.Configuration) {
+// embedByConfigs runs embedding for all configs and logs the results.
+func embedByConfigs(configs []configuration.Configuration) error {
 	var totalEmbeddedFiles []string
 	totalEmbeddings := 0
+	var embeddingErrors []error
 	for _, config := range configs {
-		result := cli.EmbedCodeSamples(config)
+		result, err := cli.EmbedCodeSamples(config)
+		if err != nil {
+			embeddingErrors = append(embeddingErrors, err)
+			continue
+		}
 		totalEmbeddedFiles = append(totalEmbeddedFiles, result.UpdatedTargetFiles...)
 		totalEmbeddings += result.TotalEmbeddings
+	}
+	if len(embeddingErrors) > 0 {
+		return errors.Join(embeddingErrors...)
 	}
 	if len(totalEmbeddedFiles) == 0 && totalEmbeddings != 0 {
 		fmt.Println("All documentation files are already up to date. Nothing to update.")
 	}
 	printFiles("File updated:", "Files updated:", totalEmbeddedFiles)
+
+	return nil
 }
 
 // printFiles prints file paths with the singular or plural heading.

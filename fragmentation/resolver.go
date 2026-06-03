@@ -77,7 +77,7 @@ func ResolveContent(codePath string, fragmentName string, config config.Configur
 			fragmentName, codeFileReference)
 	}
 
-	return fragmentLines(fragment, content.lines, config.Separator), nil
+	return fragmentLines(fragment, content.lines, config.Separator)
 }
 
 // missingFragmentLogMessage describes a missing fragment without exposing internal names.
@@ -127,7 +127,11 @@ func resolveSource(codePath string, config config.Configuration) (resolvedPath, 
 		if err != nil {
 			return resolvedPath{}, false, err
 		}
-		if !shouldDoFragmentation(source.absolutePath) {
+		shouldFragment, err := shouldDoFragmentation(source.absolutePath)
+		if err != nil {
+			return resolvedPath{}, false, err
+		}
+		if !shouldFragment {
 			continue
 		}
 
@@ -171,7 +175,10 @@ func cachedSourceFragments(source resolvedPath) (fragmentedFile, error) {
 
 // loadSourceFragments reads and fragments the source file when it is not already cached.
 func loadSourceFragments(source resolvedPath) (fragmentedFile, error) {
-	fragmentation := NewFragmentation(source.absolutePath, source.root, config.Configuration{})
+	fragmentation, err := NewFragmentation(source.absolutePath, source.root, config.Configuration{})
+	if err != nil {
+		return fragmentedFile{}, err
+	}
 	lines, fragments, err := fragmentation.DoFragmentation()
 	if err != nil {
 		return fragmentedFile{}, err
@@ -183,13 +190,16 @@ func loadSourceFragments(source resolvedPath) (fragmentedFile, error) {
 }
 
 // fragmentLines renders a fragment into lines.
-func fragmentLines(fragment Fragment, lines []string, separator string) []string {
-	text := fragment.text(lines, separator)
+func fragmentLines(fragment Fragment, lines []string, separator string) ([]string, error) {
+	text, err := fragment.text(lines, separator)
+	if err != nil {
+		return nil, err
+	}
 	if text == "" {
-		return []string{}
+		return []string{}, nil
 	}
 
-	return strings.Split(strings.TrimSuffix(text, "\n"), "\n")
+	return strings.Split(strings.TrimSuffix(text, "\n"), "\n"), nil
 }
 
 // unresolvedSourceError builds an error for a code path that cannot be resolved from sources.

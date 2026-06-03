@@ -69,7 +69,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should be up to date", func() {
 		docPath := fmt.Sprintf("%s/whole-file-fragment.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
@@ -77,7 +77,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should be up to date as there is nothing to update", func() {
 		docPath := fmt.Sprintf("%s/no-embedding-doc.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
@@ -91,13 +91,13 @@ var _ = Describe("Embedding", func() {
 			parsing.RegularLine: {parsing.CodeFenceEnd},
 		}
 
-		falseProcessor := embedding.NewProcessorWithTransitions(docPath, config, falseTransitions)
+		falseProcessor := newProcessorWithTransitions(docPath, config, falseTransitions)
 		Expect(falseProcessor.Embed()).Error().Should(HaveOccurred())
 	})
 
 	It("should successfully embed with multi lined tag", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-tag.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
 		Expect(processor.IsUpToDate()).Should(BeTrue())
@@ -105,7 +105,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should embed directly from source", func() {
 		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
@@ -116,12 +116,15 @@ var _ = Describe("Embedding", func() {
 		config.DocIncludes = []string{"doc.md"}
 		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
 
-		Expect(embedding.CheckUpToDate(config)).Should(ContainElement(docPath))
+		outdatedFiles, err := embedding.CheckUpToDate(config)
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(outdatedFiles).Should(ContainElement(docPath))
 	})
 
 	It("should ignore embed-code samples inside markdown code fences", func() {
 		docPath := fmt.Sprintf("%s/embed-code-sample-in-fence.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
@@ -129,7 +132,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should detect markdown fences by triple-or-more backticks only", func() {
 		docPath := fmt.Sprintf("%s/triple-backticks-only-fence.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
@@ -143,16 +146,10 @@ var _ = Describe("Embedding", func() {
 	It("should report all check errors", func() {
 		config.DocIncludes = []string{"missing-closing-tag.md", "unclosed-nested-tag.md"}
 
-		var recovered any
-		func() {
-			defer func() {
-				recovered = recover()
-			}()
-			embedding.CheckUpToDate(config)
-		}()
+		_, err := embedding.CheckUpToDate(config)
 
-		Expect(recovered).ShouldNot(BeNil())
-		Expect(fmt.Sprint(recovered)).Should(And(
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(And(
 			ContainSubstring("missing-closing-tag.md"),
 			ContainSubstring("the `<embed-code>` tag is not closed"),
 			ContainSubstring("unclosed-nested-tag.md"),
@@ -163,16 +160,10 @@ var _ = Describe("Embedding", func() {
 	It("should report all pattern matching errors", func() {
 		config.DocIncludes = []string{"missing-start-pattern.md", "missing-end-pattern.md"}
 
-		var recovered any
-		func() {
-			defer func() {
-				recovered = recover()
-			}()
-			embedding.CheckUpToDate(config)
-		}()
+		_, err := embedding.CheckUpToDate(config)
 
-		Expect(recovered).ShouldNot(BeNil())
-		Expect(fmt.Sprint(recovered)).Should(And(
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(And(
 			ContainSubstring("missing-start-pattern.md:3"),
 			ContainSubstring(
 				"no line in code file `file://",
@@ -191,7 +182,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should embed with multi lined tag attributes", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-valid-tag-attributes.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
 		Expect(processor.IsUpToDate()).Should(BeTrue())
@@ -200,7 +191,7 @@ var _ = Describe("Embedding", func() {
 	It("should embed a method with escaped newline patterns", func() {
 		config.DocIncludes = []string{"escaped-newline-pattern.md"}
 		docPath := fmt.Sprintf("%s/escaped-newline-pattern.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
@@ -215,7 +206,7 @@ var _ = Describe("Embedding", func() {
 	It("should embed a method with exact escaped newline patterns", func() {
 		config.DocIncludes = []string{"escaped-newline-exact-pattern.md"}
 		docPath := fmt.Sprintf("%s/escaped-newline-exact-pattern.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
@@ -230,7 +221,7 @@ var _ = Describe("Embedding", func() {
 	It("should embed matching lines with an escaped newline line pattern", func() {
 		config.DocIncludes = []string{"escaped-newline-line-pattern.md"}
 		docPath := fmt.Sprintf("%s/escaped-newline-line-pattern.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
@@ -245,7 +236,7 @@ var _ = Describe("Embedding", func() {
 	It("should embed a line with an escaped newline literal pattern", func() {
 		config.DocIncludes = []string{"escaped-newline-literal-pattern.md"}
 		docPath := fmt.Sprintf("%s/escaped-newline-literal-pattern.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
@@ -258,7 +249,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should report a missing closing tag", func() {
 		docPath := fmt.Sprintf("%s/missing-closing-tag.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		_, err := processor.Embed()
 
@@ -272,7 +263,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should report the XML parser error", func() {
 		docPath := fmt.Sprintf("%s/unclosed-nested-tag.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		_, err := processor.Embed()
 
@@ -286,7 +277,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should report a missing code fence after the instruction", func() {
 		docPath := fmt.Sprintf("%s/missing-code-fence.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		_, err := processor.Embed()
 
@@ -299,7 +290,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should report an unclosed code fence after the instruction", func() {
 		docPath := fmt.Sprintf("%s/unclosed-code-fence.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		_, err := processor.Embed()
 
@@ -315,12 +306,11 @@ var _ = Describe("Embedding", func() {
 		config.DocIncludes = []string{"nested-dir-1/nested-dir-2/nested-dir-doc.md"}
 		docPath := fmt.Sprintf("%s/nested-dir-1/nested-dir-2/nested-dir-doc.md",
 			config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
-		Expect(func() {
-			embedding.EmbedAll(config)
-		}).NotTo(Panic())
+		_, err := embedding.EmbedAll(config)
 
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
@@ -328,7 +318,7 @@ var _ = Describe("Embedding", func() {
 		config.DocExcludes = []string{"**/excluded-doc.*"}
 
 		docPath := fmt.Sprintf("%s/excluded-doc.md", config.DocumentationRoot)
-		processor := embedding.NewProcessor(docPath, config)
+		processor := newProcessor(docPath, config)
 
 		context, err := processor.Embed()
 
@@ -346,6 +336,27 @@ func buildConfigWithSourceFiles() configuration.Configuration {
 	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
 
 	return config
+}
+
+func newProcessor(
+	docPath string,
+	config configuration.Configuration,
+) embedding.Processor {
+	processor, err := embedding.NewProcessor(docPath, config)
+
+	Expect(err).ShouldNot(HaveOccurred())
+	return processor
+}
+
+func newProcessorWithTransitions(
+	docPath string,
+	config configuration.Configuration,
+	transitions parsing.TransitionMap,
+) embedding.Processor {
+	processor, err := embedding.NewProcessorWithTransitions(docPath, config, transitions)
+
+	Expect(err).ShouldNot(HaveOccurred())
+	return processor
 }
 
 func copyDirRecursive(sourceDirPath string, targetDirPath string) {
