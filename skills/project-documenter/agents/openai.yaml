@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Documenter"
+  short_description: "Map and document embed-code-go"
+  default_prompt: "Use $project-documenter to update embed-code-go architecture and agent documentation."
