@@ -118,7 +118,7 @@ func (p Processor) Embed() (*parsing.Context, error) {
 	}
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		data := []byte(strings.Join(context.GetResult(), "\n"))
-		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.ReadWriteExecPermission))
+		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.DocumentationFilePermission))
 		if err != nil {
 			return &context, err
 		}
@@ -143,12 +143,11 @@ func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
 		return nil, nil
 	}
 	context, err := p.fillEmbeddingContext()
-	changedEmbeddings := context.FindChangedEmbeddings()
 	if err != nil {
-		return changedEmbeddings, err
+		return nil, err
 	}
 
-	return changedEmbeddings, nil
+	return context.FindChangedEmbeddings(), nil
 }
 
 // IsUpToDate reports whether the embedding of the target markdown is up-to-date with the code file.
@@ -446,7 +445,7 @@ func getFilesByPatterns(root string, patterns []string) ([]string, error) {
 	return result, nil
 }
 
-// Returns the elements of the first array excluding those present in the second array.
+// removeElements returns values from first that are not present in second.
 func removeElements(first, second []string) []string {
 	secondMap := make(map[string]struct{})
 	for _, value := range second {
