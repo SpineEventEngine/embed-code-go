@@ -24,6 +24,7 @@ import (
 	"embed-code/embed-code-go/indent"
 )
 
+// DefaultFragmentName identifies the whole-file fragment.
 const DefaultFragmentName = "_default"
 
 // Fragment is a single fragment in a file.
@@ -44,11 +45,12 @@ func CreateDefaultFragment() Fragment {
 	}
 }
 
+// isDefault reports whether this fragment represents the whole source file.
 func (f Fragment) isDefault() bool {
 	return f.Name == DefaultFragmentName
 }
 
-// Obtains the text for the fragment.
+// text returns the rendered text for the fragment.
 //
 // lines — a list with every line of the file.
 //
@@ -82,7 +84,7 @@ func (f Fragment) text(lines []string, separator string) (string, error) {
 	return text, nil
 }
 
-// Calculates and returns a list which contains corresponding lines for every partition.
+// obtainPartitionTexts returns source lines selected for every partition.
 //
 // lines — a list with every line of the file.
 //
@@ -100,7 +102,7 @@ func (f Fragment) obtainPartitionTexts(lines []string) ([][]string, error) {
 	return partitionLines, nil
 }
 
-// Returns string indent for separator.
+// separatorIndent returns the indentation to use before a partition separator.
 func separatorIndent(lines []string) string {
 	if len(lines) > 0 {
 		firstLine := lines[0]

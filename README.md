@@ -60,8 +60,11 @@ The available arguments are:
   * `-docs-path`: (Optional) Path to the documentation root directory.
   * `-config-path`: (Optional) Path to a YAML configuration file containing `code-path` and `docs-path`.
   * `-doc-includes`: (Optional) Comma-separated glob patterns for documentation files to include. Defaults to `"**/*.md,**/*.html"`.
+  * `-doc-excludes`: (Optional) Comma-separated glob patterns for documentation files to exclude.
   * `-separator`: (Optional) String used to separate joined code fragments. Defaults to `...`.
- 
+  * `-info`: (Optional) Enables info-level logging when set to `true`.
+  * `-stacktrace`: (Optional) Prints stack traces for panics when set to `true`.
+
 Even though the `code-path`, `docs-path`, and `config-path` arguments are optional,
 Embed Code still requires the root directories for code and documentation to be set.
 This can be done in one of two ways:
@@ -108,19 +111,19 @@ The available fields for the configuration file are:
         ```
     * multiple named paths:
         ```yaml
-        code-path: 
+        code-path:
           - name: examples
             path: path/to/code/root1
           - name: production
             path: path/to/code/root2
         ```
-      When a named path is specified, fragments must be referenced in the embedding instructions 
+      When a named path is specified, fragments must be referenced in the embedding instructions
       using the corresponding path name:
       ```md
       <embed-code file="$PATH_NAME/path/to/file"></embed-code>
       ```
       **Do not forget the dollar sign (`$`) before the path name.**
-    
+
       Code source names must be unique. A configuration may use either one unnamed
       code source or one or more named code sources, but named and unnamed sources
       cannot be mixed.
@@ -131,6 +134,8 @@ The available fields for the configuration file are:
   * `doc-includes`: (Optional) Glob patterns for documentation files to include.
     It may be represented as a comma-separated string list or as a YAML sequence.
   * `separator`: (Optional) Separator for fragments.
+  * `info`: (Optional) Enables info-level logging.
+  * `stacktrace`: (Optional) Prints stack traces for panics.
   * `embeddings`: (Optional) A list of complete embedding configurations for multiple
     documentation targets. When `embeddings` is set, do not set root-level `code-path`
     or `docs-path`. Define `code-path`, `docs-path`, and optional settings inside each entry.
@@ -153,19 +158,19 @@ However, you can also compile the utility manually if Go is [installed](#install
 
 Navigate to the project root and run:
 ```bash
-go build -trimpath main.go
+go build -trimpath -o embed-code main.go
 ```
 
 There may be issues when running `go build` outside of the directory containing `main.go`,
 even if the path is specified correctly.
 
-This command creates an executable named `embed-code` (or `embed-code.exe` on Windows).
+This command creates an executable named `embed-code`.
 For further information, please refer to the [docs](https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies).
 
-Without the `-trimpath` flag, Go includes absolute file paths in stack traces 
-based on the system where the binary was built. 
+Without the `-trimpath` flag, Go includes absolute file paths in stack traces
+based on the system where the binary was built.
 
-Run following command to build binaries for macOS, Windows and Ubuntu:
+Run the following command to build binaries for macOS, Windows and Ubuntu:
 ```bash
 mkdir -p bin && \
 GOOS=darwin GOARCH=amd64 go build -trimpath -o bin/embed-code-macos main.go && chmod +x bin/embed-code-macos && \

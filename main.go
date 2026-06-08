@@ -79,6 +79,8 @@ const Version = "1.2.2"
 //     "old-docs/**/*.md,old-guides/*.html". It is not set by default;
 //   - separator — a string which is used as a separator between code fragments. Default value
 //     is "...".
+//   - info — a flag that enables info-level logs;
+//   - stacktrace — a flag that enables stack traces in panic logs.
 func main() {
 	fmt.Printf("Running embed-code v%s.\n", Version)
 	userArgs := cli.ReadArgs()

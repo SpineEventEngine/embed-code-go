@@ -24,9 +24,11 @@ import (
 )
 
 const (
+	// DefaultSeparator joins multiple partitions of a single fragment.
 	DefaultSeparator = "..."
 )
 
+// DefaultDocIncludes contains the default documentation glob patterns.
 var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 
 // Configuration contains the settings for the plugin to work.
@@ -57,16 +59,16 @@ type Configuration struct {
 	// The default value is ["**/*.md", "**/*.html"].
 	DocIncludes []string
 
-	// DocExcludes is a list of patterns for filtering which we should not include for embedding
-	// instructions.
+	// DocExcludes is a list of patterns for documentation files that should not be
+	// processed for embedding instructions.
 	//
 	// The patterns are resolved relatively to the `documentation_root`.
 	//
-	// By the such a pattern, it can be both directories and files.
+	// A pattern can match both directories and files.
 	//
 	// For example, ["old-docs/**/*.md", "old-docs-v1/**/*"]
 	//
-	// Be the default, it is not set.
+	// By default, it is not set.
 	DocExcludes []string
 
 	// Separator is a string that's inserted between multiple partitions of a single fragment.
