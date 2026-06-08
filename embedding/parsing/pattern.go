@@ -70,14 +70,16 @@ const (
 //
 // Example usage:
 //
-//	p := NewPattern("*.txt")
+//	p, err := NewPattern("*.txt")
 //	fmt.Println("Original glob:", p.sourceGlob) // "*.txt"
 //	fmt.Println("Modified pattern:", p.pattern) // "*.txt*"
 //
-//	p := NewPattern("^.txt")
-//	fmt.Println("Original glob:", p.sourceGlob) // "*.txt"
+//	p, err = NewPattern("^.txt")
+//	fmt.Println("Original glob:", p.sourceGlob) // "^.txt"
 //	fmt.Println("Modified pattern:", p.pattern) // ".txt*"
-func NewPattern(globString string) Pattern {
+//
+// Returns an error if the modified glob pattern cannot be compiled.
+func NewPattern(globString string) (Pattern, error) {
 	pattern := globString
 
 	startOfLine := strings.HasPrefix(globString, lineStart)
@@ -97,11 +99,16 @@ func NewPattern(globString string) Pattern {
 		pattern = pattern[:lastIndex]
 	}
 
+	matcher, err := glob.Compile(pattern)
+	if err != nil {
+		return Pattern{}, err
+	}
+
 	return Pattern{
 		sourceGlob: globString,
 		pattern:    pattern,
-		matcher:    glob.MustCompile(pattern),
-	}
+		matcher:    matcher,
+	}, nil
 }
 
 // Match reports whether given line matches the pattern.
@@ -109,7 +116,7 @@ func NewPattern(globString string) Pattern {
 // line — a line to check the match for.
 func (p Pattern) Match(line string) bool {
 	if p.matcher == nil {
-		return glob.MustCompile(p.pattern).Match(line)
+		return false
 	}
 
 	return p.matcher.Match(line)
@@ -124,7 +131,10 @@ func (p Pattern) HasLineSeparator() bool {
 
 // MatchLineSequence reports whether source lines match the escaped-line-separated pattern.
 func (p Pattern) MatchLineSequence(lines []string) bool {
-	patterns := p.lineSequencePatterns()
+	patterns, err := p.lineSequencePatterns()
+	if err != nil {
+		return false
+	}
 
 	return matchLineSequencePatterns(patterns, lines)
 }
@@ -144,14 +154,18 @@ func matchLineSequencePatterns(patterns []Pattern, lines []string) bool {
 }
 
 // lineSequencePatterns returns the Patterns for each part of a multi-line pattern.
-func (p Pattern) lineSequencePatterns() []Pattern {
+func (p Pattern) lineSequencePatterns() ([]Pattern, error) {
 	patternLines, _ := p.linePatterns()
 	patterns := make([]Pattern, 0, len(patternLines))
 	for _, patternLine := range patternLines {
-		patterns = append(patterns, NewPattern(patternLine))
+		pattern, err := NewPattern(patternLine)
+		if err != nil {
+			return nil, err
+		}
+		patterns = append(patterns, pattern)
 	}
 
-	return patterns
+	return patterns, nil
 }
 
 // linePatterns returns trimmed pattern lines separated by an escaped newline.
@@ -193,7 +207,7 @@ func (p Pattern) linePatterns() ([]string, bool) {
 	return patternLines, hasSeparator
 }
 
-// Returns string representation of Pattern.
+// String returns a string representation of Pattern.
 func (p Pattern) String() string {
 	return fmt.Sprintf("Pattern %s", p.sourceGlob)
 }
