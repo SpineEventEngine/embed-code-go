@@ -250,23 +250,44 @@ func (e Instruction) String() string {
 	)
 }
 
-// Filters and returns a subset of input lines based on start, end, or line patterns.
+// matchingLines filters and returns input lines based on start, end, or line patterns.
 //
 // lines — a list of strings representing the input lines.
 func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]string, error) {
+	var selectedLines []string
+	var err error
 	if e.LinePattern != nil {
-		startPosition, endPosition, err := e.matchPattern(
-			e.LinePattern, lines, 0, "line", codeFileReference,
-		)
-		if err != nil {
-			return nil, err
-		}
-		requiredLines := lines[startPosition : endPosition+1]
-		indentation := indent.MaxCommonIndentation(requiredLines)
-
-		return indent.CutIndent(requiredLines, indentation), nil
+		selectedLines, err = e.matchLinePattern(lines, codeFileReference)
+	} else {
+		selectedLines, err = e.matchRangePattern(lines, codeFileReference)
+	}
+	if err != nil {
+		return nil, err
 	}
 
+	return removeCommonIndent(selectedLines), nil
+}
+
+// matchLinePattern returns the source lines matched by the instruction line pattern.
+func (e Instruction) matchLinePattern(
+	lines []string,
+	codeFileReference string,
+) ([]string, error) {
+	startPosition, endPosition, err := e.matchPattern(
+		e.LinePattern, lines, 0, "line", codeFileReference,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return lines[startPosition : endPosition+1], nil
+}
+
+// matchRangePattern returns the source lines matched by the instruction start/end patterns.
+func (e Instruction) matchRangePattern(
+	lines []string,
+	codeFileReference string,
+) ([]string, error) {
 	startPosition := 0
 	if e.StartPattern != nil {
 		var err error
@@ -287,10 +308,15 @@ func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]
 			return nil, err
 		}
 	}
-	requiredLines := lines[startPosition : endPosition+1]
-	indentation := indent.MaxCommonIndentation(requiredLines)
 
-	return indent.CutIndent(requiredLines, indentation), nil
+	return lines[startPosition : endPosition+1], nil
+}
+
+// removeCommonIndent removes shared indentation from the selected source lines.
+func removeCommonIndent(lines []string) []string {
+	indentation := indent.MaxCommonIndentation(lines)
+
+	return indent.CutIndent(lines, indentation)
 }
 
 // matchPattern returns the first line range that matches given pattern.
