@@ -61,6 +61,9 @@ type EmbedAllResult struct {
 	UpdatedTargetFiles []string
 }
 
+// processorHandler applies one processing mode to a configured documentation processor.
+type processorHandler func(processor Processor) error
+
 // NewProcessor creates and returns new Processor with given docFile and config.
 func NewProcessor(docFile string, config configuration.Configuration) (Processor, error) {
 	requiredDocPaths, err := requiredDocs(config)
@@ -192,26 +195,20 @@ func (p Processor) isUpToDate() (bool, error) {
 //
 // config — a configuration for embedding.
 func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
-	requiredDocPaths, err := requiredDocs(config)
-	if err != nil {
-		return EmbedAllResult{}, err
-	}
 	totalEmbeddings := 0
 	var updatedTargetFiles []string
-	var embeddingErrors []error
-	for _, doc := range requiredDocPaths {
-		processor := newProcessor(doc, config, parsing.Transitions, requiredDocPaths)
+	requiredDocPaths, embeddingErrors := processRequiredDocs(config, func(processor Processor) error {
 		context, err := processor.Embed()
 		if err != nil {
-			embeddingErrors = append(embeddingErrors, err)
-
-			continue
+			return err
 		}
 		totalEmbeddings += context.EmbeddingsCount()
 		if context.IsContentChanged() {
-			updatedTargetFiles = append(updatedTargetFiles, doc)
+			updatedTargetFiles = append(updatedTargetFiles, processor.DocFilePath)
 		}
-	}
+
+		return nil
+	})
 	if len(embeddingErrors) > 0 {
 		return EmbedAllResult{}, errors.Join(embeddingErrors...)
 	}
@@ -360,27 +357,41 @@ func (p Processor) moveToNextState(state *parsing.State, context *parsing.Contex
 //
 // config — a configuration for embedding.
 func findChangedFiles(config configuration.Configuration) ([]string, []error) {
+	var changedFiles []string
+	_, checkErrors := processRequiredDocs(config, func(processor Processor) error {
+		upToDate, err := processor.isUpToDate()
+		if err != nil {
+			return err
+		}
+		if !upToDate {
+			changedFiles = append(changedFiles, processor.DocFilePath)
+		}
+
+		return nil
+	})
+
+	return changedFiles, checkErrors
+}
+
+// processRequiredDocs applies a processing handler to every documentation file in config.
+func processRequiredDocs(
+	config configuration.Configuration,
+	handle processorHandler,
+) ([]string, []error) {
 	requiredDocPaths, err := requiredDocs(config)
 	if err != nil {
 		return nil, []error{err}
 	}
-	var changedFiles []string
-	var checkErrors []error
-	for _, doc := range requiredDocPaths {
-		upToDate, err := newProcessor(
-			doc, config, parsing.Transitions, requiredDocPaths,
-		).isUpToDate()
-		if err != nil {
-			checkErrors = append(checkErrors, err)
 
-			continue
-		}
-		if !upToDate {
-			changedFiles = append(changedFiles, doc)
+	var processingErrors []error
+	for _, doc := range requiredDocPaths {
+		processor := newProcessor(doc, config, parsing.Transitions, requiredDocPaths)
+		if err := handle(processor); err != nil {
+			processingErrors = append(processingErrors, err)
 		}
 	}
 
-	return changedFiles, checkErrors
+	return requiredDocPaths, processingErrors
 }
 
 // requiredDocs returns documentation files matched by includes minus excludes.
