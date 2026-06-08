@@ -120,12 +120,25 @@ func NewInstruction(
 		return Instruction{}, err
 	}
 
+	startPattern, err := patternFromValue("start", startValue)
+	if err != nil {
+		return Instruction{}, err
+	}
+	endPattern, err := patternFromValue("end", endValue)
+	if err != nil {
+		return Instruction{}, err
+	}
+	linePattern, err := patternFromValue("line", lineValue)
+	if err != nil {
+		return Instruction{}, err
+	}
+
 	return Instruction{
 		CodeFile:      codeFile,
 		Fragment:      fragment,
-		StartPattern:  patternFromValue(startValue),
-		EndPattern:    patternFromValue(endValue),
-		LinePattern:   patternFromValue(lineValue),
+		StartPattern:  startPattern,
+		EndPattern:    endPattern,
+		LinePattern:   linePattern,
 		CommentMode:   commentMode,
 		Configuration: config,
 	}, nil
@@ -148,13 +161,16 @@ func validateExclusiveAttributes(fragment string, start string, end string, line
 }
 
 // patternFromValue creates a Pattern pointer for a non-empty attribute value.
-func patternFromValue(value string) *Pattern {
+func patternFromValue(attribute string, value string) (*Pattern, error) {
 	if value == "" {
-		return nil
+		return nil, nil
 	}
-	pattern := NewPattern(value)
+	pattern, err := NewPattern(value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid %s pattern `%s`: %w", attribute, value, err)
+	}
 
-	return &pattern
+	return &pattern, nil
 }
 
 // Content reads and returns the lines for specified fragment from the code.
@@ -226,7 +242,7 @@ func patternLabel(kind string, pattern *Pattern) string {
 	return fmt.Sprintf("%s pattern `%s`", kind, pattern.sourceGlob)
 }
 
-// Returns string representation of Instruction.
+// String returns a string representation of Instruction.
 func (e Instruction) String() string {
 	return fmt.Sprintf(
 		"EmbeddingInstruction[file=`%s`, fragment=`%s`, start=`%s`, end=`%s`, line=`%s`, comments=`%s`]",
@@ -341,7 +357,10 @@ func matchSingleLine(pattern *Pattern, lines []string, startFrom int) (int, bool
 // matchLineSequence returns the first line range matching the pattern or a not-found error.
 func (e Instruction) matchLineSequence(pattern *Pattern, lines []string, startFrom int,
 	kind string, codeFileReference string) (int, int, error) {
-	start, end, found := matchLineSequence(pattern, lines, startFrom)
+	start, end, found, err := matchLineSequence(pattern, lines, startFrom)
+	if err != nil {
+		return 0, 0, err
+	}
 	if found {
 		return start, end, nil
 	}
@@ -355,16 +374,19 @@ func (e Instruction) matchLineSequence(pattern *Pattern, lines []string, startFr
 }
 
 // matchLineSequence returns the first source-line range matching an escaped-line pattern.
-func matchLineSequence(pattern *Pattern, lines []string, startFrom int) (int, int, bool) {
-	patterns := pattern.lineSequencePatterns()
+func matchLineSequence(pattern *Pattern, lines []string, startFrom int) (int, int, bool, error) {
+	patterns, err := pattern.lineSequencePatterns()
+	if err != nil {
+		return 0, 0, false, err
+	}
 	lineCount := len(patterns)
 	lastStart := len(lines) - lineCount
 	for start := startFrom; start <= lastStart; start++ {
 		end := start + lineCount
 		if matchLineSequencePatterns(patterns, lines[start:end]) {
-			return start, end - 1, true
+			return start, end - 1, true, nil
 		}
 	}
 
-	return 0, 0, false
+	return 0, 0, false, nil
 }

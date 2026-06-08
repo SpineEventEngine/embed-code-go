@@ -104,6 +104,17 @@ var _ = Describe("Instruction", func() {
 		Expect(parsing.FromXML(xmlString, config)).Error().Should(HaveOccurred())
 	})
 
+	It("should have an error for an invalid glob pattern", func() {
+		instructionParams := TestInstructionParams{
+			startGlob: "[",
+		}
+		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
+
+		_, err := parsing.FromXML(xmlString, config)
+
+		Expect(err).Should(MatchError(ContainSubstring("invalid start pattern `[`")))
+	})
+
 	It("should successfully read source content", func() {
 		instructionParams := TestInstructionParams{
 			closeTag: true,
