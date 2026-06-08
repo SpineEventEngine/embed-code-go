@@ -1,4 +1,0 @@
-interface:
-  display_name: "Go Code Reviewer"
-  short_description: "Review embed-code-go changes"
-  default_prompt: "Use $go-code-reviewer to review Go changes in embed-code-go."

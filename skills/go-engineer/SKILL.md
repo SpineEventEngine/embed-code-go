@@ -1,132 +1,129 @@
 ---
 name: go-engineer
 description: >
-  Implement, debug, refactor, or explain Go code in embed-code-go. Use for
-  changes to .go files, Go tests, CLI behavior, parser states, fragment
-  extraction, filesystem handling, errors, or package APIs. Enforces the
-  repository clarification gate, architecture boundaries, documentation rules,
-  focused regression tests, formatting, vetting, and full verification.
+  Encodes the embed-code-go Go implementation policy and recurring pitfalls.
+  Use whenever writing, modifying, refactoring, debugging, or reviewing Go code
+  in this repository, especially CLI/config parsing, parser state transitions,
+  embedding behavior, fragmentation, filesystem handling, error reporting,
+  package APIs, formatting, vetting, and build verification.
 ---
 
-# Go Engineer
+# Go - policy & pitfalls
 
-Act as the implementation engineer for `embed-code-go`. Assume general Go
-knowledge; focus on this repository's boundaries, invariants, and recurring
-failure modes.
+Baseline Go knowledge is assumed. This skill does not teach the language; it
+encodes the project policy, package boundaries, and traps that recur in `embed-code-go` work.
 
-## Mandatory Clarification Gate
+## When to Use
 
-1. Read `AGENTS.md` and inspect only enough source and tests to understand the
-   request and formulate precise questions.
-2. Ask the user questions before making any change. At minimum confirm:
-   - the observable result and acceptance criteria;
-   - the permitted packages and non-goals;
-   - compatibility behavior that must remain unchanged;
-   - expected tests and documentation updates.
-3. Wait for the answers. Do not edit, format, generate, install, or execute a
-   mutating command while any material ambiguity remains.
-4. If the user delegates a decision, state the proposed assumption and ask for
-   confirmation before implementation.
+Use `go-engineer` for implementation work in Go:
 
-This gate applies even when the requested fix appears obvious.
+- Writing or changing `.go` files.
+- Debugging `embed` or `check` behavior.
+- Refactoring package APIs or shared helpers.
+- Reviewing Go code for correctness and maintainability.
 
-## Workflow
+This skill is the baseline for production Go and helper code. Test-writing
+conventions live in `skills/go-tester/SKILL.md`; documentation review lives in
+`skills/review-docs/SKILL.md`.
 
-### 1. Build Context
+## Fast Path for Agents
 
-- Read the affected implementation file in full.
-- Read its package tests and relevant fixtures.
-- Trace callers and downstream behavior across package boundaries.
-- For parser work, read `embedding/parsing/constants.go`, `state.go`,
-  `context.go`, the affected state, and the processor loop together.
-- For fragment work, inspect `fragmentation/` resolution, partition building,
-  pattern matching, indentation, encoding, and cache behavior as applicable.
-- Check the working tree and preserve unrelated changes.
+1. Read `AGENTS.md` and the relevant implementation files in full.
+2. Ask clarifying questions before editing if the requested outcome, scope,
+   compatibility constraints, or verification target is not explicit.
+3. Apply the MUST / MUST NOT rules while editing.
+4. Defer test structure and fixtures to `go-tester` when adding or reviewing
+   tests.
+5. Verify with the narrowest relevant Go test first, then the repository-level
+   checks listed below.
+6. Do not commit, push, tag, merge, rebase, cherry-pick, or rewrite Git history.
 
-### 2. State The Plan
+## Setup Check
 
-After clarification, briefly state:
+Run this before non-trivial Go changes or when the package baseline is unclear:
 
-- files expected to change;
-- behavioral invariants being preserved;
-- focused tests to add or update;
-- verification commands to run.
+1. **Go version** - target the version in `go.mod`.
+2. **Package owner** - identify whether the behavior belongs in `cli/`,
+   `configuration/`, `embedding/`, `embedding/parsing/`, `fragmentation/`, or a
+   support package.
+3. **Test owner** - identify the package test suite and fixtures that already
+   cover the behavior.
+4. **Commands** - plan `gofmt`, focused `go test`, `go vet ./...`, full
+   `go test ./...`, and `go build -trimpath main.go` when integration or CLI
+   behavior changes.
 
-Stop and ask again if inspection invalidates an agreed assumption.
+## MUST DO
 
-### 3. Implement Conservatively
+- **Preserve package ownership.** Keep process orchestration in `main.go`,
+  argument and YAML handling in `cli/`, normalized defaults in
+  `configuration/`, document orchestration in `embedding/`, syntax recognition
+  in `embedding/parsing/`, and source extraction in `fragmentation/`.
+- **Trace the full flow.** For behavior changes, walk
+  `main` -> `cli`/`configuration` -> `embedding` -> `embedding/parsing` and
+  `fragmentation` -> write or compare.
+- **Keep functions small and explicit.** Prefer direct code over broad helpers
+  unless an abstraction removes real duplication or clarifies a shared contract.
+- **Document every function and method.** Add concise doc comments to new or
+  changed functions, including unexported ones. Exported comments start with
+  the declaration name.
+- **Return actionable errors.** Add file, pattern, instruction, or operation
+  context where that context becomes known.
+- **Aggregate independent failures with `errors.Join`.** Continue processing
+  only when doing so produces a more complete and still safe result.
+- **Preserve deterministic behavior.** Document order, fragment order,
+  separators, writes, and reported stale files must stay stable.
+- **Use OS-aware paths.** Preserve cross-platform behavior for separators,
+  Windows drive paths, and file URLs.
+- **Format changed Go files with `gofmt`.**
 
-- Keep `main.go` at the process boundary and business behavior in packages.
-- Keep input parsing and validation in `cli/`, normalized settings in
-  `configuration/`, document orchestration in `embedding/`, document syntax in
-  `embedding/parsing/`, and source extraction in `fragmentation/`.
-- Prefer explicit code and small functions over new framework-like abstractions.
-- Introduce an interface only at a real consumer or test boundary.
-- Preserve deterministic document order, writes, and error aggregation.
-- Use operating-system-aware path handling and preserve Windows behavior.
-- Avoid new panics, hidden global state, and speculative concurrency.
-- Do not update dependencies unless they are part of the confirmed scope.
+## MUST NOT DO
 
-### 4. Handle Errors At The Right Layer
+- **No new panics in library packages.** Return errors; leave process exit and
+  panic recovery at the executable boundary.
+- **No broad utility dumping ground.** Do not move parser, filesystem,
+  fragmentation, and CLI behavior into a catch-all helper package.
+- **No single-use interface by default.** Introduce an interface only at a real
+  consumer, ownership, or test boundary.
+- **No speculative concurrency.** This CLI is document and filesystem heavy;
+  add concurrency only for a measured problem with deterministic aggregation
+  and write safety.
+- **No log-and-return in lower layers.** Return the error; log at the CLI
+  boundary or at intentional progress/warning points.
+- **No message-string error contracts.** Prefer typed errors, sentinels, or
+  `errors.Is` / `errors.As`.
+- **No dependency updates unless the confirmed task requires them.**
+- **No commits or history-writing.**
 
-- Add file, pattern, instruction, or operation context where it becomes known.
-- Wrap inspectable causes with `%w`.
-- Use typed errors and `errors.Is` or `errors.As` for programmatic decisions.
-- Aggregate independent failures with `errors.Join` when processing can safely
-  continue.
-- Do not log and return the same failure from a library layer.
-- Keep terminal formatting and process exit in `main.go` or the CLI boundary.
-
-### 5. Document Every Function
-
-- Add a concise doc comment to every new or changed function and method.
-- Start exported comments with the declaration name.
-- Explain state changes, writes, non-obvious constraints, errors, or panics.
-- Do not add comments that merely translate the code into prose.
-
-### 6. Test By Ownership
-
-- Put a focused regression test in the package that owns the behavior.
-- Follow existing Ginkgo/Gomega style.
-- Use `test/resources/` fixtures for document parsing and end-to-end embedding.
-- Parser changes should include valid and malformed cases when relevant.
-- Shared processing changes should verify embed writes and check-mode
-  read-only comparison.
-- Error tests should verify useful context and instruction start lines without
-  overfitting entire message strings when a typed error is available.
-
-## High-Risk Areas
+## Project Hotspots
 
 ### Parser State Machine
 
-- Preserve valid self-closing, paired, and multiline instruction forms.
-- Ignore instruction-looking text inside unrelated Markdown code fences.
-- Track embedding and ordinary Markdown fences separately.
-- Preserve indentation and fence marker semantics.
-- Report malformed instructions at their start line.
-- Do not consume unrelated later document content to recover from invalid XML.
+- Read `embedding/parsing/constants.go`, `state.go`, `context.go`, the affected
+  state, and `embedding/processor.go` together.
+- Preserve self-closing, paired, and multiline instruction forms.
+- Keep ordinary Markdown fences separate from embedding fences.
+- Report malformed instructions at their start line with a concrete reason.
+- Do not consume unrelated later content to recover from invalid XML.
 
-### Filesystem And Writes
+### Embedding And Check Modes
 
-- Check mode must never modify documents.
-- Embed mode should write only changed documents.
-- Avoid partial or surprising writes on an error path.
-- Keep include/exclude matching and named source-root behavior cross-platform.
+- Embed mode may rewrite only documents whose generated content changed.
+- Check mode is read-only and reports stale documents.
+- Shared processing changes should preserve both modes.
 
-### Fragment Resolution
+### Fragmentation
 
-- Preserve whole-file, named-fragment, exact-pattern, and range-pattern
-  behavior.
-- Keep partition ordering and separators stable.
-- Preserve indentation normalization and requested comment filtering.
-- Keep caches bounded and avoid stale data crossing an operation boundary.
+- Preserve whole-file, named-fragment, exact-pattern, and range-pattern extraction.
+- Keep partition ordering, separator rendering, indentation normalization, and
+  comment filtering stable.
+- Keep source-root names and lookup errors actionable.
 
 ## Verification
 
-Run the narrowest relevant checks first, then the repository checks:
+Run the narrowest relevant checks first, then broaden:
 
 1. `gofmt -w <changed-go-files>`
-2. `go test ./<affected-package>/...`
+2. `go test ./<affected-package>`
 3. `go vet ./...`
 4. `go test ./...`
 5. `go build -trimpath main.go` when CLI, configuration, embedding, or package
@@ -135,14 +132,15 @@ Run the narrowest relevant checks first, then the repository checks:
 For user-visible CLI behavior, run a focused `go run ./main.go ...` scenario
 against existing fixtures when practical.
 
-## Completion Report
+## Output Format
 
-Report:
+When producing code:
 
-- the behavior implemented;
-- files changed;
-- tests and checks run with results;
-- assumptions confirmed by the user;
-- any remaining risk or unrun verification.
+1. A short plan after clarification.
+2. The code changes.
+3. A verification checklist with command results.
+4. A note about any remaining risk or unrun check.
 
-Never commit, push, tag, or rewrite Git history.
+When reviewing code: call out MUST-DO / MUST-NOT violations explicitly and
+suggest the minimal fix. End with a one-line verdict: `APPROVE`,
+`APPROVE WITH CHANGES`, or `REQUEST CHANGES`.
