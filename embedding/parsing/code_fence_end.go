@@ -61,7 +61,7 @@ func (c CodeFenceEndState) Recognize(context Context) bool {
 func (c CodeFenceEndState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	err := renderSample(context)
-	context.SetEmbedding(nil)
+	context.FinishEmbedding()
 	if err == nil {
 		context.Result = append(context.Result, line)
 	} else {
