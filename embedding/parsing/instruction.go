@@ -120,15 +120,7 @@ func NewInstruction(
 		return Instruction{}, err
 	}
 
-	startPattern, err := patternFromValue("start", startValue)
-	if err != nil {
-		return Instruction{}, err
-	}
-	endPattern, err := patternFromValue("end", endValue)
-	if err != nil {
-		return Instruction{}, err
-	}
-	linePattern, err := patternFromValue("line", lineValue)
+	patterns, err := parseInstructionPatterns(startValue, endValue, lineValue)
 	if err != nil {
 		return Instruction{}, err
 	}
@@ -136,9 +128,9 @@ func NewInstruction(
 	return Instruction{
 		CodeFile:      codeFile,
 		Fragment:      fragment,
-		StartPattern:  startPattern,
-		EndPattern:    endPattern,
-		LinePattern:   linePattern,
+		StartPattern:  patterns.start,
+		EndPattern:    patterns.end,
+		LinePattern:   patterns.line,
 		CommentMode:   commentMode,
 		Configuration: config,
 	}, nil
@@ -160,17 +152,49 @@ func validateExclusiveAttributes(fragment string, start string, end string, line
 	return nil
 }
 
-// patternFromValue creates a Pattern pointer for a non-empty attribute value.
-func patternFromValue(attribute string, value string) (*Pattern, error) {
-	if value == "" {
-		return nil, nil
+// instructionPatterns holds the optional source-line patterns from instruction attributes.
+type instructionPatterns struct {
+	start *Pattern
+	end   *Pattern
+	line  *Pattern
+}
+
+// parseInstructionPatterns parses all optional source-line pattern attributes.
+func parseInstructionPatterns(start string, end string, line string) (instructionPatterns, error) {
+	var patterns instructionPatterns
+	if start != "" {
+		pattern, err := parseInstructionPattern("start", start)
+		if err != nil {
+			return instructionPatterns{}, err
+		}
+		patterns.start = &pattern
 	}
-	pattern, err := NewPattern(value)
-	if err != nil {
-		return nil, fmt.Errorf("invalid %s pattern `%s`: %w", attribute, value, err)
+	if end != "" {
+		pattern, err := parseInstructionPattern("end", end)
+		if err != nil {
+			return instructionPatterns{}, err
+		}
+		patterns.end = &pattern
+	}
+	if line != "" {
+		pattern, err := parseInstructionPattern("line", line)
+		if err != nil {
+			return instructionPatterns{}, err
+		}
+		patterns.line = &pattern
 	}
 
-	return &pattern, nil
+	return patterns, nil
+}
+
+// parseInstructionPattern parses one non-empty source-line pattern attribute.
+func parseInstructionPattern(attribute string, value string) (Pattern, error) {
+	pattern, err := NewPattern(value)
+	if err != nil {
+		return Pattern{}, fmt.Errorf("invalid %s pattern `%s`: %w", attribute, value, err)
+	}
+
+	return pattern, nil
 }
 
 // Content reads and returns the lines for specified fragment from the code.
