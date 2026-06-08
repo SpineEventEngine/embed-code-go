@@ -34,7 +34,7 @@ import (
 // sourceGlob — a glob-like string, e.g. "*main*" or "^main".
 type Pattern struct {
 	sourceGlob string
-	matchers   []glob.Glob
+	matchers   []lineMatcher
 }
 
 const (
@@ -44,6 +44,11 @@ const (
 	lineSeparator        = `\n`
 	escapedLineSeparator = `\\n`
 )
+
+// lineMatcher matches a single source line using the compiled glob pattern.
+type lineMatcher struct {
+	compiled glob.Glob
+}
 
 // NewPattern creates a new Pattern based on provided glob string.
 //
@@ -64,7 +69,7 @@ const (
 // Returns an error if any modified glob pattern cannot be compiled.
 func NewPattern(globString string) (Pattern, error) {
 	patternLines := splitPatternLines(globString)
-	matchers := make([]glob.Glob, 0, len(patternLines))
+	matchers := make([]lineMatcher, 0, len(patternLines))
 	for _, patternLine := range patternLines {
 		matcher, err := compileLineMatcher(patternLine)
 		if err != nil {
@@ -80,7 +85,7 @@ func NewPattern(globString string) (Pattern, error) {
 }
 
 // compileLineMatcher compiles one source-line pattern into a glob matcher.
-func compileLineMatcher(patternLine string) (glob.Glob, error) {
+func compileLineMatcher(patternLine string) (lineMatcher, error) {
 	pattern := patternLine
 
 	startOfLine := strings.HasPrefix(patternLine, lineStart)
@@ -100,7 +105,17 @@ func compileLineMatcher(patternLine string) (glob.Glob, error) {
 		pattern = pattern[:lastIndex]
 	}
 
-	return glob.Compile(pattern)
+	compiledGlob, err := glob.Compile(pattern)
+	if err != nil {
+		return lineMatcher{}, err
+	}
+
+	return lineMatcher{compiled: compiledGlob}, nil
+}
+
+// matches reports whether the source line matches the compiled pattern.
+func (m lineMatcher) matches(line string) bool {
+	return m.compiled != nil && m.compiled.Match(line)
 }
 
 // FindIn returns the first source-line range matching the pattern.
@@ -124,7 +139,7 @@ func (p Pattern) matchesAt(lines []string, start int) bool {
 		return false
 	}
 	for i, matcher := range p.matchers {
-		if matcher == nil || !matcher.Match(lines[start+i]) {
+		if !matcher.matches(lines[start+i]) {
 			return false
 		}
 	}
