@@ -267,8 +267,6 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	if err != nil {
 		return context, err
 	}
-	absDocPath, _ := filepath.Abs(p.DocFilePath)
-	errorStr := "failed to embed code fragment into doc file `file://%s:%d`: %s"
 
 	var currentState parsing.State
 	currentState = parsing.Start
@@ -277,7 +275,7 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	for currentState != finishState {
 		accepted, newState, err := p.moveToNextState(&currentState, &context)
 		if err != nil {
-			return context, fmt.Errorf(errorStr, absDocPath, errorLine(context, err), err)
+			return context, p.processingError(context, err)
 		}
 		if !accepted {
 			err = unacceptedTransitionError(context)
@@ -286,12 +284,21 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 				context.ResolveUnacceptedEmbedding()
 			}
 
-			return context, fmt.Errorf(errorStr, absDocPath, errorLine(context, err), err)
+			return context, p.processingError(context, err)
 		}
 		currentState = *newState
 	}
 
 	return context, nil
+}
+
+// processingError wraps a parsing error with the current documentation location.
+func (p Processor) processingError(context parsing.Context, err error) ProcessingError {
+	return ProcessingError{
+		DocFilePath: p.DocFilePath,
+		Line:        errorLine(context, err),
+		Err:         err,
+	}
 }
 
 // errorLine returns the source line that should be used in the embedding error location.
