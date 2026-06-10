@@ -34,7 +34,7 @@ import (
 // repaired with embed mode, and checked again without changing repository files.
 func TestShowcasePositiveFlow(t *testing.T) {
 	repoRoot := findRepoRoot(t)
-	docsRoot := copyShowcaseDocs(t, repoRoot, "docs")
+	docsRoot := copyShowcaseDocs(t, repoRoot, filepath.Join("embedding", "positive"))
 	configPath := writeShowcaseConfig(t, repoRoot, docsRoot)
 
 	checkOutput, err := runEmbedCode(t, repoRoot, "check", configPath)
@@ -153,7 +153,7 @@ func TestShowcaseNegativeScenarios(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			docsRoot := copyShowcaseDocs(t, repoRoot, filepath.Join("negative", "docs"))
+			docsRoot := copyShowcaseDocs(t, repoRoot, filepath.Join("embedding", "negative", "docs"))
 			configPath := writeSingleDocConfig(t, docsRoot, tc.sources, tc.doc)
 
 			output, err := runEmbedCode(t, repoRoot, "check", configPath)

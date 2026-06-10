@@ -8,7 +8,7 @@ selection attributes empty.
 The `$java` prefix selects the Java source root from
 [../embed-code.yml](../embed-code.yml). Because `fragment`, `start`, `end`, and
 `line` are omitted, embed mode copies every line from
-[../code/java/org/showcase/Greeting.java](../code/java/org/showcase/Greeting.java)
+[../../code/java/org/showcase/Greeting.java](../../code/java/org/showcase/Greeting.java)
 into the following code fence.
 
 <embed-code file="$java/org/showcase/Greeting.java"></embed-code>
