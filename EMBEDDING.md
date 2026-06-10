@@ -214,18 +214,18 @@ Not all languages distinguish documentation from regular comments or inline from
 
 The table below lists the supported languages and supported `comments` modes for them:
 
-| Language               | Extensions                                              | Supported `comments` modes                                   |
-|------------------------|---------------------------------------------------------|--------------------------------------------------------------|
-| Java, Kotlin, Groovy   | `.java`, `.kt`, `.kts`, `.groovy`                       | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
-| C#                     | `.cs`                                                   | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| Language               | Extensions                                               | Supported `comments` modes                                   |
+|------------------------|----------------------------------------------------------|--------------------------------------------------------------|
+| Java, Kotlin, Groovy   | `.java`, `.kt`, `.kts`, `.groovy`                        | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| C#                     | `.cs`                                                    | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
 | C, C++                 | `.c`, `.h`, `.cc`, `.cpp`, `.cxx`, `.hh`, `.hpp`, `.hxx` | `all`, `none`, `inline`, `block`                             |
-| JavaScript, TypeScript | `.js`, `.jsx`, `.ts`, `.tsx`                            | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
-| Go                     | `.go`                                                   | `all`, `none`, `inline`, `block`                             |
-| Protobuf               | `.proto`                                                | `all`, `none`, `inline`, `block`                             |
-| Python                 | `.py`, `.pyi`, `.pyw`                                   | `all`, `none`                                                |
-| YAML                   | `.yml`, `.yaml`                                         | `all`, `none`                                                |
-| XML, HTML              | `.xml`, `.html`, `.htm`                                 | `all`, `none`                                                |
-| Visual Basic           | `.vb`, `.bas`, `.vbs`, `.vbscript`                      | `all`, `none`, `documentation`, `regular`                    |
+| JavaScript, TypeScript | `.js`, `.jsx`, `.ts`, `.tsx`                             | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| Go                     | `.go`                                                    | `all`, `none`, `inline`, `block`                             |
+| Protobuf               | `.proto`                                                 | `all`, `none`, `inline`, `block`                             |
+| Python                 | `.py`, `.pyi`, `.pyw`                                    | `all`, `none`                                                |
+| YAML                   | `.yml`, `.yaml`                                          | `all`, `none`                                                |
+| XML, HTML              | `.xml`, `.html`, `.htm`                                  | `all`, `none`                                                |
+| Visual Basic           | `.vb`, `.bas`, `.vbs`, `.vbscript`                       | `all`, `none`, `documentation`, `regular`                    |
 
 ## Advanced use cases
 
