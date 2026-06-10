@@ -7,7 +7,7 @@ This is an executable showcase guide to `embed-code-go` and the end-to-end tests
 Guide is divided on two categories:
 
 1. [Configuration](configuration/README.md) - describes how to configure the whole embed-code application.
-2. [Embedding](embedding/positive/) - describes how to work with the embedding instructions.
+2. [Embedding](embedding/README.md) - describes how to work with the embedding instructions.
 
 ## How To Run Tests
 
