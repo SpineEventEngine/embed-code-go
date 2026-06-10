@@ -7,7 +7,7 @@ user should expect when an instruction is malformed or stale.
 Run the positive examples from the repository root:
 
 ```bash
-go run ./main.go -mode check -config-path examples/showcase/embedding/embed-code.yml
+go run ./main.go -mode=check -config-path=examples/showcase/embedding/embed-code.yml
 ```
 
 ## Feature Examples
@@ -56,8 +56,8 @@ The negative examples are intentionally broken and should fail.
 Use them to recognize common diagnostics:
 
 ```bash
-go run ./main.go -mode check -config-path examples/showcase/embedding/negative/processing-errors.yml
-go run ./main.go -mode check -config-path examples/showcase/embedding/negative/stale.yml
+go run ./main.go -mode=check -config-path=examples/showcase/embedding/negative/processing-errors.yml
+go run ./main.go -mode=check -config-path=examples/showcase/embedding/negative/stale.yml
 ```
 
 The cases live in [negative/docs](negative/docs/).

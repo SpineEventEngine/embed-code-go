@@ -1,6 +1,0 @@
-code-path:
-  - name: repo
-    path: .
-docs-path: examples/showcase/configuration/docs/root-source
-doc-includes:
-  - "**/*.md"

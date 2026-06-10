@@ -1,74 +1,135 @@
 # Configuration Examples
 
-These examples show the supported YAML configuration shapes.
+This folder is a runnable guide to YAML configuration. Start with the smallest
+working config, then add only the options your documentation needs.
 
-Each YAML file has a matching docs root under [docs](docs/). Read the YAML file
-first, then open the linked docs folder to see how instructions use that source
-configuration.
+## Minimal Config
 
-## Repository Root Source
+A configuration needs one source root and one documentation root:
 
-[root-source.yml](root-source.yml) uses the repository root as a named source
-root. Instructions in [docs/root-source](docs/root-source/) embed files from
-the project root with the `$repo` prefix.
-
-Use this shape only when documentation really needs files from the repository
-root. The main embedding showcase avoids root sources so ordinary examples stay
-independent from project metadata.
-
-```bash
-go run ./main.go -mode check -config-path examples/showcase/configuration/root-source.yml
+```yaml
+code-path: examples/showcase/code/java
+docs-path: examples/showcase/configuration/docs/single-source
 ```
 
-## Single Showcase Source Root
+This shape is shown by [single-source.yml](single-source.yml).
 
-[single-source.yml](single-source.yml) uses one unnamed `code-path`.
-Instructions in [docs/single-source](docs/single-source/) use paths relative to
-that root without a `$name` prefix.
+The command scans files under `docs-path`, finds `<embed-code>` instructions,
+and resolves each instruction's `file` path from `code-path`. For example, see
+instruction in [docs/single-source/greeting.md](docs/single-source/greeting.md).
 
-This is the simplest configuration for one source tree and one documentation
-tree.
+Run this example (from the project root):
 
 ```bash
-go run ./main.go -mode check -config-path examples/showcase/configuration/single-source.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/single-source.yml
 ```
 
-## Named Source Roots
+## How Paths Are Selected
 
-[named-sources.yml](named-sources.yml) defines Java, Kotlin, and text source
-roots. Instructions in [docs/named-sources](docs/named-sources/) choose a
-source root with `$java`, `$kotlin`, or `$text`.
+The showcase commands are meant to run from the repository root. Relative paths
+in `code-path` and `docs-path` are resolved from the command's current working
+directory.
 
-Use this shape when one docs tree needs snippets from several source trees.
+`docs-path` selects the documentation root to scan. `doc-includes` and
+`doc-excludes` are then matched relative to that documentation root.
 
-```bash
-go run ./main.go -mode check -config-path examples/showcase/configuration/named-sources.yml
+`code-path` selects where source files come from:
+
+- With one unnamed `code-path`, an instruction such as
+  `file="org/showcase/Greeting.java"` is resolved relative to that source root.
+- With named source roots, an instruction such as
+  `file="$kotlin/org/showcase/KotlinGreeting.kt"` first selects the `kotlin`
+  source root, then resolves the remaining path inside that root.
+
+## Add Document Selection
+
+Add `doc-includes` when only some files under `docs-path` should be scanned.
+Add `doc-excludes` when selected files should be skipped:
+
+```yaml
+code-path: examples/showcase/code/java
+docs-path: examples/showcase/configuration/docs/include-exclude
+doc-includes:
+  - "**/*.md"
+doc-excludes:
+  - excluded.md
 ```
 
-## Include And Exclude Patterns
+This shape is shown by [include-exclude.yml](include-exclude.yml). It processes
+[docs/include-exclude/included.md](docs/include-exclude/included.md) and skips
+[docs/include-exclude/excluded.md](docs/include-exclude/excluded.md).
 
-[include-exclude.yml](include-exclude.yml) processes Markdown files in
-[docs/include-exclude](docs/include-exclude/) but excludes
-[excluded.md](docs/include-exclude/excluded.md). That file intentionally
-references a missing source file, so the check succeeds only when
-`doc-excludes` is applied.
-
-Use this shape to skip drafts, generated docs, deprecated pages, or any file
-that should not be scanned for active instructions.
+Use include and exclude patterns to skip drafts, generated docs, deprecated
+pages, or any file that should not be scanned for active instructions.
 
 ```bash
-go run ./main.go -mode check -config-path examples/showcase/configuration/include-exclude.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/include-exclude.yml
 ```
 
-## Multiple Embeddings
+## Add Named Source Roots
 
-[multiple-embeddings.yml](multiple-embeddings.yml) uses the `embeddings` list
-to process two independent documentation roots in
-[docs/multiple](docs/multiple/) in one run.
+Use named source roots when one documentation tree embeds snippets from several
+source trees:
 
-Use this shape when one command should process several independent
-documentation targets with different source roots or settings.
+```yaml
+code-path:
+  - name: java
+    path: examples/showcase/code/java
+  - name: kotlin
+    path: examples/showcase/code/kotlin
+  - name: text
+    path: examples/showcase/code/text
+docs-path: examples/showcase/configuration/docs/named-sources
+```
+
+This shape is shown by [named-sources.yml](named-sources.yml). Its docs live in
+[docs/named-sources](docs/named-sources/).
+
+Instructions choose a source root with the `$name` prefix:
+
+```markdown
+<embed-code file="$kotlin/org/showcase/KotlinGreeting.kt" fragment="main()"></embed-code>
+```
+
+Run the named-source example:
 
 ```bash
-go run ./main.go -mode check -config-path examples/showcase/configuration/multiple-embeddings.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/named-sources.yml
+```
+
+## Add Multiple Documentation Targets
+
+Use `embeddings` when one command should process several independent
+documentation targets. Each entry has its own `name`, `code-path`, `docs-path`,
+and optional settings:
+
+```yaml
+embeddings:
+  - name: java-guide
+    code-path: examples/showcase/code/java
+    docs-path: examples/showcase/configuration/docs/multiple/java
+  - name: kotlin-guide
+    code-path:
+      - name: kotlin
+        path: examples/showcase/code/kotlin
+    docs-path: examples/showcase/configuration/docs/multiple/kotlin
+```
+
+This shape is shown by [multiple-embeddings.yml](multiple-embeddings.yml). It
+processes [docs/multiple/java](docs/multiple/java/) and
+[docs/multiple/kotlin](docs/multiple/kotlin/) in one run.
+
+```bash
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/multiple-embeddings.yml
+```
+
+## All Configuration Checks
+
+Run commands from the project root.
+
+```bash
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/single-source.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/named-sources.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/include-exclude.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/multiple-embeddings.yml
 ```

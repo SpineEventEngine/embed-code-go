@@ -172,7 +172,6 @@ func TestShowcaseConfigurationExamples(t *testing.T) {
 	repoRoot := findRepoRoot(t)
 
 	configs := []string{
-		"root-source.yml",
 		"single-source.yml",
 		"named-sources.yml",
 		"include-exclude.yml",
