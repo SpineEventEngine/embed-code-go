@@ -1,3 +1,10 @@
+# Repository Root Source
+
+This configuration example uses the repository root as a named source root. The
+instruction embeds `go.mod` through the `$repo` prefix.
+
+<embed-code file="$repo/go.mod"></embed-code>
+```go
 // Copyright 2026, TeamDev. All rights reserved.
 //
 // Redistribution and use in source and/or binary forms, with or without
@@ -39,3 +46,4 @@ require (
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 )
+```

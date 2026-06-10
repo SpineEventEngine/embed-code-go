@@ -1,0 +1,13 @@
+code-path:
+  - name: repo
+    path: .
+  - name: java
+    path: examples/showcase/code/java
+docs-path: examples/showcase/negative/docs
+doc-includes:
+  - missing-source.md
+  - missing-fragment.md
+  - missing-pattern.md
+  - invalid-attributes.md
+  - missing-code-fence.md
+  - unclosed-code-fence.md
