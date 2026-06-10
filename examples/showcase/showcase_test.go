@@ -263,7 +263,7 @@ func writeShowcaseConfig(t *testing.T, repoRoot string, docsRoot string) string 
 		{name: "java", path: filepath.Join(repoRoot, "examples", "showcase", "code", "java")},
 		{name: "kotlin", path: filepath.Join(repoRoot, "examples", "showcase", "code", "kotlin")},
 		{name: "text", path: filepath.Join(repoRoot, "examples", "showcase", "code", "text")},
-	}, []string{"**/*.md", "**/*.html"}, []string{"ignored-by-exclude.md"})
+	}, []string{"**/*.md", "**/*.html"})
 }
 
 // writeSingleDocConfig creates a temp config for one negative showcase document.
@@ -275,7 +275,7 @@ func writeSingleDocConfig(
 ) string {
 	t.Helper()
 
-	return writeConfig(t, docsRoot, sources, []string{docInclude}, nil)
+	return writeConfig(t, docsRoot, sources, []string{docInclude})
 }
 
 // writeConfig writes a YAML config with absolute source and documentation paths.
@@ -284,7 +284,6 @@ func writeConfig(
 	docsRoot string,
 	sources []namedSource,
 	includes []string,
-	excludes []string,
 ) string {
 	t.Helper()
 
@@ -298,12 +297,6 @@ func writeConfig(
 	builder.WriteString("doc-includes:\n")
 	for _, include := range includes {
 		builder.WriteString(fmt.Sprintf("  - %q\n", include))
-	}
-	if len(excludes) > 0 {
-		builder.WriteString("doc-excludes:\n")
-		for _, exclude := range excludes {
-			builder.WriteString(fmt.Sprintf("  - %q\n", exclude))
-		}
 	}
 	builder.WriteString("separator: \"// ...\"\n")
 
