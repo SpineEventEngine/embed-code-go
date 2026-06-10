@@ -9,6 +9,16 @@ Run commands from the repository root.
 The showcase-owned source examples live under [code](code/). Repository-root
 source examples are kept in the configuration showcase only.
 
+## How To Use This Guide
+
+Read the files in [docs](docs/) from `01` onward when learning the embedding
+syntax for the first time. Each file owns one positive case, explains how the
+instruction is resolved, and shows the rendered code fence that embed mode owns.
+
+Then inspect [negative/docs](negative/docs/) to see the failures that check mode
+reports without rewriting files. Finally, read [configuration](configuration/)
+to compare the YAML shapes that point documentation roots at source roots.
+
 ## Positive Flow
 
 Refresh the generated snippets:
@@ -28,6 +38,11 @@ Run the opt-in test:
 ```bash
 go test -tags showcase ./examples/showcase
 ```
+
+The test copies the showcase docs to a temporary directory, runs check mode,
+intentionally makes one copied snippet stale, repairs it with embed mode, and
+then verifies the negative and configuration cases. The build tag keeps this
+larger documentation test out of the default test flow.
 
 The positive showcase covers:
 
@@ -51,7 +66,9 @@ The positive showcase covers:
 
 ## Negative Flow
 
-The negative examples are intentionally broken. These commands should fail.
+The negative examples are intentionally broken. They are still documentation:
+each file describes the mistake, the expected failure reason, and what a user
+should fix in a real document. These commands should fail.
 
 ```bash
 go run ./main.go -mode check -config-path examples/showcase/negative/processing-errors.yml
@@ -81,6 +98,10 @@ Configuration examples live under [configuration](configuration/). They cover a
 repository-root source, a single source root, named source roots,
 include/exclude patterns, and the `embeddings` list for multiple documentation
 roots.
+
+Each configuration has its own docs root so the examples can be run separately.
+Open the YAML file first, then follow the linked docs root to see how the
+instructions use that configuration.
 
 | Case                 | Config                                                                       | Docs root                                                                  |
 |----------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------|

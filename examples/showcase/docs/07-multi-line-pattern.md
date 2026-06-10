@@ -1,7 +1,14 @@
 # Multi-Line Patterns
 
-Use `\n` inside a pattern when the match should span consecutive source lines.
-Each pattern line still uses the same glob syntax.
+Use `\n` inside a pattern when one source line is not specific enough.
+
+## How It Works
+
+The `start` value is split into two consecutive line patterns: one that matches
+the `@Scenario` line and one that matches the display-name line. The `end`
+value works the same way for the assertion and closing brace. Each pattern line
+still uses the normal glob rules, so anchors are optional unless you need exact
+line boundaries.
 
 <embed-code
   file="$java/org/showcase/PatternSamples.java"

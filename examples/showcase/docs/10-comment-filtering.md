@@ -1,8 +1,14 @@
 # Comment Filtering
 
-The `comments` attribute controls which recognized comments remain in the
-rendered snippet. This example keeps documentation comments and removes regular
-comments from Java source.
+Use `comments` when examples should keep useful API documentation but omit
+implementation notes.
+
+## How It Works
+
+The instruction embeds the whole Java file and applies
+`comments="documentation"`. Javadoc is retained, regular block comments and
+inline comments are removed, and comment-like text inside string literals stays
+unchanged because it is not a real comment.
 
 <embed-code file="$java/org/showcase/CommentModes.java" comments="documentation"></embed-code>
 ```java

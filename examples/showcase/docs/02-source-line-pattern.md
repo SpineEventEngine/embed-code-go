@@ -1,8 +1,17 @@
 # One Line From A Showcase Source
 
-The `line` attribute embeds only the first source line matching the pattern.
+Use `line` when the documentation needs one source line instead of a whole
+fragment.
 
-<embed-code file="$java/org/showcase/Greeting.java" line="return \"Hello,*"></embed-code>
+## How It Works
+
+The pattern is matched against
+[../code/java/org/showcase/Greeting.java](../code/java/org/showcase/Greeting.java).
+The opening quote is escaped because instruction attributes are parsed as XML,
+and the trailing `*` lets the pattern match the rest of the return expression.
+Only the first matching source line is rendered into the fence.
+
+<embed-code file="$java/org/showcase/Greeting.java" line="Hello"></embed-code>
 ```java
 return "Hello, " + name + "!";
 ```
