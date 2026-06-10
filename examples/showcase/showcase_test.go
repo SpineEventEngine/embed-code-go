@@ -28,58 +28,108 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-// TestShowcasePositiveFlow verifies the showcase docs can be checked, detected as stale,
-// repaired with embed mode, and checked again without changing repository files.
-func TestShowcasePositiveFlow(t *testing.T) {
-	repoRoot := findRepoRoot(t)
-	docsRoot := copyShowcaseDocs(t, repoRoot, filepath.Join("embedding", "positive"))
-	configPath := writeShowcaseConfig(t, repoRoot, docsRoot)
-
-	checkOutput, err := runEmbedCode(t, repoRoot, "check", configPath)
-	if err != nil {
-		t.Fatalf("expected positive showcase check to pass:\n%s", checkOutput)
-	}
-
-	staleDoc := filepath.Join(docsRoot, "whole-file-source.md")
-	replaceInFile(t, staleDoc, "package org.showcase;", "package stale.showcase;")
-
-	staleOutput, err := runEmbedCode(t, repoRoot, "check", configPath)
-	if err == nil {
-		t.Fatalf("expected stale showcase check to fail:\n%s", staleOutput)
-	}
-	assertOutputContains(t, staleOutput, "File to update:")
-	assertOutputContains(t, staleOutput, "whole-file-source.md")
-
-	embedOutput, err := runEmbedCode(t, repoRoot, "embed", configPath)
-	if err != nil {
-		t.Fatalf("expected positive showcase embed to repair stale doc:\n%s", embedOutput)
-	}
-	assertOutputContains(t, embedOutput, "Embedding process finished.")
-
-	finalOutput, err := runEmbedCode(t, repoRoot, "check", configPath)
-	if err != nil {
-		t.Fatalf("expected positive showcase check to pass after embed:\n%s", finalOutput)
-	}
+// TestShowcase runs the showcase example suite.
+func TestShowcase(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Showcase Suite")
 }
 
-// TestShowcaseNegativeScenarios verifies each negative document fails with its expected reason.
-func TestShowcaseNegativeScenarios(t *testing.T) {
-	repoRoot := findRepoRoot(t)
+var _ = Describe("Showcase", func() {
+	var repoRoot string
 
-	cases := []struct {
-		name     string
-		doc      string
-		sources  []namedSource
-		expected []string
-	}{
+	BeforeEach(func() {
+		repoRoot = findRepoRoot()
+	})
+
+	Describe("embedding examples", func() {
+		It("should check, detect staleness, embed, and recheck positive examples", func() {
+			docsRoot := copyShowcaseDocs(repoRoot, filepath.Join("embedding", "positive"))
+			configPath := writeShowcaseConfig(repoRoot, docsRoot)
+
+			checkOutput, err := runEmbedCode(repoRoot, "check", configPath)
+			Expect(err).ShouldNot(HaveOccurred(), "expected positive showcase check to pass:\n%s", checkOutput)
+
+			staleDoc := filepath.Join(docsRoot, "whole-file-source.md")
+			replaceInFile(staleDoc, "package org.showcase;", "package stale.showcase;")
+
+			staleOutput, err := runEmbedCode(repoRoot, "check", configPath)
+			Expect(err).Should(HaveOccurred(), "expected stale showcase check to fail:\n%s", staleOutput)
+			Expect(staleOutput).Should(ContainSubstring("File to update:"))
+			Expect(staleOutput).Should(ContainSubstring("whole-file-source.md"))
+
+			embedOutput, err := runEmbedCode(repoRoot, "embed", configPath)
+			Expect(err).ShouldNot(HaveOccurred(), "expected positive showcase embed to repair stale doc:\n%s", embedOutput)
+			Expect(embedOutput).Should(ContainSubstring("Embedding process finished."))
+
+			finalOutput, err := runEmbedCode(repoRoot, "check", configPath)
+			Expect(err).ShouldNot(HaveOccurred(), "expected positive showcase check to pass after embed:\n%s", finalOutput)
+		})
+
+		Describe("negative examples", func() {
+			for _, tc := range negativeShowcaseCases() {
+				tc := tc
+
+				It("should report "+tc.name, func() {
+					docsRoot := copyShowcaseDocs(repoRoot, filepath.Join("embedding", "negative", "docs"))
+					configPath := writeSingleDocConfig(
+						docsRoot,
+						[]namedSource{javaSource(repoRoot)},
+						tc.doc,
+					)
+
+					output, err := runEmbedCode(repoRoot, "check", configPath)
+					Expect(err).Should(HaveOccurred(), "expected negative scenario to fail:\n%s", output)
+					for _, expected := range tc.expected {
+						Expect(output).Should(ContainSubstring(expected))
+					}
+				})
+			}
+		})
+	})
+
+	Describe("configuration examples", func() {
+		for _, config := range []string{
+			"single-source.yml",
+			"named-sources.yml",
+			"include-exclude.yml",
+			"multiple-embeddings.yml",
+		} {
+			config := config
+
+			It("should check "+config, func() {
+				configPath := filepath.Join("examples", "showcase", "configuration", config)
+
+				output, err := runEmbedCode(repoRoot, "check", configPath)
+				Expect(err).ShouldNot(HaveOccurred(), "expected configuration example to pass:\n%s", output)
+			})
+		}
+	})
+})
+
+// negativeShowcaseCase describes one intentionally broken showcase document.
+type negativeShowcaseCase struct {
+	name     string
+	doc      string
+	expected []string
+}
+
+// namedSource is the named code source path.
+type namedSource struct {
+	name string
+	path string
+}
+
+// negativeShowcaseCases returns the expected failures for the broken embedding examples.
+func negativeShowcaseCases() []negativeShowcaseCase {
+	return []negativeShowcaseCase{
 		{
 			name: "missing source",
 			doc:  "missing-source.md",
-			sources: []namedSource{
-				{name: "java", path: filepath.Join(repoRoot, "examples", "showcase", "code", "java")},
-			},
 			expected: []string{
 				"code file `$java/org/showcase/DoesNotExist.java",
 				"not found",
@@ -88,9 +138,6 @@ func TestShowcaseNegativeScenarios(t *testing.T) {
 		{
 			name: "missing fragment",
 			doc:  "missing-fragment.md",
-			sources: []namedSource{
-				{name: "java", path: filepath.Join(repoRoot, "examples", "showcase", "code", "java")},
-			},
 			expected: []string{
 				"fragment `does not exist`",
 				"not found",
@@ -99,9 +146,6 @@ func TestShowcaseNegativeScenarios(t *testing.T) {
 		{
 			name: "missing pattern",
 			doc:  "missing-pattern.md",
-			sources: []namedSource{
-				{name: "java", path: filepath.Join(repoRoot, "examples", "showcase", "code", "java")},
-			},
 			expected: []string{
 				"matches the line pattern",
 				"doesNotExistPattern",
@@ -110,9 +154,6 @@ func TestShowcaseNegativeScenarios(t *testing.T) {
 		{
 			name: "invalid attributes",
 			doc:  "invalid-attributes.md",
-			sources: []namedSource{
-				{name: "java", path: filepath.Join(repoRoot, "examples", "showcase", "code", "java")},
-			},
 			expected: []string{
 				"must NOT specify both a fragment name and start/end/line patterns",
 			},
@@ -120,9 +161,6 @@ func TestShowcaseNegativeScenarios(t *testing.T) {
 		{
 			name: "missing code fence",
 			doc:  "missing-code-fence.md",
-			sources: []namedSource{
-				{name: "java", path: filepath.Join(repoRoot, "examples", "showcase", "code", "java")},
-			},
 			expected: []string{
 				"expected a markdown code fence after the embedding instruction",
 			},
@@ -130,9 +168,6 @@ func TestShowcaseNegativeScenarios(t *testing.T) {
 		{
 			name: "unclosed code fence",
 			doc:  "unclosed-code-fence.md",
-			sources: []namedSource{
-				{name: "java", path: filepath.Join(repoRoot, "examples", "showcase", "code", "java")},
-			},
 			expected: []string{
 				"the markdown code fence after the embedding instruction is not closed",
 			},
@@ -140,9 +175,6 @@ func TestShowcaseNegativeScenarios(t *testing.T) {
 		{
 			name: "stale snippet",
 			doc:  "stale-snippet.md",
-			sources: []namedSource{
-				{name: "java", path: filepath.Join(repoRoot, "examples", "showcase", "code", "java")},
-			},
 			expected: []string{
 				"File to update:",
 				"stale-snippet.md",
@@ -150,76 +182,44 @@ func TestShowcaseNegativeScenarios(t *testing.T) {
 			},
 		},
 	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			docsRoot := copyShowcaseDocs(t, repoRoot, filepath.Join("embedding", "negative", "docs"))
-			configPath := writeSingleDocConfig(t, docsRoot, tc.sources, tc.doc)
-
-			output, err := runEmbedCode(t, repoRoot, "check", configPath)
-			if err == nil {
-				t.Fatalf("expected negative scenario to fail:\n%s", output)
-			}
-			for _, expected := range tc.expected {
-				assertOutputContains(t, output, expected)
-			}
-		})
-	}
 }
 
-// TestShowcaseConfigurationExamples verifies the runnable configuration examples.
-func TestShowcaseConfigurationExamples(t *testing.T) {
-	repoRoot := findRepoRoot(t)
-
-	configs := []string{
-		"single-source.yml",
-		"named-sources.yml",
-		"include-exclude.yml",
-		"multiple-embeddings.yml",
+// javaSource returns the Java showcase source root.
+func javaSource(repoRoot string) namedSource {
+	return namedSource{
+		name: "java",
+		path: filepath.Join(repoRoot, "examples", "showcase", "code", "java"),
 	}
-
-	for _, config := range configs {
-		t.Run(config, func(t *testing.T) {
-			configPath := filepath.Join("examples", "showcase", "configuration", config)
-			output, err := runEmbedCode(t, repoRoot, "check", configPath)
-			if err != nil {
-				t.Fatalf("expected configuration example to pass:\n%s", output)
-			}
-		})
-	}
-}
-
-type namedSource struct {
-	name string
-	path string
 }
 
 // findRepoRoot returns the repository root by walking up from this test file.
-func findRepoRoot(t *testing.T) string {
-	t.Helper()
+func findRepoRoot() string {
+	GinkgoHelper()
 
 	_, filePath, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("could not locate showcase test file")
-	}
+	Expect(ok).Should(BeTrue(), "could not locate showcase test file")
 
 	return filepath.Clean(filepath.Join(filepath.Dir(filePath), "..", ".."))
 }
 
 // copyShowcaseDocs copies one showcase documentation folder to a temporary test directory.
-func copyShowcaseDocs(t *testing.T, repoRoot string, relativeSource string) string {
-	t.Helper()
+func copyShowcaseDocs(repoRoot string, relativeSource string) string {
+	GinkgoHelper()
 
 	sourceRoot := filepath.Join(repoRoot, "examples", "showcase", relativeSource)
-	targetRoot := filepath.Join(t.TempDir(), "docs")
-	copyDir(t, sourceRoot, targetRoot)
+	tempRoot, err := os.MkdirTemp("", "embed-code-showcase-docs-*")
+	Expect(err).ShouldNot(HaveOccurred())
+	DeferCleanup(os.RemoveAll, tempRoot)
+
+	targetRoot := filepath.Join(tempRoot, "docs")
+	copyDir(sourceRoot, targetRoot)
 
 	return targetRoot
 }
 
 // copyDir recursively copies a directory tree while preserving regular file permissions.
-func copyDir(t *testing.T, sourceRoot string, targetRoot string) {
-	t.Helper()
+func copyDir(sourceRoot string, targetRoot string) {
+	GinkgoHelper()
 
 	err := filepath.WalkDir(sourceRoot, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -249,17 +249,15 @@ func copyDir(t *testing.T, sourceRoot string, targetRoot string) {
 
 		return os.WriteFile(targetPath, data, info.Mode())
 	})
-	if err != nil {
-		t.Fatalf("failed to copy showcase docs: %v", err)
-	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to copy showcase docs")
 }
 
 // writeShowcaseConfig creates a temp config that points at copied positive docs.
-func writeShowcaseConfig(t *testing.T, repoRoot string, docsRoot string) string {
-	t.Helper()
+func writeShowcaseConfig(repoRoot string, docsRoot string) string {
+	GinkgoHelper()
 
-	return writeConfig(t, docsRoot, []namedSource{
-		{name: "java", path: filepath.Join(repoRoot, "examples", "showcase", "code", "java")},
+	return writeConfig(docsRoot, []namedSource{
+		javaSource(repoRoot),
 		{name: "kotlin", path: filepath.Join(repoRoot, "examples", "showcase", "code", "kotlin")},
 		{name: "text", path: filepath.Join(repoRoot, "examples", "showcase", "code", "text")},
 	}, []string{"**/*.md", "**/*.html"})
@@ -267,24 +265,22 @@ func writeShowcaseConfig(t *testing.T, repoRoot string, docsRoot string) string 
 
 // writeSingleDocConfig creates a temp config for one negative showcase document.
 func writeSingleDocConfig(
-	t *testing.T,
 	docsRoot string,
 	sources []namedSource,
 	docInclude string,
 ) string {
-	t.Helper()
+	GinkgoHelper()
 
-	return writeConfig(t, docsRoot, sources, []string{docInclude})
+	return writeConfig(docsRoot, sources, []string{docInclude})
 }
 
 // writeConfig writes a YAML config with absolute source and documentation paths.
 func writeConfig(
-	t *testing.T,
 	docsRoot string,
 	sources []namedSource,
 	includes []string,
 ) string {
-	t.Helper()
+	GinkgoHelper()
 
 	var builder strings.Builder
 	builder.WriteString("code-path:\n")
@@ -299,19 +295,22 @@ func writeConfig(
 	}
 	builder.WriteString("separator: \"// ...\"\n")
 
-	configPath := filepath.Join(t.TempDir(), "embed-code.yml")
-	if err := os.WriteFile(configPath, []byte(builder.String()), 0o644); err != nil {
-		t.Fatalf("failed to write temp config: %v", err)
-	}
+	tempRoot, err := os.MkdirTemp("", "embed-code-showcase-config-*")
+	Expect(err).ShouldNot(HaveOccurred())
+	DeferCleanup(os.RemoveAll, tempRoot)
+
+	configPath := filepath.Join(tempRoot, "embed-code.yml")
+	Expect(os.WriteFile(configPath, []byte(builder.String()), 0o644)).
+		Should(Succeed(), "failed to write temp config")
 
 	return configPath
 }
 
 // runEmbedCode executes the CLI through `go run` and returns combined output.
-func runEmbedCode(t *testing.T, repoRoot string, mode string, configPath string) (string, error) {
-	t.Helper()
+func runEmbedCode(repoRoot string, mode string, configPath string) (string, error) {
+	GinkgoHelper()
 
-	cmd := exec.Command("go", "run", "./main.go", "-mode", mode, "-config-path", configPath)
+	cmd := exec.Command("go", "run", "./main.go", "-mode="+mode, "-config-path="+configPath)
 	cmd.Dir = repoRoot
 	output, err := cmd.CombinedOutput()
 
@@ -319,28 +318,14 @@ func runEmbedCode(t *testing.T, repoRoot string, mode string, configPath string)
 }
 
 // replaceInFile replaces one expected substring in a copied documentation file.
-func replaceInFile(t *testing.T, path string, oldText string, newText string) {
-	t.Helper()
+func replaceInFile(path string, oldText string, newText string) {
+	GinkgoHelper()
 
 	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("failed to read %s: %v", path, err)
-	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to read %s", path)
 	content := string(data)
-	if !strings.Contains(content, oldText) {
-		t.Fatalf("expected %s to contain %q", path, oldText)
-	}
+	Expect(content).Should(ContainSubstring(oldText), "expected %s to contain %q", path, oldText)
 	content = strings.Replace(content, oldText, newText, 1)
-	if err = os.WriteFile(path, []byte(content), 0o644); err != nil {
-		t.Fatalf("failed to write %s: %v", path, err)
-	}
-}
-
-// assertOutputContains fails the test when a command output does not include a substring.
-func assertOutputContains(t *testing.T, output string, expected string) {
-	t.Helper()
-
-	if !strings.Contains(output, expected) {
-		t.Fatalf("expected output to contain %q:\n%s", expected, output)
-	}
+	Expect(os.WriteFile(path, []byte(content), 0o644)).
+		Should(Succeed(), "failed to write %s", path)
 }
