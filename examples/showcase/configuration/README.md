@@ -12,34 +12,20 @@ code-path: examples/showcase/code/java
 docs-path: examples/showcase/configuration/docs/single-source
 ```
 
-This shape is shown by [single-source.yml](single-source.yml).
+This config is shown by [single-source.yml](single-source.yml).
 
-The command scans files under `docs-path`, finds `<embed-code>` instructions,
+The application scans files under `docs-path`, finds `<embed-code>` instructions,
 and resolves each instruction's `file` path from `code-path`. For example, see
 instruction in [docs/single-source/greeting.md](docs/single-source/greeting.md).
+
+Relative paths in `code-path` and `docs-path` are resolved 
+from the command's current working directory.
 
 Run this example (from the project root):
 
 ```bash
 go run ./main.go -mode=check -config-path=examples/showcase/configuration/single-source.yml
 ```
-
-## How Paths Are Selected
-
-The showcase commands are meant to run from the repository root. Relative paths
-in `code-path` and `docs-path` are resolved from the command's current working
-directory.
-
-`docs-path` selects the documentation root to scan. `doc-includes` and
-`doc-excludes` are then matched relative to that documentation root.
-
-`code-path` selects where source files come from:
-
-- With one unnamed `code-path`, an instruction such as
-  `file="org/showcase/Greeting.java"` is resolved relative to that source root.
-- With named source roots, an instruction such as
-  `file="$kotlin/org/showcase/KotlinGreeting.kt"` first selects the `kotlin`
-  source root, then resolves the remaining path inside that root.
 
 ## Add Document Selection
 
