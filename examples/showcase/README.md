@@ -22,22 +22,21 @@ go test -tags showcase ./examples/showcase
 Verify the positive embedding examples:
 
 ```bash
-go run ./main.go -mode check -config-path examples/showcase/embedding/embed-code.yml
+go run ./main.go -mode=check -config-path=examples/showcase/embedding/embed-code.yml
 ```
 
 Verify the configuration examples:
 
 ```bash
-go run ./main.go -mode check -config-path examples/showcase/configuration/root-source.yml
-go run ./main.go -mode check -config-path examples/showcase/configuration/single-source.yml
-go run ./main.go -mode check -config-path examples/showcase/configuration/named-sources.yml
-go run ./main.go -mode check -config-path examples/showcase/configuration/include-exclude.yml
-go run ./main.go -mode check -config-path examples/showcase/configuration/multiple-embeddings.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/single-source.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/named-sources.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/include-exclude.yml
+go run ./main.go -mode=check -config-path=examples/showcase/configuration/multiple-embeddings.yml
 ```
 
 The negative examples are intentionally broken, so these commands should fail:
 
 ```bash
-go run ./main.go -mode check -config-path examples/showcase/embedding/negative/processing-errors.yml
-go run ./main.go -mode check -config-path examples/showcase/embedding/negative/stale.yml
+go run ./main.go -mode=check -config-path=examples/showcase/embedding/negative/processing-errors.yml
+go run ./main.go -mode=check -config-path=examples/showcase/embedding/negative/stale.yml
 ```
