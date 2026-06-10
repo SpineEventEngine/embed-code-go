@@ -4,11 +4,16 @@ Use `\n` inside a pattern when one source line is not specific enough.
 
 ## How It Works
 
-The `start` value is split into two consecutive line patterns: one that matches
-the `@Scenario` line and one that matches the display-name line. The `end`
-value works the same way for the assertion and closing brace. Each pattern line
-still uses the normal glob rules, so anchors are optional unless you need exact
-line boundaries.
+A multi-line pattern is a sequence of ordinary line patterns separated by `\n`.
+The match succeeds only when those patterns match neighboring source lines in
+the same order. This works for `start`, `end`, and `line` patterns.
+
+Each part keeps the same glob behavior as a one-line pattern. When a part does
+not start with `^`, it may begin anywhere in the source line. When it does not
+end with `$`, it may stop before the source line ends. Add `^`, `$`, or both to
+the individual part that needs a stricter boundary.
+
+## Start And End Pattern
 
 <embed-code
   file="$java/org/showcase/PatternSamples.java"
@@ -22,4 +27,17 @@ void addsTwoNumbers() {
 
     assertEquals(2, total);
 }
+```
+
+## Line Pattern
+
+The `line` attribute also accepts `\n`. In this case the matched consecutive
+source lines become the rendered snippet.
+
+<embed-code
+  file="$java/org/showcase/PatternSamples.java"
+  line="Scenario \n adds two numbers"></embed-code>
+```java
+@Scenario
+@Name("adds two numbers")
 ```
