@@ -5,7 +5,7 @@ code-path:
     path: examples/showcase/code/kotlin
   - name: text
     path: examples/showcase/code/text
-docs-path: examples/showcase/docs
+docs-path: examples/showcase/embedding/positive
 doc-includes:
   - "**/*.md"
   - "**/*.html"

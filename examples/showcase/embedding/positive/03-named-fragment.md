@@ -5,7 +5,7 @@ region.
 
 ## How It Works
 
-[../code/java/org/showcase/Greeting.java](../code/java/org/showcase/Greeting.java)
+[../../code/java/org/showcase/Greeting.java](../../code/java/org/showcase/Greeting.java)
 wraps the `main()` method with matching `#docfragment` and `#enddocfragment`
 comments. The instruction resolves the named region, removes the marker lines,
 normalizes indentation, and replaces the following fence with the method body.
