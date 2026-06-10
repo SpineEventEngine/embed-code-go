@@ -4,33 +4,16 @@ Instructions may be self-closing or paired. The self-closing form is supported,
 but this showcase uses paired tags because some Markdown renderers display the
 XML-style self-closing tag awkwardly.
 
-## Short Paired Tag
+## How It Works
 
-This compact paired form is useful when all attributes fit naturally in one
-line.
+The active instruction below has an opening `<embed-code>` tag and a matching
+closing tag. No content is required between them; the rendered snippet still
+comes from the source file and the following code fence. The whole showcase uses
+this paired form so Markdown previews display the instructions consistently.
 
 <embed-code file="$java/org/showcase/Greeting.java" fragment="main()"></embed-code>
 ```java
 public static void main(String[] args) {
     System.out.println(greeting("Ada"));
-}
-```
-
-## Paired Tag With A Larger Fragment
-
-The same paired form works for larger snippets too.
-
-<embed-code file="$java/org/showcase/Greeting.java" fragment="Greeter class"></embed-code>
-```java
-public final class Greeting {
-    private Greeting() {}
-
-    public static void main(String[] args) {
-        System.out.println(greeting("Ada"));
-    }
-
-    public static String greeting(String name) {
-        return "Hello, " + name + "!";
-    }
 }
 ```
