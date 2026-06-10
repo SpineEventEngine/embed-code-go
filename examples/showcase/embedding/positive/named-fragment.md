@@ -1,7 +1,7 @@
 # Named Fragment
 
 Use `fragment` when the source file can mark a stable region that documentation
-may reuse. Named fragments are usually easier to maintain than line patterns
+should reuse. Named fragments are usually easier to maintain than line patterns
 when the example has a clear semantic boundary, such as a method, class, or
 configuration block.
 

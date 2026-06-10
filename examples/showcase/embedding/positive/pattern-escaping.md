@@ -3,6 +3,17 @@
 Pattern escaping distinguishes glob syntax from source text that happens to use
 the same characters.
 
+## How It Works
+
+Patterns use glob control characters, so `*`, `?`, and character classes have
+special meaning unless they are escaped with a backslash. The anchors `^` and
+`$` are special only at the beginning and end of a pattern part. Use `^^` at the
+beginning to match a literal caret and `$$` at the end to match a literal dollar
+sign.
+
+The sequence `\n` separates consecutive pattern lines. Use `\\n` when the source
+line contains the literal characters `\n`.
+
 ## Literal Asterisk
 
 The pattern `Use \* to multiply` treats `*` as source text instead of a
