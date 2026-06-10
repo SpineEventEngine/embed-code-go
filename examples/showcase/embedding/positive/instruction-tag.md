@@ -1,10 +1,16 @@
 # Instruction Tag
 
-Instructions may be self-closing or paired. The self-closing form is supported,
-but it is preferred to use paired tags because some Markdown renderers display the
-XML-style self-closing tag awkwardly.
+An embedding instruction is an XML-like tag placed immediately before the code
+fence that embed-code should manage. The tag contains source-selection
+attributes such as `file`, `fragment`, `line`, etc.
 
-### Paired tag version
+The following Markdown fences keeps the language label used by renderers for
+syntax highlighting.
+
+## Paired Tag
+
+The paired form is preferred in Markdown because it is displayed consistently
+by most renderers.
 
 <embed-code file="$java/org/showcase/Greeting.java" fragment="main()"></embed-code>
 ```java
@@ -13,7 +19,11 @@ public static void main(String[] args) {
 }
 ```
 
-### Self-closing tag version
+## Self-Closing Tag
+
+The self-closing form is supported and resolves the same source content,
+but it is preferred to use paired tags elsewhere because they tend to look better
+in Markdown previews.
 
 <embed-code file="$java/org/showcase/Greeting.java" fragment="main()" />
 ```java

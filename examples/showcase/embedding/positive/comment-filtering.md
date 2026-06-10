@@ -5,9 +5,10 @@ implementation notes.
 
 ## How It Works
 
-The instruction first resolves the source content, then applies comment
-filtering before rendering the code fence. If `comments` is omitted, the default
-is `all`, so every recognized comment remains in the snippet.
+The instruction first resolves the requested source content using `file` plus
+any `fragment`, `start`, `end`, or `line` selection. It then applies comment
+filtering before comparing or rendering the code fence. If `comments` is
+omitted, the default is `all`, so every recognized comment remains in the snippet.
 
 Supported modes are:
 
@@ -19,8 +20,9 @@ Supported modes are:
 - `block` keeps non-documentation block comments, such as `/* */`.
 
 Comment support depends on the source file extension. Unknown extensions are
-embedded unchanged, and not every supported language distinguishes
-documentation, regular, inline, and block comments. See
+embedded unchanged. Not every supported language distinguishes documentation,
+regular, inline, and block comments, so unsupported categories simply have no
+comments to keep. See
 [Comment filtering](../../../../EMBEDDING.md#comment-filtering) for the full
 language matrix.
 
