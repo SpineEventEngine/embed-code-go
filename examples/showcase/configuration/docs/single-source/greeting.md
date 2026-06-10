@@ -1,7 +1,6 @@
 # Single Source Root
 
-This config uses one unnamed `code-path`, so instructions refer to source files
-relative to that root without a `$name` prefix.
+This config uses one unnamed `code-path`.
 
 ## How It Works
 
