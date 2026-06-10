@@ -9,6 +9,4 @@ docs-path: examples/showcase/embedding/positive
 doc-includes:
   - "**/*.md"
   - "**/*.html"
-doc-excludes:
-  - ignored-by-exclude.md
 separator: "// ..."
