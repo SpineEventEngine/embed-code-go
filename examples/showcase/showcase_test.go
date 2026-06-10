@@ -42,7 +42,7 @@ func TestShowcasePositiveFlow(t *testing.T) {
 		t.Fatalf("expected positive showcase check to pass:\n%s", checkOutput)
 	}
 
-	staleDoc := filepath.Join(docsRoot, "01-whole-file-source.md")
+	staleDoc := filepath.Join(docsRoot, "whole-file-source.md")
 	replaceInFile(t, staleDoc, "package org.showcase;", "package stale.showcase;")
 
 	staleOutput, err := runEmbedCode(t, repoRoot, "check", configPath)
@@ -50,7 +50,7 @@ func TestShowcasePositiveFlow(t *testing.T) {
 		t.Fatalf("expected stale showcase check to fail:\n%s", staleOutput)
 	}
 	assertOutputContains(t, staleOutput, "File to update:")
-	assertOutputContains(t, staleOutput, "01-whole-file-source.md")
+	assertOutputContains(t, staleOutput, "whole-file-source.md")
 
 	embedOutput, err := runEmbedCode(t, repoRoot, "embed", configPath)
 	if err != nil {
