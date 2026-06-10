@@ -1,0 +1,14 @@
+code-path:
+  - name: java
+    path: examples/showcase/code/java
+  - name: kotlin
+    path: examples/showcase/code/kotlin
+  - name: text
+    path: examples/showcase/code/text
+docs-path: examples/showcase/docs
+doc-includes:
+  - "**/*.md"
+  - "**/*.html"
+doc-excludes:
+  - ignored-by-exclude.md
+separator: "// ..."

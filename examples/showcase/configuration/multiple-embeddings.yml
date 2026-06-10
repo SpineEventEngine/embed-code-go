@@ -1,0 +1,13 @@
+embeddings:
+  - name: java-guide
+    code-path: examples/showcase/code/java
+    docs-path: examples/showcase/configuration/docs/multiple/java
+    doc-includes:
+      - "**/*.md"
+  - name: kotlin-guide
+    code-path:
+      - name: kotlin
+        path: examples/showcase/code/kotlin
+    docs-path: examples/showcase/configuration/docs/multiple/kotlin
+    doc-includes:
+      - "**/*.md"

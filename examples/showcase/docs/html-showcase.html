@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<body>
+<h1>HTML Embedding Showcase</h1>
+<p>
+  HTML files are scanned too when the include patterns allow them. The
+  instruction still needs a Markdown code fence after it.
+</p>
+
+<embed-code file="$java/org/showcase/Greeting.java" fragment="main()"></embed-code>
+```java
+public static void main(String[] args) {
+    System.out.println(greeting("Ada"));
+}
+```
+</body>
+</html>
