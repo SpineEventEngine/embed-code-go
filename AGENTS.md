@@ -124,6 +124,6 @@ first function that exposes the symptom.
 
 - Do not revert unrelated user changes.
 - Do not edit generated binaries under `bin/` unless explicitly requested.
-- Do not add temporary repro files, local binaries, IDE metadata, coverage
+- Do not add temporary repo files, local binaries, IDE metadata, coverage
   output, or build artifacts to the intended change set.
 - Keep changes narrowly scoped and make unrelated cleanup a separate task.
