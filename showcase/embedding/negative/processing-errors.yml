@@ -2,8 +2,8 @@ code-path:
   - name: repo
     path: .
   - name: java
-    path: examples/showcase/code/java
-docs-path: examples/showcase/embedding/negative/docs
+    path: showcase/code/java
+docs-path: showcase/embedding/negative/docs
 doc-includes:
   - missing-source.md
   - missing-fragment.md

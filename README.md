@@ -17,7 +17,7 @@ This project is the implementation of `embed-code` utility written in Go.
 For the details of the usage in the documentation and the code, please refer to the [EMBEDDING.md](EMBEDDING.md).
 
 For a runnable guide with positive examples, negative examples, and YAML
-configuration shapes, see the [embed-code showcase](examples/showcase/README.md).
+configuration shapes, see the [embed-code showcase](showcase/README.md).
 The showcase is an opt-in end-to-end test and is not part of the normal
 `go test ./...` flow.
 

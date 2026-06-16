@@ -1,0 +1,12 @@
+code-path:
+  - name: java
+    path: showcase/code/java
+  - name: kotlin
+    path: showcase/code/kotlin
+  - name: text
+    path: showcase/code/text
+docs-path: showcase/embedding/positive
+doc-includes:
+  - "**/*.md"
+  - "**/*.html"
+separator: "// ..."
