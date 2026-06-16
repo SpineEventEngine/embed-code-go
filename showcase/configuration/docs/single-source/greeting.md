@@ -4,7 +4,7 @@ This config uses one unnamed `code-path`.
 
 ## How It Works
 
-[../../single-source.yml](../../single-source.yml) points `code-path` directly
+[single-source.yml](../../single-source.yml) points `code-path` directly
 at `showcase/code/java`. The instruction therefore uses
 `org/showcase/Greeting.java` instead of `$java/org/showcase/Greeting.java`.
 

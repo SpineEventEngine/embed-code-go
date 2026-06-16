@@ -18,7 +18,7 @@ If `end` is omitted, it continues to the end of the file.
 ## Embedding Instruction
 
 The instruction below finds the first `@Scenario` in
-[../../code/java/org/showcase/PatternSamples.java](../../code/java/org/showcase/PatternSamples.java).
+[PatternSamples.java](../../code/java/org/showcase/PatternSamples.java).
 It then stops at the next line that is exactly four spaces followed by `}`.
 
 <embed-code

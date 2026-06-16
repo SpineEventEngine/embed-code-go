@@ -23,7 +23,7 @@ Comment support depends on the source file extension. Unknown extensions are
 embedded unchanged. Not every supported language distinguishes documentation,
 regular, inline, and block comments, so unsupported categories simply have no
 comments to keep. See
-[Comment filtering](../../../../EMBEDDING.md#comment-filtering) for the full
+[Comment filtering](../../../EMBEDDING.md#comment-filtering) for the full
 language matrix.
 
 The examples below embed the same Java file with different `comments` modes so

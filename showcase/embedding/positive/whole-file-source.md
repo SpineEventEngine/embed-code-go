@@ -9,12 +9,12 @@ small source file. This is the smallest useful instruction: it only needs
 The `file` attribute is resolved from the configured source roots. 
 
 In this example, the `$java` prefix selects the Java source root from
-[../embed-code.yml](../embed-code.yml) before resolving `org/showcase/Greeting.java`.
+[embed-code.yml](../embed-code.yml) before resolving `org/showcase/Greeting.java`.
 
 ## Embedding Instruction
 
 The instruction below embeds the contents of
-[../../code/java/org/showcase/Greeting.java](../../code/java/org/showcase/Greeting.java)
+[Greeting.java](../../code/java/org/showcase/Greeting.java)
 into the following code fence, without the embed-code-related instructions.
 
 <embed-code file="$java/org/showcase/Greeting.java"></embed-code>

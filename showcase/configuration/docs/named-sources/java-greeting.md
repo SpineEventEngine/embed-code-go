@@ -5,7 +5,7 @@ root before resolving the relative path.
 
 ## How It Works
 
-[../../named-sources.yml](../../named-sources.yml) defines a source root named
+[named-sources.yml](../../named-sources.yml) defines a source root named
 `java`. The instruction must include `$java` so the resolver knows which source
 tree owns `org/showcase/Greeting.java`.
 

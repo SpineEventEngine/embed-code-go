@@ -11,7 +11,7 @@ A marker can open or close multiple fragments by listing several quoted names:
 
 ## Embedding Instruction
 
-[../../code/java/org/showcase/OverlappingFragments.java](../../code/java/org/showcase/OverlappingFragments.java)
+[OverlappingFragments.java](../../code/java/org/showcase/OverlappingFragments.java)
 uses marker lines that name both `Class wrapper` and `Greeting method`. The
 instruction asks only for `Greeting method`, so the rendered snippet keeps the
 shared class wrapper and the greeting method while replacing skipped details

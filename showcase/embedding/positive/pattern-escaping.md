@@ -18,7 +18,7 @@ line contains the literal characters `\n`.
 
 The pattern `Use \* to multiply` treats `*` as source text instead of a
 wildcard. It matches a line in
-[../../code/text/glob-patterns.txt](../../code/text/glob-patterns.txt).
+[glob-patterns.txt](../../code/text/glob-patterns.txt).
 
 <embed-code file="$text/glob-patterns.txt" line="Use \* to multiply"></embed-code>
 ```text

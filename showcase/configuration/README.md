@@ -16,7 +16,7 @@ This config is shown by [single-source.yml](single-source.yml).
 
 The application scans files under `docs-path`, finds `<embed-code>` instructions,
 and resolves each instruction's `file` path from `code-path`. For example, see
-instruction in [docs/single-source/greeting.md](docs/single-source/greeting.md).
+instruction in [greeting.md](docs/single-source/greeting.md).
 
 Relative paths in `code-path` and `docs-path` are resolved 
 from the command's current working directory.
@@ -42,8 +42,8 @@ doc-excludes:
 ```
 
 This shape is shown by [include-exclude.yml](include-exclude.yml). It processes
-[docs/include-exclude/included.md](docs/include-exclude/included.md) and skips
-[docs/include-exclude/excluded.md](docs/include-exclude/excluded.md).
+[included.md](docs/include-exclude/included.md) and skips
+[excluded.md](docs/include-exclude/excluded.md).
 
 Use include and exclude patterns to skip drafts, generated docs, deprecated
 pages, or any file that should not be scanned for active instructions.
@@ -69,7 +69,7 @@ docs-path: showcase/configuration/docs/named-sources
 ```
 
 This shape is shown by [named-sources.yml](named-sources.yml). Its docs live in
-[docs/named-sources](docs/named-sources/).
+[showcase/configuration/docs/named-sources/](docs/named-sources).
 
 Instructions choose a source root with the `$name` prefix:
 
@@ -102,8 +102,8 @@ embeddings:
 ```
 
 This shape is shown by [multiple-embeddings.yml](multiple-embeddings.yml). It
-processes [docs/multiple/java](docs/multiple/java/) and
-[docs/multiple/kotlin](docs/multiple/kotlin/) in one run.
+processes [showcase/configuration/docs/multiple/java/](docs/multiple/java) and
+[showcase/configuration/docs/multiple/kotlin/](docs/multiple/kotlin) in one run.
 
 ```bash
 go run ./main.go -mode=check -config-path=showcase/configuration/multiple-embeddings.yml

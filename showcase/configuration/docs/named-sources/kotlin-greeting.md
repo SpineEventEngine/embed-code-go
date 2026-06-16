@@ -5,7 +5,7 @@ prefix in the instruction.
 
 ## How It Works
 
-[../../named-sources.yml](../../named-sources.yml) also defines a source root
+[named-sources.yml](../../named-sources.yml) also defines a source root
 named `kotlin`. Changing the prefix to `$kotlin` resolves the same relative
 package path under the Kotlin source tree.
 

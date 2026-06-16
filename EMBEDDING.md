@@ -234,7 +234,7 @@ The table below lists the supported languages and supported `comments` modes for
 A named fragment may consist of one or several pieces declared in a single file.
 When rendered, the pieces that belong to a single fragment are joined together.
 It is possible to specify a separator between the joined pieces,
-see [Configuration](./README.md#arguments) for the corresponding parameter.
+see [Configuration](README.md#arguments) for the corresponding parameter.
 
 Here is an example of how a multi-piece fragment is rendered.
 

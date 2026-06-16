@@ -60,4 +60,4 @@ go run ./main.go -mode=check -config-path=showcase/embedding/negative/processing
 go run ./main.go -mode=check -config-path=showcase/embedding/negative/stale.yml
 ```
 
-The cases live in [negative/docs](negative/docs/).
+The cases live in [showcase/embedding/negative/docs/](negative/docs).

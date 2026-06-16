@@ -20,7 +20,7 @@ source file, the run reports the missing fragment.
 
 ## Source Markers
 
-[../../code/java/org/showcase/Greeting.java](../../code/java/org/showcase/Greeting.java)
+[Greeting.java](../../code/java/org/showcase/Greeting.java)
 declares the `main()` fragment like this:
 
 ```java
