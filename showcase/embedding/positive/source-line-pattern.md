@@ -16,7 +16,7 @@ cannot be combined with `fragment`, `start`, or `end`.
 ## Embedding Instruction
 
 The instruction below searches
-[../../code/java/org/showcase/Greeting.java](../../code/java/org/showcase/Greeting.java)
+[Greeting.java](../../code/java/org/showcase/Greeting.java)
 and renders the first line that contains `Hello`.
 
 <embed-code file="$java/org/showcase/Greeting.java" line="Hello"></embed-code>

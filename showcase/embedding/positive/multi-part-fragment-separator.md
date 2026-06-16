@@ -13,13 +13,13 @@ the selected parts in source order, normalizes common indentation across all of
 them, and inserts the configured `separator` between neighboring parts.
 
 The default separator is `...`. This showcase uses `// ...` in
-[../embed-code.yml](../embed-code.yml) so the separator is valid inside Java
+[embed-code.yml](../embed-code.yml) so the separator is valid inside Java
 snippets. Separator indentation follows the surrounding rendered code, which
 keeps skipped sections readable inside classes and methods.
 
 ## Embedding Instruction
 
-[../../code/java/org/showcase/MultiPartWorkflow.java](../../code/java/org/showcase/MultiPartWorkflow.java)
+[MultiPartWorkflow.java](../../code/java/org/showcase/MultiPartWorkflow.java)
 opens and closes the `Workflow` fragment several times. The instruction below
 renders those selected parts as one snippet.
 

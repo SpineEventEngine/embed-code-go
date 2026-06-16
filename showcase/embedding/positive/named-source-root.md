@@ -10,7 +10,7 @@ In config file, each entry in `code-path` can have a `name` and a `path`.
 When an instruction starts its `file` value with `$name/`, embed-code selects 
 only that named root and then resolves the remaining relative path inside it.
 
-[../embed-code.yml](../embed-code.yml) defines `java`, `kotlin`, and `text`
+[embed-code.yml](../embed-code.yml) defines `java`, `kotlin`, and `text`
 source roots. The `$kotlin` prefix below chooses the Kotlin root before
 resolving `org/showcase/KotlinGreeting.kt`.
 

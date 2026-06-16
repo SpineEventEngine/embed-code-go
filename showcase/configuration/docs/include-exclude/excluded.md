@@ -5,7 +5,7 @@ that excluded documents are not processed.
 
 ## How It Works
 
-[../../include-exclude.yml](../../include-exclude.yml) lists this file in
+[include-exclude.yml](../../include-exclude.yml) lists this file in
 `doc-excludes`. The instruction points at a missing source file, but the command
 still succeeds because excluded files are skipped before instruction parsing.
 

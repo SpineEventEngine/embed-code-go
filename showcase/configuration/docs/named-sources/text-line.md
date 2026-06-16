@@ -5,7 +5,7 @@ from the text source root.
 
 ## How It Works
 
-[../../named-sources.yml](../../named-sources.yml) defines a source root named
+[named-sources.yml](../../named-sources.yml) defines a source root named
 `text`. The `line` pattern matches one plain-text line from
 `glob-patterns.txt`, showing that source roots can point at any supported text
 fixture, not only programming language files.

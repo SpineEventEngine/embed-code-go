@@ -5,7 +5,7 @@ processed normally.
 
 ## How It Works
 
-[../../include-exclude.yml](../../include-exclude.yml) includes Markdown files
+[include-exclude.yml](../../include-exclude.yml) includes Markdown files
 under this docs root. Because this file is not listed in `doc-excludes`, check
 mode resolves the instruction and compares the rendered fence with the Java
 source fragment.
