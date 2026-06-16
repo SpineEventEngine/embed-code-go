@@ -3,7 +3,7 @@
 The `embed-code` utility uses a custom `<embed-code>` tag to insert code snippets from source files into Markdown documentation.
 
 For executable examples of the embedding features described here, see the
-[embed-code showcase](examples/showcase/README.md). The showcase uses paired
+[embed-code showcase](showcase/README.md). The showcase uses paired
 instruction tags and dedicated source fixtures so it can double as a guide and
 an opt-in end-to-end test.
 

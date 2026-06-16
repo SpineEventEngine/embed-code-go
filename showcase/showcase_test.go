@@ -102,7 +102,7 @@ var _ = Describe("Showcase", func() {
 			config := config
 
 			It("should check "+config, func() {
-				configPath := filepath.Join("examples", "showcase", "configuration", config)
+				configPath := filepath.Join("showcase", "configuration", config)
 
 				output, err := runEmbedCode(repoRoot, "check", configPath)
 				Expect(err).ShouldNot(HaveOccurred(), "expected configuration example to pass:\n%s", output)
@@ -188,7 +188,7 @@ func negativeShowcaseCases() []negativeShowcaseCase {
 func javaSource(repoRoot string) namedSource {
 	return namedSource{
 		name: "java",
-		path: filepath.Join(repoRoot, "examples", "showcase", "code", "java"),
+		path: filepath.Join(repoRoot, "showcase", "code", "java"),
 	}
 }
 
@@ -199,14 +199,14 @@ func findRepoRoot() string {
 	_, filePath, _, ok := runtime.Caller(0)
 	Expect(ok).Should(BeTrue(), "could not locate showcase test file")
 
-	return filepath.Clean(filepath.Join(filepath.Dir(filePath), "..", ".."))
+	return filepath.Clean(filepath.Join(filepath.Dir(filePath), ".."))
 }
 
 // copyShowcaseDocs copies one showcase documentation folder to a temporary test directory.
 func copyShowcaseDocs(repoRoot string, relativeSource string) string {
 	GinkgoHelper()
 
-	sourceRoot := filepath.Join(repoRoot, "examples", "showcase", relativeSource)
+	sourceRoot := filepath.Join(repoRoot, "showcase", relativeSource)
 	tempRoot, err := os.MkdirTemp("", "embed-code-showcase-docs-*")
 	Expect(err).ShouldNot(HaveOccurred())
 	DeferCleanup(os.RemoveAll, tempRoot)
@@ -258,8 +258,8 @@ func writeShowcaseConfig(repoRoot string, docsRoot string) string {
 
 	return writeConfig(docsRoot, []namedSource{
 		javaSource(repoRoot),
-		{name: "kotlin", path: filepath.Join(repoRoot, "examples", "showcase", "code", "kotlin")},
-		{name: "text", path: filepath.Join(repoRoot, "examples", "showcase", "code", "text")},
+		{name: "kotlin", path: filepath.Join(repoRoot, "showcase", "code", "kotlin")},
+		{name: "text", path: filepath.Join(repoRoot, "showcase", "code", "text")},
 	}, []string{"**/*.md", "**/*.html"})
 }
 

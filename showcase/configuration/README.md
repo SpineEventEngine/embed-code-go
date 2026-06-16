@@ -8,8 +8,8 @@ working config, then add only the options your documentation needs.
 A configuration needs one source root and one documentation root:
 
 ```yaml
-code-path: examples/showcase/code/java
-docs-path: examples/showcase/configuration/docs/single-source
+code-path: showcase/code/java
+docs-path: showcase/configuration/docs/single-source
 ```
 
 This config is shown by [single-source.yml](single-source.yml).
@@ -24,7 +24,7 @@ from the command's current working directory.
 Run this example (from the project root):
 
 ```bash
-go run ./main.go -mode=check -config-path=examples/showcase/configuration/single-source.yml
+go run ./main.go -mode=check -config-path=showcase/configuration/single-source.yml
 ```
 
 ## Add Document Selection
@@ -33,8 +33,8 @@ Add `doc-includes` when only some files under `docs-path` should be scanned.
 Add `doc-excludes` when selected files should be skipped:
 
 ```yaml
-code-path: examples/showcase/code/java
-docs-path: examples/showcase/configuration/docs/include-exclude
+code-path: showcase/code/java
+docs-path: showcase/configuration/docs/include-exclude
 doc-includes:
   - "**/*.md"
 doc-excludes:
@@ -49,7 +49,7 @@ Use include and exclude patterns to skip drafts, generated docs, deprecated
 pages, or any file that should not be scanned for active instructions.
 
 ```bash
-go run ./main.go -mode=check -config-path=examples/showcase/configuration/include-exclude.yml
+go run ./main.go -mode=check -config-path=showcase/configuration/include-exclude.yml
 ```
 
 ## Add Named Source Roots
@@ -60,12 +60,12 @@ source trees:
 ```yaml
 code-path:
   - name: java
-    path: examples/showcase/code/java
+    path: showcase/code/java
   - name: kotlin
-    path: examples/showcase/code/kotlin
+    path: showcase/code/kotlin
   - name: text
-    path: examples/showcase/code/text
-docs-path: examples/showcase/configuration/docs/named-sources
+    path: showcase/code/text
+docs-path: showcase/configuration/docs/named-sources
 ```
 
 This shape is shown by [named-sources.yml](named-sources.yml). Its docs live in
@@ -80,7 +80,7 @@ Instructions choose a source root with the `$name` prefix:
 Run the named-source example:
 
 ```bash
-go run ./main.go -mode=check -config-path=examples/showcase/configuration/named-sources.yml
+go run ./main.go -mode=check -config-path=showcase/configuration/named-sources.yml
 ```
 
 ## Add Multiple Documentation Targets
@@ -92,13 +92,13 @@ and optional settings:
 ```yaml
 embeddings:
   - name: java-guide
-    code-path: examples/showcase/code/java
-    docs-path: examples/showcase/configuration/docs/multiple/java
+    code-path: showcase/code/java
+    docs-path: showcase/configuration/docs/multiple/java
   - name: kotlin-guide
     code-path:
       - name: kotlin
-        path: examples/showcase/code/kotlin
-    docs-path: examples/showcase/configuration/docs/multiple/kotlin
+        path: showcase/code/kotlin
+    docs-path: showcase/configuration/docs/multiple/kotlin
 ```
 
 This shape is shown by [multiple-embeddings.yml](multiple-embeddings.yml). It
@@ -106,7 +106,7 @@ processes [docs/multiple/java](docs/multiple/java/) and
 [docs/multiple/kotlin](docs/multiple/kotlin/) in one run.
 
 ```bash
-go run ./main.go -mode=check -config-path=examples/showcase/configuration/multiple-embeddings.yml
+go run ./main.go -mode=check -config-path=showcase/configuration/multiple-embeddings.yml
 ```
 
 ## All Configuration Checks
@@ -114,8 +114,8 @@ go run ./main.go -mode=check -config-path=examples/showcase/configuration/multip
 Run commands from the project root.
 
 ```bash
-go run ./main.go -mode=check -config-path=examples/showcase/configuration/single-source.yml
-go run ./main.go -mode=check -config-path=examples/showcase/configuration/named-sources.yml
-go run ./main.go -mode=check -config-path=examples/showcase/configuration/include-exclude.yml
-go run ./main.go -mode=check -config-path=examples/showcase/configuration/multiple-embeddings.yml
+go run ./main.go -mode=check -config-path=showcase/configuration/single-source.yml
+go run ./main.go -mode=check -config-path=showcase/configuration/named-sources.yml
+go run ./main.go -mode=check -config-path=showcase/configuration/include-exclude.yml
+go run ./main.go -mode=check -config-path=showcase/configuration/multiple-embeddings.yml
 ```
