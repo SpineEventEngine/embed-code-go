@@ -17,8 +17,8 @@ cover the known behavior once the cases are identified.
 
 Two companions own neighboring concerns:
 
-- `skills/go-engineer/SKILL.md` - Go implementation policy and production code correctness.
-- `skills/review-docs/SKILL.md` - documentation review for test fixtures and
+- `.agents/skills/go-engineer/SKILL.md` - Go implementation policy and production code correctness.
+- `.agents/skills/review-docs/SKILL.md` - documentation review for test fixtures and
   Markdown docs when prose changes are part of the task.
 
 ## Core Policy
