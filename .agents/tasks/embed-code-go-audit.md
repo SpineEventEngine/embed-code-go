@@ -1,6 +1,6 @@
 # Technical Audit & Improvement Plan — `embed-code-go`
 
-| | |
+| Field | Value |
 |---|---|
 | **Repository** | `SpineEventEngine/embed-code-go` |
 | **Audit date** | 2026-06-17 |
@@ -31,7 +31,7 @@ These were open questions in the original audit; the product owner has since res
 | **Binary distribution** | Move from committed `bin/` to **GitHub Releases**. |
 | **Repository history** | **Purge the entire `bin/` history** to reclaim space (accepts a destructive, repo-wide rewrite). |
 | **Audience** | The tool **will be consumed by external teams** (not internal-only). |
-| **License** | **Apache-2.0.** (The current per-file "All rights reserved" headers do not grant external use, so a root `LICENSE` is now required.) |
+| **License** | **Apache-2.0.** (The per-file headers are already a custom BSD-style *permissive* grant; the gap is the absence of a standard root license. Standardizing on Apache-2.0 gives external consumers clear, recognizable terms and an explicit patent grant.) |
 | **Comment-filter correctness** | Reliable behavior is **desired for these languages, in priority order:** Kotlin → Java → TypeScript → JavaScript → C# → C++ → Python → Go → Visual Basic. |
 | **`check` output contract** | **No** downstream pipeline depends on `check` stdout/exit format — a refactor may change it freely. |
 
@@ -43,7 +43,7 @@ These were open questions in the original audit; the product owner has since res
 
 `embed-code-go` is a mature, well-engineered Go CLI that injects source snippets into Markdown documentation (a Go rewrite of a Ruby `embed-code` utility) for Hugo-based docs. The architecture is clean and layered — a State-pattern line parser feeding a fragment resolver and per-language comment filter — and the project enforces an unusually strict 40-linter `golangci-lint` configuration in CI across Windows/macOS/Linux. It ships typed errors with clickable `file://` diagnostics and carries **75.9% integrated test coverage** with tests that assert real behavior rather than mere execution. The engineering bar is clearly above average.
 
-Three issues hold it back from an A. **Top 3 risks:** (1) a **confirmed runtime panic** in `indent.CutIndent` (`indent/indent.go:65`), reproduced from realistic input — a fragment containing a whitespace-only line shorter than the block's indentation; (2) a **206 MB `.git`** caused by auto-committing three ~4.3 MB binaries to the tree on every `master` push via a deploy-key workflow that pushes directly to a protected branch; (3) a **test suite that cannot run in parallel** because it shares a mutable `../test/docs` directory and a process-global resolver cache, forcing a `-p 1` crutch. **Top 3 opportunities:** harden the core with a one-line guard plus fuzz tests (cheap, high payoff); move binary distribution to GitHub Releases and purge the binary history; refactor tests to per-test temp dirs and an injectable cache to unlock parallelism and lift orchestration coverage. There are **no security findings of note** and no hardcoded secrets. A newly-scoped workstream — tightening the heuristic comment filter for the nine target languages, beginning with a concrete Kotlin nested-block-comment defect — is the main correctness investment beyond the quick fixes.
+Three issues hold it back from an A. **Top 3 risks:** (1) a **confirmed runtime panic** in `indent.CutIndent` (`indent/indent.go:65`), reproduced from realistic input — a fragment containing a whitespace-only line shorter than the block's indentation; (2) a **206 MB `.git`** caused by auto-committing three ~4.3 MB binaries to the tree on every `master` push via a deploy-key workflow that pushes directly to a protected branch; (3) the **heuristic comment filter** mishandles common language constructs — e.g. Kotlin's legal nested block comments (`marker_comment_filter.go:123-137`) — so it can silently emit incorrect snippets into published docs. **Top 3 opportunities:** harden the core with a one-line guard plus fuzz tests (cheap, high payoff); move binary distribution to GitHub Releases and purge the binary history; tighten test isolation (per-test temp dirs, an injectable cache) and cover the untested orchestration paths. There are **no security findings of note** and no hardcoded secrets. Beyond the quick fixes, the main correctness investment is the comment-filter workstream — hardening the nine target languages in the owner's priority order.
 
 ---
 
@@ -132,7 +132,7 @@ main.go ─ orchestration, error aggregation, exit codes
 - **M — [Fact] Orchestration is 0% covered.** All of `main.go` — `checkByConfigs`, `embedByConfigs`, `formatError`, `flattenedErrors`, `printFiles` (`main.go:82-242`) — is untested; the multi-config aggregation and error-flattening logic has no tests.
 - **M — [Fact] Non-trivial logic untested.** The LRU `evictOldest` (`cache.go:108-123`) is 0% — tests never exceed the 100-entry limit (`resolver.go:33`), so the eviction path is unexercised. Error-formatting paths `codeFileReference`/`unresolvedSourceError` (`resolver.go:213-256`) are also 0%.
 - **M — [Fact] Parser's own-package coverage is 42.1%.** State-transition files (`blank_line.go:43`, `start.go`, etc.) are exercised only cross-package by `embedding`'s tests, so the parser is less directly tested than it appears. `configuration` has no test file (0%, but trivial).
-- **M — [Fact] Shared mutable state forces `-p 1`.** `embedding_test.go:39` uses a shared relative `../test/docs` dir (created/removed per spec, `:61,65`); the resolver cache is a process global cleared manually (`fragmentation_test.go:52`). CI works around this with `go test -p 1` (`check.yml:31-33`).
+- **M — [Fact] Test-isolation smells (not a proven `-p 1` cause).** `embedding_test.go:39` reuses one relative `../test/docs` dir across specs (created/removed per spec, `:61,65`), and the resolver cache is a process global cleared manually (`fragmentation_test.go:52`). Both are package-local — `go test -p` governs *cross-package* parallelism, and no shared writable path crosses packages — so they do not by themselves require the `go test -p 1` CI uses (`check.yml:31-33`); the exact reason for `-p 1` is not evident from the code. Isolating fixtures to per-test temp dirs and injecting the cache is still worthwhile for robustness and intra-package parallelism.
 
 ### 4.6 Performance
 - **[Judgment] A non-issue for the workload.** All in-memory over small files; no DB, network, or concurrency. Only items: the double-read/redundant-ASCII check (4.2) and an O(N²) `slices.Contains(p.requiredDocPaths, …)` per doc (`processor.go:106,142,165`) — negligible at realistic doc counts.
@@ -147,7 +147,7 @@ main.go ─ orchestration, error aggregation, exit codes
 
 ### 4.9 Documentation
 - **L — [Fact] README arg list incomplete.** The "Arguments" section (`README.md:57-63`) omits the `-doc-excludes`, `-info`, and `-stacktrace` flags that `ReadArgs` defines (`cli.go:128-138`).
-- **Required — [Fact] No top-level LICENSE.** License terms live only in per-file headers ("All rights reserved" + BSD-style disclaimer). With external distribution decided, a root **Apache-2.0** `LICENSE` (and consistent headers) is now a required deliverable.
+- **Required — [Fact] No top-level LICENSE.** Today the terms are a custom BSD-style *permissive* grant embedded in per-file headers (the "All rights reserved" wording notwithstanding, redistribution/use is granted provided the notice is retained); there is no root `LICENSE` file. With external distribution decided, standardizing on a root **Apache-2.0** `LICENSE` (and reconciled headers) is now a required deliverable.
 
 ---
 
@@ -157,7 +157,7 @@ main.go ─ orchestration, error aggregation, exit codes
 
 **Theme 2 — Stop shipping binaries through git.** The single largest hygiene problem is operational. *Target state:* binaries distributed via GitHub Releases on tag; `bin/` removed from the tree; the binary history purged; the deploy-key auto-commit workflow retired. *Principle:* build artifacts don't belong in source history. *Trade-off:* consumers fetch from Releases instead of cloning binaries (a documented change); the history purge is destructive and must be scheduled with branch-protection coordination.
 
-**Theme 3 — Make the test suite isolated and parallel-safe.** `-p 1` is a symptom of shared mutable state. *Target state:* each test uses `t.TempDir()`/`os.MkdirTemp`; the resolver cache is injected or deterministically reset; `-p 1` removed. *Principle:* tests own their state.
+**Theme 3 — Make the test suite isolated and parallel-safe.** Shared mutable test state (a reused `../test/docs`, a process-global cache) is a robustness smell, and CI currently serializes packages with `-p 1`. *Target state:* each test uses `t.TempDir()`/`os.MkdirTemp`; the resolver cache is injected or deterministically reset; the suite is verified safe without relying on `-p 1`. *Principle:* tests own their state.
 
 **Theme 4 — Close coverage gaps in orchestration and error paths.** *Target state:* `main.go` aggregation, cache eviction, and error formatters are unit-tested; duplicated error-formatting logic is unified. *Principle:* the code that runs only on failure is the code you most need tested.
 
@@ -165,7 +165,7 @@ main.go ─ orchestration, error aggregation, exit codes
 
 **Definition of done (measurable signals):**
 - Zero High findings; fuzz tests for `indent`/`pattern` run in CI with zero crashes.
-- `go test ./...` passes **without `-p 1`**.
+- Test fixtures are isolated per test; the suite is verified not to rely on `-p 1` for correctness.
 - Integrated coverage ≥ 80%, with `main.go` and `cache.evictOldest` > 0%.
 - `bin/` absent from the tree; `.git` < 5 MB after purge; binaries attached to the latest GitHub Release.
 - Root Apache-2.0 `LICENSE` present; README arg list matches `ReadArgs`.
@@ -229,14 +229,19 @@ main.go ─ orchestration, error aggregation, exit codes
 
 **Integrated coverage = 75.9%** (`go test ./... -coverpkg=./...`). Per-package, own-tests:
 
-| Package | Coverage | | Package | Coverage |
-|---|---|---|---|---|
-| `indent` | 100.0% | | `cli` | 75.8% |
-| `commentfilter` | 91.8% | | `fragmentation` | 68.8% |
-| `type` | 93.1% | | `parsing` | 42.1% * |
-| `embedding` | 86.5% | | `logging` | 21.8% |
-| `files` | 78.6% | | `configuration` | 0.0% (trivial) |
-| | | | `main` | 0.0% |
+| Package | Coverage (own tests) |
+|---|---|
+| `indent` | 100.0% |
+| `type` | 93.1% |
+| `commentfilter` | 91.8% |
+| `embedding` | 86.5% |
+| `files` | 78.6% |
+| `cli` | 75.8% |
+| `fragmentation` | 68.8% |
+| `parsing` | 42.1% * |
+| `logging` | 21.8% |
+| `configuration` | 0.0% (trivial) |
+| `main` | 0.0% |
 
 \* The parser is exercised mainly cross-package by `embedding`'s tests, so its true coverage is higher than the own-package figure.
 
@@ -251,4 +256,4 @@ panic: runtime error: slice bounds out of range [8:2]
 
 ---
 
-*Prepared with Claude Code. Analysis-only audit — no source code was modified in its production.*
+*Prepared with Claude Code. Analysis-only audit — no source code was modified in its preparation.*

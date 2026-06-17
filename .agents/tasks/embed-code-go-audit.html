@@ -25,7 +25,7 @@ code {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.85em; background: #f3f4f6; padding: .15em .35em; border-radius: 5px;
 }
-pre { background: #f6f8fa; border: 1px solid #e4e8 ; border-radius: 8px; padding: 14px 16px; overflow-x: auto; }
+pre { background: #f6f8fa; border: 1px solid #d8dee4; border-radius: 8px; padding: 14px 16px; overflow-x: auto; }
 pre code { background: none; padding: 0; font-size: 0.82rem; line-height: 1.45; }
 table { border-collapse: collapse; width: 100%; margin: 1.1em 0; font-size: 0.9rem; display: block; overflow-x: auto; }
 th, td { border: 1px solid #d0d7de; padding: 7px 11px; text-align: left; vertical-align: top; }
@@ -55,8 +55,8 @@ strong { font-weight: 650; }
 <table>
 <thead>
 <tr>
-<th></th>
-<th></th>
+<th scope="col">Field</th>
+<th scope="col">Value</th>
 </tr>
 </thead>
 <tbody>
@@ -103,8 +103,8 @@ strong { font-weight: 650; }
 <table>
 <thead>
 <tr>
-<th>Topic</th>
-<th>Decision</th>
+<th scope="col">Topic</th>
+<th scope="col">Decision</th>
 </tr>
 </thead>
 <tbody>
@@ -122,7 +122,7 @@ strong { font-weight: 650; }
 </tr>
 <tr>
 <td><strong>License</strong></td>
-<td><strong>Apache-2.0.</strong> (The current per-file "All rights reserved" headers do not grant external use, so a root <code>LICENSE</code> is now required.)</td>
+<td><strong>Apache-2.0.</strong> (The per-file headers are already a custom BSD-style <em>permissive</em> grant; the gap is the absence of a standard root license. Standardizing on Apache-2.0 gives external consumers clear, recognizable terms and an explicit patent grant.)</td>
 </tr>
 <tr>
 <td><strong>Comment-filter correctness</strong></td>
@@ -138,7 +138,7 @@ strong { font-weight: 650; }
 <hr />
 <h2 id="2-executive-summary">2. Executive summary</h2>
 <p><code>embed-code-go</code> is a mature, well-engineered Go CLI that injects source snippets into Markdown documentation (a Go rewrite of a Ruby <code>embed-code</code> utility) for Hugo-based docs. The architecture is clean and layered — a State-pattern line parser feeding a fragment resolver and per-language comment filter — and the project enforces an unusually strict 40-linter <code>golangci-lint</code> configuration in CI across Windows/macOS/Linux. It ships typed errors with clickable <code>file://</code> diagnostics and carries <strong>75.9% integrated test coverage</strong> with tests that assert real behavior rather than mere execution. The engineering bar is clearly above average.</p>
-<p>Three issues hold it back from an A. <strong>Top 3 risks:</strong> (1) a <strong>confirmed runtime panic</strong> in <code>indent.CutIndent</code> (<code>indent/indent.go:65</code>), reproduced from realistic input — a fragment containing a whitespace-only line shorter than the block's indentation; (2) a <strong>206 MB <code>.git</code></strong> caused by auto-committing three ~4.3 MB binaries to the tree on every <code>master</code> push via a deploy-key workflow that pushes directly to a protected branch; (3) a <strong>test suite that cannot run in parallel</strong> because it shares a mutable <code>../test/docs</code> directory and a process-global resolver cache, forcing a <code>-p 1</code> crutch. <strong>Top 3 opportunities:</strong> harden the core with a one-line guard plus fuzz tests (cheap, high payoff); move binary distribution to GitHub Releases and purge the binary history; refactor tests to per-test temp dirs and an injectable cache to unlock parallelism and lift orchestration coverage. There are <strong>no security findings of note</strong> and no hardcoded secrets. A newly-scoped workstream — tightening the heuristic comment filter for the nine target languages, beginning with a concrete Kotlin nested-block-comment defect — is the main correctness investment beyond the quick fixes.</p>
+<p>Three issues hold it back from an A. <strong>Top 3 risks:</strong> (1) a <strong>confirmed runtime panic</strong> in <code>indent.CutIndent</code> (<code>indent/indent.go:65</code>), reproduced from realistic input — a fragment containing a whitespace-only line shorter than the block's indentation; (2) a <strong>206 MB <code>.git</code></strong> caused by auto-committing three ~4.3 MB binaries to the tree on every <code>master</code> push via a deploy-key workflow that pushes directly to a protected branch; (3) the <strong>heuristic comment filter</strong> mishandles common language constructs — e.g. Kotlin's legal nested block comments (<code>marker_comment_filter.go:123-137</code>) — so it can silently emit incorrect snippets into published docs. <strong>Top 3 opportunities:</strong> harden the core with a one-line guard plus fuzz tests (cheap, high payoff); move binary distribution to GitHub Releases and purge the binary history; tighten test isolation (per-test temp dirs, an injectable cache) and cover the untested orchestration paths. There are <strong>no security findings of note</strong> and no hardcoded secrets. Beyond the quick fixes, the main correctness investment is the comment-filter workstream — hardening the nine target languages in the owner's priority order.</p>
 <hr />
 <h2 id="3-repo-map">3. Repo map</h2>
 <p><strong>Purpose.</strong> A CLI that (a) <strong>embeds</strong> named code fragments / pattern-matched line ranges from source files into <code>&lt;embed-code …&gt;</code> tags in Markdown, or (b) <strong>checks</strong> that already-embedded snippets are up-to-date. Built for TeamDev/SpineEventEngine's Hugo documentation sites (<code>README.md:6-8</code>).</p>
@@ -157,8 +157,8 @@ strong { font-weight: 650; }
 <table>
 <thead>
 <tr>
-<th>Directory</th>
-<th>One-line description</th>
+<th scope="col">Directory</th>
+<th scope="col">One-line description</th>
 </tr>
 </thead>
 <tbody>
@@ -241,11 +241,11 @@ strong { font-weight: 650; }
 <table>
 <thead>
 <tr>
-<th>#</th>
-<th>Language</th>
-<th>Current handling</th>
-<th>Concrete risk (<code>file:line</code>)</th>
-<th>Sev</th>
+<th scope="col">#</th>
+<th scope="col">Language</th>
+<th scope="col">Current handling</th>
+<th scope="col">Concrete risk (<code>file:line</code>)</th>
+<th scope="col">Sev</th>
 </tr>
 </thead>
 <tbody>
@@ -324,7 +324,7 @@ strong { font-weight: 650; }
 <li><strong>M — [Fact] Orchestration is 0% covered.</strong> All of <code>main.go</code> — <code>checkByConfigs</code>, <code>embedByConfigs</code>, <code>formatError</code>, <code>flattenedErrors</code>, <code>printFiles</code> (<code>main.go:82-242</code>) — is untested; the multi-config aggregation and error-flattening logic has no tests.</li>
 <li><strong>M — [Fact] Non-trivial logic untested.</strong> The LRU <code>evictOldest</code> (<code>cache.go:108-123</code>) is 0% — tests never exceed the 100-entry limit (<code>resolver.go:33</code>), so the eviction path is unexercised. Error-formatting paths <code>codeFileReference</code>/<code>unresolvedSourceError</code> (<code>resolver.go:213-256</code>) are also 0%.</li>
 <li><strong>M — [Fact] Parser's own-package coverage is 42.1%.</strong> State-transition files (<code>blank_line.go:43</code>, <code>start.go</code>, etc.) are exercised only cross-package by <code>embedding</code>'s tests, so the parser is less directly tested than it appears. <code>configuration</code> has no test file (0%, but trivial).</li>
-<li><strong>M — [Fact] Shared mutable state forces <code>-p 1</code>.</strong> <code>embedding_test.go:39</code> uses a shared relative <code>../test/docs</code> dir (created/removed per spec, <code>:61,65</code>); the resolver cache is a process global cleared manually (<code>fragmentation_test.go:52</code>). CI works around this with <code>go test -p 1</code> (<code>check.yml:31-33</code>).</li>
+<li><strong>M — [Fact] Test-isolation smells (not a proven <code>-p 1</code> cause).</strong> <code>embedding_test.go:39</code> reuses one relative <code>../test/docs</code> dir across specs (created/removed per spec, <code>:61,65</code>), and the resolver cache is a process global cleared manually (<code>fragmentation_test.go:52</code>). Both are package-local — <code>go test -p</code> governs <em>cross-package</em> parallelism, and no shared writable path crosses packages — so they do not by themselves require the <code>go test -p 1</code> CI uses (<code>check.yml:31-33</code>); the exact reason for <code>-p 1</code> is not evident from the code. Isolating fixtures to per-test temp dirs and injecting the cache is still worthwhile for robustness and intra-package parallelism.</li>
 </ul>
 <h3 id="46-performance">4.6 Performance</h3>
 <ul>
@@ -343,18 +343,18 @@ strong { font-weight: 650; }
 <h3 id="49-documentation">4.9 Documentation</h3>
 <ul>
 <li><strong>L — [Fact] README arg list incomplete.</strong> The "Arguments" section (<code>README.md:57-63</code>) omits the <code>-doc-excludes</code>, <code>-info</code>, and <code>-stacktrace</code> flags that <code>ReadArgs</code> defines (<code>cli.go:128-138</code>).</li>
-<li><strong>Required — [Fact] No top-level LICENSE.</strong> License terms live only in per-file headers ("All rights reserved" + BSD-style disclaimer). With external distribution decided, a root <strong>Apache-2.0</strong> <code>LICENSE</code> (and consistent headers) is now a required deliverable.</li>
+<li><strong>Required — [Fact] No top-level LICENSE.</strong> Today the terms are a custom BSD-style <em>permissive</em> grant embedded in per-file headers (the "All rights reserved" wording notwithstanding, redistribution/use is granted provided the notice is retained); there is no root <code>LICENSE</code> file. With external distribution decided, standardizing on a root <strong>Apache-2.0</strong> <code>LICENSE</code> (and reconciled headers) is now a required deliverable.</li>
 </ul>
 <hr />
 <h2 id="5-improvement-strategy">5. Improvement strategy</h2>
 <p><strong>Theme 1 — Harden the core against real-world input.</strong> A confirmed panic and a few missing guards sit in the hot path (<code>indent</code>, <code>pattern</code>, <code>context</code>), and the comment filter mishandles common constructs in the target languages. <em>Target state:</em> core string/slice operations never panic on valid files; per-language comment/string handling is correct for the nine priority languages, proven by a golden-file corpus. <em>Principle:</em> a documentation tool must fail with a diagnostic, never a stack trace, and must never silently corrupt an embedded snippet. <em>Trade-off:</em> the comment-filter work is the larger effort; sequence it by the owner's priority order and stop when payoff tapers.</p>
 <p><strong>Theme 2 — Stop shipping binaries through git.</strong> The single largest hygiene problem is operational. <em>Target state:</em> binaries distributed via GitHub Releases on tag; <code>bin/</code> removed from the tree; the binary history purged; the deploy-key auto-commit workflow retired. <em>Principle:</em> build artifacts don't belong in source history. <em>Trade-off:</em> consumers fetch from Releases instead of cloning binaries (a documented change); the history purge is destructive and must be scheduled with branch-protection coordination.</p>
-<p><strong>Theme 3 — Make the test suite isolated and parallel-safe.</strong> <code>-p 1</code> is a symptom of shared mutable state. <em>Target state:</em> each test uses <code>t.TempDir()</code>/<code>os.MkdirTemp</code>; the resolver cache is injected or deterministically reset; <code>-p 1</code> removed. <em>Principle:</em> tests own their state.</p>
+<p><strong>Theme 3 — Make the test suite isolated and parallel-safe.</strong> Shared mutable test state (a reused <code>../test/docs</code>, a process-global cache) is a robustness smell, and CI currently serializes packages with <code>-p 1</code>. <em>Target state:</em> each test uses <code>t.TempDir()</code>/<code>os.MkdirTemp</code>; the resolver cache is injected or deterministically reset; the suite is verified safe without relying on <code>-p 1</code>. <em>Principle:</em> tests own their state.</p>
 <p><strong>Theme 4 — Close coverage gaps in orchestration and error paths.</strong> <em>Target state:</em> <code>main.go</code> aggregation, cache eviction, and error formatters are unit-tested; duplicated error-formatting logic is unified. <em>Principle:</em> the code that runs only on failure is the code you most need tested.</p>
 <p><strong>Theme 5 — Be a credible external dependency.</strong> <em>Target state:</em> root Apache-2.0 <code>LICENSE</code>, accurate README, versioned Releases with attached binaries. <em>Principle:</em> external consumers judge a tool by its packaging and docs as much as its code.</p>
 <p><strong>Definition of done (measurable signals):</strong>
 - Zero High findings; fuzz tests for <code>indent</code>/<code>pattern</code> run in CI with zero crashes.
-- <code>go test ./...</code> passes <strong>without <code>-p 1</code></strong>.
+- Test fixtures are isolated per test; the suite is verified not to rely on <code>-p 1</code> for correctness.
 - Integrated coverage ≥ 80%, with <code>main.go</code> and <code>cache.evictOldest</code> &gt; 0%.
 - <code>bin/</code> absent from the tree; <code>.git</code> &lt; 5 MB after purge; binaries attached to the latest GitHub Release.
 - Root Apache-2.0 <code>LICENSE</code> present; README arg list matches <code>ReadArgs</code>.
@@ -373,13 +373,13 @@ strong { font-weight: 650; }
 <table>
 <thead>
 <tr>
-<th>ID</th>
-<th>Title</th>
-<th>Files</th>
-<th>Acceptance criteria</th>
-<th>Effort</th>
-<th>Change risk</th>
-<th>Deps</th>
+<th scope="col">ID</th>
+<th scope="col">Title</th>
+<th scope="col">Files</th>
+<th scope="col">Acceptance criteria</th>
+<th scope="col">Effort</th>
+<th scope="col">Change risk</th>
+<th scope="col">Deps</th>
 </tr>
 </thead>
 <tbody>
@@ -566,53 +566,52 @@ strong { font-weight: 650; }
 <table>
 <thead>
 <tr>
-<th>Package</th>
-<th>Coverage</th>
-<th></th>
-<th>Package</th>
-<th>Coverage</th>
+<th scope="col">Package</th>
+<th scope="col">Coverage (own tests)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>indent</code></td>
 <td>100.0%</td>
-<td></td>
-<td><code>cli</code></td>
-<td>75.8%</td>
-</tr>
-<tr>
-<td><code>commentfilter</code></td>
-<td>91.8%</td>
-<td></td>
-<td><code>fragmentation</code></td>
-<td>68.8%</td>
 </tr>
 <tr>
 <td><code>type</code></td>
 <td>93.1%</td>
-<td></td>
-<td><code>parsing</code></td>
-<td>42.1% *</td>
+</tr>
+<tr>
+<td><code>commentfilter</code></td>
+<td>91.8%</td>
 </tr>
 <tr>
 <td><code>embedding</code></td>
 <td>86.5%</td>
-<td></td>
-<td><code>logging</code></td>
-<td>21.8%</td>
 </tr>
 <tr>
 <td><code>files</code></td>
 <td>78.6%</td>
-<td></td>
+</tr>
+<tr>
+<td><code>cli</code></td>
+<td>75.8%</td>
+</tr>
+<tr>
+<td><code>fragmentation</code></td>
+<td>68.8%</td>
+</tr>
+<tr>
+<td><code>parsing</code></td>
+<td>42.1% *</td>
+</tr>
+<tr>
+<td><code>logging</code></td>
+<td>21.8%</td>
+</tr>
+<tr>
 <td><code>configuration</code></td>
 <td>0.0% (trivial)</td>
 </tr>
 <tr>
-<td></td>
-<td></td>
-<td></td>
 <td><code>main</code></td>
 <td>0.0%</td>
 </tr>
@@ -626,6 +625,6 @@ panic: runtime error: slice bounds out of range [8:2]
 </code></pre>
 <p><strong>Repository bloat:</strong> <code>.git</code> = 206 MB; 23 "Update binaries" commits; <code>bin/</code> = three binaries ~4.3 MB each.</p>
 <hr />
-<p><em>Prepared with Claude Code. Analysis-only audit — no source code was modified in its production.</em></p>
+<p><em>Prepared with Claude Code. Analysis-only audit — no source code was modified in its preparation.</em></p>
 </body>
 </html>
