@@ -81,8 +81,9 @@ first function that exposes the symptom.
 - `indent/`: shared indentation measurement and removal.
 - `logging/`: `slog` handler, clickable file references, panic reporting, and
   terminal formatting support.
-- `type/`: YAML-compatible string and named-path list types. Preserve this
-  existing package name even though it is unusual.
+- `type/`: YAML-compatible string and named-path list types. The import path
+  segment is `type`, but the Go package identifier is `_type` because `type` is
+  a Go keyword.
 - `test/resources/`: parser, embedding, configuration, and source-code fixtures.
 
 ## Parser And Embedding Rules
