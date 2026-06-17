@@ -379,6 +379,20 @@ var _ = Describe("Instruction", func() {
 		}))
 	})
 
+	It("should preserve UTF-8 after trimming spaces following a line separator", func() {
+		instructionParams := TestInstructionParams{
+			lineGlob: "^Use \\* to multiply$ \\n żółć$",
+		}
+
+		actualLines := getXMLExtractionContent(
+			"literal-patterns.txt", instructionParams, config)
+
+		Expect(actualLines).Should(Equal([]string{
+			"Use * to multiply",
+			"żółć",
+		}))
+	})
+
 	It("should successfully parse XML by only end glob", func() {
 		instructionParams := TestInstructionParams{
 			endGlob: "package*",

@@ -167,8 +167,8 @@ func splitPatternLines(sourceGlob string) []string {
 			r, size := utf8.DecodeRuneInString(remaining)
 			if !unicode.IsSpace(r) {
 				trimLeft = false
-				line.WriteByte(sourceGlob[cursor])
-				cursor++
+				line.WriteString(sourceGlob[cursor : cursor+size])
+				cursor += size
 
 				continue
 			}
