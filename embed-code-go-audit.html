@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>embed-code-go — Technical Audit (2026-06-17)</title>
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.55; color: #1f2328; background: #ffffff;
+  max-width: 920px; margin: 0 auto; padding: 48px 28px 80px;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { line-height: 1.25; font-weight: 650; margin-top: 1.6em; }
+h1 { font-size: 1.9rem; border-bottom: 2px solid #d0d7de; padding-bottom: .3em; margin-top: 0; }
+h2 { font-size: 1.4rem; border-bottom: 1px solid #d8dee4; padding-bottom: .25em; }
+h3 { font-size: 1.12rem; }
+h4 { font-size: 1rem; color: #424a53; }
+a { color: #0969da; text-decoration: none; }
+a:hover { text-decoration: underline; }
+p, li { font-size: 0.96rem; }
+code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85em; background: #f3f4f6; padding: .15em .35em; border-radius: 5px;
+}
+pre { background: #f6f8fa; border: 1px solid #e4e8 ; border-radius: 8px; padding: 14px 16px; overflow-x: auto; }
+pre code { background: none; padding: 0; font-size: 0.82rem; line-height: 1.45; }
+table { border-collapse: collapse; width: 100%; margin: 1.1em 0; font-size: 0.9rem; display: block; overflow-x: auto; }
+th, td { border: 1px solid #d0d7de; padding: 7px 11px; text-align: left; vertical-align: top; }
+th { background: #f6f8fa; font-weight: 650; }
+tr:nth-child(even) td { background: #fbfcfd; }
+blockquote { border-left: 4px solid #d0d7de; margin: 1em 0; padding: .2em 1em; color: #57606a; }
+hr { border: 0; border-top: 1px solid #d8dee4; margin: 2em 0; }
+strong { font-weight: 650; }
+.banner {
+  background: linear-gradient(135deg,#0969da0d,#1f883d0d); border: 1px solid #d0d7de;
+  border-radius: 10px; padding: 10px 16px; margin: 0 0 8px; font-size: .85rem; color: #57606a;
+}
+@media print { body { max-width: none; padding: 0; } a { color: #1f2328; } pre, table { page-break-inside: avoid; } }
+@media (prefers-color-scheme: dark) {
+  body { background: #0d1117; color: #e6edf3; }
+  th { background: #161b22; } tr:nth-child(even) td { background: #0f141a; }
+  th, td, hr, h1, h2 { border-color: #30363d; }
+  code { background: #161b22; } pre { background: #161b22; border-color: #30363d; }
+  a { color: #4493f8; } blockquote { color: #9198a1; border-color:#30363d; }
+  .banner { background:#161b22; border-color:#30363d; }
+}
+</style>
+</head>
+<body>
+<div class="banner">Standalone audit report · open in any browser · use your browser's “Print → Save as PDF” to export</div>
+<h1 id="technical-audit-improvement-plan-embed-code-go">Technical Audit &amp; Improvement Plan — <code>embed-code-go</code></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Repository</strong></td>
+<td><code>SpineEventEngine/embed-code-go</code></td>
+</tr>
+<tr>
+<td><strong>Audit date</strong></td>
+<td>2026-06-17</td>
+</tr>
+<tr>
+<td><strong>Scope</strong></td>
+<td>Full-repository audit. Analysis only — no source code was modified.</td>
+</tr>
+<tr>
+<td><strong>Method</strong></td>
+<td>Every source file read; build, <code>go vet</code>, and the full test suite run; coverage measured; the headline correctness bug reproduced from a verbatim copy of the affected functions.</td>
+</tr>
+<tr>
+<td><strong>Citations</strong></td>
+<td>Findings cite <code>file:line</code>. Each is labeled <strong>[Fact]</strong> (verifiable in code / reproduced) or <strong>[Judgment]</strong> (design opinion).</td>
+</tr>
+<tr>
+<td><strong>Overall grade</strong></td>
+<td><strong>B+ (Good)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="table-of-contents">Table of contents</h2>
+<ol>
+<li><a href="#1-decisions-taken-owner-sign-off">Decisions taken (owner sign-off)</a></li>
+<li><a href="#2-executive-summary">Executive summary</a></li>
+<li><a href="#3-repo-map">Repo map</a></li>
+<li><a href="#4-audit-report">Audit report</a></li>
+<li><a href="#5-improvement-strategy">Improvement strategy</a></li>
+<li><a href="#6-task-plan">Task plan</a></li>
+<li><a href="#7-appendix--evidence">Appendix — evidence</a></li>
+</ol>
+<hr />
+<h2 id="1-decisions-taken-owner-sign-off">1. Decisions taken (owner sign-off)</h2>
+<p>These were open questions in the original audit; the product owner has since resolved them. They are now constraints on the plan.</p>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Binary distribution</strong></td>
+<td>Move from committed <code>bin/</code> to <strong>GitHub Releases</strong>.</td>
+</tr>
+<tr>
+<td><strong>Repository history</strong></td>
+<td><strong>Purge the entire <code>bin/</code> history</strong> to reclaim space (accepts a destructive, repo-wide rewrite).</td>
+</tr>
+<tr>
+<td><strong>Audience</strong></td>
+<td>The tool <strong>will be consumed by external teams</strong> (not internal-only).</td>
+</tr>
+<tr>
+<td><strong>License</strong></td>
+<td><strong>Apache-2.0.</strong> (The current per-file "All rights reserved" headers do not grant external use, so a root <code>LICENSE</code> is now required.)</td>
+</tr>
+<tr>
+<td><strong>Comment-filter correctness</strong></td>
+<td>Reliable behavior is <strong>desired for these languages, in priority order:</strong> Kotlin → Java → TypeScript → JavaScript → C# → C++ → Python → Go → Visual Basic.</td>
+</tr>
+<tr>
+<td><strong><code>check</code> output contract</strong></td>
+<td><strong>No</strong> downstream pipeline depends on <code>check</code> stdout/exit format — a refactor may change it freely.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>One coordination item remains:</strong> the history purge (task <strong>M2-1b</strong>) requires temporarily lifting <code>master</code> branch protection and a maintainer-performed force-push. It is <em>not</em> normal feature work and should be scheduled deliberately.</p>
+<hr />
+<h2 id="2-executive-summary">2. Executive summary</h2>
+<p><code>embed-code-go</code> is a mature, well-engineered Go CLI that injects source snippets into Markdown documentation (a Go rewrite of a Ruby <code>embed-code</code> utility) for Hugo-based docs. The architecture is clean and layered — a State-pattern line parser feeding a fragment resolver and per-language comment filter — and the project enforces an unusually strict 40-linter <code>golangci-lint</code> configuration in CI across Windows/macOS/Linux. It ships typed errors with clickable <code>file://</code> diagnostics and carries <strong>75.9% integrated test coverage</strong> with tests that assert real behavior rather than mere execution. The engineering bar is clearly above average.</p>
+<p>Three issues hold it back from an A. <strong>Top 3 risks:</strong> (1) a <strong>confirmed runtime panic</strong> in <code>indent.CutIndent</code> (<code>indent/indent.go:65</code>), reproduced from realistic input — a fragment containing a whitespace-only line shorter than the block's indentation; (2) a <strong>206 MB <code>.git</code></strong> caused by auto-committing three ~4.3 MB binaries to the tree on every <code>master</code> push via a deploy-key workflow that pushes directly to a protected branch; (3) a <strong>test suite that cannot run in parallel</strong> because it shares a mutable <code>../test/docs</code> directory and a process-global resolver cache, forcing a <code>-p 1</code> crutch. <strong>Top 3 opportunities:</strong> harden the core with a one-line guard plus fuzz tests (cheap, high payoff); move binary distribution to GitHub Releases and purge the binary history; refactor tests to per-test temp dirs and an injectable cache to unlock parallelism and lift orchestration coverage. There are <strong>no security findings of note</strong> and no hardcoded secrets. A newly-scoped workstream — tightening the heuristic comment filter for the nine target languages, beginning with a concrete Kotlin nested-block-comment defect — is the main correctness investment beyond the quick fixes.</p>
+<hr />
+<h2 id="3-repo-map">3. Repo map</h2>
+<p><strong>Purpose.</strong> A CLI that (a) <strong>embeds</strong> named code fragments / pattern-matched line ranges from source files into <code>&lt;embed-code …&gt;</code> tags in Markdown, or (b) <strong>checks</strong> that already-embedded snippets are up-to-date. Built for TeamDev/SpineEventEngine's Hugo documentation sites (<code>README.md:6-8</code>).</p>
+<p><strong>Stack &amp; maturity.</strong> Go 1.22.1 (<code>go.mod:21</code>), version 1.2.2 (<code>main.go:33</code>). 38 Go files, ~7,856 lines (~5,400 non-test). Dependencies: <code>doublestar</code> (globbing), <code>gobwas/glob</code> (patterns), <code>yaml.v3</code>, Ginkgo/Gomega (tests). 345 commits over two years, primarily one author. <strong>Maturity: established internal product</strong>, not a prototype — and now headed for external distribution.</p>
+<p><strong>Control flow.</strong></p>
+<pre><code>main.go ─ orchestration, error aggregation, exit codes
+  └─ cli/ ─────────── arg + YAML parsing → Config; validation; build []Configuration
+       └─ embedding/ ─ EmbedAll / CheckUpToDate; one Processor per doc file
+            └─ parsing/ ─ State-machine parser (Start→…→Finish) over doc lines
+                 │         Instruction (the &lt;embed-code&gt; tag) extracts content via:
+                 ├─ fragmentation/ ─ split source into #docfragment regions; LRU cache
+                 ├─ commentfilter/ ─ strip/keep comments per language &amp; mode
+                 └─ indent/ ──────── compute &amp; cut common indentation
+  shared: configuration/ (settings), files/ (fs helpers), type/ (YAML list types), logging/
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>One-line description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main.go</code></td>
+<td>Entry point; mode dispatch; multi-config aggregation; error formatting</td>
+</tr>
+<tr>
+<td><code>cli/</code></td>
+<td><code>Config</code> struct (doubles as CLI args + YAML schema), flag/file parsing, validation</td>
+</tr>
+<tr>
+<td><code>configuration/</code></td>
+<td><code>Configuration</code> value object + defaults</td>
+</tr>
+<tr>
+<td><code>embedding/</code></td>
+<td><code>Processor</code> (per-doc) + <code>EmbedAll</code>/<code>CheckUpToDate</code> orchestration</td>
+</tr>
+<tr>
+<td><code>embedding/parsing/</code></td>
+<td>State-pattern parser; <code>Instruction</code>; <code>Pattern</code> (glob); XML tag parsing</td>
+</tr>
+<tr>
+<td><code>embedding/commentfilter/</code></td>
+<td>Per-language comment stripping (Java/Go/Python/VB/XML/…)</td>
+</tr>
+<tr>
+<td><code>fragmentation/</code></td>
+<td><code>#docfragment</code> extraction, partitions, generic LRU <code>cache</code></td>
+</tr>
+<tr>
+<td><code>indent/</code></td>
+<td>Common-indentation detection and trimming</td>
+</tr>
+<tr>
+<td><code>files/</code>, <code>type/</code>, <code>logging/</code></td>
+<td>FS existence checks; YAML list unmarshalers; slog handler + <code>file://</code> refs</td>
+</tr>
+<tr>
+<td><code>test/resources/</code></td>
+<td>Java/Kotlin code + Markdown + YAML fixtures</td>
+</tr>
+<tr>
+<td><code>bin/</code></td>
+<td><strong>Committed</strong> linux/macos/windows binaries (~13 MB) — <em>to be removed</em></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Surprises (all [Fact]):</strong> (1) the three platform binaries are committed <em>and re-committed by CI on every master push</em> (<code>.github/workflows/build_binaries.yml:57-63</code>), inflating <code>.git</code> to 206 MB; (2) <code>logging/logger.go:31</code> imports the legacy <code>golang.org/x/net/context</code> shim instead of stdlib <code>context</code>; (3) <code>fragmentation/partition.go:77-88</code> uses <code>panic</code>/<code>recover</code> for an array-bounds check a single <code>if</code> would handle.</p>
+<hr />
+<h2 id="4-audit-report">4. Audit report</h2>
+<h3 id="40-strengths-preserve-these">4.0 Strengths (preserve these)</h3>
+<ul>
+<li><strong>[Fact] Enforced quality gate.</strong> <code>.golangci.yml</code> enables ~40 linters including <code>gosec</code>, <code>gocyclo</code>, <code>gocognit</code>, <code>cyclop</code>, <code>funlen</code>, <code>errorlint</code>, <code>varnamelen</code>; CI runs it on every PR across three OSes (<code>check.yml:24-33</code>).</li>
+<li><strong>[Fact] Behavior-asserting tests, 75.9% integrated coverage.</strong> <code>commentfilter</code> 91.8%, <code>embedding</code> 86.5%, <code>type</code> 93.1%, <code>indent</code> 100% (own-package). Tests check exact output lines, not just non-error.</li>
+<li><strong>[Judgment] Clean, extensible parser.</strong> The <code>State</code> interface (<code>state.go:26-43</code>) + declarative <code>Transitions</code> map (<code>constants.go:34-53</code>) is readable and open for extension. No circular dependencies (Go enforces this).</li>
+<li><strong>[Fact] Good diagnostics &amp; typed errors.</strong> <code>PatternNotFoundError</code>, <code>MissingCodeFenceError</code>, etc. matched via <code>errors.As</code> (<code>processor.go:301-323</code>) and rendered as clickable <code>file://…:line</code> references (<code>logging/logger.go:99-117</code>).</li>
+<li><strong>[Fact] Clean security posture.</strong> No secrets, no <code>TODO/FIXME</code>, no XXE (Go's <code>encoding/xml</code> resolves no external entities), no injection sinks.</li>
+</ul>
+<h3 id="41-architecture-design">4.1 Architecture &amp; design</h3>
+<ul>
+<li><strong>M — [Judgment] <code>processor.go</code> mixes two responsibilities.</strong> It holds both the per-file <code>Processor</code> (<code>processor.go:44-186</code>) and the file-set orchestration <code>EmbedAll</code>/<code>CheckUpToDate</code>/<code>requiredDocs</code>/glob helpers (<code>processor.go:188-463</code>). Splitting discovery/orchestration from single-file processing improves cohesion.</li>
+<li><strong>L — [Judgment] <code>cli.Config</code> is overloaded.</strong> One struct serves as CLI-arg holder, YAML schema (<code>cli.go:64-75</code>), and carries <code>Mode</code>/<code>ConfigPath</code>. Pragmatic but couples three concerns.</li>
+<li><strong>L — [Fact] Pointless wrapper.</strong> <code>EmbedCodeSamplesResult</code> (<code>cli.go:90-92</code>) embeds <code>embedding.EmbedAllResult</code> with no added behavior; <code>CheckCodeSamples</code>/<code>EmbedCodeSamples</code> (<code>cli.go:102-118</code>) are thin pass-throughs.</li>
+</ul>
+<h3 id="42-code-quality">4.2 Code quality</h3>
+<ul>
+<li><strong>H — [Fact, reproduced] Latent panic in <code>indent.CutIndent</code>.</strong> <code>linesChanged[i] = line[redundantSpaces:]</code> (<code>indent/indent.go:65</code>) lacks a guard that <code>len(line) &gt;= redundantSpaces</code>. <code>MaxCommonIndentation</code> (<code>indent.go:34</code>) ignores whitespace-only lines when computing the minimum, so a fragment with an 8-space code line and a 2-space blank line yields <code>redundantSpaces=8</code> applied to the length-2 line. Reproduced verbatim: <code>panic: runtime error: slice bounds out of range [8:2]</code>. Reachable via <code>fragment.text</code> (<code>fragment.go:72</code>) and <code>instruction.matchingLines</code> (<code>instruction.go:252,263,289</code>). Trailing-whitespace blank lines inside indented blocks are common, so this crashes the tool on realistic input (recovered only to a stack-trace exit via <code>HandlePanic</code>).</li>
+<li><strong>M — [Fact] Double file read + dead branch in encoding check.</strong> <code>IsEncodedAsText</code> (<code>encoding.go:31-42</code>) reads the whole file via <code>os.ReadFile</code>, then <code>DoFragmentation</code> reads it again with a scanner (<code>fragmentation.go:103-117</code>). <code>areASCIIEncoded</code> (<code>encoding.go:47-55</code>) is fully redundant: ASCII ⊂ UTF-8, so <code>utf8.Valid</code> already covers it.</li>
+<li><strong>M — [Fact] Duplicated joined-error formatting.</strong> <code>main.go:138-170</code> (<code>formatError</code>/<code>flattenedErrors</code>) and <code>logging/logger.go:173-195</code> (<code>formatPanicMessage</code>) independently implement the same "unwrap <code>errors.Join</code> into a bullet list" logic.</li>
+<li><strong>M — [Fact] Write-only / dead fields.</strong> <code>Fragmentation.Configuration</code> (set <code>fragmentation.go:90</code>, never read) and <code>Fragmentation.SourcesRoot</code> (set <code>:78</code>, never read) are dead; <code>_, err := filepath.Abs(codeRoot.Path)</code> (<code>:79</code>) computes a value only to discard it. <code>resolver.go:184</code> passes an empty <code>config.Configuration{}</code> precisely because the field is unused. The <code>unused</code> linter misses these because the fields are <em>written</em>.</li>
+<li><strong>L — [Fact] <code>panic</code>/<code>recover</code> for bounds checking.</strong> <code>safeAccess</code> (<code>partition.go:77-88</code>) uses <code>recover()</code> where <code>index &gt;= 0 &amp;&amp; index &lt; len(slice)</code> suffices.</li>
+<li><strong>L — [Fact] Swallowed <code>Close()</code> error.</strong> <code>DoFragmentation</code>'s deferred <code>err = file.Close()</code> (<code>fragmentation.go:108-110</code>) assigns to a non-named return after the value is computed; the close error is dropped.</li>
+<li><strong>L — [Fact] Dead defensive branch.</strong> <code>Pattern.Match</code> recompiles the glob when <code>p.matcher == nil</code> (<code>pattern.go:111-113</code>), but <code>NewPattern</code> always sets <code>matcher</code>.</li>
+<li><strong>L — [Judgment] Missing defensive length guard.</strong> <code>IsContentChanged</code> (<code>context.go:136-144</code>) indexes <code>c.Result[i]</code> up to <code>c.lineIndex</code> (= <code>len(source)</code>), relying on an early content mismatch to avoid an out-of-bounds read when an embedding shrinks the file. Holds in practice but is fragile.</li>
+</ul>
+<h3 id="43-comment-filter-reliability-new-workstream-see-decisions">4.3 Comment-filter reliability <em>(new workstream — see Decisions)</em></h3>
+<p>[Judgment] Root cause: <code>commentfilter</code> is a single-pass byte/marker scanner (<code>marker_comment_filter.go</code>) with <strong>no per-language lexer and no cross-line string state</strong> — only <em>block-comment</em> state persists across lines (<code>marker_comment_filter.go:65-77</code>). This yields concrete, language-specific defects, listed in the owner's priority order:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Language</th>
+<th>Current handling</th>
+<th>Concrete risk (<code>file:line</code>)</th>
+<th>Sev</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Kotlin</strong></td>
+<td>C-style markers, all modes</td>
+<td><strong>[Fact] Nested block comments <code>/* /* */ */</code> unsupported</strong> — <code>consumeActiveBlock</code> ends at the <em>first</em> <code>*/</code> (<code>marker_comment_filter.go:123-137</code>); no depth counter. String templates <code>"${…}"</code> / raw <code>"""…"""</code> treated as plain quotes.</td>
+<td>High</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Java</td>
+<td>C-style, all</td>
+<td>Text blocks <code>"""…"""</code> (Java 15+) not modeled.</td>
+<td>Med</td>
+</tr>
+<tr>
+<td>3</td>
+<td>TypeScript</td>
+<td>JS, all</td>
+<td>Template literals with <code>${…}</code> interpolation and regex literals confuse the scanner; backtick handled as a plain quote (<code>config.go:25</code>).</td>
+<td>Med-High</td>
+</tr>
+<tr>
+<td>4</td>
+<td>JavaScript</td>
+<td>JS, all</td>
+<td>Same template-literal / regex caveats.</td>
+<td>Med-High</td>
+</tr>
+<tr>
+<td>5</td>
+<td>C#</td>
+<td>C#, all</td>
+<td>Verbatim <code>@"…"</code> (doubled-quote escaping) and interpolated <code>$"…"</code> mis-scanned — scanner assumes <code>\</code> escaping (<code>marker_comment_filter.go:162</code>).</td>
+<td>Med-High</td>
+</tr>
+<tr>
+<td>6</td>
+<td>C++</td>
+<td>C-style, regular</td>
+<td>Raw string literals <code>R"(…)"</code> not handled.</td>
+<td>Med</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Python</td>
+<td>hash, none/all</td>
+<td><strong>Triple-quoted strings spanning lines not tracked</strong> (no cross-line string state) → a <code>#</code> on a docstring continuation line is wrongly stripped.</td>
+<td>Med-High</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Go</td>
+<td>Go, regular</td>
+<td>Raw strings (backticks, no <code>\</code> escaping) slightly mismodeled.</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Visual Basic</td>
+<td>VB filter, doc modes</td>
+<td><code>""</code>-doubled string escaping not handled (<code>visual_basic.go:57</code>).</td>
+<td>Low</td>
+</tr>
+</tbody>
+</table>
+<p><em>All nine languages are already registered (<code>config.go:29-82</code>); the issue is robustness, not coverage.</em> Fix strategy: targeted patches (nested-block depth counter for #1/#2; cross-line string state for #7; verbatim/interpolated handling for #5; template-literal handling for #3/#4) rather than full lexers.</p>
+<h3 id="44-security">4.4 Security</h3>
+<ul>
+<li><strong>[Judgment] Healthy.</strong> One informational item only: an embedding's <code>file="…"</code> attribute is <code>filepath.Join</code>-ed onto the code root (<code>resolver.go:173</code>) with no containment check, so <code>file="../../secret"</code> would escape the root. Threat model is local, trusted, self-authored docs → <strong>informational/Low</strong>, not a real boundary.</li>
+</ul>
+<h3 id="45-testing">4.5 Testing</h3>
+<ul>
+<li><strong>M — [Fact] Orchestration is 0% covered.</strong> All of <code>main.go</code> — <code>checkByConfigs</code>, <code>embedByConfigs</code>, <code>formatError</code>, <code>flattenedErrors</code>, <code>printFiles</code> (<code>main.go:82-242</code>) — is untested; the multi-config aggregation and error-flattening logic has no tests.</li>
+<li><strong>M — [Fact] Non-trivial logic untested.</strong> The LRU <code>evictOldest</code> (<code>cache.go:108-123</code>) is 0% — tests never exceed the 100-entry limit (<code>resolver.go:33</code>), so the eviction path is unexercised. Error-formatting paths <code>codeFileReference</code>/<code>unresolvedSourceError</code> (<code>resolver.go:213-256</code>) are also 0%.</li>
+<li><strong>M — [Fact] Parser's own-package coverage is 42.1%.</strong> State-transition files (<code>blank_line.go:43</code>, <code>start.go</code>, etc.) are exercised only cross-package by <code>embedding</code>'s tests, so the parser is less directly tested than it appears. <code>configuration</code> has no test file (0%, but trivial).</li>
+<li><strong>M — [Fact] Shared mutable state forces <code>-p 1</code>.</strong> <code>embedding_test.go:39</code> uses a shared relative <code>../test/docs</code> dir (created/removed per spec, <code>:61,65</code>); the resolver cache is a process global cleared manually (<code>fragmentation_test.go:52</code>). CI works around this with <code>go test -p 1</code> (<code>check.yml:31-33</code>).</li>
+</ul>
+<h3 id="46-performance">4.6 Performance</h3>
+<ul>
+<li><strong>[Judgment] A non-issue for the workload.</strong> All in-memory over small files; no DB, network, or concurrency. Only items: the double-read/redundant-ASCII check (4.2) and an O(N²) <code>slices.Contains(p.requiredDocPaths, …)</code> per doc (<code>processor.go:106,142,165</code>) — negligible at realistic doc counts.</li>
+</ul>
+<h3 id="47-dependencies">4.7 Dependencies</h3>
+<ul>
+<li><strong>L — [Fact] Legacy shim.</strong> <code>golang.org/x/net/context</code> (<code>logging/logger.go:31</code>) is a pre-Go-1.7 relic; stdlib <code>context</code> is a drop-in replacement and removes a direct reason to pull <code>golang.org/x/net</code>.</li>
+<li><strong>L — [Fact] Behind latest, no known CVEs.</strong> <code>doublestar v4.6.1→4.10.0</code>, <code>ginkgo 2.20→2.31</code>, <code>gomega 1.34→1.42</code>, <code>glob v0.2.3</code> (2018, unmaintained but stable). <code>go.sum</code> clean; <code>-mod=readonly</code> enforced.</li>
+</ul>
+<h3 id="48-devex-operations">4.8 DevEx &amp; operations</h3>
+<ul>
+<li><strong>H — [Fact] 206 MB <code>.git</code> from committed binaries.</strong> <code>bin/</code> holds three ~4.3 MB binaries, and <code>build_binaries.yml:57-63</code> rebuilds and commits them to <code>master</code> on every push (23 "Update binaries" commits). A fresh clone pulls 206 MB for &lt;1 MB of source. The workflow uses a deploy key (<code>build_binaries.yml:27-37</code>) to push directly to a protected branch — unusual and fragile.</li>
+<li><strong>L — [Fact] Hand-maintained version.</strong> <code>const Version = "1.2.2"</code> (<code>main.go:33</code>) is decoupled from any git tag and must be bumped manually.</li>
+</ul>
+<h3 id="49-documentation">4.9 Documentation</h3>
+<ul>
+<li><strong>L — [Fact] README arg list incomplete.</strong> The "Arguments" section (<code>README.md:57-63</code>) omits the <code>-doc-excludes</code>, <code>-info</code>, and <code>-stacktrace</code> flags that <code>ReadArgs</code> defines (<code>cli.go:128-138</code>).</li>
+<li><strong>Required — [Fact] No top-level LICENSE.</strong> License terms live only in per-file headers ("All rights reserved" + BSD-style disclaimer). With external distribution decided, a root <strong>Apache-2.0</strong> <code>LICENSE</code> (and consistent headers) is now a required deliverable.</li>
+</ul>
+<hr />
+<h2 id="5-improvement-strategy">5. Improvement strategy</h2>
+<p><strong>Theme 1 — Harden the core against real-world input.</strong> A confirmed panic and a few missing guards sit in the hot path (<code>indent</code>, <code>pattern</code>, <code>context</code>), and the comment filter mishandles common constructs in the target languages. <em>Target state:</em> core string/slice operations never panic on valid files; per-language comment/string handling is correct for the nine priority languages, proven by a golden-file corpus. <em>Principle:</em> a documentation tool must fail with a diagnostic, never a stack trace, and must never silently corrupt an embedded snippet. <em>Trade-off:</em> the comment-filter work is the larger effort; sequence it by the owner's priority order and stop when payoff tapers.</p>
+<p><strong>Theme 2 — Stop shipping binaries through git.</strong> The single largest hygiene problem is operational. <em>Target state:</em> binaries distributed via GitHub Releases on tag; <code>bin/</code> removed from the tree; the binary history purged; the deploy-key auto-commit workflow retired. <em>Principle:</em> build artifacts don't belong in source history. <em>Trade-off:</em> consumers fetch from Releases instead of cloning binaries (a documented change); the history purge is destructive and must be scheduled with branch-protection coordination.</p>
+<p><strong>Theme 3 — Make the test suite isolated and parallel-safe.</strong> <code>-p 1</code> is a symptom of shared mutable state. <em>Target state:</em> each test uses <code>t.TempDir()</code>/<code>os.MkdirTemp</code>; the resolver cache is injected or deterministically reset; <code>-p 1</code> removed. <em>Principle:</em> tests own their state.</p>
+<p><strong>Theme 4 — Close coverage gaps in orchestration and error paths.</strong> <em>Target state:</em> <code>main.go</code> aggregation, cache eviction, and error formatters are unit-tested; duplicated error-formatting logic is unified. <em>Principle:</em> the code that runs only on failure is the code you most need tested.</p>
+<p><strong>Theme 5 — Be a credible external dependency.</strong> <em>Target state:</em> root Apache-2.0 <code>LICENSE</code>, accurate README, versioned Releases with attached binaries. <em>Principle:</em> external consumers judge a tool by its packaging and docs as much as its code.</p>
+<p><strong>Definition of done (measurable signals):</strong>
+- Zero High findings; fuzz tests for <code>indent</code>/<code>pattern</code> run in CI with zero crashes.
+- <code>go test ./...</code> passes <strong>without <code>-p 1</code></strong>.
+- Integrated coverage ≥ 80%, with <code>main.go</code> and <code>cache.evictOldest</code> &gt; 0%.
+- <code>bin/</code> absent from the tree; <code>.git</code> &lt; 5 MB after purge; binaries attached to the latest GitHub Release.
+- Root Apache-2.0 <code>LICENSE</code> present; README arg list matches <code>ReadArgs</code>.
+- Golden-file comment-filter corpus passes for Kotlin → … → Go (Visual Basic best-effort).</p>
+<p><strong>Explicitly NOT doing (calibrated to maturity):</strong> migrating off Ginkgo (works well; churn not worth it); restructuring <code>cli.Config</code>'s dual role (pragmatic as-is); chasing 100% coverage (diminishing returns past ~85%); writing full per-language lexers where a targeted fix suffices.</p>
+<hr />
+<h2 id="6-task-plan">6. Task plan</h2>
+<h3 id="quick-wins-high-impact-s-effort-do-immediately">Quick wins (high impact, S effort — do immediately)</h3>
+<ul>
+<li><strong>QW1</strong> Guard <code>CutIndent</code> against short lines (clamp/skip when <code>len(line) &lt; redundantSpaces</code>) — fixes the confirmed panic. <code>indent/indent.go:60-70</code>.</li>
+<li><strong>QW2</strong> Replace <code>golang.org/x/net/context</code> with stdlib <code>context</code>. <code>logging/logger.go:31</code>.</li>
+<li><strong>QW3</strong> Delete dead fields/branches: <code>Fragmentation.Configuration</code>/<code>SourcesRoot</code> + discarded <code>Abs</code> (<code>fragmentation.go:78-90</code>); collapse <code>areASCIIEncoded</code> into <code>utf8.Valid</code> (<code>encoding.go</code>); drop the dead <code>matcher==nil</code> branch (<code>pattern.go:111</code>).</li>
+<li><strong>QW4</strong> Add <code>-doc-excludes/-info/-stacktrace</code> to the README arg list (<code>README.md:57-63</code>).</li>
+</ul>
+<h3 id="task-table">Task table</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>Files</th>
+<th>Acceptance criteria</th>
+<th>Effort</th>
+<th>Change risk</th>
+<th>Deps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>M0-1</strong></td>
+<td>Fuzz/table tests for <code>indent</code> &amp; <code>pattern</code></td>
+<td><code>indent/*_test.go</code>, <code>parsing/pattern_test.go</code> (new)</td>
+<td>Fuzz targets in CI; whitespace/short-line/multiline cases asserted</td>
+<td>M</td>
+<td>Low</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>M0-2</strong></td>
+<td>Test harness uses temp dirs; remove <code>-p 1</code></td>
+<td><code>embedding/embedding_test.go</code>, <code>check.yml:33</code></td>
+<td>Suite passes with default parallelism; no shared <code>../test/docs</code></td>
+<td>M</td>
+<td>Med</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>M0-3</strong></td>
+<td>Injectable/reset resolver cache</td>
+<td><code>fragmentation/resolver.go:42</code>, <code>cache.go</code></td>
+<td>Cache resettable per test; no package-global reliance</td>
+<td>M</td>
+<td>Med</td>
+<td>M0-2</td>
+</tr>
+<tr>
+<td><strong>M1-1</strong></td>
+<td>Fix <code>CutIndent</code> panic (QW1)</td>
+<td><code>indent/indent.go:65</code></td>
+<td>Reproduction input returns trimmed lines, no panic; regression test</td>
+<td>S</td>
+<td>Low</td>
+<td>M0-1</td>
+</tr>
+<tr>
+<td><strong>M1-2</strong></td>
+<td>Defensive guard in <code>IsContentChanged</code></td>
+<td><code>context.go:136-144</code></td>
+<td>Shrinking-embed case covered; no OOB</td>
+<td>S</td>
+<td>Low</td>
+<td>M0-2</td>
+</tr>
+<tr>
+<td><strong>M2-1</strong></td>
+<td>Binaries → GitHub Releases</td>
+<td><code>build_binaries.yml</code>, <code>bin/</code>, <code>.gitignore</code>, README</td>
+<td>Tagged release attaches 3 binaries; <code>bin/</code> untracked; deploy-key push removed</td>
+<td>M</td>
+<td>Med</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>M2-1b</strong></td>
+<td><strong>Purge <code>bin/</code> history</strong></td>
+<td>whole repo history</td>
+<td><code>git filter-repo --path bin --invert-paths</code>; <code>.git</code> &lt; 5 MB; tags re-pushed</td>
+<td>M</td>
+<td><strong>High</strong></td>
+<td>M2-1</td>
+</tr>
+<tr>
+<td><strong>M2-2</strong></td>
+<td>Split orchestration out of <code>processor.go</code></td>
+<td><code>embedding/processor.go</code></td>
+<td>Discovery/orchestration in own file; behavior unchanged</td>
+<td>M</td>
+<td>Med</td>
+<td>M0-2</td>
+</tr>
+<tr>
+<td><strong>M2-3</strong></td>
+<td>Unify joined-error formatting</td>
+<td><code>main.go:138-170</code>, <code>logging/logger.go:173-195</code></td>
+<td>Single shared helper; tests for single + joined errors</td>
+<td>S</td>
+<td>Low</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>M-LIC</strong></td>
+<td>Add Apache-2.0 LICENSE + headers</td>
+<td><code>LICENSE</code> (new), file headers, README</td>
+<td>Root <code>LICENSE</code> = Apache-2.0; headers consistent; README states license</td>
+<td>S</td>
+<td>Low</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>M3-1</strong></td>
+<td>Tests for <code>main.go</code> aggregation &amp; <code>printFiles</code></td>
+<td><code>main_test.go</code> (new)</td>
+<td><code>checkByConfigs</code>/<code>embedByConfigs</code>/formatters &gt; 0% covered</td>
+<td>M</td>
+<td>Low</td>
+<td>M0-2</td>
+</tr>
+<tr>
+<td><strong>M3-2</strong></td>
+<td>Test cache LRU <code>evictOldest</code></td>
+<td><code>fragmentation/cache_test.go</code> (new)</td>
+<td>Eviction-at-limit asserted; <code>evictOldest</code> covered</td>
+<td>S</td>
+<td>Low</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>M3-3</strong></td>
+<td>Single-read fragmentation</td>
+<td><code>encoding.go</code>, <code>fragmentation.go</code></td>
+<td>Source read once; encoding check folded in/removed</td>
+<td>M</td>
+<td>Med</td>
+<td>M0-1</td>
+</tr>
+<tr>
+<td><strong>M3-4</strong></td>
+<td>Replace <code>panic/recover</code> bounds check</td>
+<td><code>partition.go:77-88</code></td>
+<td>Plain bounds check; tests green</td>
+<td>S</td>
+<td>Low</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>M-CF-1</strong></td>
+<td>Kotlin: nested block comments + string templates</td>
+<td><code>commentfilter/*</code></td>
+<td>Golden-file corpus for nested <code>/* */</code> and <code>"""…"""</code> passes all modes</td>
+<td>M</td>
+<td>Med</td>
+<td>M0-1</td>
+</tr>
+<tr>
+<td><strong>M-CF-2</strong></td>
+<td>Java text blocks; TS/JS template literals &amp; regex</td>
+<td><code>commentfilter/*</code></td>
+<td>Golden files for Java <code>"""</code>, TS/JS <code>${…}</code> / regex pass</td>
+<td>M</td>
+<td>Med</td>
+<td>M-CF-1</td>
+</tr>
+<tr>
+<td><strong>M-CF-3</strong></td>
+<td>C# verbatim/interpolated; C++ raw strings; Python triple-quotes</td>
+<td><code>commentfilter/*</code></td>
+<td>Cross-line string state added; golden files pass</td>
+<td>L</td>
+<td>Med</td>
+<td>M-CF-2</td>
+</tr>
+<tr>
+<td><strong>M-CF-4</strong></td>
+<td>Go raw strings; VB doubled-quote escaping</td>
+<td><code>commentfilter/*</code>, <code>visual_basic.go</code></td>
+<td>Golden files pass (best-effort)</td>
+<td>S</td>
+<td>Low</td>
+<td>M-CF-3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="milestones">Milestones</h3>
+<ul>
+<li><strong>Milestone 0 — Safety net:</strong> M0-1, M0-2, M0-3 (tests + parallel-safety before refactors).</li>
+<li><strong>Milestone 1 — Critical / correctness:</strong> M1-1, M1-2 (plus QW1).</li>
+<li><strong>Milestone 2 — High-leverage / packaging:</strong> M2-1, M2-1b (gated), M2-2, M2-3, M-LIC.</li>
+<li><strong>Milestone 3 — Quality &amp; polish:</strong> M3-1…M3-4 + remaining quick wins.</li>
+<li><strong>Workstream M-CF — Comment-filter reliability:</strong> M-CF-1…M-CF-4, in owner priority order, runs in parallel after Milestone 0.</li>
+</ul>
+<h3 id="top-3-implementation-sketches">Top-3 implementation sketches</h3>
+<p><strong>M1-1 — Fix <code>CutIndent</code> panic.</strong> <em>Approach:</em> clamp the slice to the line length. In <code>CutIndent</code> (<code>indent.go:63-67</code>), bound the cut by <code>min(redundantSpaces, len(line))</code>. <em>Steps:</em> add the bound; add a regression test using the reproduced fixture (8-space code line + 2-space blank line); add a fuzz target over random indented blocks. <em>Gotcha:</em> leave the normal case (lines ≥ indentation) unchanged; verify <code>indent_test.go</code> (100% today) still passes.</p>
+<p><strong>M2-1 / M2-1b — Binaries → Releases, then purge.</strong> <em>Approach (M2-1):</em> trigger on <code>push: tags: ['v*']</code>; build matrix; upload via <code>softprops/action-gh-release</code>; <code>git rm -r --cached bin/</code>; add <code>bin/</code> to <code>.gitignore</code>; drop the <code>ssh-agent</code>/deploy-key + <code>add-and-commit</code> steps (<code>build_binaries.yml:27-37,57-63</code>); point README at Releases. <em>Approach (M2-1b):</em> on a scheduled maintenance window, <code>git filter-repo --path bin --invert-paths</code>, force-push all refs and tags after temporarily lifting <code>master</code> protection. <em>Gotchas:</em> M2-1b rewrites every SHA — announce ahead, require all forks/clones to re-clone, and have a maintainer (not this automation) perform the force-push. M2-1 halts growth; only M2-1b reclaims space.</p>
+<p><strong>M-CF-1 — Kotlin nested block comments.</strong> <em>Approach:</em> give the C-family block scanner a nesting depth counter so <code>/* /* */ */</code> only closes at depth 0, and add cross-line <em>string</em> state (mirroring the existing block state) so <code>"""…"""</code> raw strings and <code>"${…}"</code> templates protect their contents. <em>Steps:</em> extend <code>blockState</code> with a <code>depth</code> and a <code>inString</code> mode; update <code>consumeActiveBlock</code> (<code>marker_comment_filter.go:118-140</code>) and <code>consumeQuotedSegment</code> (<code>:143-152</code>); build a golden-file corpus under <code>test/resources</code> covering nested comments and multiline strings for every mode. <em>Gotcha:</em> enable nesting only for languages that actually allow it (Kotlin) — Java/C/C++ do <strong>not</strong> nest block comments, so keep nesting per-syntax to avoid regressions.</p>
+<hr />
+<h2 id="7-appendix-evidence">7. Appendix — evidence</h2>
+<p><strong>Build &amp; tests:</strong> <code>go build ./...</code> and <code>go vet ./...</code> clean. Full suite passes (<code>go test ./... -p 1</code>).</p>
+<p><strong>Integrated coverage = 75.9%</strong> (<code>go test ./... -coverpkg=./...</code>). Per-package, own-tests:</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Coverage</th>
+<th></th>
+<th>Package</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>indent</code></td>
+<td>100.0%</td>
+<td></td>
+<td><code>cli</code></td>
+<td>75.8%</td>
+</tr>
+<tr>
+<td><code>commentfilter</code></td>
+<td>91.8%</td>
+<td></td>
+<td><code>fragmentation</code></td>
+<td>68.8%</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>93.1%</td>
+<td></td>
+<td><code>parsing</code></td>
+<td>42.1% *</td>
+</tr>
+<tr>
+<td><code>embedding</code></td>
+<td>86.5%</td>
+<td></td>
+<td><code>logging</code></td>
+<td>21.8%</td>
+</tr>
+<tr>
+<td><code>files</code></td>
+<td>78.6%</td>
+<td></td>
+<td><code>configuration</code></td>
+<td>0.0% (trivial)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td><code>main</code></td>
+<td>0.0%</td>
+</tr>
+</tbody>
+</table>
+<p>* The parser is exercised mainly cross-package by <code>embedding</code>'s tests, so its true coverage is higher than the own-package figure.</p>
+<p><strong>Reproduced panic (<code>indent.CutIndent</code>)</strong> — verbatim copies of <code>MaxCommonIndentation</code> and <code>CutIndent</code> fed a fragment <code>["        System.out.println(\"Hi\");", "  ", "        return;"]</code>:</p>
+<pre><code>computed common indentation = 8
+calling CutIndent...
+panic: runtime error: slice bounds out of range [8:2]
+</code></pre>
+<p><strong>Repository bloat:</strong> <code>.git</code> = 206 MB; 23 "Update binaries" commits; <code>bin/</code> = three binaries ~4.3 MB each.</p>
+<hr />
+<p><em>Prepared with Claude Code. Analysis-only audit — no source code was modified in its production.</em></p>
+</body>
+</html>
