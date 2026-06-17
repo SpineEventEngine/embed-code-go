@@ -31,7 +31,7 @@ Apply multiple skills when a task crosses these boundaries.
 
 ## Project Overview
 
-`embed-code-go` is a Go 1.22.1 command-line application. It scans Markdown and
+`embed-code-go` is a Go command-line application. It scans Markdown and
 HTML documents for `embed-code` instructions, resolves source fragments,
 renders them inside code fences, and checks whether existing snippets are
 up-to-date.
