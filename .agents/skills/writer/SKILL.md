@@ -27,7 +27,7 @@ description: >
 - Put project flow, package ownership, skill routing, and repository-level
   invariants in `AGENTS.md`.
 - Put language, testing, writing, and review procedures in the relevant
-  `skills/<name>/SKILL.md`.
+  `.agents/skills/<name>/SKILL.md`.
 - Put API or helper behavior that belongs with code in Go doc comments.
 - Put parser and embedding fixtures under `test/resources/` only when they are
   part of tests or examples already in scope.

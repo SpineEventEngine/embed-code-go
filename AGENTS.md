@@ -15,16 +15,16 @@ live, and which local skill owns the detailed working rules.
 
 ## Skills
 
-- `skills/go-engineer/SKILL.md`: Go implementation, debugging, refactoring,
+- `.agents/skills/go-engineer/SKILL.md`: Go implementation, debugging, refactoring,
   parser and embedding behavior, error handling, formatting, vetting, and
   build verification.
-- `skills/go-tester/SKILL.md`: Go test authoring and test review, including
+- `.agents/skills/go-tester/SKILL.md`: Go test authoring and test review, including
   Ginkgo/Gomega style, fixtures, package-level test ownership, and test command
   selection.
-- `skills/writer/SKILL.md`: documentation authoring and editing for
+- `.agents/skills/writer/SKILL.md`: documentation authoring and editing for
   `README.md`, `EMBEDDING.md`, `AGENTS.md`, skills, Markdown fixtures, and Go
   doc comments.
-- `skills/review-docs/SKILL.md`: documentation review for Go doc comments,
+- `.agents/skills/review-docs/SKILL.md`: documentation review for Go doc comments,
   Markdown, `README.md`, `EMBEDDING.md`, skills, and this file.
 
 Apply multiple skills when a task crosses these boundaries.
@@ -117,9 +117,9 @@ first function that exposes the symptom.
   and normal operation.
 - `EMBEDDING.md`: embedding syntax, source markers, patterns, fences,
   separators, comment modes, and examples.
-- `skills/`: operational rules for agents. Keep language-specific, testing, and
-  documentation authoring/review policy in the relevant skill rather than
-  duplicating it here.
+- `.agents/skills/`: operational rules for agents. Keep language-specific,
+  testing, and documentation authoring/review policy in the relevant skill
+  rather than duplicating it here.
 
 ## Repository Hygiene
 

@@ -23,8 +23,8 @@ Use `go-engineer` for implementation work in Go:
 - Reviewing Go code for correctness and maintainability.
 
 This skill is the baseline for production Go and helper code. Test-writing
-conventions live in `skills/go-tester/SKILL.md`; documentation review lives in
-`skills/review-docs/SKILL.md`.
+conventions live in `.agents/skills/go-tester/SKILL.md`; documentation review
+lives in `.agents/skills/review-docs/SKILL.md`.
 
 ## Fast Path for Agents
 
