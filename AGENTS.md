@@ -31,7 +31,7 @@ Apply multiple skills when a task crosses these boundaries.
 
 ## Project Overview
 
-`embed-code-go` is a Go 1.22.1 command-line application. It scans Markdown and
+`embed-code-go` is a Go command-line application. It scans Markdown and
 HTML documents for `embed-code` instructions, resolves source fragments,
 renders them inside code fences, and checks whether existing snippets are
 up-to-date.
@@ -81,8 +81,9 @@ first function that exposes the symptom.
 - `indent/`: shared indentation measurement and removal.
 - `logging/`: `slog` handler, clickable file references, panic reporting, and
   terminal formatting support.
-- `type/`: YAML-compatible string and named-path list types. Preserve this
-  existing package name even though it is unusual.
+- `type/`: YAML-compatible string and named-path list types. The import path
+  segment is `type`, but the Go package identifier is `_type` because `type` is
+  a Go keyword.
 - `test/resources/`: parser, embedding, configuration, and source-code fixtures.
 
 ## Parser And Embedding Rules
@@ -124,6 +125,6 @@ first function that exposes the symptom.
 
 - Do not revert unrelated user changes.
 - Do not edit generated binaries under `bin/` unless explicitly requested.
-- Do not add temporary repro files, local binaries, IDE metadata, coverage
+- Do not add temporary repo files, local binaries, IDE metadata, coverage
   output, or build artifacts to the intended change set.
 - Keep changes narrowly scoped and make unrelated cleanup a separate task.
