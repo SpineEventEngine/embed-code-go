@@ -8,7 +8,7 @@ description: >
   code, tests, fixtures, and project flows.
 ---
 
-# Write documentation (repo-specific)
+# Write documentation
 
 ## Decide the Target and Audience
 

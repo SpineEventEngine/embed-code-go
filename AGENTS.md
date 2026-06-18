@@ -14,11 +14,6 @@ agent operating policy and repository-wide rules.
   history in this repository.
 - Preserve unrelated local changes. Treat them as user work.
 
-## Project Reference
-
-See [PROJECT.md](PROJECT.md) for the project overview and project map.
-Implementation details live in the matching discovered skills.
-
 ## Repository Hygiene
 
 - Do not revert unrelated user changes.
