@@ -51,7 +51,7 @@ Three issues hold it back from an A. **Top 3 risks:** (1) a **confirmed runtime 
 
 **Purpose.** A CLI that (a) **embeds** named code fragments / pattern-matched line ranges from source files into `<embed-code …>` tags in Markdown, or (b) **checks** that already-embedded snippets are up-to-date. Built for TeamDev/SpineEventEngine's Hugo documentation sites (`README.md:6-8`).
 
-**Stack & maturity.** Go 1.22.1 (`go.mod:21`), version 1.2.2 (`main.go:33`). 38 Go files, ~7,856 lines (~5,400 non-test). Dependencies: `doublestar` (globbing), `gobwas/glob` (patterns), `yaml.v3`, Ginkgo/Gomega (tests). 345 commits over two years, primarily one author. **Maturity: established internal product**, not a prototype — and now headed for external distribution.
+**Stack & maturity.** Go 1.26.4 (`go.mod:21`), version 1.2.2 (`main.go:33`). 38 Go files, ~7,856 lines (~5,400 non-test). Dependencies: `doublestar` (globbing), `gobwas/glob` (patterns), `yaml.v3`, Ginkgo/Gomega (tests). 345 commits over two years, primarily one author. **Maturity: established internal product**, not a prototype — and now headed for external distribution.
 
 **Control flow.**
 ```
