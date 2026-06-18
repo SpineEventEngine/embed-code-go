@@ -10,3 +10,6 @@
 /out/
 **/build/
 coverage.out
+
+# Built 'main' application
+main

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Writer"
+  short_description: "Write embed-code-go documentation"
+  default_prompt: "Use $writer after reading AGENTS.md and PROJECT.md to write or update documentation in embed-code-go."
