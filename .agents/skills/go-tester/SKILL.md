@@ -17,8 +17,8 @@ cover the known behavior once the cases are identified.
 
 Two companions own neighboring concerns:
 
-- `skills/go-engineer/SKILL.md` - Go implementation policy and production code correctness.
-- `skills/review-docs/SKILL.md` - documentation review for test fixtures and
+- `.agents/skills/go-engineer/SKILL.md` - Go implementation policy and production code correctness.
+- `.agents/skills/review-docs/SKILL.md` - documentation review for test fixtures and
   Markdown docs when prose changes are part of the task.
 
 ## Core Policy
@@ -36,7 +36,8 @@ Two companions own neighboring concerns:
 5. **Keep tests deterministic and portable.** Avoid machine-specific absolute
    paths, map iteration order, hidden local files, and OS-specific separators
    unless the code intentionally emits them.
-6. **Do not commit or rewrite history.**
+6. **Follow git-history policy.** Do not commit or rewrite history unless
+   `AGENTS.md` allows it.
 
 ## Workflow
 
@@ -96,23 +97,6 @@ Two companions own neighboring concerns:
 - Use `test/resources/prepared-fragments/` only for behavior that already relies
   on prepared expected content.
 - Keep expected files stable and easy to diff.
-
-## Package-Specific Coverage
-
-- `cli/`: validation matrix, config-file loading, named code roots, duplicate
-  embedding names, include/exclude defaults, and invalid mode behavior.
-- `embedding/`: document discovery, embed writes, check-mode stale files,
-  multi-configuration aggregation, and joined errors.
-- `embedding/parsing/`: state transitions, ordinary Markdown fences,
-  instruction parsing, missing fences, unclosed fences, malformed XML, and
-  instruction start-line errors.
-- `embedding/commentfilter/`: supported language modes, unsupported modes,
-  quoted comment delimiters, and block-comment edge cases.
-- `fragmentation/`: fragment marker parsing, nested or overlapping fragments,
-  whole-file fallback, line and range patterns, encoding, source lookup, and
-  cache behavior.
-- `files/`, `indent/`, `logging/`, `type/`: cross-platform edge cases,
-  formatting contracts, YAML unmarshalling, and small helper boundaries.
 
 ## Verification
 

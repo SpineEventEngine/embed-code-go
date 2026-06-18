@@ -1,4 +1,0 @@
-interface:
-  display_name: "Go Engineer"
-  short_description: "Implement Go changes for embed-code-go"
-  default_prompt: "Use $go-engineer to implement a scoped Go change in embed-code-go."

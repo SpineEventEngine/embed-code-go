@@ -1,4 +1,0 @@
-interface:
-  display_name: "Review Docs"
-  short_description: "Review embed-code-go documentation"
-  default_prompt: "Use $review-docs to review documentation changes in embed-code-go."
