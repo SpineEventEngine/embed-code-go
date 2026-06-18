@@ -2,6 +2,7 @@ name: Release Binaries
 
 on:
   push:
+    branches: [ master ]
 
 permissions:
   contents: write
