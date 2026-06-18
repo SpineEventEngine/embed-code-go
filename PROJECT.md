@@ -32,13 +32,8 @@ them inside code fences, and checks whether existing snippets are up-to-date.
   a Go keyword.
 - `test/resources/`: parser, embedding, configuration, and source-code fixtures.
 
-## Documentation Map
+## Documentation
 
-- `AGENTS.md`: agent operating policy and repository-wide rules.
-- `PROJECT.md`: project overview, project map, and documentation ownership.
-- `README.md`: user-facing overview, installation, configuration, modes, flags,
-  and normal operation.
-- `EMBEDDING.md`: embedding syntax, source markers, patterns, fences,
-  separators, comment modes, and examples.
-- `.agents/skills/`: detailed operational rules for agents, including language,
-  testing, implementation, and documentation policy.
+Read `README.md` for user-facing usage, `EMBEDDING.md` for embedding syntax,
+and `.agents/skills/` for task-specific implementation, testing, writing, and
+review rules.

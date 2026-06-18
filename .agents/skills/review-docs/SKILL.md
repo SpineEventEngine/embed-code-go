@@ -62,8 +62,9 @@ and repository guidance. Do not duplicate `writer` for authoring strategy,
 - **No orphans.** A paragraph, list item, or table cell must not end with a
   final line containing only one word. Flag it and propose a reflow or rewrite.
 - **Project docs keep their ownership.** `README.md` is user-facing,
-  `EMBEDDING.md` owns embedding syntax, `PROJECT.md` owns project description
-  and map, skills own implementation details, and `AGENTS.md` owns agent policy.
+  `EMBEDDING.md` owns embedding syntax, `PROJECT.md` owns project description,
+  map, and compact doc pointers, skills own implementation details, and
+  `AGENTS.md` owns agent policy.
 
 ### C. Embedding-Specific Documentation
 
