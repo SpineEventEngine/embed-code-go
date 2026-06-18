@@ -24,7 +24,7 @@ description: >
 - Put project entry-point and usage content in `README.md`.
 - Put embedding syntax, source markers, patterns, fences, separators, comment
   modes, and examples in `EMBEDDING.md`.
-- Put project overview, project map, and the documentation map in `PROJECT.md`.
+- Put `PROJECT.md` project overview, project map, and compact doc pointers.
 - Put project flow and implementation constraints in the relevant
   `.agents/skills/<name>/SKILL.md` file.
 - Put agent operating policy and repository-wide rules in `AGENTS.md`.

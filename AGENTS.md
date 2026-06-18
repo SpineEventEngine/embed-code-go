@@ -6,8 +6,7 @@ agent operating policy and repository-wide rules.
 ## Operating Policy
 
 - Read this file before changing the workspace.
-- Read [PROJECT.md](PROJECT.md) for the project overview, project map, and
-  documentation map.
+- Read [PROJECT.md](PROJECT.md) for the project overview and project map.
 - Always use matching automatically discovered skills when they are available.
 - Ask clarifying questions before implementation, review, or documentation work
   when scope, acceptance criteria, or constraints are not explicit.
@@ -17,8 +16,8 @@ agent operating policy and repository-wide rules.
 
 ## Project Reference
 
-See [PROJECT.md](PROJECT.md) for the project overview, project map, and
-documentation map. Implementation details live in the task-specific skills.
+See [PROJECT.md](PROJECT.md) for the project overview and project map.
+Implementation details live in the matching discovered skills.
 
 ## Repository Hygiene
 
