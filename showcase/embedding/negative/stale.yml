@@ -1,0 +1,6 @@
+code-path:
+  - name: java
+    path: showcase/code/java
+docs-path: showcase/embedding/negative/docs
+doc-includes:
+  - stale-snippet.md

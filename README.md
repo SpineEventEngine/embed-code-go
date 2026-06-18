@@ -1,196 +1,69 @@
 # Embed Code
 
-Embed Code provides a way to embed code snippets into Markdown files.
-This allows developers to easily include code examples within their documentation.
+Embed Code is a Go command-line tool that keeps documentation snippets in sync
+with source files. It scans Markdown and HTML documents for `<embed-code>`
+instructions, resolves the requested source content, and manages the following
+code fence.
 
-Previously, we used the `embed-code` utility written in [Ruby for Jekyll][embed-code-jekyll].
-Since we standardize our sites on Hugo, we rewrote the utility in Go.
-This project is the implementation of `embed-code` utility written in Go.
+This project replaces the earlier [`embed-code` utility for Ruby/Jekyll][embed-code-jekyll].
 
-## Key features
-- Extracts code fragments from source files and embeds them into documentation.
-- Verifies that embedded code samples are up-to-date with the source.
-- Supports configuration via command-line arguments or a YAML file.
-- Allows embedding specific named fragments or matching code using line patterns.
-- Maps multiple code sources to various documentation folders.
+## Start Here
 
-For the details of the usage in the documentation and the code, please refer to the [EMBEDDING.md](EMBEDDING.md).
+The complete usage guide lives in the [showcase](showcase/README.md). It covers
+configuration, embedding instructions, check mode, embed mode, expected
+failures, and runnable examples.
 
-## Running
+## What It Does
 
-Embed Code operates in two modes:
+- Embeds whole files, named fragments, source ranges, or matching source lines.
+- Supports multiple named source roots for one documentation tree.
+- Filters comments when examples should omit implementation notes.
+- Processes Markdown and HTML documents.
+- Runs in `check` mode for CI and `embed` mode to update documentation.
 
-1. **Embedding**: Scans documentation files for `<embed-code>` tags and performs the requested embeddings,
-   overwriting the content of the target documentation files.
+## Run
 
-2. **Up-to-Date Check**: Compares the content under `<embed-code>` tags with the corresponding source code fragments.
-   If they differ, the tool reports which files are out-of-date.
+Use a prebuilt binary from [GitHub Releases][releases]:
 
-The mode is selected using the mandatory `-mode` argument:
-- `embed`: Performs the embedding process.
-- `check`: Checks if embeddings are up-to-date.
-
-The tool can be run as a pre-compiled binary or via the Go compiler (requires Go [installed](#installation)).
-Binaries are located in the `./bin` directory.
-
-The code and documentation files must be prepared for embedding.
-The instructions are provided in the [Setting up documentation and code files](EMBEDDING.md) document.
-
-### Running the binary
-
-To run the binary, use:
 ```bash
-./bin/<binary_name> [arguments]
+./bin/embed-code-linux -mode=check -config-path=showcase/embedding/embed-code.yml
 ```
 
-### Running the Go file
+Or run it with Go:
 
-#### Running with Go
-
-If you have Go installed, you can run the tool directly:
 ```bash
-go run ./main.go [arguments]
+go run ./main.go -mode=check -config-path=showcase/embedding/embed-code.yml
 ```
 
-It is better to use the same Go version as the one specified in [go.mod](./go.mod).
+Use `-mode=embed` when documentation should be rewritten with current source
+content. See the [configuration guide](showcase/configuration/README.md) for
+all command-line flags and YAML options.
 
-### Arguments
+## Build
 
-The available arguments are:
-  * `-mode`: (Mandatory) The execution mode: `embed` or `check`.
-  * `-code-path`: (Optional) Path to the source code root directory.
-  * `-docs-path`: (Optional) Path to the documentation root directory.
-  * `-config-path`: (Optional) Path to a YAML configuration file containing `code-path` and `docs-path`.
-  * `-doc-includes`: (Optional) Comma-separated glob patterns for documentation files to include. Defaults to `"**/*.md,**/*.html"`.
-  * `-doc-excludes`: (Optional) Comma-separated glob patterns for documentation files to exclude.
-  * `-separator`: (Optional) String used to separate joined code fragments. Defaults to `...`.
-  * `-info`: (Optional) Enables info-level logging when set to `true`.
-  * `-stacktrace`: (Optional) Prints stack traces for panics when set to `true`.
+Use Go `1.26.4`.
 
-Even though the `code-path`, `docs-path`, and `config-path` arguments are optional,
-Embed Code still requires the root directories for code and documentation to be set.
-This can be done in one of two ways:
-
-1. Provide the `code-path` and `docs-path` arguments, in this case the roots are read directly from the provided paths.
-2. Provide the `config-path` argument, in this case the roots are read from the given configuration file.
-
-If neither of these options is provided, the embedding process will fail.
-If both options are set, the embedding will also fail.
-
-### Configuration file
-
-Optional settings can be defined in a YAML configuration file:
-
-```yaml
-code-path: path/to/code/root
-docs-path: path/to/docs/root
-doc-excludes: "**/*-old.*,**/deprecated/*.*"
-```
-
-For multiple independent documentation targets, use `embeddings` instead:
-
-```yaml
-embeddings:
-  - name: java
-    code-path: path/to/code/root/java
-    docs-path: path/to/java/docs
-  - name: kotlin
-    code-path:
-      - name: samples
-        path: path/to/code/root/kotlin-samples
-      - name: runtime
-        path: path/to/code/root/kotlin-runtime
-    docs-path: path/to/kotlin/docs
-    separator: "---"
-```
-
-The available fields for the configuration file are:
-  * `code-path`: (Mandatory) Path to the source code root.
-    May be represented as:
-    * single path
-        ```yaml
-        code-path: path/to/code/root
-        ```
-    * multiple named paths:
-        ```yaml
-        code-path:
-          - name: examples
-            path: path/to/code/root1
-          - name: production
-            path: path/to/code/root2
-        ```
-      When a named path is specified, fragments must be referenced in the embedding instructions
-      using the corresponding path name:
-      ```md
-      <embed-code file="$PATH_NAME/path/to/file"></embed-code>
-      ```
-      **Do not forget the dollar sign (`$`) before the path name.**
-
-      Code source names must be unique. A configuration may use either one unnamed
-      code source or one or more named code sources, but named and unnamed sources
-      cannot be mixed.
-
-  * `docs-path`: (Mandatory) Path to the documentation root.
-  * `doc-excludes`: (Optional) Glob patterns for documentation files to exclude.
-    It may be represented as a comma-separated string list or as a YAML sequence.
-  * `doc-includes`: (Optional) Glob patterns for documentation files to include.
-    It may be represented as a comma-separated string list or as a YAML sequence.
-  * `separator`: (Optional) Separator for fragments.
-  * `info`: (Optional) Enables info-level logging.
-  * `stacktrace`: (Optional) Prints stack traces for panics.
-  * `embeddings`: (Optional) A list of complete embedding configurations for multiple
-    documentation targets. When `embeddings` is set, do not set root-level `code-path`
-    or `docs-path`. Define `code-path`, `docs-path`, and optional settings inside each entry.
-    Each entry must set a unique `name`.
-
-These settings have the same role as the command-line arguments.
-
-## Installation
-
-* Go to https://go.dev/doc/install.
-* Make sure your Go installed successfully with the command
-    ```bash
-    go version
-    ```
-
-## Compilation
-
-Pre-compiled binaries are available in the `./bin` directory.
-However, you can also compile the utility manually if Go is [installed](#installation).
-
-Navigate to the project root and run:
 ```bash
 go build -trimpath -o embed-code main.go
 ```
 
-There may be issues when running `go build` outside of the directory containing `main.go`,
-even if the path is specified correctly.
+This creates `embed-code` on Unix-like systems or `embed-code.exe` on Windows.
+The `-trimpath` flag prevents local absolute paths from appearing in stack
+traces.
 
-This command creates an executable named `embed-code` (or `embed-code.exe` on Windows).
-For further information, please refer to the [docs](https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies).
+## Development
 
-Without the `-trimpath` flag, Go includes absolute file paths in stack traces
-based on the system where the binary was built.
+Run the normal test suite:
 
-Run the following command to build binaries for macOS, Windows and Ubuntu:
 ```bash
-mkdir -p bin && \
-GOOS=darwin GOARCH=amd64 go build -trimpath -o bin/embed-code-macos main.go && chmod +x bin/embed-code-macos && \
-GOOS=windows GOARCH=amd64 go build -trimpath -o bin/embed-code-windows.exe main.go && \
-GOOS=linux GOARCH=amd64 go build -trimpath -o bin/embed-code-linux main.go && chmod +x bin/embed-code-linux
+go test ./...
 ```
 
-## Development Notes
+Run the executable showcase:
 
-This repository is configured with the following GitHub workflows:
-- `check` — runs tests across different platforms.
-- `build_binaries` — builds binaries on push to the `master` branch.
-   > Note: This workflow uses a **Deploy Key** instead of the default GitHub Actions bot
-   > to bypass the `master` branch protection against direct pushes.
-   >
-   > If it is necessary to update the Deploy Key, follow these steps:
-   > 1. Generate an SSH key pair for GitHub: `ssh -i ~/.ssh/workflow_deploy_key -T git@github.com`.
-   > 2. Add the public key (`workflow_deploy_key.pub`) as a **Deploy Key** in GitHub with write access.
-   > 3. Add the private key (`workflow_deploy_key`) as a repository secret named `WORKFLOW_DEPLOY_KEY`.
+```bash
+go test -tags showcase ./showcase
+```
 
 [embed-code-jekyll]: https://github.com/SpineEventEngine/embed-code
+[releases]: https://github.com/SpineEventEngine/embed-code-go/releases
