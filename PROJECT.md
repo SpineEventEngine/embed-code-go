@@ -34,6 +34,7 @@ them inside code fences, and checks whether existing snippets are up-to-date.
 
 ## Documentation
 
-Read `README.md` for user-facing usage, `EMBEDDING.md` for embedding syntax,
-and `.agents/skills/` for task-specific implementation, testing, writing, and
-review rules.
+- `README.md`: user-facing usage.
+- `EMBEDDING.md`: embedding syntax and examples.
+- `.agents/skills/`: task-specific rules for implementation, testing, writing,
+  and review.
