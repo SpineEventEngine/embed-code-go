@@ -2,8 +2,8 @@
 name: review-docs
 description: >
   Reviews documentation changes in embed-code-go: Go doc comments, inline
-  comments, README.md, EMBEDDING.md, PROJECT.md, AGENTS.md, skills, Markdown
-  fixtures, and user-facing examples. Use when a diff touches prose,
+  comments, README.md, showcase guides, PROJECT.md, AGENTS.md, skills,
+  Markdown fixtures, and user-facing examples. Use when a diff touches prose,
   documentation comments, embedding syntax docs, command examples,
   architecture/package maps, or agent instructions. Read-only; does not run
   builds unless explicitly asked.
@@ -61,10 +61,10 @@ and repository guidance. Do not duplicate `writer` for authoring strategy,
   root, check mode, embed mode.
 - **No orphans.** A paragraph, list item, or table cell must not end with a
   final line containing only one word. Flag it and propose a reflow or rewrite.
-- **Project docs keep their ownership.** `README.md` is user-facing,
-  `EMBEDDING.md` owns embedding syntax, `PROJECT.md` owns project description,
-  map, and compact doc pointers, skills own implementation details, and
-  `AGENTS.md` owns agent policy.
+- **Project docs keep their ownership.** `README.md` is the short user-facing
+  entry point, showcase docs own complete usage details, `PROJECT.md` owns
+  project description, map, and compact doc pointers, skills own implementation
+  details, and `AGENTS.md` owns agent policy.
 
 ### C. Embedding-Specific Documentation
 
