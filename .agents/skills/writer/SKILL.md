@@ -24,17 +24,19 @@ description: >
 - Put project entry-point and usage content in `README.md`.
 - Put embedding syntax, source markers, patterns, fences, separators, comment
   modes, and examples in `EMBEDDING.md`.
-- Put project flow, package ownership, and repository-wide rules in `AGENTS.md`.
+- Put project flow, package ownership, architecture boundaries, and the
+  documentation map in `PROJECT.md`.
+- Put agent operating policy and repository-wide rules in `AGENTS.md`.
 - Put language, testing, writing, and review procedures in the relevant
-  `.agents/skills/<name>/SKILL.md`.
+  skill under `.agents/skills/<name>/SKILL.md`.
 - Put API or helper behavior that belongs with code in Go doc comments.
 - Put parser and embedding fixtures under `test/resources/` only when they are
   part of tests or examples already in scope.
 
 ## Verify Against Project Flows
 
-- For CLI flags and modes, check `main.go`, `cli/cli.go`, and
-  `cli/cli_validation.go`.
+- For CLI flags and modes, check `main.go`, `cli/cli.go`, and the
+  `cli/cli_validation.go` file.
 - For YAML configuration, check `cli/`, `configuration/`, and config fixtures
   under `test/resources/config_files/`.
 - For embedding syntax, check `embedding/parsing/`, `embedding/processor.go`,
