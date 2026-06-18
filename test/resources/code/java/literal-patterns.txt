@@ -1,5 +1,6 @@
   padded text  
 Use * to multiply
+żółć
 The total is $5
 The value ends with $
 ^ starts with caret
