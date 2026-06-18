@@ -22,9 +22,22 @@ Supported modes are:
 Comment support depends on the source file extension. Unknown extensions are
 embedded unchanged. Not every supported language distinguishes documentation,
 regular, inline, and block comments, so unsupported categories simply have no
-comments to keep. See
-[Comment filtering](../../../EMBEDDING.md#comment-filtering) for the full
-language matrix.
+comments to keep.
+
+## Language Support
+
+| Language               | Extensions                                               | Supported `comments` modes                                   |
+|------------------------|----------------------------------------------------------|--------------------------------------------------------------|
+| Java, Kotlin, Groovy   | `.java`, `.kt`, `.kts`, `.groovy`                        | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| C#                     | `.cs`                                                    | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| C, C++                 | `.c`, `.h`, `.cc`, `.cpp`, `.cxx`, `.hh`, `.hpp`, `.hxx` | `all`, `none`, `inline`, `block`                             |
+| JavaScript, TypeScript | `.js`, `.jsx`, `.ts`, `.tsx`                             | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
+| Go                     | `.go`                                                    | `all`, `none`, `inline`, `block`                             |
+| Protobuf               | `.proto`                                                 | `all`, `none`, `inline`, `block`                             |
+| Python                 | `.py`, `.pyi`, `.pyw`                                    | `all`, `none`                                                |
+| YAML                   | `.yml`, `.yaml`                                          | `all`, `none`                                                |
+| XML, HTML              | `.xml`, `.html`, `.htm`                                  | `all`, `none`                                                |
+| Visual Basic           | `.vb`, `.bas`, `.vbs`, `.vbscript`                       | `all`, `none`, `documentation`, `regular`                    |
 
 The examples below embed the same Java file with different `comments` modes so
 the rendered output can be compared directly.

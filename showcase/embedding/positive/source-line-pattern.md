@@ -5,7 +5,7 @@ fragment or range.
 
 ## How It Works
 
-The `line` attribute uses the same glob-style pattern syntax as `start` and `end`. 
+The `line` attribute uses the same glob-style pattern syntax as `start` and `end`.
 By default, embed-code behaves as if `*` exists at the beginning and end
 of the pattern, so `Hello` can match any source line that contains `Hello`.
 Use `^` or `$` when the match must start or end at a line boundary.

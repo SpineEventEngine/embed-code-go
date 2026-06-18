@@ -1,31 +1,42 @@
 # Embed Code Showcase
 
-This is an executable showcase guide to `embed-code-go` and the end-to-end tests.
+This is the complete usage guide for `embed-code-go`. It is also executable:
+the showcase test runs the examples through the real CLI so the guide stays in
+sync with the application.
 
-## How To Use This Guide
+## Workflow
 
-This guide is divided into two categories:
+1. Configure source roots and documentation roots.
+2. Add an `<embed-code>` instruction followed by a managed code fence.
+3. Run check mode in CI to detect stale snippets.
+4. Run embed mode when documentation should be rewritten from source.
 
-1. [Configuration](configuration/README.md) - describes how to configure the whole embed-code application.
-2. [Embedding](embedding/README.md) - describes how to work with the embedding instructions.
+## Guide Map
 
-## How To Run Tests
+- [Configuration](configuration/README.md): how the CLI finds source files and documentation files.
+- [Embedding](embedding/README.md): how instructions select and render source content.
+- [Positive examples](embedding/positive): runnable examples that should pass.
+- [Negative examples](embedding/negative/docs): intentionally broken examples
+  that document diagnostics.
+
+## Run The Showcase
 
 Run commands from the repository root.
 
-Run the opt-in end-to-end test with the `showcase` build tag:
+The end-to-end suite checks positive examples, expected failures, and all
+configuration shapes:
 
 ```bash
 go test -tags showcase ./showcase
 ```
 
-Verify the positive embedding examples:
+Check the positive embedding examples directly:
 
 ```bash
 go run ./main.go -mode=check -config-path=showcase/embedding/embed-code.yml
 ```
 
-Verify the configuration examples:
+Check the configuration examples directly:
 
 ```bash
 go run ./main.go -mode=check -config-path=showcase/configuration/single-source.yml

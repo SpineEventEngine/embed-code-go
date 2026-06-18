@@ -6,7 +6,7 @@ small source file. This is the smallest useful instruction: it only needs
 
 ## How It Works
 
-The `file` attribute is resolved from the configured source roots. 
+The `file` attribute is resolved from the configured source roots.
 
 In this example, the `$java` prefix selects the Java source root from
 [embed-code.yml](../embed-code.yml) before resolving `org/showcase/Greeting.java`.
