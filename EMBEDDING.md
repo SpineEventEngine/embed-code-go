@@ -22,8 +22,8 @@ Use glob-style patterns to match the start and end lines of the fragment.
 
 ## Embedding instruction format
 
-An `<embed-code>` instruction must always be followed by a Markdown code fence 
-(opening and closing triple backticks). 
+An `<embed-code>` instruction must always be followed by a Markdown code fence
+(opening and closing triple backticks).
 
 ````markdown
 <embed-code file="java/lang/String.java" fragment="Constructor"></embed-code>
@@ -47,7 +47,7 @@ To define a named fragment in your source code, wrap the desired lines with
 ```java
 public final class String
     implements java.io.Serializable, Comparable<String>, CharSequence {
-    
+
     // #docfragment "Constructor"
     public String() {
         this.value = new char[0];
@@ -205,7 +205,7 @@ Supported values:
 
 Unknown extensions are embedded unchanged.
 
-Not all languages has difference between documentation/regular or inline/block comments.
+Not all languages distinguish documentation from regular comments or inline from block comments.
 
 The table below lists the supported languages and supported `comments` modes for them:
 
@@ -213,7 +213,7 @@ The table below lists the supported languages and supported `comments` modes for
 |------------------------|---------------------------------------------------------|--------------------------------------------------------------|
 | Java, Kotlin, Groovy   | `.java`, `.kt`, `.kts`, `.groovy`                       | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
 | C#                     | `.cs`                                                   | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
-| C, C++                 | `.c`, `.h`, `.cc`, `.cpp`, `.cxx`,`.hh`, `.hpp`, `.hxx` | `all`, `none`, `inline`, `block`                             |
+| C, C++                 | `.c`, `.h`, `.cc`, `.cpp`, `.cxx`, `.hh`, `.hpp`, `.hxx` | `all`, `none`, `inline`, `block`                             |
 | JavaScript, TypeScript | `.js`, `.jsx`, `.ts`, `.tsx`                            | `all`, `none`, `documentation`, `regular`, `inline`, `block` |
 | Go                     | `.go`                                                   | `all`, `none`, `inline`, `block`                             |
 | Protobuf               | `.proto`                                                | `all`, `none`, `inline`, `block`                             |
@@ -226,9 +226,9 @@ The table below lists the supported languages and supported `comments` modes for
 
 ### Joining several parts of code into one fragment
 
-A named fragment may consist of one or several pieces declared in a single file. 
-When rendered, the pieces that belong to a single fragment are joined together. 
-It is possible to specify a separator between the joined pieces, 
+A named fragment may consist of one or several pieces declared in a single file.
+When rendered, the pieces that belong to a single fragment are joined together.
+It is possible to specify a separator between the joined pieces,
 see [Configuration](./README.md#arguments) for the corresponding parameter.
 
 Here is an example of how a multi-piece fragment is rendered.
@@ -245,7 +245,7 @@ public final class String
         return hash;
     }
     // #enddocfragment "Standard Object methods"
-    
+
     /* Here goes irrelevant code */
 
     // #docfragment "Standard Object methods"
@@ -313,7 +313,7 @@ public final class String
     }
     // #enddocfragment "All methods"
 }
-``` 
+```
 
 ### Usage with other languages
 
