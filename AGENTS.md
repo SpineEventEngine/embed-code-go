@@ -1,33 +1,17 @@
 # Agent Instructions
 
-These instructions apply to the whole repository. Keep this file focused on
-project knowledge: what `embed-code-go` is, where the major responsibilities
-live, and which local skill owns the detailed working rules.
+These instructions apply to the whole repository. Keep this file focused on the
+project map, ownership boundaries, and repository-wide rules.
 
 ## Operating Policy
 
-- Read this file and the relevant skill before changing the workspace.
+- Read this file before changing the workspace. Always use matching
+  automatically discovered skills when they are available.
 - Ask clarifying questions before implementation, review, or documentation work
   when scope, acceptance criteria, or constraints are not explicit.
 - Never create commits, push, tag, merge, rebase, cherry-pick, or rewrite Git
   history in this repository.
 - Preserve unrelated local changes. Treat them as user work.
-
-## Skills
-
-- `.agents/skills/go-engineer/SKILL.md`: Go implementation, debugging, refactoring,
-  parser and embedding behavior, error handling, formatting, vetting, and
-  build verification.
-- `.agents/skills/go-tester/SKILL.md`: Go test authoring and test review, including
-  Ginkgo/Gomega style, fixtures, package-level test ownership, and test command
-  selection.
-- `.agents/skills/writer/SKILL.md`: documentation authoring and editing for
-  `README.md`, `EMBEDDING.md`, `AGENTS.md`, skills, Markdown fixtures, and Go
-  doc comments.
-- `.agents/skills/review-docs/SKILL.md`: documentation review for Go doc comments,
-  Markdown, `README.md`, `EMBEDDING.md`, skills, and this file.
-
-Apply multiple skills when a task crosses these boundaries.
 
 ## Project Overview
 
@@ -111,14 +95,14 @@ first function that exposes the symptom.
 
 ## Documentation Ownership
 
-- `AGENTS.md`: project map, processing flow, package ownership, skill routing,
-  and repository-level invariants.
+- `AGENTS.md`: project map, processing flow, package ownership, and
+  repository-wide rules.
 - `README.md`: user-facing overview, installation, configuration, modes, flags,
   and normal operation.
 - `EMBEDDING.md`: embedding syntax, source markers, patterns, fences,
   separators, comment modes, and examples.
-- `.agents/skills/`: operational rules for agents. Keep language-specific,
-  testing, and documentation authoring/review policy in the relevant skill
+- `.agents/skills/`: detailed operational rules for agents. Keep
+  language-specific, testing, and documentation authoring/review policy there
   rather than duplicating it here.
 
 ## Repository Hygiene
