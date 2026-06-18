@@ -61,8 +61,8 @@ and repository guidance. Do not duplicate `writer` for authoring strategy,
 - **No orphans.** A paragraph, list item, or table cell must not end with a
   final line containing only one word. Flag it and propose a reflow or rewrite.
 - **Project docs keep their ownership.** `README.md` is user-facing,
-  `EMBEDDING.md` owns embedding syntax, and `AGENTS.md` owns the project map
-  and repository-wide rules.
+  `EMBEDDING.md` owns embedding syntax, `PROJECT.md` owns the project map, and
+  `AGENTS.md` owns repository-wide agent policy.
 
 ### C. Embedding-Specific Documentation
 
@@ -85,7 +85,8 @@ and repository guidance. Do not duplicate `writer` for authoring strategy,
   fast path or workflow, checks/policy sections, repo notes, and output format.
 - **Avoid duplicated policy.** Keep language policy in `go-engineer`, test
   policy in `go-tester`, documentation authoring policy in `writer`,
-  documentation review policy in `review-docs`, and project map in `AGENTS.md`.
+  documentation review policy in `review-docs`, and the project map in
+  `PROJECT.md` only.
 - **No task-plan references.** Skills should point at durable files and source
   paths, not temporary task plans.
 
