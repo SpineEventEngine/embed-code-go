@@ -24,8 +24,7 @@ description: >
 - Put project entry-point and usage content in `README.md`.
 - Put embedding syntax, source markers, patterns, fences, separators, comment
   modes, and examples in `EMBEDDING.md`.
-- Put project flow, package ownership, skill routing, and repository-level
-  invariants in `AGENTS.md`.
+- Put project flow, package ownership, and repository-wide rules in `AGENTS.md`.
 - Put language, testing, writing, and review procedures in the relevant
   `.agents/skills/<name>/SKILL.md`.
 - Put API or helper behavior that belongs with code in Go doc comments.
