@@ -12,7 +12,7 @@ By default, embed-code behaves as if `*` exists at the beginning and end
 of the pattern, so `Hello` can match any source line that contains `Hello`.
 Use `^` or `$` when the match must start or end at a line boundary.
 
-If `start` is omitted, the range starts at the beginning of the file. 
+If `start` is omitted, the range starts at the beginning of the file.
 If `end` is omitted, it continues to the end of the file.
 
 ## Embedding Instruction

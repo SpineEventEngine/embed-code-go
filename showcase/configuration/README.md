@@ -1,11 +1,64 @@
-# Configuration Examples
+# Configuration
 
-This folder is a runnable guide to YAML configuration. Start with the smallest
-working config, then add only the options your documentation needs.
+This guide owns command-line and YAML configuration. Start with the smallest
+working shape, then add only the options your documentation needs.
+
+Run commands from the repository root.
+
+## Configuration Sources
+
+Embed Code needs source roots and a documentation root. Provide them in exactly
+one of these ways:
+
+- Direct command-line roots: `-code-path` and `-docs-path`.
+- A YAML file selected with `-config-path`.
+
+Do not combine direct roots with `-config-path`.
+
+## Command-Line Arguments
+
+- `-mode`: required execution mode, either `embed` or `check`.
+- `-code-path`: source root directory. Use with `-docs-path`.
+- `-docs-path`: documentation root directory. Use with `-code-path`.
+- `-config-path`: YAML configuration file.
+- `-doc-includes`: comma-separated documentation glob patterns to include.
+  Defaults to `"**/*.md,**/*.html"`.
+- `-doc-excludes`: comma-separated documentation glob patterns to exclude.
+- `-separator`: text inserted between joined fragment parts. Defaults to `...`.
+- `-info`: enables info-level logging when set to `true`.
+- `-stacktrace`: prints stack traces for panics when set to `true`.
+
+Direct roots are useful for small projects:
+
+```bash
+go run ./main.go \
+  -mode=check \
+  -code-path=showcase/code/java \
+  -docs-path=showcase/configuration/docs/single-source
+```
+
+YAML is easier to maintain when you need named roots, include/exclude patterns,
+or multiple documentation targets.
+
+## YAML Fields
+
+- `code-path`: source root. Use a string for one unnamed root or a list of
+  `{name, path}` entries for named roots. Do not mix named and unnamed roots.
+- `docs-path`: documentation root.
+- `doc-includes`: string or list of glob patterns to include.
+- `doc-excludes`: string or list of glob patterns to exclude.
+- `separator`: text inserted between joined fragment parts.
+- `info`: enables info-level logging.
+- `stacktrace`: prints stack traces for panics.
+- `embeddings`: list of complete configurations for independent documentation
+  targets. When `embeddings` is set, define `code-path`, `docs-path`, and
+  optional settings inside each entry instead of at the root.
+
+Each `embeddings` entry must have a unique `name`.
 
 ## Minimal Config
 
-A configuration needs one source root and one documentation root:
+A YAML configuration needs one source root and one documentation root:
 
 ```yaml
 code-path: showcase/code/java
@@ -14,14 +67,14 @@ docs-path: showcase/configuration/docs/single-source
 
 This config is shown by [single-source.yml](single-source.yml).
 
-The application scans files under `docs-path`, finds `<embed-code>` instructions,
-and resolves each instruction's `file` path from `code-path`. For example, see
-instruction in [greeting.md](docs/single-source/greeting.md).
+The application scans files under `docs-path`, finds `<embed-code>`
+instructions, and resolves each instruction's `file` path from `code-path`. For
+example, see the instruction in [greeting.md](docs/single-source/greeting.md).
 
-Relative paths in `code-path` and `docs-path` are resolved 
-from the command's current working directory.
+Relative paths in `code-path` and `docs-path` are resolved from the command's
+current working directory.
 
-Run this example (from the project root):
+Run this example:
 
 ```bash
 go run ./main.go -mode=check -config-path=showcase/configuration/single-source.yml
@@ -69,7 +122,7 @@ docs-path: showcase/configuration/docs/named-sources
 ```
 
 This shape is shown by [named-sources.yml](named-sources.yml). Its docs live in
-[showcase/configuration/docs/named-sources/](docs/named-sources).
+[docs/named-sources](docs/named-sources).
 
 Instructions choose a source root with the `$name` prefix:
 
@@ -102,20 +155,9 @@ embeddings:
 ```
 
 This shape is shown by [multiple-embeddings.yml](multiple-embeddings.yml). It
-processes [showcase/configuration/docs/multiple/java/](docs/multiple/java) and
-[showcase/configuration/docs/multiple/kotlin/](docs/multiple/kotlin) in one run.
+processes [docs/multiple/java](docs/multiple/java) and
+[docs/multiple/kotlin](docs/multiple/kotlin) in one run.
 
 ```bash
-go run ./main.go -mode=check -config-path=showcase/configuration/multiple-embeddings.yml
-```
-
-## All Configuration Checks
-
-Run commands from the project root.
-
-```bash
-go run ./main.go -mode=check -config-path=showcase/configuration/single-source.yml
-go run ./main.go -mode=check -config-path=showcase/configuration/named-sources.yml
-go run ./main.go -mode=check -config-path=showcase/configuration/include-exclude.yml
 go run ./main.go -mode=check -config-path=showcase/configuration/multiple-embeddings.yml
 ```
