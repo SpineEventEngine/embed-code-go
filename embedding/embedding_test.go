@@ -19,8 +19,7 @@
 package embedding_test
 
 import (
-	"embed-code/embed-code-go/files"
-	_type "embed-code/embed-code-go/type"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -31,6 +30,8 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/embedding/parsing"
+	"embed-code/embed-code-go/files"
+	_type "embed-code/embed-code-go/type"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -155,6 +156,11 @@ var _ = Describe("Embedding", func() {
 			ContainSubstring("unclosed-nested-tag.md"),
 			ContainSubstring("element <unexpected> closed by </embed-code>"),
 		))
+		var processingErr embedding.ProcessingError
+		Expect(errors.As(err, &processingErr)).Should(BeTrue())
+
+		var parseErr parsing.InstructionParseError
+		Expect(errors.As(err, &parseErr)).Should(BeTrue())
 	})
 
 	It("should report all pattern matching errors", func() {
@@ -178,6 +184,9 @@ var _ = Describe("Embedding", func() {
 					"`*doesNotExistEnd*`",
 			),
 		))
+		var patternErr parsing.PatternNotFoundError
+		Expect(errors.As(err, &patternErr)).Should(BeTrue())
+		Expect(patternErr.Line).Should(Equal(3))
 	})
 
 	It("should embed with multi lined tag attributes", func() {
@@ -259,6 +268,24 @@ var _ = Describe("Embedding", func() {
 				"failed to parse an embedding instruction: " +
 				"the `<embed-code>` tag is not closed",
 		))
+	})
+
+	It("should preserve typed parser errors after adding document context", func() {
+		docPath := fmt.Sprintf("%s/missing-closing-tag.md", config.DocumentationRoot)
+		processor := newProcessor(docPath, config)
+
+		_, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		var processingErr embedding.ProcessingError
+		Expect(errors.As(err, &processingErr)).Should(BeTrue())
+		Expect(processingErr.DocFilePath).Should(Equal(docPath))
+		Expect(processingErr.Line).Should(Equal(3))
+
+		var parseErr parsing.InstructionParseError
+		Expect(errors.As(err, &parseErr)).Should(BeTrue())
+		Expect(parseErr.Line).Should(Equal(3))
+		Expect(parseErr.Reason).Should(Equal("the `<embed-code>` tag is not closed"))
 	})
 
 	It("should report the XML parser error", func() {
