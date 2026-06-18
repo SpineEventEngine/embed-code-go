@@ -30,8 +30,8 @@ The mode is selected using the mandatory `-mode` argument:
 - `embed`: Performs the embedding process.
 - `check`: Checks if embeddings are up-to-date.
 
-The tool can be run as a pre-compiled binary or via the Go compiler (requires Go [installed](#installation)).
-Binaries are located in the `./bin` directory.
+The tool can be run as a pre-compiled binary from the [GitHub Releases page][releases]
+or via the Go compiler (requires Go [installed](#installation)).
 
 The code and documentation files must be prepared for embedding.
 The instructions are provided in the [Setting up documentation and code files](EMBEDDING.md) document.
@@ -40,7 +40,7 @@ The instructions are provided in the [Setting up documentation and code files](E
 
 To run the binary, use:
 ```bash
-./bin/<binary_name> [arguments]
+./embed-code-<platform> [arguments]
 ```
 
 ### Running the Go file
@@ -148,12 +148,12 @@ These settings have the same role as the command-line arguments.
 
 ## Compilation
 
-Pre-compiled binaries are available in the `./bin` directory.
+Pre-compiled binaries are attached to each [GitHub Release][releases].
 However, you can also compile the utility manually if Go is [installed](#installation).
 
 Navigate to the project root and run:
 ```bash
-go build -trimpath main.go
+go build -trimpath -o embed-code main.go
 ```
 
 There may be issues when running `go build` outside of the directory containing `main.go`,
@@ -165,25 +165,25 @@ For further information, please refer to the [docs](https://pkg.go.dev/cmd/go#hd
 Without the `-trimpath` flag, Go includes absolute file paths in stack traces 
 based on the system where the binary was built. 
 
-Run following command to build binaries for macOS, Windows and Ubuntu:
+Run the following command to build local binaries for macOS, Windows, and Ubuntu:
 ```bash
-mkdir -p bin && \
-GOOS=darwin GOARCH=amd64 go build -trimpath -o bin/embed-code-macos main.go && chmod +x bin/embed-code-macos && \
-GOOS=windows GOARCH=amd64 go build -trimpath -o bin/embed-code-windows.exe main.go && \
-GOOS=linux GOARCH=amd64 go build -trimpath -o bin/embed-code-linux main.go && chmod +x bin/embed-code-linux
+mkdir -p dist && \
+GOOS=darwin GOARCH=amd64 go build -trimpath -o dist/embed-code-macos main.go && chmod +x dist/embed-code-macos && \
+GOOS=windows GOARCH=amd64 go build -trimpath -o dist/embed-code-windows.exe main.go && \
+GOOS=linux GOARCH=amd64 go build -trimpath -o dist/embed-code-linux main.go && chmod +x dist/embed-code-linux
 ```
 
 ## Development Notes
 
 This repository is configured with the following GitHub workflows:
 - `check` — runs tests across different platforms.
-- `build_binaries` — builds binaries on push to the `master` branch.
-   > Note: This workflow uses a **Deploy Key** instead of the default GitHub Actions bot
-   > to bypass the `master` branch protection against direct pushes.
-   >
-   > If it is necessary to update the Deploy Key, follow these steps:
-   > 1. Generate an SSH key pair for GitHub: `ssh -i ~/.ssh/workflow_deploy_key -T git@github.com`.
-   > 2. Add the public key (`workflow_deploy_key.pub`) as a **Deploy Key** in GitHub with write access.
-   > 3. Add the private key (`workflow_deploy_key`) as a repository secret named `WORKFLOW_DEPLOY_KEY`.
+- `build_binaries` — builds binaries on each push to the `master` branch and
+  uploads them to a GitHub Release named after the `VERSION` file. If the
+  release already exists, the workflow replaces its binary assets.
+
+Because releases are named from the value of `VERSION`, update the file when a
+change should publish a new release version. Keep the same value to refresh the
+assets attached to the existing release. The CLI embeds this file at build time.
 
 [embed-code-jekyll]: https://github.com/SpineEventEngine/embed-code
+[releases]: https://github.com/SpineEventEngine/embed-code-go/releases

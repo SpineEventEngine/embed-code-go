@@ -19,18 +19,23 @@
 package main
 
 import (
-	"embed-code/embed-code-go/cli"
-	"embed-code/embed-code-go/configuration"
-	"embed-code/embed-code-go/logging"
+	_ "embed"
 	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"strings"
+
+	"embed-code/embed-code-go/cli"
+	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/logging"
 )
 
-// Version of the embed-code application.
-const Version = "1.2.2"
+//go:embed VERSION
+var versionFile string
+
+// Version is the embed-code application version embedded from the VERSION file.
+var Version = strings.TrimSpace(versionFile)
 
 // The entry point for embed-code.
 //
