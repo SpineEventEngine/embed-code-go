@@ -2,7 +2,6 @@ name: Release Binaries
 
 on:
   push:
-    branches: [ master ]
 
 permissions:
   contents: write
@@ -55,11 +54,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
+          release_notes="$(printf 'Embed Code %s\n\nThis release contains pre-built Embed Code binaries for macOS, Linux, and Windows.' "$RELEASE_TAG")"
+
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            git tag --force "$RELEASE_TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$RELEASE_TAG" --force
+            gh release edit "$RELEASE_TAG" \
+              --title "embed-code $RELEASE_TAG" \
+              --notes "$release_notes"
             gh release upload "$RELEASE_TAG" dist/* --clobber
           else
             gh release create "$RELEASE_TAG" dist/* \
-              --target "${{ github.sha }}" \
+              --target "$GITHUB_SHA" \
               --title "embed-code $RELEASE_TAG" \
-              --notes "Automated release for commit ${{ github.sha }}."
+              --notes "$release_notes"
           fi
