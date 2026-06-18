@@ -2,10 +2,10 @@
 name: writer
 description: >
   Writes, edits, and restructures embed-code-go documentation. Use when asked
-  to create or update README.md, EMBEDDING.md, PROJECT.md, AGENTS.md, skills,
-  Markdown fixtures, contributor notes, examples, command snippets, Go doc
-  comments, or inline explanatory comments. Verifies claims against current Go
-  code, tests, fixtures, and project flows.
+  to create or update README.md, showcase guides, PROJECT.md, AGENTS.md,
+  skills, Markdown fixtures, contributor notes, examples, command snippets,
+  Go doc comments, or inline explanatory comments. Verifies claims against
+  current Go code, tests, fixtures, and project flows.
 ---
 
 # Write documentation
@@ -22,9 +22,13 @@ description: >
 
 Prefer updating an existing document over creating a new one.
 
-- `README.md`: user-facing overview, setup, configuration, modes, and flags.
-- `EMBEDDING.md`: embedding syntax, source markers, patterns, fences,
-  separators, and comment modes.
+- `README.md`: user-facing overview, short run/build instructions, and links
+  to the complete guide.
+- `showcase/README.md`: complete user guide entry point and runnable workflow.
+- `showcase/configuration/README.md`: command-line flags, YAML configuration,
+  source roots, include/exclude patterns, and multiple embedding targets.
+- `showcase/embedding/README.md`: embedding instruction map; detailed syntax
+  belongs in the related `showcase/embedding/positive/*.md` feature page.
 - `PROJECT.md`: project overview, project map, and compact doc pointers.
 - `AGENTS.md`: agent operating policy and repository-wide rules.
 - `.agents/skills/<name>/SKILL.md`: language, testing, writing, review, project
@@ -39,7 +43,7 @@ Prefer updating an existing document over creating a new one.
 - For YAML configuration, check `cli/`, `configuration/`, and config fixtures
   under `test/resources/config_files/`.
 - For embedding syntax, check `embedding/parsing/`, `embedding/processor.go`,
-  `embedding/parsing/instruction.go`, and `EMBEDDING.md`.
+  `embedding/parsing/instruction.go`, and `showcase/embedding/`.
 - For source fragments and patterns, check `fragmentation/`,
   `embedding/parsing/pattern.go`, and relevant source fixtures.
 - For comments modes, check `embedding/commentfilter/`.
@@ -60,7 +64,7 @@ Prefer updating an existing document over creating a new one.
   code fence, fragment, source root, docs root, include pattern, exclude pattern.
 - Do not leave orphans in prose: no paragraph, list item, or table cell should
   end with a final line containing only one word. Reflow or rewrite the text.
-- Do not duplicate long explanations between `README.md`, `EMBEDDING.md`, and
+- Do not duplicate long explanations between `README.md`, the showcase, and
   `AGENTS.md`; link to the owning document instead.
 
 ## Go Doc Comment Guidance
