@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Tester"
+  short_description: "Write embed-code-go Go tests"
+  default_prompt: "Use $go-tester after reading AGENTS.md and PROJECT.md to add or review tests in embed-code-go."

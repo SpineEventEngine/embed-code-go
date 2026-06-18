@@ -47,10 +47,12 @@ To run the binary, use:
 
 #### Running with Go
 
-If you have Go installed (version `1.22.1` recommended), you can run the tool directly:
+If you have Go installed, you can run the tool directly:
 ```bash
 go run ./main.go [arguments]
 ```
+
+It is better to use the same Go version as the one specified in [go.mod](./go.mod).
 
 ### Arguments
 
@@ -140,7 +142,7 @@ These settings have the same role as the command-line arguments.
 
 ## Installation
 
-* Go to https://go.dev/doc/install. Our Go version is `1.22.1`, which can be checked in the [go.mod](./go.mod) file
+* Go to https://go.dev/doc/install.
 * Make sure your Go installed successfully with the command
     ```bash
     go version

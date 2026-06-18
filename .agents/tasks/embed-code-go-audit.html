@@ -142,7 +142,7 @@ strong { font-weight: 650; }
 <hr />
 <h2 id="3-repo-map">3. Repo map</h2>
 <p><strong>Purpose.</strong> A CLI that (a) <strong>embeds</strong> named code fragments / pattern-matched line ranges from source files into <code>&lt;embed-code …&gt;</code> tags in Markdown, or (b) <strong>checks</strong> that already-embedded snippets are up-to-date. Built for TeamDev/SpineEventEngine's Hugo documentation sites (<code>README.md:6-8</code>).</p>
-<p><strong>Stack &amp; maturity.</strong> Go 1.22.1 (<code>go.mod:21</code>), version 1.2.2 (<code>main.go:33</code>). 38 Go files, ~7,856 lines (~5,400 non-test). Dependencies: <code>doublestar</code> (globbing), <code>gobwas/glob</code> (patterns), <code>yaml.v3</code>, Ginkgo/Gomega (tests). 345 commits over two years, primarily one author. <strong>Maturity: established internal product</strong>, not a prototype — and now headed for external distribution.</p>
+<p><strong>Stack &amp; maturity.</strong> Go 1.26.4 (<code>go.mod:21</code>), version 1.2.2 (<code>main.go:33</code>). 38 Go files, ~7,856 lines (~5,400 non-test). Dependencies: <code>doublestar</code> (globbing), <code>gobwas/glob</code> (patterns), <code>yaml.v3</code>, Ginkgo/Gomega (tests). 345 commits over two years, primarily one author. <strong>Maturity: established internal product</strong>, not a prototype — and now headed for external distribution.</p>
 <p><strong>Control flow.</strong></p>
 <pre><code>main.go ─ orchestration, error aggregation, exit codes
   └─ cli/ ─────────── arg + YAML parsing → Config; validation; build []Configuration
