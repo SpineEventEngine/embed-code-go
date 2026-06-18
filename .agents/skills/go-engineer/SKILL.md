@@ -8,7 +8,7 @@ description: >
   package APIs, formatting, vetting, and build verification.
 ---
 
-# Go - policy & pitfalls
+# Go Engineering
 
 Baseline Go knowledge is assumed. This skill does not teach the language; it
 encodes the project policy, package boundaries, and traps that recur in `embed-code-go` work.
@@ -35,7 +35,7 @@ lives in `.agents/skills/review-docs/SKILL.md`.
 4. Defer test structure and fixtures to `go-tester` for test changes.
 5. Verify with the narrowest relevant Go test first, then the repository-level
    checks listed below.
-6. Do not commit, push, tag, merge, rebase, cherry-pick, or rewrite Git history.
+6. Follow the git-history policy in `AGENTS.md`.
 
 ## Setup Check
 
@@ -112,7 +112,7 @@ first function that exposes the symptom.
 - **No message-string error contracts.** Prefer typed errors, sentinels, or
   `errors.Is` / `errors.As`.
 - **No dependency updates unless the confirmed task requires them.**
-- **No commits or history-writing.**
+- **No local history exceptions.** Follow the git-history policy in `AGENTS.md`.
 
 ## Project Hotspots
 

@@ -36,7 +36,8 @@ Two companions own neighboring concerns:
 5. **Keep tests deterministic and portable.** Avoid machine-specific absolute
    paths, map iteration order, hidden local files, and OS-specific separators
    unless the code intentionally emits them.
-6. **Do not commit or rewrite history.**
+6. **Follow git-history policy.** Do not commit or rewrite history unless
+   `AGENTS.md` allows it.
 
 ## Workflow
 

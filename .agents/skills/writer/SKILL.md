@@ -20,19 +20,17 @@ description: >
 
 ## Choose Where The Content Should Live
 
-- Prefer updating an existing document over creating a new one.
-- Put project entry-point and usage content in `README.md`.
-- Put embedding syntax, source markers, patterns, fences, separators, comment
-  modes, and examples in `EMBEDDING.md`.
-- Put `PROJECT.md` project overview, project map, and compact doc pointers.
-- Put project flow and implementation constraints in the relevant
-  `.agents/skills/<name>/SKILL.md` file.
-- Put agent operating policy and repository-wide rules in `AGENTS.md`.
-- Put language, testing, writing, and review procedures in the relevant
-  skill under `.agents/skills/<name>/SKILL.md`.
-- Put API or helper behavior that belongs with code in Go doc comments.
-- Put parser and embedding fixtures under `test/resources/` only when they are
-  part of tests or examples already in scope.
+Prefer updating an existing document over creating a new one.
+
+- `README.md`: user-facing overview, setup, configuration, modes, and flags.
+- `EMBEDDING.md`: embedding syntax, source markers, patterns, fences,
+  separators, and comment modes.
+- `PROJECT.md`: project overview, project map, and compact doc pointers.
+- `AGENTS.md`: agent operating policy and repository-wide rules.
+- `.agents/skills/<name>/SKILL.md`: language, testing, writing, review, project
+  flow, and implementation constraints.
+- Go doc comments: API or helper behavior.
+- `test/resources/`: parser and embedding fixtures.
 
 ## Verify Against Project Flows
 
@@ -106,4 +104,4 @@ When writing documentation:
 3. List source files, tests, or fixtures used to verify claims.
 4. Report validation commands run and any remaining unverified claims.
 
-Never commit, push, tag, or rewrite Git history.
+Follow the git-history policy in `AGENTS.md`.
