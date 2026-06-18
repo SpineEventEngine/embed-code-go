@@ -23,7 +23,7 @@ failures, and runnable examples.
 
 ## Run
 
-Use a prebuilt binary from [Releases]():
+Use a prebuilt binary from [GitHub Releases][releases]:
 
 ```bash
 ./bin/embed-code-linux -mode=check -config-path=showcase/embedding/embed-code.yml
@@ -66,3 +66,4 @@ go test -tags showcase ./showcase
 ```
 
 [embed-code-jekyll]: https://github.com/SpineEventEngine/embed-code
+[releases]: https://github.com/SpineEventEngine/embed-code-go/releases
