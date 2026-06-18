@@ -1,8 +1,8 @@
 # Project
 
-This document describes what `embed-code-go` is and where its project
-information lives. For agent operating policy, read [AGENTS.md](AGENTS.md). For
-implementation details, use the matching discovered skill.
+This document gives agents and contributors the project overview and package
+map. For agent operating policy, read [AGENTS.md](AGENTS.md). For implementation
+details, use the matching discovered skill.
 
 ## Overview
 
