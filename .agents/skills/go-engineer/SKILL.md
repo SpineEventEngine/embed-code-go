@@ -28,12 +28,11 @@ lives in `.agents/skills/review-docs/SKILL.md`.
 
 ## Fast Path for Agents
 
-1. Read `AGENTS.md` and the relevant implementation files in full.
+1. Read `AGENTS.md`, `PROJECT.md`, and relevant implementation files.
 2. Ask clarifying questions before editing if the requested outcome, scope,
    compatibility constraints, or verification target is not explicit.
 3. Apply the MUST / MUST NOT rules while editing.
-4. Defer test structure and fixtures to `go-tester` when adding or reviewing
-   tests.
+4. Defer test structure and fixtures to `go-tester` for test changes.
 5. Verify with the narrowest relevant Go test first, then the repository-level
    checks listed below.
 6. Do not commit, push, tag, merge, rebase, cherry-pick, or rewrite Git history.
@@ -51,6 +50,27 @@ Run this before non-trivial Go changes or when the package baseline is unclear:
 4. **Commands** - plan `gofmt`, focused `go test`, `go vet ./...`, full
    `go test ./...`, and `go build -trimpath main.go` when integration or CLI
    behavior changes.
+
+## Processing Flow
+
+The normal execution path is:
+
+1. `main.go` reads arguments, configures logging, validates input, and dispatches
+   `embed` or `check` mode.
+2. `cli/` reads flags or YAML and produces one or more normalized
+   `configuration.Configuration` values.
+3. `embedding.EmbedAll` or `embedding.CheckUpToDate` selects documentation files
+   using include and exclude patterns.
+4. An `embedding.Processor` processes one document at a time.
+5. `embedding/parsing/` walks the document through explicit states, records each
+   instruction and its code fence, and preserves unrelated document content.
+6. A parsed `Instruction` resolves source content through `fragmentation/`,
+   optional line patterns, indentation normalization, and comment filtering.
+7. Embed mode writes changed documents. Check mode compares generated content
+   with existing content and must not modify documentation.
+
+When behavior changes, trace the complete path instead of patching only the
+first function that exposes the symptom.
 
 ## MUST DO
 
@@ -102,7 +122,11 @@ Run this before non-trivial Go changes or when the package baseline is unclear:
   state, and `embedding/processor.go` together.
 - Preserve self-closing, paired, and multiline instruction forms.
 - Keep ordinary Markdown fences separate from embedding fences.
+- Preserve the opening fence's marker length and indentation when recognizing
+  the closing fence and rendering source lines.
 - Report malformed instructions at their start line with a concrete reason.
+- Prefer concrete parse reasons: missing tag end, missing closing tag, invalid
+  XML, missing code fence, or unclosed code fence.
 - Do not consume unrelated later content to recover from invalid XML.
 
 ### Embedding And Check Modes

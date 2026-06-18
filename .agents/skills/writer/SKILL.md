@@ -2,9 +2,9 @@
 name: writer
 description: >
   Writes, edits, and restructures embed-code-go documentation. Use when asked
-  to create or update README.md, EMBEDDING.md, AGENTS.md, skills, Markdown
-  fixtures, contributor notes, examples, command snippets, Go doc comments, or
-  inline explanatory comments. Verifies documentation claims against current Go
+  to create or update README.md, EMBEDDING.md, PROJECT.md, AGENTS.md, skills,
+  Markdown fixtures, contributor notes, examples, command snippets, Go doc
+  comments, or inline explanatory comments. Verifies claims against current Go
   code, tests, fixtures, and project flows.
 ---
 
@@ -24,8 +24,9 @@ description: >
 - Put project entry-point and usage content in `README.md`.
 - Put embedding syntax, source markers, patterns, fences, separators, comment
   modes, and examples in `EMBEDDING.md`.
-- Put project flow, package ownership, architecture boundaries, and the
-  documentation map in `PROJECT.md`.
+- Put project overview, project map, and the documentation map in `PROJECT.md`.
+- Put project flow and implementation constraints in the relevant
+  `.agents/skills/<name>/SKILL.md` file.
 - Put agent operating policy and repository-wide rules in `AGENTS.md`.
 - Put language, testing, writing, and review procedures in the relevant
   skill under `.agents/skills/<name>/SKILL.md`.
