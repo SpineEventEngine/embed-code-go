@@ -55,8 +55,7 @@ go build -trimpath -o embed-code main.go
 ```
 
 This creates `embed-code` on Unix-like systems or `embed-code.exe` on Windows.
-The `-trimpath` flag prevents local absolute paths from appearing in stack
-traces.
+The `-trimpath` flag prevents local absolute paths from appearing in stack traces.
 
 ## Development
 
