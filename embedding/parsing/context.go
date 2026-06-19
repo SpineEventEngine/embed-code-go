@@ -181,23 +181,23 @@ func (c *Context) ResolveUnacceptedEmbedding() {
 	c.EmbeddingInstruction = nil
 }
 
-// SetEmbedding sets an embedding to Context. Also sets fileContainsEmbedding flag.
-func (c *Context) SetEmbedding(embedding *Instruction) {
-	sourceIndex := c.lineIndex
-	resultIndex := len(c.Result)
-
-	if embedding == nil {
-		c.CurrentEmbedding().SourceEndIndex = sourceIndex
-		c.CurrentEmbedding().resultEndIndex = resultIndex
-	} else {
-		c.fileContainsEmbedding = true
-		context := EmbeddingContext{
-			embeddingInstruction: *embedding,
-		}
-
-		c.embeddings = append(c.embeddings, context)
+// StartEmbedding records an instruction as the current embedding.
+func (c *Context) StartEmbedding(instruction Instruction) {
+	c.fileContainsEmbedding = true
+	embeddingContext := EmbeddingContext{
+		embeddingInstruction: instruction,
 	}
-	c.EmbeddingInstruction = embedding
+
+	c.embeddings = append(c.embeddings, embeddingContext)
+	c.EmbeddingInstruction = &c.CurrentEmbedding().embeddingInstruction
+}
+
+// FinishEmbedding closes the current embedding at the current parser position.
+func (c *Context) FinishEmbedding() {
+	currentEmbedding := c.CurrentEmbedding()
+	currentEmbedding.SourceEndIndex = c.lineIndex
+	currentEmbedding.resultEndIndex = len(c.Result)
+	c.EmbeddingInstruction = nil
 }
 
 // SetCodeStart sets the current line as a start of a code lines in the result. It's needed to not

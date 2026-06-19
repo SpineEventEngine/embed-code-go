@@ -1,8 +1,8 @@
 # Project
 
-This document gives agents and contributors the project overview and package
-map. For agent operating policy, read [AGENTS.md](AGENTS.md). For implementation
-details, use the matching discovered skill.
+This document gives agents and contributors the project overview, package map,
+documentation ownership, and CI notes. For agent operating policy, read
+[AGENTS.md](AGENTS.md).
 
 ## Overview
 
@@ -31,10 +31,37 @@ them inside code fences, and checks whether existing snippets are up-to-date.
   segment is `type`, but the Go package identifier is `_type` because `type` is
   a Go keyword.
 - `test/resources/`: parser, embedding, configuration, and source-code fixtures.
+- `showcase/`: executable user guide and end-to-end example suite.
 
-## Documentation
+## Documentation Ownership
 
-- `README.md`: user-facing usage.
-- `EMBEDDING.md`: embedding syntax and examples.
-- `.agents/skills/`: task-specific rules for implementation, testing, writing,
-  and review.
+- `README.md`: project entry point, short run/build instructions, and links to
+  the complete guide.
+- `showcase/README.md`: complete user guide entry point and runnable workflow.
+- `showcase/configuration/README.md`: command-line flags, YAML configuration,
+  source roots, include/exclude patterns, and multiple embedding targets.
+- `showcase/embedding/README.md`: `<embed-code>` instruction syntax, source
+  selection, fragments, patterns, comment filtering, and rendered examples.
+- `PROJECT.md`: project map, package ownership, documentation ownership, and CI
+  notes for contributors and agents.
+- `AGENTS.md`: repository operating policy for agents.
+
+Keep usage details in the showcase. Keep architecture and ownership details in
+this file. Keep the root README short.
+
+## CI
+
+This repository is configured with these GitHub workflows:
+
+- `check`: runs linting, the normal Go test suite, and the showcase end-to-end
+  tests across supported platforms.
+- `build_binaries`: builds binaries on pushes to `master`.
+
+`build_binaries` uses a deploy key instead of the default GitHub Actions bot so
+it can push through branch protection. If it must be rotated:
+
+1. Generate an SSH key pair for GitHub:
+   `ssh -i ~/.ssh/workflow_deploy_key -T git@github.com`.
+2. Add `workflow_deploy_key.pub` as a GitHub deploy key with write access.
+3. Add `workflow_deploy_key` as a repository secret named
+   `WORKFLOW_DEPLOY_KEY`.
