@@ -1,11 +1,15 @@
+# Releases binaries when application version changes.
 name: Release Binaries
 
 on:
   push:
+    branches: [ master ]
 
 permissions:
   contents: write
 
+# Keep only the newest release run for the same ref. This avoids competing
+# release attempts when several pushes land close together.
 concurrency:
   group: release-binaries-${{ github.ref }}
   cancel-in-progress: true
@@ -22,11 +26,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Use the same Go version as the project, declared in go.mod.
       - name: Set Up Go Environment
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
 
+      # Reads the app version from the `VERSION` file.
+      # It must be a plain MAJOR.MINOR.PATCH value, such as 1.2.3.
       - name: Read Version
         id: version
         shell: bash
@@ -39,6 +46,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
+      # Compares the release version with current app version.
+      # If current app version already exist in release, emits a warning, but flow counts as passed.
       - name: Check Release Version
         id: release
         shell: bash
@@ -53,6 +62,7 @@ jobs:
             echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # Build binaries only for new releases.
       - name: Build Binaries
         if: steps.release.outputs.publish == 'true'
         shell: bash
@@ -63,6 +73,7 @@ jobs:
           GOOS=darwin GOARCH=amd64 go build -trimpath -o dist/embed-code-macos main.go
           chmod +x dist/embed-code-linux dist/embed-code-macos
 
+      # Create the release for the current commit and attach all generated binaries.
       - name: Publish GitHub Release
         if: steps.release.outputs.publish == 'true'
         shell: bash
