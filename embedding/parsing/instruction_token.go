@@ -103,7 +103,7 @@ func (e EmbedInstructionTokenState) Accept(context *Context,
 		if err == nil {
 			instruction.DocumentationFile = context.MarkdownFilePath
 			instruction.DocumentationLine = startLine
-			context.SetEmbedding(&instruction)
+			context.StartEmbedding(instruction)
 		} else {
 			parseErr = err
 		}

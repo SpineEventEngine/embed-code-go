@@ -1,0 +1,6 @@
+code-path: showcase/code/java
+docs-path: showcase/configuration/docs/include-exclude
+doc-includes:
+  - "**/*.md"
+doc-excludes:
+  - excluded.md

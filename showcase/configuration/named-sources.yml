@@ -1,0 +1,10 @@
+code-path:
+  - name: java
+    path: showcase/code/java
+  - name: kotlin
+    path: showcase/code/kotlin
+  - name: text
+    path: showcase/code/text
+docs-path: showcase/configuration/docs/named-sources
+doc-includes:
+  - "**/*.md"
