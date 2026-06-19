@@ -2,7 +2,6 @@ name: Release Binaries
 
 on:
   push:
-    branches: [ master ]
 
 permissions:
   contents: write
@@ -40,7 +39,22 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
+      - name: Check Release Version
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "::warning title=Release already exists::Release $RELEASE_TAG already exists. Bump VERSION to publish a new release."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build Binaries
+        if: steps.release.outputs.publish == 'true'
         shell: bash
         run: |
           mkdir -p dist
@@ -50,23 +64,14 @@ jobs:
           chmod +x dist/embed-code-linux dist/embed-code-macos
 
       - name: Publish GitHub Release
+        if: steps.release.outputs.publish == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
           release_notes="$(printf 'Embed Code %s\n\nThis release contains pre-built Embed Code binaries for macOS, Linux, and Windows.' "$RELEASE_TAG")"
-
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            git tag --force "$RELEASE_TAG" "$GITHUB_SHA"
-            git push origin "refs/tags/$RELEASE_TAG" --force
-            gh release edit "$RELEASE_TAG" \
-              --title "embed-code $RELEASE_TAG" \
-              --notes "$release_notes"
-            gh release upload "$RELEASE_TAG" dist/* --clobber
-          else
-            gh release create "$RELEASE_TAG" dist/* \
-              --target "$GITHUB_SHA" \
-              --title "embed-code $RELEASE_TAG" \
-              --notes "$release_notes"
-          fi
+          gh release create "$RELEASE_TAG" dist/* \
+            --target "$GITHUB_SHA" \
+            --title "embed-code $RELEASE_TAG" \
+            --notes "$release_notes"
