@@ -23,11 +23,18 @@ failures, and runnable examples.
 
 ## Run
 
-Use a prebuilt binary from [GitHub Releases][releases]:
+Download the asset for your platform from [GitHub Releases][releases]. 
+
+On Linux, for example:
 
 ```bash
-./bin/embed-code-linux -mode=check -config-path=showcase/embedding/embed-code.yml
+./embed-code-linux -mode=check -config-path=showcase/embedding/embed-code.yml
 ```
+
+> It may be necessary to give the executable permission with `chmod +x` on Unix-like systems:
+> ```bash
+> chmod +x embed-code-linux
+> ```
 
 Or run it with Go:
 
