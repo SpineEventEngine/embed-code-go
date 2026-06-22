@@ -61,7 +61,11 @@ var _ = Describe("Indent", func() {
 	})
 
 	It("should cut lines shorter than the indentation", func() {
-		testLines := []string{"        System.out.println(\"Hi\");", "  ", "        return;"}
+		testLines := []string{
+			"        System.out.println(\"Hi\");",
+			"  ",
+			"        return;",
+		}
 
 		changedLines := indent.CutIndent(testLines, 8)
 
