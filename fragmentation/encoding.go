@@ -19,37 +19,17 @@
 package fragmentation
 
 import (
-	"os"
+	"errors"
 	"unicode/utf8"
 )
 
-const lastASCIIchar = 127
+var errUnsupportedEncoding = errors.New("unsupported source encoding: expected UTF-8")
 
-// IsEncodedAsText reports whether the file stored at filePath is encoded as a text.
-//
-// If file encoded in ASCII or UTF-8, it is meant to be a text file.
-func IsEncodedAsText(filePath string) (bool, error) {
-	// Read the entire file into memory.
-	content, err := os.ReadFile(filePath)
-	if err != nil {
-		return false, err
+// validateTextEncoding reports whether source content uses UTF-8 text encoding.
+func validateTextEncoding(content []byte) error {
+	if !utf8.Valid(content) {
+		return errUnsupportedEncoding
 	}
 
-	isUTF8Encoded := utf8.Valid(content)
-	isASCIIEncoded := areASCIIEncoded(content)
-
-	return isUTF8Encoded || isASCIIEncoded, nil
-}
-
-// Reports whether given bytes are ASCII-encoded.
-//
-// If all the characters fall within the ASCII range (0 to 127), it’s likely an ASCII-encoded file.
-func areASCIIEncoded(bytes []byte) bool {
-	for _, char := range bytes {
-		if char > byte(lastASCIIchar) {
-			return false
-		}
-	}
-
-	return true
+	return nil
 }
