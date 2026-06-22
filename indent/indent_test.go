@@ -60,4 +60,16 @@ var _ = Describe("Indent", func() {
 		Expect(changedLines).ShouldNot(Equal(testLines))
 	})
 
+	It("should cut lines shorter than the indentation", func() {
+		testLines := []string{"        System.out.println(\"Hi\");", "  ", "        return;"}
+
+		changedLines := indent.CutIndent(testLines, 8)
+
+		Expect(changedLines).Should(Equal([]string{
+			"System.out.println(\"Hi\");",
+			"",
+			"return;",
+		}))
+	})
+
 })
