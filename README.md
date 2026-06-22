@@ -36,6 +36,12 @@ On Linux, for example:
 > chmod +x embed-code-linux
 > ```
 
+> Since binary file for macOS is not signed, it may be necessary 
+> to change its attributes to allow execution:
+> ```bash
+> xattr -d com.apple.quarantine embed-code-macos
+> ```
+
 Or run it with Go:
 
 ```bash
