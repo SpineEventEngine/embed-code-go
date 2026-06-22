@@ -55,13 +55,9 @@ This repository is configured with these GitHub workflows:
 
 - `check`: runs linting, the normal Go test suite, and the showcase end-to-end
   tests across supported platforms.
-- `build_binaries`: builds binaries on pushes to `master`.
+- `release-binaries`: reads `VERSION`, builds Linux, macOS, and Windows
+  binaries, and creates the matching GitHub Release on pushes to `master`.
 
-`build_binaries` uses a deploy key instead of the default GitHub Actions bot so
-it can push through branch protection. If it must be rotated:
-
-1. Generate an SSH key pair for GitHub:
-   `ssh -i ~/.ssh/workflow_deploy_key -T git@github.com`.
-2. Add `workflow_deploy_key.pub` as a GitHub deploy key with write access.
-3. Add `workflow_deploy_key` as a repository secret named
-   `WORKFLOW_DEPLOY_KEY`.
+The release tag is `v<version>` from `VERSION`. When the release already exists,
+the workflow emits a warning and finishes successfully without rebuilding or
+uploading binaries.

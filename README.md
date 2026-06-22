@@ -23,11 +23,24 @@ failures, and runnable examples.
 
 ## Run
 
-Use a prebuilt binary from [GitHub Releases][releases]:
+Download the asset for your platform from [GitHub Releases][releases]. 
+
+On Linux, for example:
 
 ```bash
-./bin/embed-code-linux -mode=check -config-path=showcase/embedding/embed-code.yml
+./embed-code-linux -mode=check -config-path=showcase/embedding/embed-code.yml
 ```
+
+> It may be necessary to give the executable permission with `chmod +x` on Unix-like systems:
+> ```bash
+> chmod +x embed-code-linux
+> ```
+
+> Since binary file for macOS is not signed, it may be necessary 
+> to change its attributes to allow execution:
+> ```bash
+> xattr -d com.apple.quarantine embed-code-macos
+> ```
 
 Or run it with Go:
 
@@ -48,8 +61,7 @@ go build -trimpath -o embed-code main.go
 ```
 
 This creates `embed-code` on Unix-like systems or `embed-code.exe` on Windows.
-The `-trimpath` flag prevents local absolute paths from appearing in stack
-traces.
+The `-trimpath` flag prevents local absolute paths from appearing in stack traces.
 
 ## Development
 
