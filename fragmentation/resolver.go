@@ -140,7 +140,8 @@ func resolveSource(codePath string, config config.Configuration) (absolutePath, 
 		}
 
 		_, err = cachedSourceFragments(source)
-		if errors.Is(err, errUnsupportedEncoding) {
+		var encodingError *unsupportedEncodingError
+		if errors.As(err, &encodingError) {
 			continue
 		}
 		if err != nil {

@@ -19,14 +19,21 @@
 package fragmentation
 
 import (
-	"errors"
 	"unicode/utf8"
 )
+
+// unsupportedEncodingError indicates that source content is not valid UTF-8.
+type unsupportedEncodingError struct{}
+
+// Error describes the required source encoding.
+func (*unsupportedEncodingError) Error() string {
+	return "unsupported source encoding: expected UTF-8"
+}
 
 // validateTextEncoding reports whether source content uses UTF-8 text encoding.
 func validateTextEncoding(content []byte) error {
 	if !utf8.Valid(content) {
-		return errors.New("unsupported source encoding: expected UTF-8")
+		return &unsupportedEncodingError{}
 	}
 
 	return nil
