@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -31,8 +30,6 @@ import (
 	"embed-code/embed-code-go/embedding/parsing"
 	"embed-code/embed-code-go/files"
 	"embed-code/embed-code-go/logging"
-
-	"github.com/bmatcuk/doublestar/v4"
 )
 
 // Processor entity processes a single documentation file and embeds code snippets
@@ -47,22 +44,6 @@ type Processor struct {
 	TransitionsMap   parsing.TransitionMap
 	requiredDocPaths []string
 }
-
-// EmbedAllResult is result of the EmbedAll method.
-//
-// TargetFiles is the list of target documentation files.
-//
-// TotalEmbeddings is the total number of embeddings found in the target documentation files.
-//
-// UpdatedTargetFiles is the list of updated target documentation files.
-type EmbedAllResult struct {
-	TargetFiles        []string
-	TotalEmbeddings    int
-	UpdatedTargetFiles []string
-}
-
-// processorHandler applies one processing mode to a configured documentation processor.
-type processorHandler func(processor Processor) error
 
 // NewProcessor creates and returns new Processor with given docFile and config.
 func NewProcessor(docFile string, config configuration.Configuration) (Processor, error) {
@@ -188,74 +169,6 @@ func (p Processor) isUpToDate() (bool, error) {
 	return upToDate, nil
 }
 
-// EmbedAll processes embedding for multiple documentation files based on provided config.
-//
-// Iterates over patterns in the configuration, finds documentation files matching those patterns,
-// creates an EmbeddingProcessor for each file, and embeds code fragments in them.
-//
-// config — a configuration for embedding.
-func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
-	totalEmbeddings := 0
-	var updatedTargetFiles []string
-	requiredDocPaths, embeddingErrors := processRequiredDocs(config, func(processor Processor) error {
-		context, err := processor.Embed()
-		if err != nil {
-			return err
-		}
-		totalEmbeddings += context.EmbeddingsCount()
-		if context.IsContentChanged() {
-			updatedTargetFiles = append(updatedTargetFiles, processor.DocFilePath)
-		}
-
-		return nil
-	})
-	if len(embeddingErrors) > 0 {
-		return EmbedAllResult{}, errors.Join(embeddingErrors...)
-	}
-	if totalEmbeddings > 0 {
-		slog.Info(
-			fmt.Sprintf(
-				"Processed %d documentation file(s) with %d embedding(s) in `%s`%s.",
-				len(requiredDocPaths), totalEmbeddings,
-				logging.FileReference(config.DocumentationRoot),
-				configNameLabel(config),
-			),
-		)
-	} else {
-		slog.Warn(
-			fmt.Sprintf("No embedding instructions were found in documentation folder `%s`%s.",
-				logging.FileReference(config.DocumentationRoot), configNameLabel(config)),
-		)
-	}
-
-	return EmbedAllResult{
-		TargetFiles:        requiredDocPaths,
-		TotalEmbeddings:    totalEmbeddings,
-		UpdatedTargetFiles: updatedTargetFiles,
-	}, nil
-}
-
-// configNameLabel formats a configuration name for summary log messages.
-func configNameLabel(config configuration.Configuration) string {
-	if config.Name == "" {
-		return ""
-	}
-
-	return fmt.Sprintf(" for `%s` embedding setup", config.Name)
-}
-
-// CheckUpToDate returns documentation files that are not up-to-date with code files.
-//
-// config — a configuration for embedding.
-func CheckUpToDate(config configuration.Configuration) ([]string, error) {
-	changedFiles, checkErrors := findChangedFiles(config)
-	if len(checkErrors) > 0 {
-		return nil, errors.Join(checkErrors...)
-	}
-
-	return changedFiles, nil
-}
-
 // Iterates through the doc file line by line considering them as a states of an embedding.
 // Such way, transits from the state to the next possible one until it reaches the end of a file.
 // By the transition process, fills the parsing.Context accordingly, so it is ready to retrieve
@@ -358,124 +271,4 @@ func (p Processor) moveToNextState(state *parsing.State, context *parsing.Contex
 	}
 
 	return false, state, nil
-}
-
-// findChangedFiles returns documentation files that are not up-to-date with their code files.
-//
-// config — a configuration for embedding.
-func findChangedFiles(config configuration.Configuration) ([]string, []error) {
-	var changedFiles []string
-	_, checkErrors := processRequiredDocs(config, func(processor Processor) error {
-		upToDate, err := processor.isUpToDate()
-		if err != nil {
-			return err
-		}
-		if !upToDate {
-			changedFiles = append(changedFiles, processor.DocFilePath)
-		}
-
-		return nil
-	})
-
-	return changedFiles, checkErrors
-}
-
-// processRequiredDocs applies a processing handler to every documentation file in config.
-func processRequiredDocs(
-	config configuration.Configuration,
-	handle processorHandler,
-) ([]string, []error) {
-	requiredDocPaths, err := requiredDocs(config)
-	if err != nil {
-		return nil, []error{err}
-	}
-
-	var processingErrors []error
-	for _, doc := range requiredDocPaths {
-		processor := newProcessor(doc, config, parsing.Transitions, requiredDocPaths)
-		if err := handle(processor); err != nil {
-			processingErrors = append(processingErrors, err)
-		}
-	}
-
-	return requiredDocPaths, processingErrors
-}
-
-// requiredDocs returns documentation files matched by includes minus excludes.
-func requiredDocs(config configuration.Configuration) ([]string, error) {
-	documentationRoot := config.DocumentationRoot
-	includedPatterns := config.DocIncludes
-	excludedPatterns := config.DocExcludes
-
-	includedDocs, err := getFilesByPatterns(documentationRoot, includedPatterns)
-	if err != nil {
-		return nil, err
-	}
-
-	excludedDocs, err := getFilesByPatterns(documentationRoot, excludedPatterns)
-	if err != nil {
-		return nil, err
-	}
-	if len(excludedDocs) == 0 {
-		slog.Info(fmt.Sprintf(
-			"Found %d documentation file(s) from `%s` matching include pattern(s) %s.",
-			len(includedDocs), logging.FileReference(documentationRoot),
-			patternsLabel(includedPatterns),
-		))
-
-		return includedDocs, nil
-	}
-
-	result := removeElements(includedDocs, excludedDocs)
-	slog.Info(fmt.Sprintf(
-		"Found %d documentation file(s) from `%s` matching include pattern(s) %s "+
-			"and exclude pattern(s) %s.",
-		len(result), logging.FileReference(documentationRoot), patternsLabel(includedPatterns),
-		patternsLabel(excludedPatterns),
-	))
-
-	return result, nil
-}
-
-// patternsLabel formats glob patterns for human-readable log messages.
-func patternsLabel(patterns []string) string {
-	if len(patterns) == 0 {
-		return "nothing"
-	}
-
-	return "`" + strings.Join(patterns, "`, `") + "`"
-}
-
-// getFilesByPatterns expands documentation glob patterns relative to the given root.
-func getFilesByPatterns(root string, patterns []string) ([]string, error) {
-	var result []string
-	for _, pattern := range patterns {
-		globString := filepath.Join(root, filepath.FromSlash(pattern))
-		matches, err := doublestar.FilepathGlob(globString)
-		if err != nil {
-			return nil, err
-		}
-		for _, match := range matches {
-			result = append(result, filepath.ToSlash(match))
-		}
-	}
-
-	return result, nil
-}
-
-// removeElements returns values from first that are not present in second.
-func removeElements(first, second []string) []string {
-	secondMap := make(map[string]struct{})
-	for _, value := range second {
-		secondMap[value] = struct{}{}
-	}
-
-	var result []string
-	for _, value := range first {
-		if _, exists := secondMap[value]; !exists {
-			result = append(result, value)
-		}
-	}
-
-	return result
 }
