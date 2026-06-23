@@ -19,12 +19,14 @@
 package fragmentation
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"path/filepath"
 	"strings"
 
 	config "embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/files"
 	"embed-code/embed-code-go/logging"
 	_type "embed-code/embed-code-go/type"
 )
@@ -38,8 +40,11 @@ type fragmentedFile struct {
 	fragments map[string]Fragment
 }
 
+// absolutePath is a resolved absolute filesystem path.
+type absolutePath string
+
 // resolverCache stores source fragmentations already resolved during the current run.
-var resolverCache = newCache[resolvedPath, fragmentedFile](
+var resolverCache = newCache[absolutePath, fragmentedFile](
 	resolverCacheLimit,
 	loadSourceFragments,
 )
@@ -76,8 +81,8 @@ func ResolveContent(
 
 	fragment, found := content.fragments[fragmentName]
 	if !found {
-		codeFileReference := logging.FileReference(source.absolutePath)
-		slog.Info(missingFragmentLogMessage(fragmentName, source.absolutePath))
+		codeFileReference := logging.FileReference(string(source))
+		slog.Info(missingFragmentLogMessage(fragmentName, source))
 
 		return nil, fmt.Errorf("fragment `%s` from code file `%s` not found",
 			fragmentName, codeFileReference)
@@ -87,8 +92,8 @@ func ResolveContent(
 }
 
 // missingFragmentLogMessage describes a missing fragment without exposing internal names.
-func missingFragmentLogMessage(fragmentName string, sourcePath string) string {
-	sourceReference := logging.FileReference(sourcePath)
+func missingFragmentLogMessage(fragmentName string, sourcePath absolutePath) string {
+	sourceReference := logging.FileReference(string(sourcePath))
 	if fragmentName == DefaultFragmentName {
 		return fmt.Sprintf("Could not load source file `%s`.", sourceReference)
 	}
@@ -103,7 +108,7 @@ func ResolveCodeFileReference(codePath string, config config.Configuration) (str
 		return "", err
 	}
 	if found {
-		return logging.FileReference(source.absolutePath), nil
+		return logging.FileReference(string(source)), nil
 	}
 
 	return codeFileReference(codePath, config)
@@ -114,15 +119,8 @@ func ClearResolverCache() {
 	resolverCache.clear()
 }
 
-// resolvedPath is a source file path resolved from a user-facing embedding path.
-type resolvedPath struct {
-	root         _type.NamedPath
-	relativePath string
-	absolutePath string
-}
-
 // resolveSource resolves the user-facing code path to the source file.
-func resolveSource(codePath string, config config.Configuration) (resolvedPath, bool, error) {
+func resolveSource(codePath string, config config.Configuration) (absolutePath, bool, error) {
 	codeRootName, relativePath, named := splitNamedPath(codePath)
 	for _, root := range config.CodeRoots {
 		if named && strings.TrimSpace(root.Name) != codeRootName {
@@ -131,20 +129,29 @@ func resolveSource(codePath string, config config.Configuration) (resolvedPath, 
 
 		source, err := sourceFromRoot(root, relativePath)
 		if err != nil {
-			return resolvedPath{}, false, err
+			return "", false, err
 		}
-		shouldFragment, err := shouldDoFragmentation(source.absolutePath)
+		exists, err := files.IsFileExist(string(source))
 		if err != nil {
-			return resolvedPath{}, false, err
+			return "", false, err
 		}
-		if !shouldFragment {
+		if !exists {
 			continue
+		}
+
+		_, err = cachedSourceFragments(source)
+		var encodingError *unsupportedEncodingError
+		if errors.As(err, &encodingError) {
+			continue
+		}
+		if err != nil {
+			return "", false, err
 		}
 
 		return source, true, nil
 	}
 
-	return resolvedPath{}, false, nil
+	return "", false, nil
 }
 
 // splitNamedPath separates a named-code-root prefix from a code path.
@@ -160,28 +167,24 @@ func splitNamedPath(codePath string) (string, string, bool) {
 	return rootName, relativePath, true
 }
 
-// sourceFromRoot builds a source path from a code root and a relative path.
-func sourceFromRoot(root _type.NamedPath, relativePath string) (resolvedPath, error) {
+// sourceFromRoot builds an absolute source path from a code root and a relative path.
+func sourceFromRoot(root _type.NamedPath, relativePath string) (absolutePath, error) {
 	rootAbs, err := filepath.Abs(root.Path)
 	if err != nil {
-		return resolvedPath{}, err
+		return "", err
 	}
 
-	return resolvedPath{
-		root:         root,
-		relativePath: filepath.FromSlash(relativePath),
-		absolutePath: filepath.Join(rootAbs, filepath.FromSlash(relativePath)),
-	}, nil
+	return absolutePath(filepath.Join(rootAbs, filepath.FromSlash(relativePath))), nil
 }
 
-// cachedSourceFragments returns cached source fragmentation for a resolved source file.
-func cachedSourceFragments(source resolvedPath) (fragmentedFile, error) {
+// cachedSourceFragments returns cached source fragmentation for an absolute source path.
+func cachedSourceFragments(source absolutePath) (fragmentedFile, error) {
 	return resolverCache.get(source)
 }
 
 // loadSourceFragments reads and fragments the source file when it is not already cached.
-func loadSourceFragments(source resolvedPath) (fragmentedFile, error) {
-	fragmentation, err := NewFragmentation(source.absolutePath, source.root, config.Configuration{})
+func loadSourceFragments(source absolutePath) (fragmentedFile, error) {
+	fragmentation, err := NewFragmentation(string(source))
 	if err != nil {
 		return fragmentedFile{}, err
 	}
@@ -240,10 +243,10 @@ func codeFileReference(codePath string, config config.Configuration) (string, er
 			return "", err
 		}
 		if named {
-			return fmt.Sprintf("%s (%s)", codePath, logging.FileReference(source.absolutePath)), nil
+			return fmt.Sprintf("%s (%s)", codePath, logging.FileReference(string(source))), nil
 		}
 		if len(config.CodeRoots) == 1 {
-			return logging.FileReference(source.absolutePath), nil
+			return logging.FileReference(string(source)), nil
 		}
 	}
 

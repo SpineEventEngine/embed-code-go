@@ -75,5 +75,4 @@ var _ = Describe("Indent", func() {
 			"return;",
 		}))
 	})
-
 })
