@@ -23,12 +23,10 @@ import (
 	"unicode/utf8"
 )
 
-var errUnsupportedEncoding = errors.New("unsupported source encoding: expected UTF-8")
-
 // validateTextEncoding reports whether source content uses UTF-8 text encoding.
 func validateTextEncoding(content []byte) error {
 	if !utf8.Valid(content) {
-		return errUnsupportedEncoding
+		return errors.New("unsupported source encoding: expected UTF-8")
 	}
 
 	return nil
