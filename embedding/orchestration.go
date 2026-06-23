@@ -32,7 +32,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-// EmbedAllResult is result of the EmbedAll method.
+// EmbedAllResult contains the result of an EmbedAll operation.
 //
 // TargetFiles is the list of target documentation files.
 //
@@ -51,7 +51,7 @@ type processorHandler func(processor Processor) error
 // EmbedAll processes embedding for multiple documentation files based on provided config.
 //
 // Iterates over patterns in the configuration, finds documentation files matching those patterns,
-// creates an EmbeddingProcessor for each file, and embeds code fragments in them.
+// creates a Processor for each file, and embeds code fragments in them.
 //
 // config — a configuration for embedding.
 func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
