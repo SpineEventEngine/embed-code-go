@@ -59,5 +59,4 @@ var _ = Describe("Indent", func() {
 
 		Expect(changedLines).ShouldNot(Equal(testLines))
 	})
-
 })
