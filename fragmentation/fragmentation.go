@@ -37,60 +37,36 @@ package fragmentation
 
 import (
 	"bufio"
-	"embed-code/embed-code-go/files"
-	_type "embed-code/embed-code-go/type"
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
-
-	config "embed-code/embed-code-go/configuration"
 )
 
 // NamedPathPrefix the prefix before the named code source.
 const NamedPathPrefix = "$"
 
 // Fragmentation splits the given file into fragments.
-//
-// Configuration — a configuration for embedding.
-//
-// SourcesRoot — a named source code path.
-//
-// CodeFile — a full path of a file to fragment.
 type Fragmentation struct {
-	Configuration    config.Configuration
-	SourcesRoot      _type.NamedPath
-	CodeFile         string
+	// codeFile is the absolute path of the source file being fragmented.
+	codeFile string
+	// fragmentBuilders collects fragment partitions by name while the source file is scanned.
 	fragmentBuilders map[string]*FragmentBuilder
 }
 
-// NewFragmentation builds Fragmentation from given codeFileRelative and config.
+// NewFragmentation builds Fragmentation for the given code file.
 //
-// codeFileRelative — a relative path to a code file to fragment.
-//
-// config — a configuration for embedding.
-func NewFragmentation(
-	codeFileRelative string,
-	codeRoot _type.NamedPath,
-	config config.Configuration,
-) (Fragmentation, error) {
-	fragmentation := Fragmentation{}
-
-	fragmentation.SourcesRoot = codeRoot
-	_, err := filepath.Abs(codeRoot.Path)
+// codeFile — a relative or absolute path to a code file to fragment.
+func NewFragmentation(codeFile string) (Fragmentation, error) {
+	absoluteCodeFile, err := filepath.Abs(codeFile)
 	if err != nil {
 		return Fragmentation{}, err
 	}
 
-	absoluteCodeFile, err := filepath.Abs(codeFileRelative)
-	if err != nil {
-		return Fragmentation{}, err
-	}
-	fragmentation.CodeFile = absoluteCodeFile
-
-	fragmentation.Configuration = config
-	fragmentation.fragmentBuilders = make(map[string]*FragmentBuilder)
-
-	return fragmentation, nil
+	return Fragmentation{
+		codeFile:         absoluteCodeFile,
+		fragmentBuilders: make(map[string]*FragmentBuilder),
+	}, nil
 }
 
 // DoFragmentation splits the file into fragments.
@@ -100,16 +76,15 @@ func NewFragmentation(
 func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) {
 	var contentToRender []string
 
-	file, err := os.Open(f.CodeFile)
+	content, err := os.ReadFile(f.codeFile)
 	if err != nil {
 		return nil, nil, err
 	}
+	if err := validateTextEncoding(content); err != nil {
+		return nil, nil, err
+	}
 
-	defer func(file *os.File) {
-		err = file.Close()
-	}(file)
-
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(bytes.NewReader(content))
 	lineNumber := 0
 	for scanner.Scan() {
 		lineNumber++
@@ -118,11 +93,11 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 		if err != nil {
 			return nil, nil, fmt.Errorf(
 				"failed to do fragmentation on file `file://%s:%d`: %w",
-				f.CodeFile, lineNumber, err,
+				f.codeFile, lineNumber, err,
 			)
 		}
 	}
-	if err = scanner.Err(); err != nil {
+	if err := scanner.Err(); err != nil {
 		return nil, nil, err
 	}
 
@@ -133,22 +108,6 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 	fragments[DefaultFragmentName] = CreateDefaultFragment()
 
 	return contentToRender, fragments, nil
-}
-
-// shouldDoFragmentation reports whether the file is valid to do fragmentation:
-//   - it exists by the given path
-//   - it is a file (not a dir)
-//   - it is textual-encoded.
-func shouldDoFragmentation(filePath string) (bool, error) {
-	exists, err := files.IsFileExist(filePath)
-	if err != nil {
-		return false, err
-	}
-	if exists {
-		return IsEncodedAsText(filePath)
-	}
-
-	return false, nil
 }
 
 // Parses a single line of input and performs the following actions:
@@ -196,7 +155,7 @@ func (f Fragmentation) parseStartDocFragments(docFragments []string, cursor int)
 		fragment, exists := f.fragmentBuilders[fragmentName]
 		if !exists {
 			builder := FragmentBuilder{
-				CodeFilePath: f.CodeFile,
+				CodeFilePath: f.codeFile,
 				Name:         fragmentName,
 			}
 			f.fragmentBuilders[fragmentName] = &builder
@@ -220,7 +179,7 @@ func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int
 			}
 		} else {
 			return fmt.Errorf("cannot end the fragment `%s` of the file `file://%s` as it wasn't started",
-				fragmentName, f.CodeFile)
+				fragmentName, f.codeFile)
 		}
 	}
 

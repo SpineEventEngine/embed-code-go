@@ -23,6 +23,8 @@ import (
 	"embed-code/embed-code-go/fragmentation"
 	_type "embed-code/embed-code-go/type"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -92,6 +94,31 @@ var _ = Describe("Fragmentation", func() {
 		Expect(lines).Should(BeEmpty())
 		Expect(fragments).Should(HaveLen(1))
 		Expect(fragments).Should(HaveKey(fragmentation.DefaultFragmentName))
+	})
+
+	It("should skip a non-UTF-8 source and use the next code root", func() {
+		invalidRoot := GinkgoT().TempDir()
+		validRoot := GinkgoT().TempDir()
+		fileName := "Example.java"
+		Expect(os.WriteFile(filepath.Join(invalidRoot, fileName), []byte{0xff}, 0600)).To(Succeed())
+		Expect(os.WriteFile(
+			filepath.Join(validRoot, fileName),
+			[]byte("class Example {}"),
+			0600,
+		)).To(Succeed())
+		config.CodeRoots = _type.NamedPathList{
+			_type.NamedPath{Path: invalidRoot},
+			_type.NamedPath{Path: validRoot},
+		}
+
+		content, err := fragmentation.ResolveContent(
+			fileName,
+			fragmentation.DefaultFragmentName,
+			config,
+		)
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(content).Should(Equal([]string{"class Example {}"}))
 	})
 
 	It("should fail on an unopened fragment", func() {
@@ -221,7 +248,7 @@ func buildTestFragmentation(testFileName string,
 	config configuration.Configuration) fragmentation.Fragmentation {
 	codeRoot := config.CodeRoots[0]
 	testFilePath := fmt.Sprintf("%s/org/example/%s", codeRoot.Path, testFileName)
-	frag, err := fragmentation.NewFragmentation(testFilePath, codeRoot, config)
+	frag, err := fragmentation.NewFragmentation(testFilePath)
 
 	Expect(err).ShouldNot(HaveOccurred())
 
