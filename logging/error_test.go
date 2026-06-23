@@ -16,11 +16,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package logging //nolint:testpackage // Shares the package's Ginkgo suite.
+package logging_test
 
 import (
 	"errors"
 	"fmt"
+
+	"embed-code/embed-code-go/logging"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -31,7 +33,7 @@ var _ = Describe("Error formatting", func() {
 	It("should format a single error inline", func() {
 		err := errors.New("first failure")
 
-		Expect(FormatError("operation failed", err)).To(
+		Expect(logging.FormatError("operation failed", err)).To(
 			Equal("operation failed: first failure"),
 		)
 	})
@@ -39,7 +41,7 @@ var _ = Describe("Error formatting", func() {
 	It("should format a nested error inline", func() {
 		err := fmt.Errorf("outer context: %w", errors.New("first failure"))
 
-		Expect(FormatError("operation failed", err)).To(
+		Expect(logging.FormatError("operation failed", err)).To(
 			Equal("operation failed: outer context: first failure"),
 		)
 	})
@@ -50,7 +52,7 @@ var _ = Describe("Error formatting", func() {
 			errors.New("second failure"),
 		)
 
-		Expect(FormatError("operation failed", err)).To(
+		Expect(logging.FormatError("operation failed", err)).To(
 			Equal("operation failed:\n- first failure\n- second failure"),
 		)
 	})
@@ -64,7 +66,7 @@ var _ = Describe("Error formatting", func() {
 			),
 		)
 
-		Expect(FormatError("operation failed", err)).To(
+		Expect(logging.FormatError("operation failed", err)).To(
 			Equal("operation failed:" +
 				"\n- first failure" +
 				"\n- second failure" +
