@@ -56,13 +56,16 @@ func MaxCommonIndentation(lines []string) int {
 //
 // redundantSpaces — the number of leading spaces to remove from each line.
 //
+// If a line is shorter than redundantSpaces, the whole line is removed.
+//
 // Returns processed lines.
 func CutIndent(lines []string, redundantSpaces int) []string {
 	linesChanged := make([]string, len(lines))
 	copy(linesChanged, lines)
 	for i, line := range linesChanged {
 		if len(line) > 0 {
-			linesChanged[i] = line[redundantSpaces:]
+			cutLength := min(redundantSpaces, len(line))
+			linesChanged[i] = line[cutLength:]
 		}
 	}
 

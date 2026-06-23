@@ -1,0 +1,88 @@
+# Releases binaries when application version changes.
+name: Release Binaries
+
+on:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: write
+
+# Keep only the newest release run for the same ref. This avoids competing
+# release attempts when several pushes land close together.
+concurrency:
+  group: release-binaries-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Use the same Go version as the project, declared in go.mod.
+      - name: Set Up Go Environment
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      # Reads the app version from the `VERSION` file.
+      # It must be a plain MAJOR.MINOR.PATCH value, such as 1.2.3.
+      - name: Read Version
+        id: version
+        shell: bash
+        run: |
+          version="$(< VERSION)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must use MAJOR.MINOR.PATCH format, found: $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      # Compares the release version with current app version.
+      # If current app version already exist in release, emits a warning, but flow counts as passed.
+      - name: Check Release Version
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "::warning title=Release already exists::Release $RELEASE_TAG already exists. Bump VERSION to publish a new release."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Build binaries only for new releases.
+      - name: Build Binaries
+        if: steps.release.outputs.publish == 'true'
+        shell: bash
+        run: |
+          mkdir -p dist
+          GOOS=windows GOARCH=amd64 go build -trimpath -o dist/embed-code-windows.exe main.go
+          GOOS=linux GOARCH=amd64 go build -trimpath -o dist/embed-code-linux main.go
+          GOOS=darwin GOARCH=amd64 go build -trimpath -o dist/embed-code-macos main.go
+          chmod +x dist/embed-code-linux dist/embed-code-macos
+
+      # Create the release for the current commit and attach all generated binaries.
+      - name: Publish GitHub Release
+        if: steps.release.outputs.publish == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          release_notes="$(printf 'Embed Code %s\n\nThis release contains pre-built Embed Code binaries for macOS, Linux, and Windows.' "$RELEASE_TAG")"
+          gh release create "$RELEASE_TAG" dist/* \
+            --target "$GITHUB_SHA" \
+            --title "embed-code $RELEASE_TAG" \
+            --notes "$release_notes"
