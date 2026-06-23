@@ -138,42 +138,7 @@ func configureLogging(config cli.Config) {
 
 // logError writes a user-facing error through the configured logger.
 func logError(message string, err error) {
-	slog.Error(formatError(message, err))
-}
-
-// formatError formats single errors inline and joined errors as a bullet list.
-func formatError(message string, err error) string {
-	errs := flattenedErrors(err)
-	if len(errs) <= 1 {
-		return fmt.Sprintf("%s: %v", message, err)
-	}
-
-	var builder strings.Builder
-	builder.WriteString(message)
-	builder.WriteString(":")
-	for _, nestedErr := range errs {
-		builder.WriteString("\n- ")
-		builder.WriteString(nestedErr.Error())
-	}
-
-	return builder.String()
-}
-
-// flattenedErrors returns the leaf errors from a joined error joined.
-func flattenedErrors(err error) []error {
-	joined, ok := err.(interface {
-		Unwrap() []error
-	})
-	if !ok {
-		return []error{err}
-	}
-
-	var result []error
-	for _, nestedErr := range joined.Unwrap() {
-		result = append(result, flattenedErrors(nestedErr)...)
-	}
-
-	return result
+	slog.Error(logging.FormatError(message, err))
 }
 
 // exitWithError writes a user-facing error and exits with a failing status.
