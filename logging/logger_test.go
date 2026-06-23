@@ -18,44 +18,42 @@
 
 package logging //nolint:testpackage // Tests OS-specific normalization in an unexported helper.
 
-import "testing"
+import (
+	"testing"
 
-// TestFileURLFromAbsolutePath verifies OS-specific path shapes are valid file URLs.
-func TestFileURLFromAbsolutePath(t *testing.T) {
-	tests := []struct {
-		name string
-		path string
-		want string
-	}{
-		{
-			name: "unix path",
-			path: "/Users/me/project/file.go",
-			want: "file:///Users/me/project/file.go",
-		},
-		{
-			name: "windows drive path",
-			path: `C:\Users\me\project\file.go`,
-			want: "file:///C:/Users/me/project/file.go",
-		},
-		{
-			name: "windows drive path with spaces",
-			path: `C:\Users\me\my project\file.go`,
-			want: "file:///C:/Users/me/my%20project/file.go",
-		},
-		{
-			name: "windows unc path",
-			path: `\\server\share\project\file.go`,
-			want: "file://server/share/project/file.go",
-		},
-	}
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+)
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got := fileURLFromAbsolutePath(test.path)
-			if got != test.want {
-				t.Fatalf("fileURLFromAbsolutePath(%q) = %q, want %q",
-					test.path, got, test.want)
-			}
-		})
-	}
+// TestLogging runs the logging package specs.
+func TestLogging(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Logging Suite")
 }
+
+var _ = Describe("File URL formatting", func() {
+
+	It("should format a Unix path", func() {
+		Expect(fileURLFromAbsolutePath("/Users/me/project/file.go")).To(
+			Equal("file:///Users/me/project/file.go"),
+		)
+	})
+
+	It("should format a Windows drive path", func() {
+		Expect(fileURLFromAbsolutePath(`C:\Users\me\project\file.go`)).To(
+			Equal("file:///C:/Users/me/project/file.go"),
+		)
+	})
+
+	It("should escape spaces in a Windows drive path", func() {
+		Expect(fileURLFromAbsolutePath(`C:\Users\me\my project\file.go`)).To(
+			Equal("file:///C:/Users/me/my%20project/file.go"),
+		)
+	})
+
+	It("should format a Windows UNC path", func() {
+		Expect(fileURLFromAbsolutePath(`\\server\share\project\file.go`)).To(
+			Equal("file://server/share/project/file.go"),
+		)
+	})
+})
