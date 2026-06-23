@@ -177,19 +177,5 @@ func formatPanicMessage(recovered any) string {
 		return fmt.Sprintf("panic: %v", recovered)
 	}
 
-	joined, isJoined := err.(interface {
-		Unwrap() []error
-	})
-	if !isJoined || len(joined.Unwrap()) <= 1 {
-		return fmt.Sprintf("panic: %v", err)
-	}
-
-	var builder strings.Builder
-	builder.WriteString("panic:")
-	for _, wrappedErr := range joined.Unwrap() {
-		builder.WriteString("\n- ")
-		builder.WriteString(wrappedErr.Error())
-	}
-
-	return builder.String()
+	return FormatError("panic", err)
 }
