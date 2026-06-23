@@ -136,14 +136,9 @@ func configureLogging(config cli.Config) {
 	slog.SetDefault(logger)
 }
 
-// logError writes a user-facing error through the configured logger.
-func logError(message string, err error) {
-	slog.Error(logging.FormatError(message, err))
-}
-
 // exitWithError writes a user-facing error and exits with a failing status.
 func exitWithError(message string, err error) {
-	logError(message, err)
+	slog.Error(logging.FormatError(message, err))
 	os.Exit(1)
 }
 
