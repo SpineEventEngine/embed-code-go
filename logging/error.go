@@ -34,7 +34,7 @@ func FormatError(message string, err error) string {
 	builder.WriteString(message)
 	builder.WriteString(":")
 	for _, nestedErr := range errs {
-		builder.WriteString("\n- ")
+		builder.WriteString("\n  - ")
 		builder.WriteString(nestedErr.Error())
 	}
 

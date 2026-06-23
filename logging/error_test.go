@@ -53,7 +53,9 @@ var _ = Describe("Error formatting", func() {
 		)
 
 		Expect(logging.FormatError("operation failed", err)).To(
-			Equal("operation failed:\n- first failure\n- second failure"),
+			Equal("operation failed:\n" +
+				"  - first failure\n" +
+				"  - second failure"),
 		)
 	})
 
@@ -67,10 +69,10 @@ var _ = Describe("Error formatting", func() {
 		)
 
 		Expect(logging.FormatError("operation failed", err)).To(
-			Equal("operation failed:" +
-				"\n- first failure" +
-				"\n- second failure" +
-				"\n- third failure"),
+			Equal("operation failed:\n" +
+				"  - first failure\n" +
+				"  - second failure\n" +
+				"  - third failure"),
 		)
 	})
 })
