@@ -32,16 +32,11 @@ import (
 	"embed-code/embed-code-go/logging"
 )
 
-// Processor entity processes a single documentation file and embeds code snippets
-// into it based on the provided configuration.
-//
-// DocFilePath — the path to the documentation file.
-//
-// Config — a configuration for embedding.
+// Processor processes a single documentation file using the provided embedding configuration.
 type Processor struct {
-	DocFilePath      string
-	Config           configuration.Configuration
-	TransitionsMap   parsing.TransitionMap
+	docFilePath      string
+	config           configuration.Configuration
+	transitionsMap   parsing.TransitionMap
 	requiredDocPaths []string
 }
 
@@ -55,18 +50,6 @@ func NewProcessor(docFile string, config configuration.Configuration) (Processor
 	return newProcessor(docFile, config, parsing.Transitions, requiredDocPaths), nil
 }
 
-// NewProcessorWithTransitions Creates and returns new Processor with given docFile, config
-// and transitions.
-func NewProcessorWithTransitions(docFile string, config configuration.Configuration,
-	transitions parsing.TransitionMap) (Processor, error) {
-	requiredDocPaths, err := requiredDocs(config)
-	if err != nil {
-		return Processor{}, err
-	}
-
-	return newProcessor(docFile, config, transitions, requiredDocPaths), nil
-}
-
 // newProcessor creates a Processor with a precomputed documentation file list.
 func newProcessor(
 	docFile string,
@@ -75,9 +58,9 @@ func newProcessor(
 	requiredDocPaths []string,
 ) Processor {
 	return Processor{
-		DocFilePath:      docFile,
-		Config:           config,
-		TransitionsMap:   transitions,
+		docFilePath:      docFile,
+		config:           config,
+		transitionsMap:   transitions,
 		requiredDocPaths: requiredDocPaths,
 	}
 }
@@ -87,51 +70,35 @@ func newProcessor(
 // Returns an empty context without parsing the file when it is excluded by configuration.
 // If any problems faced, an error is returned.
 func (p Processor) Embed() (*parsing.Context, error) {
-	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
+	if !slices.Contains(p.requiredDocPaths, p.docFilePath) {
 		slog.Info(fmt.Sprintf("Skipping `%s`; it is excluded by the configuration.",
-			logging.FileReference(p.DocFilePath)))
-		context := parsing.NewEmptyContext(p.DocFilePath)
+			logging.FileReference(p.docFilePath)))
+		context := parsing.NewEmptyContext(p.docFilePath)
 
 		return &context, nil
 	}
 
-	slog.Info(fmt.Sprintf("Started processing doc file `%s`.", logging.FileReference(p.DocFilePath)))
+	slog.Info(fmt.Sprintf("Started processing doc file `%s`.", logging.FileReference(p.docFilePath)))
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
 		return nil, err
 	}
 	if context.IsContainsEmbedding() && context.IsContentChanged() {
 		data := []byte(strings.Join(context.GetResult(), "\n"))
-		err = os.WriteFile(p.DocFilePath, data, os.FileMode(files.DocumentationFilePermission))
+		err = os.WriteFile(p.docFilePath, data, os.FileMode(files.DocumentationFilePermission))
 		if err != nil {
 			return &context, err
 		}
 		slog.Info(fmt.Sprintf("Updated `%s` after processing %d embedding(s).",
-			logging.FileReference(p.DocFilePath), context.EmbeddingsCount()))
+			logging.FileReference(p.docFilePath), context.EmbeddingsCount()))
 	} else {
 		slog.Info(fmt.Sprintf(
 			"Documentation is up-to-date in `%s`.",
-			logging.FileReference(p.DocFilePath),
+			logging.FileReference(p.docFilePath),
 		))
 	}
 
 	return &context, nil
-}
-
-// FindChangedEmbeddings Returns the list of EmbeddingInstruction that are changed in the
-// markdown file.
-//
-// If any problems during the embedding construction faced, an error is returned.
-func (p Processor) FindChangedEmbeddings() ([]parsing.Instruction, error) {
-	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
-		return nil, nil
-	}
-	context, err := p.fillEmbeddingContext()
-	if err != nil {
-		return nil, err
-	}
-
-	return context.FindChangedEmbeddings(), nil
 }
 
 // IsUpToDate reports whether the embedding of the target markdown is up-to-date with the code file.
@@ -146,13 +113,13 @@ func (p Processor) IsUpToDate() bool {
 
 // isUpToDate reports whether the target markdown is up-to-date and returns processing errors.
 func (p Processor) isUpToDate() (bool, error) {
-	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
+	if !slices.Contains(p.requiredDocPaths, p.docFilePath) {
 		slog.Info(fmt.Sprintf("Skipping `%s`; it is excluded by the configuration.",
-			logging.FileReference(p.DocFilePath)))
+			logging.FileReference(p.docFilePath)))
 
 		return true, nil
 	}
-	slog.Info(fmt.Sprintf("Checking `%s`.", logging.FileReference(p.DocFilePath)))
+	slog.Info(fmt.Sprintf("Checking `%s`.", logging.FileReference(p.docFilePath)))
 	context, err := p.fillEmbeddingContext()
 	if err != nil {
 		return false, err
@@ -164,7 +131,7 @@ func (p Processor) isUpToDate() (bool, error) {
 		status = "needs an update"
 	}
 	slog.Info(fmt.Sprintf("Checked `%s`: %d embedding(s), %s.",
-		logging.FileReference(p.DocFilePath), context.EmbeddingsCount(), status))
+		logging.FileReference(p.docFilePath), context.EmbeddingsCount(), status))
 
 	return upToDate, nil
 }
@@ -176,7 +143,7 @@ func (p Processor) isUpToDate() (bool, error) {
 //
 // Returns a parsing.Context and an error if any occurs.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
-	context, err := parsing.NewContext(p.DocFilePath)
+	context, err := parsing.NewContext(p.docFilePath)
 	if err != nil {
 		return context, err
 	}
@@ -208,7 +175,7 @@ func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 // processingError wraps a parsing error with the current documentation location.
 func (p Processor) processingError(context parsing.Context, err error) ProcessingError {
 	return ProcessingError{
-		DocFilePath: p.DocFilePath,
+		DocFilePath: p.docFilePath,
 		Line:        errorLine(context, err),
 		Err:         err,
 	}
@@ -259,9 +226,9 @@ func unacceptedTransitionError(context parsing.Context) error {
 // it successfully moved to the next state and returns the new state.
 func (p Processor) moveToNextState(state *parsing.State, context *parsing.Context) (
 	bool, *parsing.State, error) {
-	for _, nextState := range p.TransitionsMap[*state] {
+	for _, nextState := range p.transitionsMap[*state] {
 		if nextState.Recognize(*context) {
-			err := nextState.Accept(context, p.Config)
+			err := nextState.Accept(context, p.config)
 			if err != nil {
 				return false, &nextState, err
 			}

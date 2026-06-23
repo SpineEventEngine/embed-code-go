@@ -34,13 +34,10 @@ import (
 
 // EmbedAllResult contains the result of an EmbedAll operation.
 //
-// TargetFiles is the list of target documentation files.
-//
 // TotalEmbeddings is the total number of embeddings found in the target documentation files.
 //
 // UpdatedTargetFiles is the list of updated target documentation files.
 type EmbedAllResult struct {
-	TargetFiles        []string
 	TotalEmbeddings    int
 	UpdatedTargetFiles []string
 }
@@ -64,7 +61,7 @@ func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
 		}
 		totalEmbeddings += context.EmbeddingsCount()
 		if context.IsContentChanged() {
-			updatedTargetFiles = append(updatedTargetFiles, processor.DocFilePath)
+			updatedTargetFiles = append(updatedTargetFiles, processor.docFilePath)
 		}
 
 		return nil
@@ -89,7 +86,6 @@ func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
 	}
 
 	return EmbedAllResult{
-		TargetFiles:        requiredDocPaths,
 		TotalEmbeddings:    totalEmbeddings,
 		UpdatedTargetFiles: updatedTargetFiles,
 	}, nil
@@ -127,7 +123,7 @@ func findChangedFiles(config configuration.Configuration) ([]string, []error) {
 			return err
 		}
 		if !upToDate {
-			changedFiles = append(changedFiles, processor.DocFilePath)
+			changedFiles = append(changedFiles, processor.docFilePath)
 		}
 
 		return nil
