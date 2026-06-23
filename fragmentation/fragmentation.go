@@ -47,10 +47,9 @@ import (
 const NamedPathPrefix = "$"
 
 // Fragmentation splits the given file into fragments.
-//
-// CodeFile — a full path of a file to fragment.
 type Fragmentation struct {
-	CodeFile string
+	// codeFile is the absolute path of the source file being fragmented.
+	codeFile string
 	// fragmentBuilders collects fragment partitions by name while the source file is scanned.
 	fragmentBuilders map[string]*FragmentBuilder
 }
@@ -65,7 +64,7 @@ func NewFragmentation(codeFile string) (Fragmentation, error) {
 	}
 
 	return Fragmentation{
-		CodeFile:         absoluteCodeFile,
+		codeFile:         absoluteCodeFile,
 		fragmentBuilders: make(map[string]*FragmentBuilder),
 	}, nil
 }
@@ -77,7 +76,7 @@ func NewFragmentation(codeFile string) (Fragmentation, error) {
 func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) {
 	var contentToRender []string
 
-	content, err := os.ReadFile(f.CodeFile)
+	content, err := os.ReadFile(f.codeFile)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -94,7 +93,7 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 		if err != nil {
 			return nil, nil, fmt.Errorf(
 				"failed to do fragmentation on file `file://%s:%d`: %w",
-				f.CodeFile, lineNumber, err,
+				f.codeFile, lineNumber, err,
 			)
 		}
 	}
@@ -156,7 +155,7 @@ func (f Fragmentation) parseStartDocFragments(docFragments []string, cursor int)
 		fragment, exists := f.fragmentBuilders[fragmentName]
 		if !exists {
 			builder := FragmentBuilder{
-				CodeFilePath: f.CodeFile,
+				CodeFilePath: f.codeFile,
 				Name:         fragmentName,
 			}
 			f.fragmentBuilders[fragmentName] = &builder
@@ -180,7 +179,7 @@ func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int
 			}
 		} else {
 			return fmt.Errorf("cannot end the fragment `%s` of the file `file://%s` as it wasn't started",
-				fragmentName, f.CodeFile)
+				fragmentName, f.codeFile)
 		}
 	}
 
