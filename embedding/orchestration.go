@@ -33,12 +33,11 @@ import (
 )
 
 // EmbedAllResult contains the result of an EmbedAll operation.
-//
-// TotalEmbeddings is the total number of embeddings found in the target documentation files.
-//
-// UpdatedTargetFiles is the list of updated target documentation files.
 type EmbedAllResult struct {
-	TotalEmbeddings    int
+	// TotalEmbeddings is the total number of embeddings found in the target documentation files.
+	TotalEmbeddings int
+
+	// UpdatedTargetFiles contains documentation files changed by embedding.
 	UpdatedTargetFiles []string
 }
 

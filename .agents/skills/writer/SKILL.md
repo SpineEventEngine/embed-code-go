@@ -74,6 +74,11 @@ Prefer updating an existing document over creating a new one.
 - Exported comments start with the exact declaration name.
 - Unexported comments state intent and start with the function name when it
   reads naturally.
+- Document every field of a named struct directly above the field declaration,
+  including unexported fields. Start with the exact field name and use normal
+  Go prose such as `FieldName is...` or `fieldName contains...`.
+- Keep struct comments focused on the type as a whole. Do not collect field
+  descriptions in the struct comment or duplicate them at struct literals.
 - Document non-obvious state transitions, filesystem writes, returned errors,
   panics, and parser constraints.
 - Do not restate the signature or narrate obvious assignments.

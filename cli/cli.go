@@ -33,61 +33,66 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config — user-specified embed-code configurations.
-//
-// BaseCodePaths — a NamedPathList to directories with code files.
-//
-// BaseDocsPath — a path to a root directory with docs files.
-//
-// DocIncludes — a StringList with patterns for filtering files
-// in which we should look for embedding instructions.
-// The patterns are resolved relatively to the `documentation_root`.
-// Directories are never matched by these patterns.
-// For example, "docs/**/*.md,guides/*.html".
-// The default value is "**/*.md,**/*.html".
-//
-// DocExcludes - a StringList with patterns for filtering documentation files
-// which should be excluded from the embedding process.
-//
-// Separator — a string that's inserted between multiple partitions of a single fragment.
-// The default value is "...".
-//
-// Embeddings — independent configurations for embedding multiple documentation targets.
-//
-// Info - specifies whether info-level logs should be shown.
-//
-// Stacktrace - specifies whether error stack traces should be shown.
-//
-// ConfigPath — a path to a yaml configuration file which contains roots or embeddings.
-//
-// Mode — defines the mode of embed-code execution.
+// Config contains user-specified embed-code settings.
 type Config struct {
+	// BaseCodePaths contains directories with source code files.
 	BaseCodePaths _type.NamedPathList `yaml:"code-path"`
-	BaseDocsPath  string              `yaml:"docs-path"`
-	DocIncludes   _type.StringList    `yaml:"doc-includes"`
-	DocExcludes   _type.StringList    `yaml:"doc-excludes"`
-	Separator     string              `yaml:"separator"`
-	Embeddings    []EmbeddingConfig   `yaml:"embeddings"`
-	Info          bool                `yaml:"info"`
-	Stacktrace    bool                `yaml:"stacktrace"`
-	ConfigPath    string
-	Mode          string
+
+	// BaseDocsPath is the root directory containing documentation files.
+	BaseDocsPath string `yaml:"docs-path"`
+
+	// DocIncludes contains patterns selecting documentation files to process.
+	// Patterns are resolved relative to the documentation root and never match directories.
+	// For example, "docs/**/*.md,guides/*.html". The default is "**/*.md,**/*.html".
+	DocIncludes _type.StringList `yaml:"doc-includes"`
+
+	// DocExcludes contains patterns selecting documentation files to skip.
+	DocExcludes _type.StringList `yaml:"doc-excludes"`
+
+	// Separator is inserted between multiple partitions of one fragment.
+	// The default is "...".
+	Separator string `yaml:"separator"`
+
+	// Embeddings contains independent embedding target configurations.
+	Embeddings []EmbeddingConfig `yaml:"embeddings"`
+
+	// Info reports whether info-level logs should be shown.
+	Info bool `yaml:"info"`
+
+	// Stacktrace reports whether panic stack traces should be shown.
+	Stacktrace bool `yaml:"stacktrace"`
+
+	// ConfigPath is the path to the YAML configuration file.
+	ConfigPath string
+
+	// Mode selects check or embed execution.
+	Mode string
 }
 
 // EmbeddingConfig contains a complete configuration for one embedding target.
 type EmbeddingConfig struct {
-	Name        string              `yaml:"name"`
-	CodePaths   _type.NamedPathList `yaml:"code-path"`
-	DocsPath    string              `yaml:"docs-path"`
-	DocIncludes _type.StringList    `yaml:"doc-includes"`
-	DocExcludes _type.StringList    `yaml:"doc-excludes"`
-	Separator   string              `yaml:"separator"`
+	// Name identifies the embedding target.
+	Name string `yaml:"name"`
+
+	// CodePaths contains directories with source code files.
+	CodePaths _type.NamedPathList `yaml:"code-path"`
+
+	// DocsPath is the root directory containing documentation files.
+	DocsPath string `yaml:"docs-path"`
+
+	// DocIncludes contains patterns selecting documentation files to process.
+	DocIncludes _type.StringList `yaml:"doc-includes"`
+
+	// DocExcludes contains patterns selecting documentation files to skip.
+	DocExcludes _type.StringList `yaml:"doc-excludes"`
+
+	// Separator is inserted between multiple partitions of one fragment.
+	Separator string `yaml:"separator"`
 }
 
-// EmbedCodeSamplesResult is result of the EmbedCodeSamples method.
-//
-// EmbedAllResult the result of embedding code fragments in the documentation.
+// EmbedCodeSamplesResult contains the result of an EmbedCodeSamples operation.
 type EmbedCodeSamplesResult struct {
+	// EmbedAllResult contains the underlying embedding result.
 	embedding.EmbedAllResult
 }
 

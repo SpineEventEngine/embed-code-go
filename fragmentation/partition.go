@@ -26,13 +26,12 @@ import "fmt"
 // In the resulting doc file, the partitions are joined by the Configuration.Separator.
 // StartPosition and EndPosition are both set to -1 by default as the default int value for them
 // is 0, which is wrong, because 0 is in the scope of possible values for them.
-//
-// StartPosition — an index from which the scope of partition exists.
-//
-// EndPosition — an index on which the scope of partition ends.
 type Partition struct {
+	// StartPosition is the first source-line index included in the partition.
 	StartPosition int
-	EndPosition   int
+
+	// EndPosition is the last source-line index included in the partition.
+	EndPosition int
 }
 
 // NewPartition returns a new Partition with both positions set to -1, as they should to be

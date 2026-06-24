@@ -27,7 +27,10 @@ import (
 
 // NamedPath represents a path that may optionally have a name.
 type NamedPath struct {
+	// Name is the optional path identifier.
 	Name string `yaml:"name"`
+
+	// Path is the filesystem path.
 	Path string `yaml:"path"`
 }
 
