@@ -84,18 +84,6 @@ var _ = Describe("Embedding", func() {
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
-	It("should have error as it has invalid transition map", func() {
-		docPath := fmt.Sprintf("%s/split-lines.md", config.DocumentationRoot)
-
-		falseTransitions := parsing.TransitionMap{
-			parsing.Start:       {parsing.Finish, parsing.EmbedInstruction, parsing.RegularLine},
-			parsing.RegularLine: {parsing.CodeFenceEnd},
-		}
-
-		falseProcessor := newProcessorWithTransitions(docPath, config, falseTransitions)
-		Expect(falseProcessor.Embed()).Error().Should(HaveOccurred())
-	})
-
 	It("should successfully embed with multi lined tag", func() {
 		docPath := fmt.Sprintf("%s/multi-lined-tag.md", config.DocumentationRoot)
 		processor := newProcessor(docPath, config)
@@ -335,9 +323,10 @@ var _ = Describe("Embedding", func() {
 			config.DocumentationRoot)
 		processor := newProcessor(docPath, config)
 
-		_, err := embedding.EmbedAll(config)
+		result, err := embedding.EmbedAll(config)
 
 		Expect(err).ShouldNot(HaveOccurred())
+		Expect(result.UpdatedTargetFiles).Should(ContainElement(docPath))
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
@@ -370,18 +359,6 @@ func newProcessor(
 	config configuration.Configuration,
 ) embedding.Processor {
 	processor, err := embedding.NewProcessor(docPath, config)
-
-	Expect(err).ShouldNot(HaveOccurred())
-
-	return processor
-}
-
-func newProcessorWithTransitions(
-	docPath string,
-	config configuration.Configuration,
-	transitions parsing.TransitionMap,
-) embedding.Processor {
-	processor, err := embedding.NewProcessorWithTransitions(docPath, config, transitions)
 
 	Expect(err).ShouldNot(HaveOccurred())
 

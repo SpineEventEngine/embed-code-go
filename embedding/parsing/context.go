@@ -66,24 +66,16 @@ func (c *Context) EmbeddingsCount() int {
 	return len(c.embeddings)
 }
 
-// EmbeddingContext contains the information about the position in the source and the
-// resulting Markdown files.
+// EmbeddingContext contains an instruction and its position in the source Markdown file.
 //
-// embeddingInstruction - an Instruction, containing all the needed embedding information.
+// SourceStartIndex is the zero-based index of the first line after the opening code fence.
 //
-// SourceStartIndex - an index of the StartState line in the original markdown file.
-//
-// SourceEndIndex - an index of the end line in the original markdown file.
-//
-// resultStartIndex - an index of the StartState line in the result markdown file.
-//
-// resultEndIndex - an index of the end line in the result markdown file.
+// SourceEndIndex is the zero-based index of the closing code fence and the exclusive slice bound.
 type EmbeddingContext struct {
+	// embeddingInstruction contains the embedding parameters.
 	embeddingInstruction Instruction
 	SourceStartIndex     int
 	SourceEndIndex       int
-	resultStartIndex     int
-	resultEndIndex       int
 }
 
 // NewContext Creates and returns a new Context struct with initial values for markdownFile, source,
@@ -143,20 +135,6 @@ func (c *Context) IsContentChanged() bool {
 	return false
 }
 
-// FindChangedEmbeddings returns a list of changed embeddings.
-func (c *Context) FindChangedEmbeddings() []Instruction {
-	var changedEmbeddings []Instruction
-	for _, embedding := range c.embeddings {
-		sourceContent := c.readEmbeddingSource(embedding)
-		resultContent := c.readEmbeddingResult(embedding)
-		if !isStringSlicesEqual(sourceContent, resultContent) {
-			changedEmbeddings = append(changedEmbeddings, embedding.embeddingInstruction)
-		}
-	}
-
-	return changedEmbeddings
-}
-
 // IsContainsEmbedding reports whether the doc file contains an embedding.
 func (c *Context) IsContainsEmbedding() bool {
 	return c.fileContainsEmbedding
@@ -196,7 +174,6 @@ func (c *Context) StartEmbedding(instruction Instruction) {
 func (c *Context) FinishEmbedding() {
 	currentEmbedding := c.CurrentEmbedding()
 	currentEmbedding.SourceEndIndex = c.lineIndex
-	currentEmbedding.resultEndIndex = len(c.Result)
 	c.EmbeddingInstruction = nil
 }
 
@@ -206,7 +183,6 @@ func (c *Context) SetCodeStart() {
 	if c.fileContainsEmbedding {
 		lastEmbedding := c.CurrentEmbedding()
 		lastEmbedding.SourceStartIndex = c.lineIndex
-		lastEmbedding.resultStartIndex = len(c.Result)
 	}
 }
 
@@ -236,11 +212,6 @@ func (c *Context) readEmbeddingSource(context EmbeddingContext) []string {
 	return c.source[context.SourceStartIndex:context.SourceEndIndex]
 }
 
-// readEmbeddingResult returns generated Markdown lines for one embedding.
-func (c *Context) readEmbeddingResult(context EmbeddingContext) []string {
-	return c.Result[context.resultStartIndex:context.resultEndIndex]
-}
-
 // readLines returns the content of a file placed at filepath as a list of strings.
 func readLines(filepath string) ([]string, error) {
 	bytes, err := os.ReadFile(filepath)
@@ -251,17 +222,4 @@ func readLines(filepath string) ([]string, error) {
 	lines := regexp.MustCompile("\r?\n").Split(str, -1)
 
 	return lines, nil
-}
-
-func isStringSlicesEqual(first, second []string) bool {
-	if len(first) != len(second) {
-		return false
-	}
-	for i := range first {
-		if first[i] != second[i] {
-			return false
-		}
-	}
-
-	return true
 }
