@@ -34,9 +34,16 @@ import (
 
 // Processor processes a single documentation file using the provided embedding configuration.
 type Processor struct {
-	docFilePath      string
-	config           configuration.Configuration
-	transitionsMap   parsing.TransitionMap
+	// docFilePath is the path to the documentation file.
+	docFilePath string
+
+	// config contains the embedding settings.
+	config configuration.Configuration
+
+	// transitionsMap defines valid parser state transitions.
+	transitionsMap parsing.TransitionMap
+
+	// requiredDocPaths contains documentation files included by the configuration.
 	requiredDocPaths []string
 }
 
