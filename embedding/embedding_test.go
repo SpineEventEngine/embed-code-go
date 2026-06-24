@@ -323,9 +323,10 @@ var _ = Describe("Embedding", func() {
 			config.DocumentationRoot)
 		processor := newProcessor(docPath, config)
 
-		_, err := embedding.EmbedAll(config)
+		result, err := embedding.EmbedAll(config)
 
 		Expect(err).ShouldNot(HaveOccurred())
+		Expect(result.UpdatedTargetFiles).Should(ContainElement(docPath))
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 
