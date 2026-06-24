@@ -42,8 +42,8 @@ type EmbedAllResult struct {
 	UpdatedTargetFiles []string
 }
 
-// processorHandler applies one processing mode to a configured documentation processor.
-type processorHandler func(processor Processor) error
+// processorHandler applies one processing mode to a discovered documentation file.
+type processorHandler func(docFilePath string, processor Processor) error
 
 // EmbedAll processes embedding for multiple documentation files based on provided config.
 //
@@ -54,14 +54,17 @@ type processorHandler func(processor Processor) error
 func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
 	totalEmbeddings := 0
 	var updatedTargetFiles []string
-	requiredDocPaths, embeddingErrors := processRequiredDocs(config, func(processor Processor) error {
+	requiredDocPaths, embeddingErrors := processRequiredDocs(config, func(
+		_ string,
+		processor Processor,
+	) error {
 		context, err := processor.Embed()
 		if err != nil {
 			return err
 		}
 		totalEmbeddings += context.EmbeddingsCount()
 		if context.IsContentChanged() {
-			updatedTargetFiles = append(updatedTargetFiles, processor.docFilePath)
+			updatedTargetFiles = append(updatedTargetFiles, context.MarkdownFilePath)
 		}
 
 		return nil
@@ -119,13 +122,16 @@ func CheckUpToDate(config configuration.Configuration) ([]string, error) {
 // config — a configuration for embedding.
 func findChangedFiles(config configuration.Configuration) ([]string, []error) {
 	var changedFiles []string
-	_, checkErrors := processRequiredDocs(config, func(processor Processor) error {
+	_, checkErrors := processRequiredDocs(config, func(
+		docFilePath string,
+		processor Processor,
+	) error {
 		upToDate, err := processor.isUpToDate()
 		if err != nil {
 			return err
 		}
 		if !upToDate {
-			changedFiles = append(changedFiles, processor.docFilePath)
+			changedFiles = append(changedFiles, docFilePath)
 		}
 
 		return nil
@@ -147,7 +153,7 @@ func processRequiredDocs(
 	var processingErrors []error
 	for _, doc := range requiredDocPaths {
 		processor := newProcessor(doc, config, parsing.Transitions, requiredDocPaths)
-		if err := handle(processor); err != nil {
+		if err := handle(doc, processor); err != nil {
 			processingErrors = append(processingErrors, err)
 		}
 	}
