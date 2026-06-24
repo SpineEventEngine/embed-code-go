@@ -68,12 +68,11 @@ func (c *Context) EmbeddingsCount() int {
 
 // EmbeddingContext contains an instruction and its position in the source Markdown file.
 //
-// embeddingInstruction - an Instruction, containing all the needed embedding information.
+// SourceStartIndex is the zero-based index of the first line after the opening code fence.
 //
-// SourceStartIndex - an index of the StartState line in the original markdown file.
-//
-// SourceEndIndex - an index of the end line in the original markdown file.
+// SourceEndIndex is the zero-based index of the closing code fence and the exclusive slice bound.
 type EmbeddingContext struct {
+	// embeddingInstruction contains the embedding parameters.
 	embeddingInstruction Instruction
 	SourceStartIndex     int
 	SourceEndIndex       int
