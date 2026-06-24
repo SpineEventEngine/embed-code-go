@@ -64,6 +64,7 @@ type Instruction struct {
 	DocumentationFile string
 	DocumentationLine int
 	Configuration     configuration.Configuration
+	resolver          *fragmentation.Resolver
 }
 
 // PatternNotFoundError reports that an instruction pattern did not match the code file.
@@ -133,6 +134,7 @@ func NewInstruction(
 		LinePattern:   patterns.line,
 		CommentMode:   commentMode,
 		Configuration: config,
+		resolver:      fragmentation.NewResolver(),
 	}, nil
 }
 
@@ -201,11 +203,16 @@ func parseInstructionPattern(attribute string, value string) (Pattern, error) {
 //
 // Returns an error if there was an error during reading the content.
 func (e Instruction) Content() ([]string, error) {
-	fileContent, err := fragmentation.ResolveContent(e.CodeFile, e.Fragment, e.Configuration)
+	resolver := e.resolver
+	if resolver == nil {
+		resolver = fragmentation.NewResolver()
+	}
+
+	fileContent, err := resolver.ResolveContent(e.CodeFile, e.Fragment, e.Configuration)
 	if err != nil {
 		return nil, err
 	}
-	codeFileReference, referenceErr := fragmentation.ResolveCodeFileReference(
+	codeFileReference, referenceErr := resolver.ResolveCodeFileReference(
 		e.CodeFile,
 		e.Configuration,
 	)

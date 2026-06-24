@@ -27,6 +27,7 @@ import (
 
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/parsing"
+	"embed-code/embed-code-go/fragmentation"
 	"embed-code/embed-code-go/logging"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -143,8 +144,9 @@ func processRequiredDocs(
 	}
 
 	var processingErrors []error
+	resolver := fragmentation.NewResolver()
 	for _, doc := range requiredDocPaths {
-		processor := newProcessor(doc, config, parsing.Transitions, requiredDocPaths)
+		processor := newProcessor(doc, config, parsing.Transitions, requiredDocPaths, resolver)
 		if err := handle(processor); err != nil {
 			processingErrors = append(processingErrors, err)
 		}

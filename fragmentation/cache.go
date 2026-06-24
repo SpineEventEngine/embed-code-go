@@ -70,16 +70,6 @@ func (c *cache[K, V]) get(key K) (V, error) {
 	return value, nil
 }
 
-// clear removes all cached values.
-func (c *cache[K, V]) clear() {
-	c.Lock()
-	defer c.Unlock()
-
-	c.values = make(map[K]V)
-	c.entries = make(map[K]*list.Element)
-	c.order.Init()
-}
-
 // storeLoaded stores a loaded value and evicts the least recently used value when needed.
 func (c *cache[K, V]) storeLoaded(key K, value V) {
 	c.values[key] = value
