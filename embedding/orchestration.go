@@ -92,6 +92,8 @@ func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
 }
 
 // configNameLabel formats a configuration name for summary log messages.
+//
+// A non-empty label starts with a space so callers can append it directly.
 func configNameLabel(config configuration.Configuration) string {
 	if config.Name == "" {
 		return ""
