@@ -49,9 +49,10 @@ func TestFragmentation(t *testing.T) {
 
 var _ = Describe("Fragmentation", func() {
 	var config configuration.Configuration
+	var resolver *fragmentation.Resolver
 
 	BeforeEach(func() {
-		fragmentation.ClearResolverCache()
+		resolver = fragmentation.NewResolver()
 		config = configuration.NewConfiguration()
 		config.DocumentationRoot = "../test/resources/docs"
 		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
@@ -69,7 +70,7 @@ var _ = Describe("Fragmentation", func() {
 	})
 
 	It("should resolve named fragments", func() {
-		content := resolveTestFragment(correctFragmentsFileName, "main()", config)
+		content := resolveTestFragment(resolver, correctFragmentsFileName, "main()", config)
 
 		Expect(content).Should(Equal([]string{
 			"public static void main(String[] args) {",
@@ -79,7 +80,12 @@ var _ = Describe("Fragmentation", func() {
 	})
 
 	It("should resolve fragments without an end marker through the end of the file", func() {
-		content := resolveTestFragment(unclosedFragmentFileName, "Fragment that never ends", config)
+		content := resolveTestFragment(
+			resolver,
+			unclosedFragmentFileName,
+			"Fragment that never ends",
+			config,
+		)
 
 		Expect(content).Should(Equal([]string{
 			indent + indent + "System.out.println(\"Hello world\");",
@@ -111,7 +117,7 @@ var _ = Describe("Fragmentation", func() {
 			_type.NamedPath{Path: validRoot},
 		}
 
-		content, err := fragmentation.ResolveContent(
+		content, err := resolver.ResolveContent(
 			fileName,
 			fragmentation.DefaultFragmentName,
 			config,
@@ -119,6 +125,39 @@ var _ = Describe("Fragmentation", func() {
 
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(content).Should(Equal([]string{"class Example {}"}))
+	})
+
+	It("should isolate cached source content between resolvers", func() {
+		sourceRoot := GinkgoT().TempDir()
+		fileName := "Example.java"
+		sourcePath := filepath.Join(sourceRoot, fileName)
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+		Expect(os.WriteFile(sourcePath, []byte("class First {}"), 0600)).To(Succeed())
+
+		firstContent, err := resolver.ResolveContent(
+			fileName,
+			fragmentation.DefaultFragmentName,
+			config,
+		)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(os.WriteFile(sourcePath, []byte("class Second {}"), 0600)).To(Succeed())
+
+		cachedContent, err := resolver.ResolveContent(
+			fileName,
+			fragmentation.DefaultFragmentName,
+			config,
+		)
+		Expect(err).ShouldNot(HaveOccurred())
+		freshContent, err := fragmentation.NewResolver().ResolveContent(
+			fileName,
+			fragmentation.DefaultFragmentName,
+			config,
+		)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		Expect(firstContent).Should(Equal([]string{"class First {}"}))
+		Expect(cachedContent).Should(Equal(firstContent))
+		Expect(freshContent).Should(Equal([]string{"class Second {}"}))
 	})
 
 	It("should fail on an unopened fragment", func() {
@@ -171,7 +210,7 @@ var _ = Describe("Fragmentation", func() {
 	})
 
 	It("should correctly parse file into many partitions", func() {
-		content := resolveTestFragment(complexFragmentsFileName, "Main", config)
+		content := resolveTestFragment(resolver, complexFragmentsFileName, "Main", config)
 
 		expected := []string{
 			"public class Main {",
@@ -188,8 +227,8 @@ var _ = Describe("Fragmentation", func() {
 	})
 
 	It("should correctly parse file with several different fragments", func() {
-		mainContent := resolveTestFragment(twoFragmentsFileName, "Main", config)
-		helloContent := resolveTestFragment(twoFragmentsFileName, "Hello", config)
+		mainContent := resolveTestFragment(resolver, twoFragmentsFileName, "Main", config)
+		helloContent := resolveTestFragment(resolver, twoFragmentsFileName, "Hello", config)
 
 		Expect([][]string{mainContent, helloContent}).Should(ConsistOf([][]string{
 			{
@@ -214,8 +253,8 @@ var _ = Describe("Fragmentation", func() {
 	})
 
 	It("should correctly parse file with several overlapping fragments", func() {
-		mainContent := resolveTestFragment(overlappingFragmentsFileName, "Main", config)
-		helloContent := resolveTestFragment(overlappingFragmentsFileName, "Hello", config)
+		mainContent := resolveTestFragment(resolver, overlappingFragmentsFileName, "Main", config)
+		helloContent := resolveTestFragment(resolver, overlappingFragmentsFileName, "Hello", config)
 
 		Expect([][]string{mainContent, helloContent}).Should(ConsistOf([][]string{
 			{
@@ -269,11 +308,12 @@ func doTestFragmentation(
 }
 
 func resolveTestFragment(
+	resolver *fragmentation.Resolver,
 	testFileName string,
 	fragmentName string,
 	config configuration.Configuration,
 ) []string {
-	content, err := fragmentation.ResolveContent(
+	content, err := resolver.ResolveContent(
 		fmt.Sprintf("org/example/%s", testFileName),
 		fragmentName,
 		config,
