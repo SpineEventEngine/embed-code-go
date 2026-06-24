@@ -30,11 +30,12 @@ import (
 // Pattern represents a glob-like pattern to match consecutive source lines.
 //
 // Contains the original glob string and compiled matchers for each source-line pattern.
-//
-// sourceGlob — a glob-like string, e.g. "*main*" or "^main".
 type Pattern struct {
+	// sourceGlob is the original glob-like pattern.
 	sourceGlob string
-	matchers   []lineMatcher
+
+	// matchers contains one compiled matcher per source-line pattern.
+	matchers []lineMatcher
 }
 
 const (
@@ -47,6 +48,7 @@ const (
 
 // lineMatcher matches a single source line using the compiled glob pattern.
 type lineMatcher struct {
+	// compiled is the compiled glob matcher.
 	compiled glob.Glob
 }
 

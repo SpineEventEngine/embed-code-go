@@ -25,12 +25,23 @@ import (
 
 // cache is a limited collection of recently used values by key.
 type cache[K comparable, V any] struct {
+	// Mutex guards all cache state.
 	sync.Mutex
-	limit   int
-	loader  func(K) (V, error)
-	values  map[K]V
+
+	// limit is the maximum number of retained values.
+	limit int
+
+	// loader resolves values that are not cached.
+	loader func(K) (V, error)
+
+	// values contains cached values indexed by key.
+	values map[K]V
+
+	// entries maps keys to their positions in the usage order.
 	entries map[K]*list.Element
-	order   *list.List
+
+	// order tracks keys from least to most recently used.
+	order *list.List
 }
 
 // newCache creates a cache with a loader and least-recently-used eviction.

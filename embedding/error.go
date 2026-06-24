@@ -26,9 +26,14 @@ import (
 
 // ProcessingError wraps a parser or source-resolution error with documentation location.
 type ProcessingError struct {
+	// DocFilePath is the path to the documentation file being processed.
 	DocFilePath string
-	Line        int
-	Err         error
+
+	// Line is the one-based documentation line where processing failed.
+	Line int
+
+	// Err is the underlying parser or source-resolution error.
+	Err error
 }
 
 // Error returns a user-facing description of the failed documentation processing operation.

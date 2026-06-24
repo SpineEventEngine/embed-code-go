@@ -36,7 +36,10 @@ const resolverCacheLimit = 100
 
 // fragmentedFile stores cleaned source lines and parsed fragments for one source file.
 type fragmentedFile struct {
-	lines     []string
+	// lines contains the cleaned source lines.
+	lines []string
+
+	// fragments contains parsed fragments indexed by name.
 	fragments map[string]Fragment
 }
 

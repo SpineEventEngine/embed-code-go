@@ -28,12 +28,11 @@ import (
 const DefaultFragmentName = "_default"
 
 // Fragment is a single fragment in a file.
-//
-// Name — a name of a Fragment.
-//
-// Partitions — a list of partitions found for a Fragment.
 type Fragment struct {
-	Name       string
+	// Name is the fragment name.
+	Name string
+
+	// Partitions contains the source partitions that form the fragment.
 	Partitions []Partition
 }
 

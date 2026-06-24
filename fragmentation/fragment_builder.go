@@ -24,16 +24,15 @@ import (
 )
 
 // FragmentBuilder is a single fragment builder.
-//
-// CodeFilePath — a path to a file to fragment.
-//
-// Partitions — a list of partitions of a file to fragment.
-//
-// Name — a name of a Fragment.
 type FragmentBuilder struct {
+	// CodeFilePath is the path to the file being fragmented.
 	CodeFilePath string
-	Partitions   []Partition
-	Name         string
+
+	// Partitions contains the partitions found for the fragment.
+	Partitions []Partition
+
+	// Name is the fragment name.
+	Name string
 }
 
 // AddStartPosition adds a new partition with given startPosition.

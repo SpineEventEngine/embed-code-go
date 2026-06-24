@@ -38,6 +38,10 @@ and repository guidance. Do not duplicate `writer` for authoring strategy,
   Go doc style for exported types, constants, variables, functions, and methods.
 - **Unexported comments explain intent.** Starting with the function name is
   preferred when it reads naturally.
+- **Every named struct field is documented in place.** Require a comment
+  directly above each exported or unexported field, starting with the exact
+  field name. Keep the struct comment focused on the type and reject field
+  descriptions collected there or duplicated at struct literals.
 - **Comments describe behavior, not signatures.** Avoid prose that only
   restates parameters, return values, or obvious assignments.
 - **Mention important effects.** Document filesystem writes, state transitions,

@@ -24,40 +24,51 @@ import (
 	"regexp"
 )
 
-// Context represents the context for parsing a file containing code embeddings.
-//
-// EmbeddingInstruction - a pointer to the embedding instruction.
-//
-// MarkdownFilePath - a path to the markdown file.
-//
-// Result - a list of strings representing the markdown file updated with embedding.
-//
-// CodeFenceStarted - a flag indicating whether a code fence has been started.
-//
-// CodeFenceIndentation - an indentation of the markdown's code fences.
-//
-// EmbeddingsNotFound - a list of embedding instructions that are not found in the code.
-//
-// UnacceptedEmbeddings - a list of embedding instructions that are not accepted by the parser.
+// Context represents the state of parsing a documentation file containing code embeddings.
 type Context struct {
-	EmbeddingInstruction     *Instruction
-	MarkdownFilePath         string
-	Result                   []string
-	CodeFenceStarted         bool
-	CodeFenceMarker          string
-	CodeFenceIndentation     int
-	MarkdownFenceStarted     bool
-	MarkdownFenceMarker      string
+	// EmbeddingInstruction is the instruction currently being parsed.
+	EmbeddingInstruction *Instruction
+
+	// MarkdownFilePath is the path to the documentation file.
+	MarkdownFilePath string
+
+	// Result contains the documentation lines produced by parsing.
+	Result []string
+
+	// CodeFenceStarted reports whether an embedding code fence is open.
+	CodeFenceStarted bool
+
+	// CodeFenceMarker is the marker used by the open embedding code fence.
+	CodeFenceMarker string
+
+	// CodeFenceIndentation is the indentation of the embedding code fence.
+	CodeFenceIndentation int
+
+	// MarkdownFenceStarted reports whether an ordinary Markdown code fence is open.
+	MarkdownFenceStarted bool
+
+	// MarkdownFenceMarker is the marker used by the open ordinary Markdown code fence.
+	MarkdownFenceMarker string
+
+	// MarkdownFenceIndentation is the indentation of the ordinary Markdown code fence.
 	MarkdownFenceIndentation int
-	EmbeddingsNotFound       []Instruction
-	UnacceptedEmbeddings     []Instruction
-	// source - a list of strings representing the original markdown file.
+
+	// EmbeddingsNotFound contains instructions whose source fragments were not found.
+	EmbeddingsNotFound []Instruction
+
+	// UnacceptedEmbeddings contains instructions rejected by the parser.
+	UnacceptedEmbeddings []Instruction
+
+	// source contains the original documentation lines.
 	source []string
-	// lineIndex - an index of the current line in the markdown file.
+
+	// lineIndex is the zero-based index of the current documentation line.
 	lineIndex int
-	// fileContainsEmbedding - a flag indicating whether the file contains an embedding instruction.
+
+	// fileContainsEmbedding reports whether the file contains an embedding instruction.
 	fileContainsEmbedding bool
-	// embeddings - a list of embedding instructions found in the markdown file.
+
+	// embeddings contains accepted embedding instructions and their source positions.
 	embeddings []EmbeddingContext
 }
 
@@ -67,16 +78,15 @@ func (c *Context) EmbeddingsCount() int {
 }
 
 // EmbeddingContext contains an instruction and its position in the source Markdown file.
-//
-// embeddingInstruction - an Instruction, containing all the needed embedding information.
-//
-// SourceStartIndex - an index of the StartState line in the original markdown file.
-//
-// SourceEndIndex - an index of the end line in the original markdown file.
 type EmbeddingContext struct {
+	// embeddingInstruction contains the embedding parameters.
 	embeddingInstruction Instruction
-	SourceStartIndex     int
-	SourceEndIndex       int
+
+	// SourceStartIndex is the first source-line index belonging to the embedding.
+	SourceStartIndex int
+
+	// SourceEndIndex is the first source-line index after the embedding.
+	SourceEndIndex int
 }
 
 // NewContext Creates and returns a new Context struct with initial values for markdownFile, source,

@@ -34,13 +34,25 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// TestInstructionParams contains instruction attributes used by parser tests.
 type TestInstructionParams struct {
-	fragment  string
+	// fragment is the optional fragment name.
+	fragment string
+
+	// startGlob is the optional start pattern.
 	startGlob string
-	endGlob   string
-	lineGlob  string
-	comments  string
-	closeTag  bool
+
+	// endGlob is the optional end pattern.
+	endGlob string
+
+	// lineGlob is the optional single-line pattern.
+	lineGlob string
+
+	// comments is the requested comment filtering mode.
+	comments string
+
+	// closeTag reports whether the instruction includes a closing tag.
+	closeTag bool
 }
 
 func TestInstruction(t *testing.T) {

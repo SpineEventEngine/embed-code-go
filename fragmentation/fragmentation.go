@@ -50,6 +50,7 @@ const NamedPathPrefix = "$"
 type Fragmentation struct {
 	// codeFile is the absolute path of the source file being fragmented.
 	codeFile string
+
 	// fragmentBuilders collects fragment partitions by name while the source file is scanned.
 	fragmentBuilders map[string]*FragmentBuilder
 }

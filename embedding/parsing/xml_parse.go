@@ -25,14 +25,13 @@ import (
 	"strings"
 )
 
-// Item needed for xml.Unmarshal parsing. The fields are filling up during the parsing.
-//
-// XMLName — a name of the tag in XML line.
-//
-// Attrs — a list of xml.Attr. The xml.Attr contains both names and values of attributes.
+// Item contains the XML name and attributes decoded from an embedding instruction.
 type Item struct {
+	// XMLName is the instruction tag name.
 	XMLName xml.Name
-	Attrs   []xml.Attr `xml:",any,attr"`
+
+	// Attrs contains instruction attributes with their names and values.
+	Attrs []xml.Attr `xml:",any,attr"`
 }
 
 // FromXML reads the instruction from the '<embed-code>' XML tag and creates new Instruction.

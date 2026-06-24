@@ -41,9 +41,14 @@ const fileScheme = "file"
 //
 // Only messages with level greater than or equal to Handler.Level are printed.
 type Handler struct {
-	Level      slog.Level
+	// Level is the minimum enabled logging level.
+	Level slog.Level
+
+	// attributes contains attributes added through WithAttrs.
 	attributes []slog.Attr
-	groups     []string
+
+	// groups contains group names added through WithGroup.
+	groups []string
 }
 
 // Enabled returns true if the log level is greater than or equal to the Handler's Level.

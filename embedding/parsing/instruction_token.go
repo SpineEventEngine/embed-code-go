@@ -32,17 +32,22 @@ type EmbedInstructionTokenState struct{}
 
 // InstructionParseError reports a failed embedding instruction parse and its source line.
 type InstructionParseError struct {
-	Line   int
+	// Line is the line containing the start of the malformed instruction.
+	Line int
+
+	// Reason describes why parsing failed.
 	Reason string
 }
 
 // MissingCodeFenceError reports that an embedding instruction is not followed by a code fence.
 type MissingCodeFenceError struct {
+	// Line is the line containing the embedding instruction.
 	Line int
 }
 
 // UnclosedCodeFenceError reports that an embedding code fence is not closed.
 type UnclosedCodeFenceError struct {
+	// Line is the line containing the embedding instruction.
 	Line int
 }
 
