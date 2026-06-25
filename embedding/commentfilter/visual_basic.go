@@ -36,6 +36,12 @@ const (
 type VisualBasicCommentFilter struct{}
 
 // Filter removes or preserves Visual Basic comments according to mode.
+//
+// Parameters:
+// lines - provides Visual Basic source lines.
+// mode - selects comments to retain.
+//
+// Returns filtered source lines.
 func (VisualBasicCommentFilter) Filter(lines []string, mode Mode) []string {
 	var filtered []string
 	for _, line := range lines {

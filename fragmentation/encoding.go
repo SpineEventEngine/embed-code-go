@@ -26,6 +26,8 @@ import (
 type unsupportedEncodingError struct{}
 
 // Error describes the required source encoding.
+//
+// Returns formatted encoding error text.
 func (*unsupportedEncodingError) Error() string {
 	return "unsupported source encoding: expected UTF-8"
 }

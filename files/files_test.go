@@ -29,6 +29,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// TestFiles runs the filesystem helper test suite.
 func TestFiles(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Data Suite")

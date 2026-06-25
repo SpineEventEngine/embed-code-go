@@ -43,7 +43,7 @@ var Version = strings.TrimSpace(versionFile)
 // then the checking for up-to-date is performed. If it is set to 'embed',
 // the embedding is performed.
 //
-// EmbeddingInstruction is the process that consists of the following steps:
+// Embedding is the process that consists of the following steps:
 //   - the code fragments are extracted from the code files;
 //   - the docs files are scanned for <embed-code> tags;
 //   - for each tag, the code fragments are embedded into the docs. The embedding

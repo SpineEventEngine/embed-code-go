@@ -27,7 +27,10 @@ import (
 
 // NamedPath represents a path that may optionally have a name.
 type NamedPath struct {
+	// Name is the optional path identifier.
 	Name string `yaml:"name"`
+
+	// Path is the filesystem path.
 	Path string `yaml:"path"`
 }
 
@@ -55,6 +58,11 @@ type NamedPathList []NamedPath
 //	      path: "../examples"
 //	    - name: runtime
 //	      path: "../runtime"
+//
+// Parameters:
+// value - provides the YAML node to decode.
+//
+// Returns an error when the node kind or sequence item format is unsupported.
 func (pathList *NamedPathList) UnmarshalYAML(value *yaml.Node) error {
 	switch value.Kind {
 	case yaml.ScalarNode:

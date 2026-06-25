@@ -83,7 +83,10 @@ var filtersByExtension = map[string]filterEntry{
 
 // filterEntry stores a comment filter and supported modes for its language.
 type filterEntry struct {
-	filter         CommentFilter
+	// filter implements comment removal for the language.
+	filter CommentFilter
+
+	// supportedModes contains comment modes accepted for the language.
 	supportedModes []Mode
 }
 

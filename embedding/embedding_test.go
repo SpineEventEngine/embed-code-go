@@ -34,6 +34,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// TestEmbedding runs the embedding test suite.
 func TestEmbedding(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Data Suite")
@@ -304,9 +305,10 @@ var _ = Describe("Embedding", func() {
 		docPath := testDocPath(config, "nested-dir-1/nested-dir-2/nested-dir-doc.md")
 		processor := newProcessor(docPath, config)
 
-		_, err := embedding.EmbedAll(config)
+		result, err := embedding.EmbedAll(config)
 
 		Expect(err).ShouldNot(HaveOccurred())
+		Expect(result.UpdatedTargetFiles).Should(ContainElement(docPath))
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
 

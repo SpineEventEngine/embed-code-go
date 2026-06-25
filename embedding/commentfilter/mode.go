@@ -39,6 +39,13 @@ const (
 )
 
 // ParseMode converts an embed-code `comments` attribute value into a comment filter Mode.
+//
+// Parameters:
+// value - provides the raw instruction attribute.
+//
+// Returns:
+// Mode - parsed comment filter mode.
+// error - when value is unsupported.
 func ParseMode(value string) (Mode, error) {
 	switch Mode(value) {
 	case "":
