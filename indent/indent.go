@@ -25,17 +25,15 @@ import (
 
 // MaxCommonIndentation finds the maximal common indentation of given lines.
 //
-// If all given lines are empty, contain only whitespace, or there are no lines at all,
-// returns zero.
+// Parameters:
+// lines - provides source lines to inspect.
 //
-// lines — a list of lines which may or may not have leading whitespaces.
-//
-// Returns the maximum number of leading whitespaces among all lines except for the empty ones.
+// Returns maximal common indentation, or zero when no non-blank lines exist.
 func MaxCommonIndentation(lines []string) int {
 	indent := math.MaxInt32
 	for _, line := range lines {
 		if strings.TrimSpace(line) != "" {
-			trimmedLine := strings.TrimLeft(line, "\n\t ") // Check if it changes a line in-place.
+			trimmedLine := strings.TrimLeft(line, "\n\t ")
 			lineIndent := len(line) - len(trimmedLine)
 			if lineIndent < indent {
 				indent = lineIndent
@@ -52,13 +50,14 @@ func MaxCommonIndentation(lines []string) int {
 
 // CutIndent reduces indentation to given redundantSpaces amount.
 //
-// lines — a list of strings representing the lines to process.
-//
-// redundantSpaces — the number of leading spaces to remove from each line.
-//
+// It copies lines before trimming, so the input slice is not modified.
 // If a line is shorter than redundantSpaces, the whole line is removed.
 //
-// Returns processed lines.
+// Parameters:
+// lines - provides source lines to trim.
+// redundantSpaces - provides the maximum indentation to remove.
+//
+// Returns source lines with indentation removed.
 func CutIndent(lines []string, redundantSpaces int) []string {
 	linesChanged := make([]string, len(lines))
 	copy(linesChanged, lines)

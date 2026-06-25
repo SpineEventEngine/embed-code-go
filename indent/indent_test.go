@@ -27,6 +27,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// TestIndent runs the indentation helper test suite.
 func TestIndent(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Data Suite")

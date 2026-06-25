@@ -36,7 +36,10 @@ const resolverCacheLimit = 100
 
 // fragmentedFile stores cleaned source lines and parsed fragments for one source file.
 type fragmentedFile struct {
-	lines     []string
+	// lines contains the cleaned source lines.
+	lines []string
+
+	// fragments contains parsed fragments indexed by name.
 	fragments map[string]Fragment
 }
 
@@ -51,7 +54,17 @@ var resolverCache = newCache[absolutePath, fragmentedFile](
 
 // ResolveContent returns source lines for the requested code file fragment.
 //
-// Named fragments are extracted directly from the source file on demand and cached by source file.
+// Named fragments are extracted directly from the source file on demand and
+// cached by source file.
+//
+// Parameters:
+// codePath - identifies the source file relative to configured source roots.
+// fragmentName - selects a named fragment, or the whole file when empty.
+// config - provides embedding configuration.
+//
+// Returns:
+// []string - selected source lines.
+// error - when the source file or fragment cannot be resolved.
 func ResolveContent(
 	codePath string,
 	fragmentName string,
@@ -102,6 +115,14 @@ func missingFragmentLogMessage(fragmentName string, sourcePath absolutePath) str
 }
 
 // ResolveCodeFileReference returns a user-facing reference to the source file.
+//
+// Parameters:
+// codePath - identifies the source file relative to configured source roots.
+// config - provides embedding configuration.
+//
+// Returns:
+// string - user-facing source file reference.
+// error - when source resolution fails.
 func ResolveCodeFileReference(codePath string, config config.Configuration) (string, error) {
 	source, found, err := resolveSource(codePath, config)
 	if err != nil {

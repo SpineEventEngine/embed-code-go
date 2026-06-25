@@ -25,35 +25,37 @@ import (
 	"strings"
 )
 
-// Item needed for xml.Unmarshal parsing. The fields are filling up during the parsing.
-//
-// XMLName — a name of the tag in XML line.
-//
-// Attrs — a list of xml.Attr. The xml.Attr contains both names and values of attributes.
+// Item contains the XML name and attributes decoded from an embedding instruction.
 type Item struct {
+	// XMLName is the instruction tag name.
 	XMLName xml.Name
-	Attrs   []xml.Attr `xml:",any,attr"`
+
+	// Attrs contains instruction attributes with their names and values.
+	Attrs []xml.Attr `xml:",any,attr"`
 }
 
-// FromXML reads the instruction from the '<embed-code>' XML tag and creates new Instruction.
+// FromXML parses an XML-like `<embed-code>` tag into an Instruction.
 //
-// line — a line which contains '<embed-code>' XML tag.
-// For example: '<embed-code file="org/example/Hello.java" fragment="Hello class"/>'.
-// The line can also contain closing tag:
-// '<embed-code file=\"org/example/Hello.java\" fragment=\"Hello class\"></embed-code>'.
-// The following parameters are currently supported:
-//   - file — a mandatory relative path to the file with the code;
-//   - fragment — an optional name of the particular fragment in the code. If no fragment
-//     is specified, the whole file is embedded;
-//   - start — an optional glob-like pattern. If specified, lines before the matching one
-//     are excluded;
-//   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
-//   - line — an optional glob-like pattern. If specified, only the matching line is embedded.
-//   - comments — an optional comment filtering mode. If omitted, all comments are retained.
+// The line can be self-closing:
+// `<embed-code file="org/example/Hello.java" fragment="Hello class"/>`.
+// It can also use a closing tag:
+// `<embed-code file="org/example/Hello.java" fragment="Hello class"></embed-code>`.
 //
-// config — a Configuration with all embed-code settings.
+// Supported instruction attributes:
+//   - file - mandatory relative path to the source file;
+//   - fragment - optional source fragment name. When omitted, the whole file is embedded;
+//   - start - optional glob-like pattern. Matching lines before it are excluded;
+//   - end - optional glob-like pattern. Matching lines after it are excluded;
+//   - line - optional glob-like pattern. Only the matching line is embedded;
+//   - comments - optional comment filtering mode. When omitted, all comments are retained.
 //
-// Returns an error if the paring of XML instruction failed.
+// Parameters:
+// line - provides raw instruction text.
+// config - provides embedding configuration.
+//
+// Returns:
+// Instruction - parsed embedding instruction.
+// error - when XML or instruction attributes are invalid.
 func FromXML(line string, config configuration.Configuration) (Instruction, error) {
 	fields, err := ParseXMLLine(line)
 	if err != nil {
@@ -63,11 +65,14 @@ func FromXML(line string, config configuration.Configuration) (Instruction, erro
 	return NewInstruction(fields, config)
 }
 
-// ParseXMLLine parses given XML-encoded xmlLine and returns attributes data as key-value pairs.
+// ParseXMLLine parses an XML-like `<embed-code>` tag into attribute key-value pairs.
 //
-// xmlLine — an XML-encoded line.
+// Parameters:
+// xmlLine - provides raw instruction text.
 //
-// Returns a map of key-value pairs. If the provided line is not valid, returns an error.
+// Returns:
+// map[string]string - instruction attributes by name.
+// error - when the line is not a valid embed-code XML element.
 func ParseXMLLine(xmlLine string) (map[string]string, error) {
 	var root Item
 	err := xml.Unmarshal([]byte(quoteEscapedXMLLine(xmlLine)), &root)

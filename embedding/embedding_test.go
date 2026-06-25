@@ -39,6 +39,7 @@ import (
 
 const temporaryTestDir = "../test/docs"
 
+// TestEmbedding runs the embedding test suite.
 func TestEmbedding(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Data Suite")
@@ -346,6 +347,7 @@ var _ = Describe("Embedding", func() {
 	})
 })
 
+// buildConfigWithSourceFiles returns a configuration using source-code fixtures.
 func buildConfigWithSourceFiles() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = temporaryTestDir
@@ -354,6 +356,7 @@ func buildConfigWithSourceFiles() configuration.Configuration {
 	return config
 }
 
+// newProcessor creates an embedding processor for a test documentation file.
 func newProcessor(
 	docPath string,
 	config configuration.Configuration,
@@ -365,6 +368,7 @@ func newProcessor(
 	return processor
 }
 
+// copyDirRecursive copies a directory tree into the test workspace.
 func copyDirRecursive(sourceDirPath string, targetDirPath string) {
 	info, err := os.Stat(sourceDirPath)
 	if err != nil {
@@ -396,6 +400,7 @@ func copyDirRecursive(sourceDirPath string, targetDirPath string) {
 	}
 }
 
+// copyFile copies one fixture file into the test workspace.
 func copyFile(sourceFilePath string, targetFilePath string) (err error) {
 	sourceFile, err := os.Open(sourceFilePath)
 	if err != nil {

@@ -24,6 +24,12 @@ import (
 )
 
 // FormatError formats a single error inline and joined errors as a bullet list.
+//
+// Parameters:
+// message - provides the formatted error prefix.
+// err - provides the error to format.
+//
+// Returns formatted error text.
 func FormatError(message string, err error) string {
 	errs := flattenedErrors(err)
 	if len(errs) <= 1 {

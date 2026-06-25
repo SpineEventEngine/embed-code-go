@@ -16,7 +16,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Package configuration contains configuration of the plugin.
+// Package configuration contains normalized embed-code settings.
 package configuration
 
 import (
@@ -31,7 +31,7 @@ const (
 // DefaultDocIncludes contains the default documentation glob patterns.
 var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 
-// Configuration contains the settings for the plugin to work.
+// Configuration contains embed-code processing settings.
 //
 // It is used to get data for scanning docs and resolving source files.
 // The example of creating the Configuration with default values:
@@ -78,6 +78,8 @@ type Configuration struct {
 }
 
 // NewConfiguration builds the default config.
+//
+// Returns configuration with default include patterns and separator.
 func NewConfiguration() Configuration {
 	return Configuration{
 		DocIncludes: DefaultDocIncludes,

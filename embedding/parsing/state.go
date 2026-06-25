@@ -27,17 +27,21 @@ type State interface {
 
 	// Accept updates the parsing context based on the transition.
 	//
-	// Switches context to the next line if EOF is not reached yet.
+	// Implementations advance context to the next line when EOF is not reached
+	// and the transition consumes input.
 	//
-	// context — a context of the parsing process.
+	// Parameters:
+	// context - provides mutable parser state.
+	// config - provides embedding configuration.
 	//
-	// config — a configuration of the embedding.
-	//
-	// Returns an error if any occurs.
+	// Returns an error when the transition cannot be applied.
 	Accept(context *Context, config configuration.Configuration) error
 
 	// Recognize reports whether the current line satisfies the transition.
 	//
-	// context — a context of the parsing process.
+	// Parameters:
+	// context - provides current parser state.
+	//
+	// Returns true when this state can accept the current parser position.
 	Recognize(context Context) bool
 }

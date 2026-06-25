@@ -1,22 +1,20 @@
-/*
- * Copyright 2026, TeamDev. All rights reserved.
- *
- * Redistribution and use in source and/or binary forms, with or without
- * modification, must retain the above copyright notice and the following
- * disclaimer.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// Copyright 2026, TeamDev. All rights reserved.
+//
+// Redistribution and use in source and/or binary forms, with or without
+// modification, must retain the above copyright notice and the following
+// disclaimer.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package cli
 
@@ -35,14 +33,21 @@ import (
 const IllegalFolderNameChars = `/\ *?:"<>|`
 
 // IsUsingConfigFile reports whether user configs are set with file.
+//
+// Parameters:
+// config - provides user CLI settings.
+//
+// Returns true when ConfigPath is not empty.
 func IsUsingConfigFile(config Config) bool {
 	return isNotEmpty(config.ConfigPath)
 }
 
-// ValidateConfig checks the validity of provided config and returns an error if any of the
-// validation rules are broken. If everything is ok, returns nil.
+// ValidateConfig checks user args and returns the first validation error.
 //
-// config — a struct with user-provided args.
+// Parameters:
+// config - provides user CLI or YAML settings.
+//
+// Returns an error when mode or path settings are invalid.
 func ValidateConfig(config Config) error {
 	err := validateMode(config.Mode)
 	if err != nil {
@@ -52,14 +57,15 @@ func ValidateConfig(config Config) error {
 	return validateConfig(config)
 }
 
-// ValidateConfigFile performs several checks to ensure that the necessary configuration values are
-// present. Also checks for the existence of the config file.
+// ValidateConfigFile checks that config-file mode is used correctly.
 //
-// userConfig — is a config given from CLI.
+// Parameters:
+// userConfig - provides command-line settings before YAML loading.
 //
-// Returns an error with a validation message. If everything is ok, returns nil.
+// Returns an error when config-file mode is invalid or the file is missing.
 func ValidateConfigFile(userConfig Config) error {
-	// Configs should be read from file, verifying if they are not set already.
+	// Config values should be read from file, so other root or optional params
+	// must not be set already.
 	isCodePathSet := len(userConfig.BaseCodePaths) > 0 &&
 		isNotEmpty(userConfig.BaseCodePaths[0].Path)
 	isDocsPathSet := isNotEmpty(userConfig.BaseDocsPath)
@@ -261,7 +267,7 @@ func validatePathSet(path string) (bool, error) {
 	if isPathSet {
 		exists, err := files.IsDirExist(path)
 		if err != nil {
-			// Since the path is set, returning true even we have an error.
+			// Since the path is set, return true even when the path check fails.
 			return true, err
 		}
 		if !exists {
@@ -274,11 +280,16 @@ func validatePathSet(path string) (bool, error) {
 	return false, nil
 }
 
-// validatePaths reports whether all paths are valid.
+// validatePaths reports whether all paths are set and valid.
 //
-// If paths are provided, checks whether each path exists in the file system.
+// It checks whether each provided path exists in the file system.
 //
-// Returns an error if any path name is not a valid folder name.
+// Parameters:
+// paths - provides source paths to validate.
+//
+// Returns:
+// bool - whether all paths are set.
+// error - when any path does not exist or any path name is invalid.
 func validatePaths(paths _type.NamedPathList) (bool, error) {
 	allPathsSet := true
 	if len(paths) == 0 {

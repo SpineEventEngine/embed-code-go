@@ -23,17 +23,22 @@ import "embed-code/embed-code-go/configuration"
 // CodeSampleLineState represents a line of a code sample.
 type CodeSampleLineState struct{}
 
-// Recognize reports whether the current line is a code sample line: the code fence is started, and
-// it is not the end of a file.
+// Recognize reports whether the current line belongs to an active embedding fence.
 //
-// context — a context of the parsing process.
+// Parameters:
+// context - provides current parser state.
+//
+// Returns true for source lines inside an embedding code fence.
 func (c CodeSampleLineState) Recognize(context Context) bool {
 	return !context.ReachedEOF() && context.CodeFenceStarted
 }
 
-// Accept moves to the next line.
+// Accept skips the original embedded source line.
 //
-// context — a context of the parsing process.
+// Parameters:
+// context - provides mutable parser state.
+//
+// Returns nil.
 func (c CodeSampleLineState) Accept(context *Context, _ configuration.Configuration) error {
 	context.ToNextLine()
 

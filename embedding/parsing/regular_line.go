@@ -26,17 +26,25 @@ import (
 
 const minCodeFenceMarkerLength = 3
 
-// RegularLineState represents a regular line of a markdown.
+// RegularLineState represents ordinary Markdown content.
 type RegularLineState struct{}
 
-// Recognize returns true as every line can be considered as a regular line.
+// Recognize accepts any current line as ordinary Markdown content.
+//
+// Parameters:
+// context - provides current parser state.
+//
+// Returns true for every parser context.
 func (r RegularLineState) Recognize(_ Context) bool {
 	return true
 }
 
-// Accept adds the current line from the parsing context to the result and moves to the next line.
+// Accept appends the current line and advances to the next documentation line.
 //
-// context — a context of the parsing process.
+// Parameters:
+// context - provides mutable parser state.
+//
+// Returns nil.
 func (r RegularLineState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	updateMarkdownFenceContext(context, line)
@@ -46,6 +54,7 @@ func (r RegularLineState) Accept(context *Context, _ configuration.Configuration
 	return nil
 }
 
+// updateMarkdownFenceContext tracks ordinary Markdown fences outside embeddings.
 func updateMarkdownFenceContext(context *Context, line string) {
 	if context.EmbeddingInstruction != nil {
 		return
