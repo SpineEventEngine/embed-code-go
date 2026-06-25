@@ -43,20 +43,26 @@ import (
 	"path/filepath"
 )
 
-// NamedPathPrefix the prefix before the named code source.
+// NamedPathPrefix is the prefix before a named code source.
 const NamedPathPrefix = "$"
 
 // Fragmentation splits the given file into fragments.
 type Fragmentation struct {
 	// codeFile is the absolute path of the source file being fragmented.
 	codeFile string
+
 	// fragmentBuilders collects fragment partitions by name while the source file is scanned.
 	fragmentBuilders map[string]*FragmentBuilder
 }
 
-// NewFragmentation builds Fragmentation for the given code file.
+// NewFragmentation builds Fragmentation for a relative or absolute source path.
 //
-// codeFile — a relative or absolute path to a code file to fragment.
+// Parameters:
+// codeFile - provides the source file path.
+//
+// Returns:
+// Fragmentation - source file fragmentation context.
+// error - when codeFile cannot be made absolute.
 func NewFragmentation(codeFile string) (Fragmentation, error) {
 	absoluteCodeFile, err := filepath.Abs(codeFile)
 	if err != nil {
@@ -69,10 +75,12 @@ func NewFragmentation(codeFile string) (Fragmentation, error) {
 	}, nil
 }
 
-// DoFragmentation splits the file into fragments.
+// DoFragmentation splits the source file into renderable content and named fragments.
 //
-// Returns a refined content of the file to be cut into fragments, and the Fragments.
-// Also returns an error if the fragmentation couldn't be done.
+// Returns:
+// []string - renderable source lines.
+// map[string]Fragment - parsed fragments by name.
+// error - when the source file cannot be read, decoded, or parsed.
 func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) {
 	var contentToRender []string
 
@@ -110,16 +118,18 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 	return contentToRender, fragments, nil
 }
 
-// Parses a single line of input and performs the following actions:
-//   - identifies fragment start and end markers within given line;
-//   - updates fragmentBuilders based on the markers;
-//   - appends non-fragment lines to contentToRender.
+// parseLine parses one source line and updates fragment builders or renderable content.
 //
-// line — a string to parse.
+// It identifies fragment start and end markers, updates fragment builders,
+// and appends non-fragment lines to renderable content.
 //
-// contentToRender — a list of strings which meant to be rendered. It fills up here.
+// Parameters:
+// line - provides one source line to parse.
+// contentToRender - provides accumulated renderable source lines.
 //
-// Returns updated contentToRender, and error if there's any.
+// Returns:
+// []string - updated renderable source lines.
+// error - when fragment marker parsing fails.
 func (f Fragmentation) parseLine(line string, contentToRender []string) ([]string, error) {
 	cursor := len(contentToRender)
 
@@ -148,8 +158,9 @@ func (f Fragmentation) parseLine(line string, contentToRender []string) ([]strin
 	return contentToRender, nil
 }
 
-// Iterates through the fragments` starts, creates fragments builders (if necessary), and adds a
-// new partition to the fragment.
+// parseStartDocFragments starts a new partition for each named fragment marker.
+//
+// It creates fragment builders when necessary.
 func (f Fragmentation) parseStartDocFragments(docFragments []string, cursor int) error {
 	for _, fragmentName := range docFragments {
 		fragment, exists := f.fragmentBuilders[fragmentName]
@@ -169,8 +180,9 @@ func (f Fragmentation) parseStartDocFragments(docFragments []string, cursor int)
 	return nil
 }
 
-// Iterates through the fragments` ends, creates fragments builders (if necessary), and adds a
-// new partition to the fragment.
+// parseEndDocFragments closes the latest partition for each named fragment marker.
+//
+// It requires a matching fragment builder to have been started earlier.
 func (f Fragmentation) parseEndDocFragments(endDocFragments []string, cursor int) error {
 	for _, fragmentName := range endDocFragments {
 		if fragment, exists := f.fragmentBuilders[fragmentName]; exists {

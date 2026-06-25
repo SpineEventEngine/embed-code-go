@@ -83,9 +83,11 @@ first function that exposes the symptom.
   `fragmentation` -> write or compare.
 - **Keep functions small and explicit.** Prefer direct code over broad helpers
   unless an abstraction removes real duplication or clarifies a shared contract.
-- **Document every function and method.** Add concise doc comments to new or
-  changed functions, including unexported ones. Exported comments start with
-  the declaration name.
+- **Document functions, methods, and struct fields.** Add concise doc comments
+  to new or changed functions, including unexported ones. Document every field
+  of a named struct directly above its declaration, including unexported fields;
+  keep the struct comment focused on the type as a whole. Exported comments
+  start with the declaration name.
 - **Return actionable errors.** Add file, pattern, instruction, or operation
   context where that context becomes known.
 - **Aggregate independent failures with `errors.Join`.** Continue processing

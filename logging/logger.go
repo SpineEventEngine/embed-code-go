@@ -41,12 +41,22 @@ const fileScheme = "file"
 //
 // Only messages with level greater than or equal to Handler.Level are printed.
 type Handler struct {
-	Level      slog.Level
+	// Level is the minimum enabled logging level.
+	Level slog.Level
+
+	// attributes contains attributes added through WithAttrs.
 	attributes []slog.Attr
-	groups     []string
+
+	// groups contains group names added through WithGroup.
+	groups []string
 }
 
 // Enabled returns true if the log level is greater than or equal to the Handler's Level.
+//
+// Parameters:
+// level - provides the record level to check.
+//
+// Returns true when level is enabled.
 func (h *Handler) Enabled(_ context.Context, level slog.Level) bool {
 	return level >= h.Level
 }
@@ -54,6 +64,11 @@ func (h *Handler) Enabled(_ context.Context, level slog.Level) bool {
 // Handle formats the log record and writes it to standard output in a simple readable format:
 //
 //	HH:MM:SS LEVEL - message
+//
+// Parameters:
+// record - provides the slog record to print.
+//
+// Returns nil.
 func (h *Handler) Handle(_ context.Context, record slog.Record) error {
 	time := record.Time.Format("15:04:05")
 	fmt.Printf("%s %s - %s\n",
@@ -81,6 +96,11 @@ func (h *Handler) Handle(_ context.Context, record slog.Record) error {
 }
 
 // WithAttrs returns a copy of the handler with extra attributes.
+//
+// Parameters:
+// attributes - provides attributes for future records.
+//
+// Returns derived slog handler.
 func (h *Handler) WithAttrs(attributes []slog.Attr) slog.Handler {
 	newHandler := *h
 	newHandler.attributes = append(append([]slog.Attr{}, h.attributes...), attributes...)
@@ -89,6 +109,11 @@ func (h *Handler) WithAttrs(attributes []slog.Attr) slog.Handler {
 }
 
 // WithGroup returns a copy of the handler for a new group.
+//
+// Parameters:
+// name - provides the group name.
+//
+// Returns derived slog handler.
 func (h *Handler) WithGroup(name string) slog.Handler {
 	newHandler := *h
 	newHandler.groups = append(append([]string{}, h.groups...), name)
@@ -97,6 +122,11 @@ func (h *Handler) WithGroup(name string) slog.Handler {
 }
 
 // FileReference returns a clickable file URL when the path can be made absolute.
+//
+// Parameters:
+// path - provides a local file path.
+//
+// Returns file URL, or original path when absolute resolution fails.
 func FileReference(path string) string {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
@@ -107,6 +137,12 @@ func FileReference(path string) string {
 }
 
 // FileReferenceWithLine returns a clickable file URL with an optional line suffix.
+//
+// Parameters:
+// path - provides a local file path.
+// line - provides an optional one-based line number.
+//
+// Returns file reference with line suffix when line is positive.
 func FileReferenceWithLine(path string, line int) string {
 	reference := FileReference(path)
 	if line <= 0 {
@@ -160,6 +196,9 @@ func isWindowsDrivePath(path string) bool {
 // or invokes other methods that may call panic.
 //
 //	defer HandlePanic(withStacktrace)
+//
+// Parameters:
+// withStacktrace - controls whether a panic stack trace is printed.
 func HandlePanic(withStacktrace bool) {
 	if r := recover(); r != nil {
 		fmt.Println(formatPanicMessage(r))

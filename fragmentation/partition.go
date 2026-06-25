@@ -26,17 +26,17 @@ import "fmt"
 // In the resulting doc file, the partitions are joined by the Configuration.Separator.
 // StartPosition and EndPosition are both set to -1 by default as the default int value for them
 // is 0, which is wrong, because 0 is in the scope of possible values for them.
-//
-// StartPosition — an index from which the scope of partition exists.
-//
-// EndPosition — an index on which the scope of partition ends.
 type Partition struct {
+	// StartPosition is the first source-line index included in the partition.
 	StartPosition int
-	EndPosition   int
+
+	// EndPosition is the last source-line index included in the partition.
+	EndPosition int
 }
 
-// NewPartition returns a new Partition with both positions set to -1, as they should to be
-// positive once set by a user.
+// NewPartition returns a Partition with both positions unset as -1.
+//
+// Returns empty partition ready to receive start and end positions.
 func NewPartition() Partition {
 	return Partition{
 		-1,
@@ -45,12 +45,18 @@ func NewPartition() Partition {
 }
 
 // Select returns the partition-related lines from given lines.
-// If EndPosition is not set, returns all the lines started from StartPosition.
+//
+// Parameters:
+// lines - provides source lines indexed by StartPosition and EndPosition.
+//
+// Returns:
+// []string - selected source lines.
+// error - when configured positions are outside lines.
 func (p Partition) Select(lines []string) ([]string, error) {
 	startPosition := p.StartPosition
 	endPosition := p.EndPosition
 
-	// Verifying lines actually have those indexes.
+	// Verify source lines actually contain configured partition indexes.
 	hasStartPosition := safeAccess(lines, startPosition)
 	if !hasStartPosition {
 		return nil, fmt.Errorf(
@@ -74,6 +80,7 @@ func (p Partition) Select(lines []string) ([]string, error) {
 	return lines[startPosition : endPosition+1], nil
 }
 
+// safeAccess reports whether slice contains index.
 func safeAccess(slice []string, index int) bool {
 	var hasIndex bool
 	defer func() {

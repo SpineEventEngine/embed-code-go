@@ -29,52 +29,57 @@ import (
 	"embed-code/embed-code-go/indent"
 )
 
-// Instruction specifies the code fragment to embed into a Markdown file, and the
-// embedding parameters.
+// Instruction specifies the code fragment to embed into a Markdown file.
 //
-// Takes form of an XML processing instruction <embed-code file="..." fragment="..."/>.
-//
-// CodeFile — a path to a code file to embed. The path is relative to the corresponding code root.
-//
-// Fragment — name of the particular fragment in the code. If Fragment is empty, the whole file
-// is embedded.
-//
-// StartPattern — an optional glob-like pattern. If specified, lines before the matching one
-// are excluded.
-//
-// EndPattern — an optional glob-like pattern. If specified, lines after the matching one
-// are excluded.
-//
-// LinePattern — an optional glob-like pattern. If specified, only the matching line is embedded.
-//
-// CommentMode — specifies which comments are retained in the embedded code.
-//
-// DocumentationFile — a documentation file containing the instruction.
-//
-// DocumentationLine — a line containing the start of the instruction.
-//
-// Configuration — a Configuration with all embed-code settings.
+// It is parsed from an XML-like `<embed-code>` instruction such as
+// `<embed-code file="..." fragment="..."/>`.
 type Instruction struct {
-	CodeFile          string
-	Fragment          string
-	StartPattern      *Pattern
-	EndPattern        *Pattern
-	LinePattern       *Pattern
-	CommentMode       commentfilter.Mode
+	// CodeFile is the path to the source file relative to its code root.
+	CodeFile string
+
+	// Fragment identifies a named fragment; an empty value selects the whole file.
+	Fragment string
+
+	// StartPattern excludes lines before its first match when set.
+	StartPattern *Pattern
+
+	// EndPattern excludes lines after its first match when set.
+	EndPattern *Pattern
+
+	// LinePattern selects only its matching line when set.
+	LinePattern *Pattern
+
+	// CommentMode selects which comments are retained in embedded code.
+	CommentMode commentfilter.Mode
+
+	// DocumentationFile is the path to the documentation containing the instruction.
 	DocumentationFile string
+
+	// DocumentationLine is the line containing the start of the instruction.
 	DocumentationLine int
-	Configuration     configuration.Configuration
+
+	// Configuration contains the embedding settings.
+	Configuration configuration.Configuration
 }
 
 // PatternNotFoundError reports that an instruction pattern did not match the code file.
 type PatternNotFoundError struct {
-	Line              int
+	// Line is the documentation line containing the instruction.
+	Line int
+
+	// CodeFileReference is the user-facing reference to the searched source file.
 	CodeFileReference string
-	Kind              string
-	Pattern           *Pattern
+
+	// Kind identifies the unmatched pattern as start or end.
+	Kind string
+
+	// Pattern is the source-line pattern that did not match.
+	Pattern *Pattern
 }
 
 // Error returns a user-facing description of an unmatched start or end pattern.
+//
+// Returns formatted pattern error text.
 func (e PatternNotFoundError) Error() string {
 	pattern := ""
 	if e.Pattern != nil {
@@ -89,21 +94,22 @@ func (e PatternNotFoundError) Error() string {
 	)
 }
 
-// NewInstruction creates an Instruction based on provided attributes and configuration.
+// NewInstruction builds an instruction from parsed `<embed-code>` attributes and configuration.
 //
-// attributes — a map with string-typed both keys and values. Possible keys are:
-//   - file — a mandatory relative path to the file with the code;
-//   - fragment — an optional name of the particular fragment in the code. If no fragment
-//     is specified, the whole file is embedded;
-//   - start — an optional glob-like pattern. If specified, lines before the matching one
-//     are excluded;
-//   - end — an optional glob-like pattern. If specified, lines after the matching one are excluded.
-//   - line — an optional glob-like pattern. If specified, only the matching line is embedded.
-//   - comments — an optional comment filtering mode. If omitted, all comments are retained.
+// Parameters:
+// attributes - provides embed-code tag attributes. Supported keys are:
+//   - file - mandatory relative path to the source file;
+//   - fragment - optional source fragment name. When omitted, the whole file is embedded;
+//   - start - optional glob-like pattern. Matching lines before it are excluded;
+//   - end - optional glob-like pattern. Matching lines after it are excluded;
+//   - line - optional glob-like pattern. Only the matching line is embedded;
+//   - comments - optional comment filtering mode. When omitted, all comments are retained.
 //
-// config — a Configuration with all embed-code settings.
+// config - provides embedding configuration.
 //
-// Returns an error if the instruction is wrong.
+// Returns:
+// Instruction - parsed embedding instruction.
+// error - when instruction attributes are invalid.
 func NewInstruction(
 	attributes map[string]string, config configuration.Configuration) (Instruction, error) {
 	codeFile := attributes["file"]
@@ -154,9 +160,14 @@ func validateExclusiveAttributes(fragment string, start string, end string, line
 
 // instructionPatterns holds the optional source-line patterns from instruction attributes.
 type instructionPatterns struct {
+	// start is the optional start pattern.
 	start *Pattern
-	end   *Pattern
-	line  *Pattern
+
+	// end is the optional end pattern.
+	end *Pattern
+
+	// line is the optional single-line pattern.
+	line *Pattern
 }
 
 // parseInstructionPatterns parses all optional source-line pattern attributes.
@@ -197,9 +208,14 @@ func parseInstructionPattern(attribute string, value string) (Pattern, error) {
 	return pattern, nil
 }
 
-// Content reads and returns the lines for specified fragment from the code.
+// Content returns source lines selected and filtered by this instruction.
 //
-// Returns an error if there was an error during reading the content.
+// It reads source content for the configured file and fragment before applying
+// optional source-line patterns and comment filtering.
+//
+// Returns:
+// []string - selected and filtered source lines.
+// error - when source resolution or pattern matching fails.
 func (e Instruction) Content() ([]string, error) {
 	fileContent, err := fragmentation.ResolveContent(e.CodeFile, e.Fragment, e.Configuration)
 	if err != nil {
@@ -267,6 +283,8 @@ func patternLabel(kind string, pattern *Pattern) string {
 }
 
 // String returns a string representation of Instruction.
+//
+// Returns diagnostic instruction text.
 func (e Instruction) String() string {
 	return fmt.Sprintf(
 		"EmbeddingInstruction[file=`%s`, fragment=`%s`, start=`%s`, end=`%s`, line=`%s`, comments=`%s`]",
@@ -275,8 +293,6 @@ func (e Instruction) String() string {
 }
 
 // matchingLines filters and returns input lines based on start, end, or line patterns.
-//
-// lines — a list of strings representing the input lines.
 func (e Instruction) matchingLines(lines []string, codeFileReference string) ([]string, error) {
 	var selectedLines []string
 	var err error
@@ -343,13 +359,19 @@ func removeCommonIndent(lines []string) []string {
 	return indent.CutIndent(lines, indentation)
 }
 
-// matchPattern returns the first line range that matches given pattern.
+// matchPattern returns the first source-line range matching pattern.
 //
-// pattern — a pattern to search in lines for.
+// Parameters:
+// pattern - provides the source-line pattern to search for.
+// lines - provides source lines to search in.
+// startFrom - provides the first index to search.
+// kind - identifies the pattern kind for errors.
+// codeFileReference - identifies the searched file for errors.
 //
-// lines — a list of lines to search in.
-//
-// startFrom — an index from which to start searching.
+// Returns:
+// int - inclusive start index.
+// int - inclusive end index.
+// error - when pattern does not match.
 func (e Instruction) matchPattern(
 	pattern *Pattern, lines []string, startFrom int, kind string, codeFileReference string,
 ) (int, int, error) {

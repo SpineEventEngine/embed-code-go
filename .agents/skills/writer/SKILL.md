@@ -8,7 +8,7 @@ description: >
   current Go code, tests, fixtures, and project flows.
 ---
 
-# Write documentation
+# Documentation Writing
 
 ## Decide the Target and Audience
 
@@ -74,11 +74,49 @@ Prefer updating an existing document over creating a new one.
 - Exported comments start with the exact declaration name.
 - Unexported comments state intent and start with the function name when it
   reads naturally.
+- Document named types, interfaces, exported constants, exported variables,
+  functions, methods, and struct fields. For unexported declarations, preserve
+  existing documentation and add comments when the declaration is new, changed,
+  non-obvious, or part of a local contract.
+- Document every field of a named struct directly above the field declaration,
+  including unexported fields. Start with the exact field name and use normal
+  Go prose such as `FieldName is...` or `fieldName contains...`.
+- Keep struct comments focused on the type as a whole. Do not collect field
+  descriptions in the struct comment or duplicate them at struct literals.
 - Document non-obvious state transitions, filesystem writes, returned errors,
   panics, and parser constraints.
+- Preserve existing parameter, return, and author/explanatory comments. When
+  restyling, convert the content to project style instead of deleting it, even
+  for private functions.
 - Do not restate the signature or narrate obvious assignments.
 - Inline comments in production Go should explain why a constraint exists, not
   what the next line does.
+
+## Go Function Comment Style
+
+Use this structure for functions and methods when parameters or returns need
+documentation:
+
+```go
+// EmbedAll embeds code fragments into all documentation files selected by config.
+//
+// Parameters:
+// config - provides embedding configuration.
+//
+// Returns:
+// EmbedAllResult - embedding result.
+// error - when selected documents fail to process.
+```
+
+- Keep the opening sentence short and behavioral.
+- Use `Parameters:` when documenting parameters. Each line is
+  `<name> - <short meaningful description>`.
+- Use `Returns:` only when there are multiple return values. Each line is
+  `<type> - <short meaningful description>`.
+- For a single return value, use one sentence such as
+  `Returns parsed configuration.`
+- Keep existing examples, constraints, and behavior notes, but normalize bullets
+  and parameter descriptions to this style.
 
 ## Make Docs Actionable
 

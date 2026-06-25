@@ -42,12 +42,27 @@ var Transitions = TransitionMap{
 }
 
 var (
-	Start            = StartState{}
-	RegularLine      = RegularLineState{}
+	// Start is the initial parser state.
+	Start = StartState{}
+
+	// RegularLine handles ordinary Markdown content.
+	RegularLine = RegularLineState{}
+
+	// EmbedInstruction handles `<embed-code>` instruction tags.
 	EmbedInstruction = EmbedInstructionTokenState{}
-	BlankLine        = BlankLineState{}
-	CodeFenceStart   = CodeFenceStartState{}
-	CodeFenceEnd     = CodeFenceEndState{}
-	CodeSampleLine   = CodeSampleLineState{}
-	Finish           = FinishState{}
+
+	// BlankLine handles blank lines between an instruction and its code fence.
+	BlankLine = BlankLineState{}
+
+	// CodeFenceStart handles opening code fences after instructions.
+	CodeFenceStart = CodeFenceStartState{}
+
+	// CodeFenceEnd handles closing code fences after embedded samples.
+	CodeFenceEnd = CodeFenceEndState{}
+
+	// CodeSampleLine handles source lines inside an embedding code fence.
+	CodeSampleLine = CodeSampleLineState{}
+
+	// Finish is the terminal parser state.
+	Finish = FinishState{}
 )

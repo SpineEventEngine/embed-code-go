@@ -42,6 +42,7 @@ const (
 	indent                       = "    "
 )
 
+// TestFragmentation runs the fragmentation test suite.
 func TestFragmentation(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Data Suite")
@@ -244,6 +245,7 @@ var _ = Describe("Fragmentation", func() {
 	})
 })
 
+// buildTestFragmentation creates Fragmentation for a source fixture.
 func buildTestFragmentation(testFileName string,
 	config configuration.Configuration) fragmentation.Fragmentation {
 	codeRoot := config.CodeRoots[0]
@@ -255,6 +257,7 @@ func buildTestFragmentation(testFileName string,
 	return frag
 }
 
+// doTestFragmentation fragments a source fixture and returns its rendered lines.
 func doTestFragmentation(
 	testFileName string,
 	config configuration.Configuration,
@@ -268,6 +271,7 @@ func doTestFragmentation(
 	return lines, fragments
 }
 
+// resolveTestFragment returns one named fragment from a source fixture.
 func resolveTestFragment(
 	testFileName string,
 	fragmentName string,
