@@ -52,6 +52,8 @@ type UnclosedCodeFenceError struct {
 }
 
 // Error returns a user-facing description of an embedding instruction parse failure.
+//
+// Returns formatted parse failure text.
 func (e InstructionParseError) Error() string {
 	return fmt.Sprintf(
 		"failed to parse an embedding instruction: %s",
@@ -60,20 +62,25 @@ func (e InstructionParseError) Error() string {
 }
 
 // Error returns a user-facing description of a missing code fence after an instruction.
+//
+// Returns formatted missing-fence text.
 func (e MissingCodeFenceError) Error() string {
 	return "expected a markdown code fence after the embedding instruction"
 }
 
 // Error returns a user-facing description of an unclosed embedding code fence.
+//
+// Returns formatted unclosed-fence text.
 func (e UnclosedCodeFenceError) Error() string {
 	return "the markdown code fence after the embedding instruction is not closed"
 }
 
-// Recognize reports whether the current line in the parsing context starts with "<embed-code",
-// and if there is no ongoing embedding and the end of the file is not reached, it returns true.
-// Otherwise, it returns false.
+// Recognize reports whether the current line starts an embedding instruction.
 //
-// context — a context of the parsing process.
+// Parameters:
+// context - provides current parser state.
+//
+// Returns true when the current line starts an embed-code instruction.
 func (e EmbedInstructionTokenState) Recognize(context Context) bool {
 	line := context.CurrentLine()
 	isStatement := strings.HasPrefix(strings.TrimSpace(line), "<"+EmbeddingTag)
@@ -87,14 +94,13 @@ func (e EmbedInstructionTokenState) Recognize(context Context) bool {
 	return false
 }
 
-// Accept parses the embedding instruction and extracts relevant information to update
-// the parsing context. Switches the context to the next line.
+// Accept parses the embedding instruction and records it in the parsing context.
 //
-// context — a context of the parsing process.
+// Parameters:
+// context - provides mutable parser state.
+// config - provides embedding configuration.
 //
-// config — a configuration of the embedding.
-//
-// Returns an error if the building of the embedding instruction fails.
+// Returns an error when the instruction cannot be parsed.
 func (e EmbedInstructionTokenState) Accept(context *Context,
 	config configuration.Configuration) error {
 	var instructionBody []string

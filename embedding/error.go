@@ -37,6 +37,8 @@ type ProcessingError struct {
 }
 
 // Error returns a user-facing description of the failed documentation processing operation.
+//
+// Returns formatted processing error text.
 func (e ProcessingError) Error() string {
 	return fmt.Sprintf(
 		"failed to embed code fragment into doc file `%s`: %s",
@@ -46,6 +48,8 @@ func (e ProcessingError) Error() string {
 }
 
 // Unwrap returns the parser or source-resolution error that caused processing to fail.
+//
+// Returns the underlying parser or source-resolution error.
 func (e ProcessingError) Unwrap() error {
 	return e.Err
 }

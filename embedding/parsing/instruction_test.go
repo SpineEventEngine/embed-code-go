@@ -55,6 +55,7 @@ type TestInstructionParams struct {
 	closeTag bool
 }
 
+// TestInstruction runs the instruction parsing test suite.
 func TestInstruction(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Data Suite")
@@ -543,6 +544,7 @@ var _ = Describe("Instruction", func() {
 	})
 })
 
+// getXMLExtractionContent returns source lines selected by an XML instruction fixture.
 func getXMLExtractionContent(fileName string, params TestInstructionParams,
 	config configuration.Configuration) []string {
 	xmlString := buildInstruction(fileName, params)
@@ -551,6 +553,7 @@ func getXMLExtractionContent(fileName string, params TestInstructionParams,
 	return readInstructionContent(instruction)
 }
 
+// buildConfigWithSourceFiles returns a configuration using parser source fixtures.
 func buildConfigWithSourceFiles() configuration.Configuration {
 	var config = configuration.NewConfiguration()
 	config.DocumentationRoot = "../../test/resources/docs"
@@ -559,6 +562,7 @@ func buildConfigWithSourceFiles() configuration.Configuration {
 	return config
 }
 
+// buildInstruction builds an XML instruction string from test parameters.
 func buildInstruction(fileName string, params TestInstructionParams) string {
 	fragmentAttr := xmlAttribute("fragment", params.fragment)
 	instructionLine := fmt.Sprintf("<embed-code file=\"%s\" %s", fileName, fragmentAttr)
@@ -588,6 +592,7 @@ func buildInstruction(fileName string, params TestInstructionParams) string {
 	return instructionLine
 }
 
+// createInstructionFromXML parses an XML instruction string for tests.
 func createInstructionFromXML(xmlString string,
 	config configuration.Configuration) parsing.Instruction {
 	instruction, err := parsing.FromXML(xmlString, config)
@@ -598,6 +603,7 @@ func createInstructionFromXML(xmlString string,
 	return instruction
 }
 
+// readInstructionContent returns instruction content and fails the spec on errors.
 func readInstructionContent(instruction parsing.Instruction) []string {
 	lines, err := instruction.Content()
 	if err != nil {
@@ -607,6 +613,7 @@ func readInstructionContent(instruction parsing.Instruction) []string {
 	return lines
 }
 
+// absTestCodeFile returns an absolute path to a parser source fixture.
 func absTestCodeFile(path string) string {
 	absolutePath, err := filepath.Abs(filepath.Join("../../test/resources/code/java", path))
 	if err != nil {
@@ -616,6 +623,7 @@ func absTestCodeFile(path string) string {
 	return absolutePath
 }
 
+// xmlAttribute formats one XML attribute for instruction fixtures.
 func xmlAttribute(name string, value string) string {
 	return fmt.Sprintf("%s=\"%v\"", name, value)
 }

@@ -44,12 +44,17 @@ type EmbedAllResult struct {
 // processorHandler applies one processing mode to a discovered documentation file.
 type processorHandler func(docFilePath string, processor Processor) error
 
-// EmbedAll processes embedding for multiple documentation files based on provided config.
+// EmbedAll embeds code fragments into all documentation files selected by config.
 //
-// Iterates over patterns in the configuration, finds documentation files matching those patterns,
-// creates a Processor for each file, and embeds code fragments in them.
+// It resolves documentation files from configured patterns, creates a Processor
+// for each file, and embeds code fragments into those documents.
 //
-// config — a configuration for embedding.
+// Parameters:
+// config - provides embedding configuration.
+//
+// Returns:
+// EmbedAllResult - embedding result.
+// error - when selected documents fail to process.
 func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
 	totalEmbeddings := 0
 	var updatedTargetFiles []string
@@ -106,7 +111,12 @@ func configNameLabel(config configuration.Configuration) string {
 
 // CheckUpToDate returns documentation files that are not up-to-date with code files.
 //
-// config — a configuration for embedding.
+// Parameters:
+// config - provides embedding configuration.
+//
+// Returns:
+// []string - stale documentation file paths.
+// error - when selected documents fail to process.
 func CheckUpToDate(config configuration.Configuration) ([]string, error) {
 	changedFiles, checkErrors := findChangedFiles(config)
 	if len(checkErrors) > 0 {
@@ -117,8 +127,6 @@ func CheckUpToDate(config configuration.Configuration) ([]string, error) {
 }
 
 // findChangedFiles returns documentation files that are not up-to-date with their code files.
-//
-// config — a configuration for embedding.
 func findChangedFiles(config configuration.Configuration) ([]string, []error) {
 	var changedFiles []string
 	_, checkErrors := processRequiredDocs(config, func(

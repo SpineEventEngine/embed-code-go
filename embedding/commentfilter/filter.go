@@ -40,10 +40,26 @@ type EmbeddingCommentFilter struct {
 
 // CommentFilter strips source comments according to the requested mode.
 type CommentFilter interface {
+	// Filter removes or preserves comments in lines according to mode.
+	//
+	// Parameters:
+	// lines - provides source lines.
+	// mode - selects comments to retain.
+	//
+	// Returns filtered source lines.
 	Filter(lines []string, mode Mode) []string
 }
 
 // Filter returns source lines with comments stripped according to the requested mode.
+//
+// Parameters:
+// lines - provides source lines.
+// filePath - selects the language filter.
+// mode - selects comments to retain.
+// embeddingDocPath - identifies the instruction document for warnings.
+// embeddingLine - identifies the instruction line for warnings.
+//
+// Returns filtered source lines.
 func Filter(
 	lines []string,
 	filePath string,
@@ -61,6 +77,12 @@ func Filter(
 }
 
 // Filter strips comments using the filter registered in the filtersByExtension.
+//
+// Parameters:
+// lines - provides source lines.
+// mode - selects comments to retain.
+//
+// Returns filtered source lines, or original lines when filtering is unsupported or disabled.
 func (f EmbeddingCommentFilter) Filter(lines []string, mode Mode) []string {
 	if mode == RetainAll {
 		return lines

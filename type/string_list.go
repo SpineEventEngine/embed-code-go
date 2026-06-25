@@ -42,6 +42,11 @@ type StringList []string
 //	    - a
 //	    - b
 //	    - c
+//
+// Parameters:
+// value - provides the YAML node to decode.
+//
+// Returns an error when the node kind is unsupported.
 func (s *StringList) UnmarshalYAML(value *yaml.Node) error {
 	switch value.Kind {
 	case yaml.ScalarNode:

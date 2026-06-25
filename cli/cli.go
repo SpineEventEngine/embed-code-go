@@ -97,20 +97,33 @@ type EmbedCodeSamplesResult struct {
 }
 
 const (
+	// ModeCheck checks whether documentation snippets are up-to-date.
 	ModeCheck = "check"
+
+	// ModeEmbed rewrites documentation snippets from source code.
 	ModeEmbed = "embed"
 )
 
 // CheckCodeSamples returns documentation files that are not up-to-date with code files.
 //
-// config — a configuration for checking code samples.
+// Parameters:
+// config - provides embedding configuration.
+//
+// Returns:
+// []string - stale documentation file paths.
+// error - when selected documents fail to process.
 func CheckCodeSamples(config configuration.Configuration) ([]string, error) {
 	return embedding.CheckUpToDate(config)
 }
 
 // EmbedCodeSamples embeds code fragments in documentation files.
 //
-// config — a configuration for embedding.
+// Parameters:
+// config - provides embedding configuration.
+//
+// Returns:
+// EmbedCodeSamplesResult - embedding result.
+// error - when selected documents fail to process or write.
 func EmbedCodeSamples(config configuration.Configuration) (EmbedCodeSamplesResult, error) {
 	embeddingResult, err := embedding.EmbedAll(config)
 	if err != nil {
@@ -122,9 +135,9 @@ func EmbedCodeSamples(config configuration.Configuration) (EmbedCodeSamplesResul
 	}, nil
 }
 
-// ReadArgs reads user-specified args from the command line.
+// ReadArgs reads user-specified command-line args.
 //
-// Returns Config struct filled with the corresponding args.
+// Returns command-line configuration.
 func ReadArgs() Config {
 	codePath := flag.String("code-path", "", "a path to a root directory with code files")
 	docsPath := flag.String("docs-path", "", "a path to a root directory with docs files")
@@ -157,11 +170,14 @@ func ReadArgs() Config {
 	}
 }
 
-// FillArgsFromConfigFile fills config with the values read from config file.
+// FillArgsFromConfigFile fills args with values read from the configured YAML file.
 //
-// args — Config struct with user-provided args.
+// Parameters:
+// args - provides the config file path and command-line defaults.
 //
-// Returns filled Config.
+// Returns:
+// Config - merged configuration.
+// error - when the YAML file cannot be read or decoded.
 func FillArgsFromConfigFile(args Config) (Config, error) {
 	configFields, err := readConfigFields(args.ConfigPath)
 	if err != nil {
@@ -192,9 +208,12 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	return args, nil
 }
 
-// BuildEmbedCodeConfiguration generates and returns a configuration based on provided userArgs.
+// BuildEmbedCodeConfiguration builds normalized embedding configurations from user args.
 //
-// userArgs — a Config with user-provided args.
+// Parameters:
+// userArgs - provides command-line and YAML configuration values.
+//
+// Returns normalized embedding configurations.
 func BuildEmbedCodeConfiguration(userArgs Config) []configuration.Configuration {
 	embedCodeConfigs := make([]configuration.Configuration, 0)
 
@@ -283,7 +302,12 @@ func sourceFoldersLabel(paths _type.NamedPathList) string {
 	return "Source code folders: " + strings.Join(labels, ", ")
 }
 
-// parseListArgument returns a list of strings from given comma-separated string listArgument.
+// parseListArgument splits a comma-separated command-line argument.
+//
+// Parameters:
+// listArgument - provides a comma-separated string.
+//
+// Returns parsed non-empty values.
 func parseListArgument(listArgument string) []string {
 	splitArgs := strings.Split(listArgument, ",")
 	parsedArgs := make([]string, 0)
@@ -296,11 +320,14 @@ func parseListArgument(listArgument string) []string {
 	return parsedArgs
 }
 
-// readConfigFields reads the provided config file and returns parsed fields.
+// readConfigFields reads and parses a YAML configuration file.
 //
-// configFilePath — a path to a yaml configuration file.
+// Parameters:
+// configFilePath - provides the path to a YAML configuration file.
 //
-// Returns a filled ConfigFields struct.
+// Returns:
+// Config - parsed configuration fields.
+// error - when the file cannot be read or decoded.
 func readConfigFields(configFilePath string) (Config, error) {
 	content, err := os.ReadFile(configFilePath)
 	if err != nil {

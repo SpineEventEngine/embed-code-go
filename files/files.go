@@ -33,8 +33,14 @@ const (
 	WritePermission uint32 = 0600
 )
 
-// IsFileExist reports whether the given path (relative or absolute) to a file exists in the
-// file system.
+// IsFileExist reports whether the given path exists as a file.
+//
+// Parameters:
+// filePath - provides a file path or glob pattern.
+//
+// Returns:
+// bool - whether the first match exists as a file.
+// error - when the path cannot be inspected or points to a directory.
 func IsFileExist(filePath string) (bool, error) {
 	exists, info, err := validatePathExists(filePath)
 	if err != nil {
@@ -51,8 +57,14 @@ func IsFileExist(filePath string) (bool, error) {
 	return false, nil
 }
 
-// IsDirExist reports whether the given directory exists in the file system by the path
-// (relative or absolute).
+// IsDirExist reports whether the given path exists as a directory.
+//
+// Parameters:
+// path - provides a directory path or glob pattern.
+//
+// Returns:
+// bool - whether the first match exists as a directory.
+// error - when the path cannot be inspected or points to a file.
 func IsDirExist(path string) (bool, error) {
 	exists, info, err := validatePathExists(path)
 	if err != nil {

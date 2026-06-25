@@ -23,13 +23,23 @@ import "embed-code/embed-code-go/configuration"
 // StartState represents an initial state.
 type StartState struct{}
 
-// Recognize reports whether it is an initial state. Returns true as every state can be a
-// StartState.
+// Recognize reports whether it is an initial state.
+//
+// Parameters:
+// context - provides current parser state.
+//
+// Returns true because every parse starts from StartState.
 func (s StartState) Recognize(_ Context) bool {
 	return true
 }
 
-// Accept returns nil as it is an initial state and nothing should be processed.
+// Accept processes the initial parser state.
+//
+// Parameters:
+// context - provides mutable parser state.
+// config - provides embedding configuration.
+//
+// Returns nil.
 func (s StartState) Accept(_ *Context, _ configuration.Configuration) error {
 	return nil
 }

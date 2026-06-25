@@ -28,44 +28,55 @@ import (
 var quotedNamePattern = regexp.MustCompile("\"(.*)\"")
 
 const (
+	// FragmentStart marks the beginning of a named source fragment.
 	FragmentStart = "#docfragment"
-	FragmentEnd   = "#enddocfragment"
+
+	// FragmentEnd marks the end of a named source fragment.
+	FragmentEnd = "#enddocfragment"
 )
 
-// FindDocFragments finds all the names for the fragment's openings using the opening prefix.
+// FindDocFragments finds fragment names declared with the start marker.
 //
 // For example, FindDocFragments("// #docfragment \"main\",\"sub-main\"\n")
 // returns ["main", "sub-main"]
 //
-// line — a line to search in.
+// Parameters:
+// line - provides one source line.
 //
-// Returns the list of the names found.
+// Returns:
+// []string - fragment names declared on the line.
+// error - when a declaration is malformed.
 func FindDocFragments(line string) ([]string, error) {
 	return lookup(line, FragmentStart)
 }
 
-// FindEndDocFragments finds all the names for the fragment's endings using the ending prefix.
+// FindEndDocFragments finds fragment names declared with the end marker.
 //
 // For example, FindEndDocFragments("// #enddocfragment \"main\",\"sub-main\"\n")
 // returns ["main", "sub-main"]
 //
-// line — a line to search in.
+// Parameters:
+// line - provides one source line.
 //
-// Returns the list of the names found.
+// Returns:
+// []string - fragment names closed on the line.
+// error - when a declaration is malformed.
 func FindEndDocFragments(line string) ([]string, error) {
 	return lookup(line, FragmentEnd)
 }
 
-// Looks up for fragments' names from given line.
+// lookup finds fragment names in line after the given fragment marker prefix.
 //
 // For example, lookup("// #enddocfragment \"main\",\"sub-main\"\n", "#enddocfragment")
 // returns ["main", "sub-main"]
 //
-// line — a line to search in.
+// Parameters:
+// line - provides one source line to search in.
+// prefix - provides the fragment marker prefix, for example "#docfragment".
 //
-// prefix — a user-defined indicator of a fragment, e.g. "#docfragment".
-//
-// Returns the list of the names found and error if prefix found without names.
+// Returns:
+// []string - fragment names found on the line.
+// error - when prefix is found without valid names.
 func lookup(line string, prefix string) ([]string, error) {
 	var unquotedNames []string
 	if strings.Contains(line, prefix) {
@@ -89,7 +100,14 @@ func lookup(line string, prefix string) ([]string, error) {
 	return unquotedNames, nil
 }
 
-// Returns the unquoted name from given quotedName.
+// unquoteName removes quotes from a fragment marker name.
+//
+// Parameters:
+// quotedName - provides a quoted fragment name.
+//
+// Returns:
+// string - unquoted fragment name.
+// error - when quotedName cannot be unquoted.
 func unquoteName(quotedName string) (string, error) {
 	nameQuoted := quotedNamePattern.FindString(quotedName)
 	nameCleaned, err := strconv.Unquote(nameQuoted)

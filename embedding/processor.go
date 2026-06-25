@@ -47,7 +47,15 @@ type Processor struct {
 	requiredDocPaths []string
 }
 
-// NewProcessor creates and returns new Processor with given docFile and config.
+// NewProcessor creates and returns a new Processor with the given docFile and config.
+//
+// Parameters:
+// docFile - identifies the documentation file to process.
+// config - provides embedding configuration.
+//
+// Returns:
+// Processor - documentation file processor.
+// error - when configured documentation patterns cannot be resolved.
 func NewProcessor(docFile string, config configuration.Configuration) (Processor, error) {
 	requiredDocPaths, err := requiredDocs(config)
 	if err != nil {
@@ -74,8 +82,9 @@ func newProcessor(
 
 // Embed constructs embedding and modifies the doc file if embedding is needed.
 //
-// Returns an empty context without parsing the file when it is excluded by configuration.
-// If any problems faced, an error is returned.
+// Returns:
+// *parsing.Context - parsing context, empty when the file is excluded by configuration.
+// error - when processing or writing fails.
 func (p Processor) Embed() (*parsing.Context, error) {
 	if !slices.Contains(p.requiredDocPaths, p.DocFilePath) {
 		slog.Info(fmt.Sprintf("Skipping `%s`; it is excluded by the configuration.",
@@ -109,6 +118,8 @@ func (p Processor) Embed() (*parsing.Context, error) {
 }
 
 // IsUpToDate reports whether the embedding of the target markdown is up-to-date with the code file.
+//
+// Returns false when processing fails or content is stale.
 func (p Processor) IsUpToDate() bool {
 	upToDate, err := p.isUpToDate()
 	if err != nil {
@@ -143,12 +154,12 @@ func (p Processor) isUpToDate() (bool, error) {
 	return upToDate, nil
 }
 
+// fillEmbeddingContext runs the parser state machine over one documentation file.
+//
 // Iterates through the doc file line by line considering them as a states of an embedding.
 // Such way, transits from the state to the next possible one until it reaches the end of a file.
 // By the transition process, fills the parsing.Context accordingly, so it is ready to retrieve
 // the result.
-//
-// Returns a parsing.Context and an error if any occurs.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
 	context, err := parsing.NewContext(p.DocFilePath)
 	if err != nil {
@@ -229,8 +240,16 @@ func unacceptedTransitionError(context parsing.Context) error {
 	return fmt.Errorf("unexpected parser state at line %d", context.CurrentIndex())
 }
 
-// Moves to the next state accordingly to a transition map from the current state. Reports whether
-// it successfully moved to the next state and returns the new state.
+// moveToNextState advances the parser through the transition map.
+//
+// Parameters:
+// state - provides the current parser state.
+// context - provides mutable parser state.
+//
+// Returns:
+// bool - whether a matching next state was accepted.
+// *parsing.State - accepted next state, or current state when none matches.
+// error - when accepting the next state fails.
 func (p Processor) moveToNextState(state *parsing.State, context *parsing.Context) (
 	bool, *parsing.State, error) {
 	for _, nextState := range p.TransitionsMap[*state] {
