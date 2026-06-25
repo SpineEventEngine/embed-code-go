@@ -42,7 +42,7 @@ type Config struct {
 	BaseDocsPath string `yaml:"docs-path"`
 
 	// DocIncludes contains patterns selecting documentation files to process.
-	// Patterns are resolved relative to the documentation root and never match directories.
+	// Patterns are resolved relative to the documentation root.
 	// For example, "docs/**/*.md,guides/*.html". The default is "**/*.md,**/*.html".
 	DocIncludes _type.StringList `yaml:"doc-includes"`
 

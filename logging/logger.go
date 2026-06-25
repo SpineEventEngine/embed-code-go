@@ -142,7 +142,7 @@ func FileReference(path string) string {
 // path - provides a local file path.
 // line - provides an optional one-based line number.
 //
-// Returns file URL with line suffix when line is positive.
+// Returns file reference with line suffix when line is positive.
 func FileReferenceWithLine(path string, line int) string {
 	reference := FileReference(path)
 	if line <= 0 {
