@@ -35,12 +35,12 @@ type FragmentBuilder struct {
 	Name string
 }
 
-// AddStartPosition adds a new partition with given startPosition.
+// AddStartPosition adds a new fragment partition starting at startPosition.
 //
-// AddEndPosition is need to be called when the end of the fragment is reached,
-// or else it will be considered that the end of partition is in the end of the file.
+// Parameters:
+// startPosition - provides the zero-based source line where the partition starts.
 //
-// startPosition — starting position of the fragment.
+// Returns an error when the previous partition is still open.
 func (b *FragmentBuilder) AddStartPosition(startPosition int) error {
 	if !b.isPartitionsEmpty() {
 		lastPartition := b.lastAddedPartition()
@@ -57,10 +57,15 @@ func (b *FragmentBuilder) AddStartPosition(startPosition int) error {
 	return nil
 }
 
-// AddEndPosition completes previously created fragment partition with its endPosition.
-// It should be called after AddStartPosition.
+// AddEndPosition completes the latest fragment partition at endPosition.
 //
-// endPosition — end position of the fragment.
+// It is needed to be called when the end of the fragment is reached,
+// or else it will be considered that the end of partition is in the end of the file.
+//
+// Parameters:
+// endPosition - provides the zero-based source line where the partition ends.
+//
+// Returns an error when no partition is open or the latest partition already has an end.
 func (b *FragmentBuilder) AddEndPosition(endPosition int) error {
 	if b.isPartitionsEmpty() {
 		return errors.New("the list of partitions is empty")
@@ -76,7 +81,9 @@ func (b *FragmentBuilder) AddEndPosition(endPosition int) error {
 	return nil
 }
 
-// Build creates and returns new Fragment with the previously added and filled Partitions.
+// Build creates a Fragment from the collected partition positions.
+//
+// Returns fragment with collected partitions.
 func (b *FragmentBuilder) Build() Fragment {
 	return Fragment{
 		Name:       b.Name,
@@ -84,10 +91,12 @@ func (b *FragmentBuilder) Build() Fragment {
 	}
 }
 
+// isPartitionsEmpty reports whether no partition positions have been collected.
 func (b *FragmentBuilder) isPartitionsEmpty() bool {
 	return len(b.Partitions) == 0
 }
 
+// lastAddedPartition returns the most recently collected partition.
 func (b *FragmentBuilder) lastAddedPartition() *Partition {
 	lastIndex := len(b.Partitions) - 1
 

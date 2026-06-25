@@ -27,12 +27,15 @@ import (
 // CodeFenceEndState represents the end of a code fence.
 type CodeFenceEndState struct{}
 
-// Recognize reports whether the current line meets this conditions:
-//   - the end of file is not reached;
-//   - the code fence has started;
-//   - the current line starts with the appropriate indentation and "```"
+// Recognize reports whether the current line closes the active embedding fence.
 //
-// context — a context of the parsing process.
+// It requires EOF not reached, an active code fence, matching fence indentation,
+// and a closing fence marker compatible with the opening marker.
+//
+// Parameters:
+// context - provides current parser state.
+//
+// Returns true when the current line closes the active embedding code fence.
 func (c CodeFenceEndState) Recognize(context Context) bool {
 	if context.ReachedEOF() {
 		return false
@@ -52,12 +55,15 @@ func (c CodeFenceEndState) Recognize(context Context) bool {
 	return isClosingCodeFence(line, context.CodeFenceMarker)
 }
 
-// Accept adds the current line to the result, resets certain context variables, and moves to
-// the next line.
+// Accept renders the embedding content and closes the active embedding fence.
 //
-// context — a context of the parsing process.
+// It appends the closing fence when rendering succeeds. When rendering fails,
+// it restores the original Markdown for the embedding before advancing.
 //
-// Returns an error if the rendering was not successful.
+// Parameters:
+// context - provides mutable parser state.
+//
+// Returns an error when embedded content cannot be produced.
 func (c CodeFenceEndState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	err := renderSample(context)
@@ -75,11 +81,12 @@ func (c CodeFenceEndState) Accept(context *Context, _ configuration.Configuratio
 	return err
 }
 
-// Renders the sample content of the embedding.
+// renderSample appends rendered embedding source lines to the parse result.
 //
-// context — a context of the parsing process.
+// Parameters:
+// context - provides mutable parser state and the current embedding instruction.
 //
-// Returns an error if the reading of the embedding's content was not successful.
+// Returns an error when reading the embedding content fails.
 func renderSample(context *Context) error {
 	content, err := context.EmbeddingInstruction.Content()
 	if err != nil {
@@ -93,6 +100,7 @@ func renderSample(context *Context) error {
 	return nil
 }
 
+// isClosingCodeFence reports whether line closes a fence opened with marker.
 func isClosingCodeFence(line string, marker string) bool {
 	if line == "" {
 		return false

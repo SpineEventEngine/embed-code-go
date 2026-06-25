@@ -29,7 +29,7 @@ import (
 
 // Pattern represents a glob-like pattern to match consecutive source lines.
 //
-// Contains the original glob string and compiled matchers for each source-line pattern.
+// Pattern contains the original glob string and compiled matchers for each source-line pattern.
 type Pattern struct {
 	// sourceGlob is the original glob-like pattern.
 	sourceGlob string
@@ -52,9 +52,9 @@ type lineMatcher struct {
 	compiled glob.Glob
 }
 
-// NewPattern creates a new Pattern based on provided glob string.
+// NewPattern creates a new Pattern from an embed-code source-line pattern.
 //
-// The modified pattern is the original one, but enclosed with the "*" wildcards,
+// NewPattern encloses the original pattern with "*" wildcards,
 // unless start of the line or end of the line wildcards were specified.
 //
 // A multi-line pattern uses "\n" as a separator between consecutive source-line
@@ -63,12 +63,17 @@ type lineMatcher struct {
 // compiled separately and follows the same wildcard rules.
 // Use "\\n" to match literal "\n" text instead of starting the next pattern line.
 //
-// glob — a string that represents a pattern that can include such wildcards:
-//   - "*" — matches any sequence of characters;
-//   - "^" — matches the start of the line;
-//   - "$" — matches the end of the line.
+// Supported wildcards:
+//   - "*" - matches any sequence of characters;
+//   - "^" - matches the start of the line;
+//   - "$" - matches the end of the line.
 //
-// Returns an error if any modified glob pattern cannot be compiled.
+// Parameters:
+// globString - provides source-line pattern text.
+//
+// Returns:
+// Pattern - compiled source-line pattern.
+// error - when any pattern line cannot be compiled.
 func NewPattern(globString string) (Pattern, error) {
 	patternLines := splitPatternLines(globString)
 	matchers := make([]lineMatcher, 0, len(patternLines))
@@ -121,6 +126,15 @@ func (m lineMatcher) matches(line string) bool {
 }
 
 // FindIn returns the first source-line range matching the pattern.
+//
+// Parameters:
+// lines - provides source lines to scan.
+// startFrom - provides the first index to scan.
+//
+// Returns:
+// int - inclusive start index.
+// int - inclusive end index.
+// bool - whether a match was found.
 func (p Pattern) FindIn(lines []string, startFrom int) (int, int, bool) {
 	if len(p.matchers) == 0 || startFrom < 0 {
 		return 0, 0, false
@@ -187,6 +201,8 @@ func splitPatternLines(sourceGlob string) []string {
 }
 
 // String returns a string representation of Pattern.
+//
+// Returns diagnostic pattern text.
 func (p Pattern) String() string {
 	return fmt.Sprintf("Pattern %s", p.sourceGlob)
 }

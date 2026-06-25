@@ -96,6 +96,12 @@ type markerLineFilter struct {
 }
 
 // Filter removes or preserves recognized comments across all lines.
+//
+// Parameters:
+// lines - provides source lines.
+// mode - selects comments to retain.
+//
+// Returns filtered source lines.
 func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
 	var filtered []string
 	state := blockState{}

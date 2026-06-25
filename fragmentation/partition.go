@@ -34,8 +34,9 @@ type Partition struct {
 	EndPosition int
 }
 
-// NewPartition returns a new Partition with both positions set to -1, as they should to be
-// positive once set by a user.
+// NewPartition returns a Partition with both positions unset as -1.
+//
+// Returns empty partition ready to receive start and end positions.
 func NewPartition() Partition {
 	return Partition{
 		-1,
@@ -44,12 +45,18 @@ func NewPartition() Partition {
 }
 
 // Select returns the partition-related lines from given lines.
-// If EndPosition is not set, returns all the lines started from StartPosition.
+//
+// Parameters:
+// lines - provides source lines indexed by StartPosition and EndPosition.
+//
+// Returns:
+// []string - selected source lines.
+// error - when configured positions are outside lines.
 func (p Partition) Select(lines []string) ([]string, error) {
 	startPosition := p.StartPosition
 	endPosition := p.EndPosition
 
-	// Verifying lines actually have those indexes.
+	// Verify source lines actually contain configured partition indexes.
 	hasStartPosition := safeAccess(lines, startPosition)
 	if !hasStartPosition {
 		return nil, fmt.Errorf(
@@ -73,6 +80,7 @@ func (p Partition) Select(lines []string) ([]string, error) {
 	return lines[startPosition : endPosition+1], nil
 }
 
+// safeAccess reports whether slice contains index.
 func safeAccess(slice []string, index int) bool {
 	var hasIndex bool
 	defer func() {

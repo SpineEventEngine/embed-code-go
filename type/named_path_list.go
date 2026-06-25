@@ -58,6 +58,11 @@ type NamedPathList []NamedPath
 //	      path: "../examples"
 //	    - name: runtime
 //	      path: "../runtime"
+//
+// Parameters:
+// value - provides the YAML node to decode.
+//
+// Returns an error when the node kind or sequence item format is unsupported.
 func (pathList *NamedPathList) UnmarshalYAML(value *yaml.Node) error {
 	switch value.Kind {
 	case yaml.ScalarNode:

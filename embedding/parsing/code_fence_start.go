@@ -24,12 +24,15 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// CodeFenceStartState represents the StartState of a code fence.
+// CodeFenceStartState represents the start state of an embedding code fence.
 type CodeFenceStartState struct{}
 
-// Recognize reports whether the current line is not reached the end and starts with "```".
+// Recognize reports whether the current line starts a code fence.
 //
-// context — a context of the parsing process.
+// Parameters:
+// context - provides current parser state.
+//
+// Returns true when EOF is not reached and the current line starts a Markdown code fence.
 func (c CodeFenceStartState) Recognize(context Context) bool {
 	if !context.ReachedEOF() {
 		return strings.HasPrefix(strings.TrimSpace(context.CurrentLine()), "```")
@@ -38,11 +41,15 @@ func (c CodeFenceStartState) Recognize(context Context) bool {
 	return false
 }
 
-// Accept appends the current line from the parsing context to the result, sets a flag to indicate
-// that a code fence has started, calculates the indentation level of the code fence, and moves
-// to the next line in the context.
+// Accept records code fence state and advances to the first embedded source line.
 //
-// context — a context of the parsing process.
+// It appends the current line to the result, records that the code fence has started,
+// records its indentation, and advances to the next line.
+//
+// Parameters:
+// context - provides mutable parser state.
+//
+// Returns nil.
 func (c CodeFenceStartState) Accept(context *Context, _ configuration.Configuration) error {
 	line := context.CurrentLine()
 	trimmedLine := strings.TrimSpace(line)
@@ -52,13 +59,14 @@ func (c CodeFenceStartState) Accept(context *Context, _ configuration.Configurat
 	leadingSpaces := len(line) - len(strings.TrimLeft(line, " "))
 	context.CodeFenceIndentation = leadingSpaces
 	context.ToNextLine()
-	// As we accepted this state and moved to the next line, we assume that the code lines
-	// start here.
+	// After accepting the opening fence and moving to the next line,
+	// embedded source lines start at the current context position.
 	context.SetCodeStart()
 
 	return nil
 }
 
+// codeFenceMarker returns the repeated fence marker characters at the start of line.
 func codeFenceMarker(line string) string {
 	if line == "" {
 		return ""
