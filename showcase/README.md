@@ -19,7 +19,7 @@ sync with the application.
 - [Negative examples](embedding/negative/docs): intentionally broken examples
   that document diagnostics.
 
-## Run The Showcase
+## Run the Showcase
 
 Run commands from the repository root.
 

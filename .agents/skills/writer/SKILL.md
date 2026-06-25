@@ -8,7 +8,7 @@ description: >
   current Go code, tests, fixtures, and project flows.
 ---
 
-# Write documentation
+# Documentation Writing
 
 ## Decide the Target and Audience
 
