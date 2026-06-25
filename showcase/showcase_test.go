@@ -113,14 +113,22 @@ var _ = Describe("Showcase", func() {
 
 // negativeShowcaseCase describes one intentionally broken showcase document.
 type negativeShowcaseCase struct {
-	name     string
-	doc      string
+	// name identifies the test case.
+	name string
+
+	// doc is the path to the broken showcase document.
+	doc string
+
+	// expected contains substrings expected in command output.
 	expected []string
 }
 
 // namedSource is the named code source path.
 type namedSource struct {
+	// name identifies the source root.
 	name string
+
+	// path is the source root path.
 	path string
 }
 

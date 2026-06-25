@@ -28,16 +28,17 @@ import (
 const DefaultFragmentName = "_default"
 
 // Fragment is a single fragment in a file.
-//
-// Name — a name of a Fragment.
-//
-// Partitions — a list of partitions found for a Fragment.
 type Fragment struct {
-	Name       string
+	// Name is the fragment name.
+	Name string
+
+	// Partitions contains the source partitions that form the fragment.
 	Partitions []Partition
 }
 
-// CreateDefaultFragment creates and returns Fragment with DefaultFragmentName.
+// CreateDefaultFragment creates a whole-file fragment.
+//
+// Returns whole-file fragment.
 func CreateDefaultFragment() Fragment {
 	return Fragment{
 		Name:       DefaultFragmentName,
@@ -50,11 +51,15 @@ func (f Fragment) isDefault() bool {
 	return f.Name == DefaultFragmentName
 }
 
-// text returns the rendered text for the fragment.
+// text returns source text selected by the fragment.
 //
-// lines — a list with every line of the file.
+// Parameters:
+// lines - provides every source line in the file.
+// separator - provides text inserted between multiple partitions of one fragment.
 //
-// separator — string to insert between multiple partitions of a single fragment.
+// Returns:
+// string - rendered fragment text.
+// error - when a partition cannot select its lines.
 func (f Fragment) text(lines []string, separator string) (string, error) {
 	if f.isDefault() {
 		return strings.Join(lines, "\n"), nil
@@ -84,11 +89,14 @@ func (f Fragment) text(lines []string, separator string) (string, error) {
 	return text, nil
 }
 
-// obtainPartitionTexts returns source lines selected for every partition.
+// obtainPartitionTexts returns source lines selected for every fragment partition.
 //
-// lines — a list with every line of the file.
+// Parameters:
+// lines - provides every source line in the file.
 //
-// partitions — a list with partitions to select lines from.
+// Returns:
+// [][]string - selected lines grouped by partition.
+// error - when a partition cannot select its lines.
 func (f Fragment) obtainPartitionTexts(lines []string) ([][]string, error) {
 	var partitionLines [][]string
 	for _, part := range f.Partitions {

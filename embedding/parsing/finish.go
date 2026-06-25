@@ -25,14 +25,23 @@ import (
 // FinishState represents the end of the file.
 type FinishState struct{}
 
-// Recognize reports whether the current line satisfies the transition.
+// Recognize reports whether the parser reached the end of the documentation file.
 //
-// context — a context of the parsing process.
+// Parameters:
+// context - provides current parser state.
+//
+// Returns true when the parser index is at EOF.
 func (f FinishState) Recognize(context Context) bool {
 	return context.ReachedEOF()
 }
 
-// Accept accepts FinishState, as there's no need to do anything, returns nil.
+// Accept completes parsing without changing the context.
+//
+// Parameters:
+// context - provides mutable parser state.
+// config - provides embedding configuration.
+//
+// Returns nil.
 func (f FinishState) Accept(_ *Context, _ configuration.Configuration) error {
 	return nil
 }

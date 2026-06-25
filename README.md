@@ -23,7 +23,7 @@ failures, and runnable examples.
 
 ## Run
 
-Download the asset for your platform from [GitHub Releases][releases]. 
+Download the asset for your platform from [GitHub Releases][releases].
 
 On Linux, for example:
 

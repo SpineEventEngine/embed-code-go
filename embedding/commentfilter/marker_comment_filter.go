@@ -22,46 +22,86 @@ import "strings"
 
 // BlockMarker describes a block comment marker pair.
 type BlockMarker struct {
+	// Start is the block comment opening marker.
 	Start string
-	End   string
+
+	// End is the block comment closing marker.
+	End string
 }
 
 // DocumentationMarker describes API documentation comment markers.
 type DocumentationMarker struct {
+	// Inline contains documentation line-comment markers.
 	Inline []string
-	Block  []BlockMarker
+
+	// Block contains documentation block-comment marker pairs.
+	Block []BlockMarker
 }
 
 // CommentMarker describes lexical comment markers and string delimiters for a language family.
 type CommentMarker struct {
-	Inline        []string
-	Block         []BlockMarker
+	// Inline contains line-comment markers.
+	Inline []string
+
+	// Block contains block-comment marker pairs.
+	Block []BlockMarker
+
+	// Documentation contains API documentation comment markers.
 	Documentation DocumentationMarker
-	QuoteChars    string
+
+	// QuoteChars contains characters that open and close quoted strings.
+	QuoteChars string
 }
 
 // MarkerCommentFilter removes comments using lexical markers declared in CommentMarker.
 type MarkerCommentFilter struct {
+	// Syntax contains the comment markers and string delimiters to recognize.
 	Syntax CommentMarker
 }
 
+// blockState tracks an active block comment across source lines.
 type blockState struct {
+	// active reports whether scanning is inside a block comment.
 	active bool
-	block  BlockMarker
-	keep   bool
+
+	// block contains the active block comment markers.
+	block BlockMarker
+
+	// keep reports whether the active comment should be retained.
+	keep bool
 }
 
+// markerLineFilter tracks lexical comment filtering state for one source line.
 type markerLineFilter struct {
-	filter     MarkerCommentFilter
-	line       string
-	mode       Mode
-	state      *blockState
-	result     strings.Builder
-	position   int
+	// filter contains the language syntax configuration.
+	filter MarkerCommentFilter
+
+	// line is the source line being filtered.
+	line string
+
+	// mode selects which comments to retain.
+	mode Mode
+
+	// state tracks block comments across lines.
+	state *blockState
+
+	// result accumulates the filtered source line.
+	result strings.Builder
+
+	// position is the current byte index in line.
+	position int
+
+	// hadComment reports whether the line contained a recognized comment.
 	hadComment bool
 }
 
 // Filter removes or preserves recognized comments across all lines.
+//
+// Parameters:
+// lines - provides source lines.
+// mode - selects comments to retain.
+//
+// Returns filtered source lines.
 func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
 	var filtered []string
 	state := blockState{}

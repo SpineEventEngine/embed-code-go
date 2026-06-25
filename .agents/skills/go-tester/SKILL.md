@@ -9,7 +9,7 @@ description: >
   helper code.
 ---
 
-# Go tester
+# Go Testing
 
 This skill is the single source of truth for how tests are written in
 `embed-code-go`. It does not decide what behavior to change; it decides how to

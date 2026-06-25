@@ -34,35 +34,42 @@ import (
 )
 
 // EmbedAllResult contains the result of an EmbedAll operation.
-//
-// TotalEmbeddings is the total number of embeddings found in the target documentation files.
-//
-// UpdatedTargetFiles is the list of updated target documentation files.
 type EmbedAllResult struct {
-	TotalEmbeddings    int
+	// TotalEmbeddings is the total number of embeddings found in the target documentation files.
+	TotalEmbeddings int
+
+	// UpdatedTargetFiles contains documentation files changed by embedding.
 	UpdatedTargetFiles []string
 }
 
-// processorHandler applies one processing mode to a configured documentation processor.
-type processorHandler func(processor Processor) error
+// processorHandler applies one processing mode to a discovered documentation file.
+type processorHandler func(docFilePath string, processor Processor) error
 
-// EmbedAll processes embedding for multiple documentation files based on provided config.
+// EmbedAll embeds code fragments into all documentation files selected by config.
 //
-// Iterates over patterns in the configuration, finds documentation files matching those patterns,
-// creates a Processor for each file, and embeds code fragments in them.
+// It resolves documentation files from configured patterns, creates a Processor
+// for each file, and embeds code fragments into those documents.
 //
-// config — a configuration for embedding.
+// Parameters:
+// config - provides embedding configuration.
+//
+// Returns:
+// EmbedAllResult - embedding result.
+// error - when selected documents fail to process.
 func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
 	totalEmbeddings := 0
 	var updatedTargetFiles []string
-	requiredDocPaths, embeddingErrors := processRequiredDocs(config, func(processor Processor) error {
+	requiredDocPaths, embeddingErrors := processRequiredDocs(config, func(
+		_ string,
+		processor Processor,
+	) error {
 		context, err := processor.Embed()
 		if err != nil {
 			return err
 		}
 		totalEmbeddings += context.EmbeddingsCount()
 		if context.IsContentChanged() {
-			updatedTargetFiles = append(updatedTargetFiles, processor.docFilePath)
+			updatedTargetFiles = append(updatedTargetFiles, context.MarkdownFilePath)
 		}
 
 		return nil
@@ -93,6 +100,8 @@ func EmbedAll(config configuration.Configuration) (EmbedAllResult, error) {
 }
 
 // configNameLabel formats a configuration name for summary log messages.
+//
+// A non-empty label starts with a space so callers can append it directly.
 func configNameLabel(config configuration.Configuration) string {
 	if config.Name == "" {
 		return ""
@@ -103,7 +112,12 @@ func configNameLabel(config configuration.Configuration) string {
 
 // CheckUpToDate returns documentation files that are not up-to-date with code files.
 //
-// config — a configuration for embedding.
+// Parameters:
+// config - provides embedding configuration.
+//
+// Returns:
+// []string - stale documentation file paths.
+// error - when selected documents fail to process.
 func CheckUpToDate(config configuration.Configuration) ([]string, error) {
 	changedFiles, checkErrors := findChangedFiles(config)
 	if len(checkErrors) > 0 {
@@ -114,17 +128,18 @@ func CheckUpToDate(config configuration.Configuration) ([]string, error) {
 }
 
 // findChangedFiles returns documentation files that are not up-to-date with their code files.
-//
-// config — a configuration for embedding.
 func findChangedFiles(config configuration.Configuration) ([]string, []error) {
 	var changedFiles []string
-	_, checkErrors := processRequiredDocs(config, func(processor Processor) error {
+	_, checkErrors := processRequiredDocs(config, func(
+		docFilePath string,
+		processor Processor,
+	) error {
 		upToDate, err := processor.isUpToDate()
 		if err != nil {
 			return err
 		}
 		if !upToDate {
-			changedFiles = append(changedFiles, processor.docFilePath)
+			changedFiles = append(changedFiles, docFilePath)
 		}
 
 		return nil
@@ -147,7 +162,7 @@ func processRequiredDocs(
 	resolver := fragmentation.NewResolver()
 	for _, doc := range requiredDocPaths {
 		processor := newProcessor(doc, config, parsing.Transitions, requiredDocPaths, resolver)
-		if err := handle(processor); err != nil {
+		if err := handle(doc, processor); err != nil {
 			processingErrors = append(processingErrors, err)
 		}
 	}
