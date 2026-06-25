@@ -60,7 +60,9 @@ type Instruction struct {
 
 	// Configuration contains the embedding settings.
 	Configuration configuration.Configuration
-	resolver          *fragmentation.Resolver
+
+	// resolver caches source fragmentations for this processing operation.
+	resolver *fragmentation.Resolver
 }
 
 // PatternNotFoundError reports that an instruction pattern did not match the code file.

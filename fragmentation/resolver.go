@@ -48,6 +48,7 @@ type absolutePath string
 
 // Resolver resolves source files and caches fragmentations for one processing operation.
 type Resolver struct {
+	// cache stores source fragmentations for this resolver instance.
 	cache *cache[absolutePath, fragmentedFile]
 }
 
