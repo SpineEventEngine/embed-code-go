@@ -9,7 +9,7 @@ description: >
   builds unless explicitly asked.
 ---
 
-# Review documentation (repo-specific)
+# Documentation Review
 
 You are the documentation reviewer for `embed-code-go`. Focus strictly on
 documentation quality: Go doc comments, inline comments, Markdown, examples,
