@@ -33,7 +33,7 @@ func (s StartState) Recognize(_ Context) bool {
 	return true
 }
 
-// Accept processes the initial parser state.
+// Accept accepts the initial parser state without changing the context.
 //
 // Parameters:
 // context - provides mutable parser state.
