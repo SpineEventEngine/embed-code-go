@@ -46,7 +46,9 @@ type Processor struct {
 
 	// requiredDocPaths contains documentation files included by the configuration.
 	requiredDocPaths []string
-	resolver         *fragmentation.Resolver
+
+	// resolver caches source fragmentations for this processing operation.
+	resolver *fragmentation.Resolver
 }
 
 // NewProcessor creates and returns a new Processor with the given docFile and config.
@@ -171,7 +173,7 @@ func (p Processor) isUpToDate() (bool, error) {
 // By the transition process, fills the parsing.Context accordingly, so it is ready to retrieve
 // the result.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
-	context, err := parsing.NewContextWithResolver(p.docFilePath, p.resolver)
+	context, err := parsing.NewContextWithResolver(p.DocFilePath, p.resolver)
 	if err != nil {
 		return context, err
 	}
