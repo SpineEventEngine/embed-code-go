@@ -72,6 +72,7 @@ type Context struct {
 
 	// embeddings contains accepted embedding instructions and their source positions.
 	embeddings []EmbeddingContext
+
 	// resolver owns source fragmentation cache state for this processing operation.
 	resolver *fragmentation.Resolver
 }
@@ -110,10 +111,16 @@ func NewContext(markdownFile string) (Context, error) {
 }
 
 // NewContextWithResolver creates a parsing context using the provided source resolver.
+//
+// If resolver is nil, it creates a default source resolver.
 func NewContextWithResolver(
 	markdownFile string,
 	resolver *fragmentation.Resolver,
 ) (Context, error) {
+	if resolver == nil {
+		resolver = fragmentation.NewResolver()
+	}
+
 	source, err := readLines(markdownFile)
 	if err != nil {
 		return Context{}, err
