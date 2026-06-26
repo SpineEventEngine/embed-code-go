@@ -72,6 +72,7 @@ type Context struct {
 
 	// embeddings contains accepted embedding instructions and their source positions.
 	embeddings []EmbeddingContext
+
 	// resolver owns source fragmentation cache state for this processing operation.
 	resolver *fragmentation.Resolver
 }
