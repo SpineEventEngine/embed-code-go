@@ -52,9 +52,9 @@ For project-specific context, also consult:
 - Repository-specific skills live under `.agents/skills/`; they are part
   of the repository's agent workflow and should stay in sync with code and docs.
 
-Do not assume Gradle, npm, frontend, infrastructure, Spine/config helper
-scripts, shared `.agents` submodules, or config-managed skip rules exist in
-this repository.
+Do not assume this repository is built with Gradle or npm, or contains a
+frontend/infrastructure stack; any such files may exist only as test fixtures.
+Do not assume Spine/config helper scripts, shared `.agents` submodules, or config-managed skip rules exist.
 
 ## Implementation Notes
 
