@@ -159,7 +159,10 @@ func processRequiredDocs(
 	}
 
 	var processingErrors []error
-	resolver := fragmentation.NewResolver()
+	resolver, err := fragmentation.NewResolver(fragmentation.DefaultResolverCacheLimit)
+	if err != nil {
+		return requiredDocPaths, []error{err}
+	}
 	for _, doc := range requiredDocPaths {
 		processor := newProcessor(doc, config, parsing.Transitions, requiredDocPaths, resolver)
 		if err := handle(doc, processor); err != nil {

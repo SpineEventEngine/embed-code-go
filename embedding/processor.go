@@ -65,13 +65,17 @@ func NewProcessor(docFile string, config configuration.Configuration) (Processor
 	if err != nil {
 		return Processor{}, err
 	}
+	resolver, err := fragmentation.NewResolver(fragmentation.DefaultResolverCacheLimit)
+	if err != nil {
+		return Processor{}, err
+	}
 
 	return newProcessor(
 		docFile,
 		config,
 		parsing.Transitions,
 		requiredDocPaths,
-		fragmentation.NewResolver(),
+		resolver,
 	), nil
 }
 
