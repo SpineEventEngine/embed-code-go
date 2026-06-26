@@ -60,6 +60,9 @@ type Instruction struct {
 
 	// Configuration contains the embedding settings.
 	Configuration configuration.Configuration
+
+	// resolver caches source fragmentations for this processing operation.
+	resolver *fragmentation.Resolver
 }
 
 // PatternNotFoundError reports that an instruction pattern did not match the code file.
@@ -217,11 +220,16 @@ func parseInstructionPattern(attribute string, value string) (Pattern, error) {
 // []string - selected and filtered source lines.
 // error - when source resolution or pattern matching fails.
 func (e Instruction) Content() ([]string, error) {
-	fileContent, err := fragmentation.ResolveContent(e.CodeFile, e.Fragment, e.Configuration)
+	resolver := e.resolver
+	if resolver == nil {
+		resolver = fragmentation.NewResolver()
+	}
+
+	fileContent, err := resolver.ResolveContent(e.CodeFile, e.Fragment, e.Configuration)
 	if err != nil {
 		return nil, err
 	}
-	codeFileReference, referenceErr := fragmentation.ResolveCodeFileReference(
+	codeFileReference, referenceErr := resolver.ResolveCodeFileReference(
 		e.CodeFile,
 		e.Configuration,
 	)

@@ -20,8 +20,6 @@ package embedding_test
 
 import (
 	"errors"
-	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,14 +28,11 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/embedding/parsing"
-	"embed-code/embed-code-go/files"
 	_type "embed-code/embed-code-go/type"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
-
-const temporaryTestDir = "../test/docs"
 
 // TestEmbedding runs the embedding test suite.
 func TestEmbedding(t *testing.T) {
@@ -49,28 +44,15 @@ var _ = Describe("Embedding", func() {
 	var config configuration.Configuration
 
 	BeforeEach(func() {
-		currentDir, err := os.Getwd()
-		if err != nil {
-			Fail("unexpected error during the test setup: " + err.Error())
-		}
-		err = os.Chdir(currentDir)
-		if err != nil {
-			Fail("unexpected error during the test setup: " + err.Error())
-		}
-		config = buildConfigWithSourceFiles()
-
-		// Copying files not to edit them directly during the test run.
-		copyDirRecursive("../test/resources/docs", config.DocumentationRoot)
-	})
-
-	AfterEach(func() {
-		if err := os.RemoveAll(temporaryTestDir); err != nil {
-			Fail(err.Error())
-		}
+		config = buildConfigWithSourceFiles(GinkgoT().TempDir())
+		Expect(os.CopyFS(
+			config.DocumentationRoot,
+			os.DirFS("../test/resources/docs"),
+		)).To(Succeed())
 	})
 
 	It("should be up to date", func() {
-		docPath := fmt.Sprintf("%s/whole-file-fragment.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "whole-file-fragment.md")
 		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -78,7 +60,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should be up to date as there is nothing to update", func() {
-		docPath := fmt.Sprintf("%s/no-embedding-doc.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "no-embedding-doc.md")
 		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -86,7 +68,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should successfully embed with multi lined tag", func() {
-		docPath := fmt.Sprintf("%s/multi-lined-tag.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "multi-lined-tag.md")
 		processor := newProcessor(docPath, config)
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
@@ -94,7 +76,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should embed directly from source", func() {
-		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "doc.md")
 		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -104,7 +86,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should report files that are not up to date", func() {
 		config.DocIncludes = []string{"doc.md"}
-		docPath := fmt.Sprintf("%s/doc.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "doc.md")
 
 		outdatedFiles, err := embedding.CheckUpToDate(config)
 
@@ -113,7 +95,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should ignore embed-code samples inside markdown code fences", func() {
-		docPath := fmt.Sprintf("%s/embed-code-sample-in-fence.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "embed-code-sample-in-fence.md")
 		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -121,7 +103,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should detect markdown fences by triple-or-more backticks only", func() {
-		docPath := fmt.Sprintf("%s/triple-backticks-only-fence.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "triple-backticks-only-fence.md")
 		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -179,7 +161,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should embed with multi lined tag attributes", func() {
-		docPath := fmt.Sprintf("%s/multi-lined-valid-tag-attributes.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "multi-lined-valid-tag-attributes.md")
 		processor := newProcessor(docPath, config)
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
 
@@ -188,7 +170,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should embed a method with escaped newline patterns", func() {
 		config.DocIncludes = []string{"escaped-newline-pattern.md"}
-		docPath := fmt.Sprintf("%s/escaped-newline-pattern.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "escaped-newline-pattern.md")
 		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -203,7 +185,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should embed a method with exact escaped newline patterns", func() {
 		config.DocIncludes = []string{"escaped-newline-exact-pattern.md"}
-		docPath := fmt.Sprintf("%s/escaped-newline-exact-pattern.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "escaped-newline-exact-pattern.md")
 		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -218,7 +200,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should embed matching lines with an escaped newline line pattern", func() {
 		config.DocIncludes = []string{"escaped-newline-line-pattern.md"}
-		docPath := fmt.Sprintf("%s/escaped-newline-line-pattern.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "escaped-newline-line-pattern.md")
 		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -233,7 +215,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should embed a line with an escaped newline literal pattern", func() {
 		config.DocIncludes = []string{"escaped-newline-literal-pattern.md"}
-		docPath := fmt.Sprintf("%s/escaped-newline-literal-pattern.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "escaped-newline-literal-pattern.md")
 		processor := newProcessor(docPath, config)
 
 		Expect(processor.Embed()).Error().ShouldNot(HaveOccurred())
@@ -246,7 +228,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should report a missing closing tag", func() {
-		docPath := fmt.Sprintf("%s/missing-closing-tag.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "missing-closing-tag.md")
 		processor := newProcessor(docPath, config)
 
 		_, err := processor.Embed()
@@ -260,7 +242,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should preserve typed parser errors after adding document context", func() {
-		docPath := fmt.Sprintf("%s/missing-closing-tag.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "missing-closing-tag.md")
 		processor := newProcessor(docPath, config)
 
 		_, err := processor.Embed()
@@ -278,7 +260,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should report the XML parser error", func() {
-		docPath := fmt.Sprintf("%s/unclosed-nested-tag.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "unclosed-nested-tag.md")
 		processor := newProcessor(docPath, config)
 
 		_, err := processor.Embed()
@@ -292,7 +274,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should report a missing code fence after the instruction", func() {
-		docPath := fmt.Sprintf("%s/missing-code-fence.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "missing-code-fence.md")
 		processor := newProcessor(docPath, config)
 
 		_, err := processor.Embed()
@@ -305,7 +287,7 @@ var _ = Describe("Embedding", func() {
 	})
 
 	It("should report an unclosed code fence after the instruction", func() {
-		docPath := fmt.Sprintf("%s/unclosed-code-fence.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "unclosed-code-fence.md")
 		processor := newProcessor(docPath, config)
 
 		_, err := processor.Embed()
@@ -320,8 +302,7 @@ var _ = Describe("Embedding", func() {
 	It("should successfully embed to a file in a nested dir", func() {
 		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/kotlin"}}
 		config.DocIncludes = []string{"nested-dir-1/nested-dir-2/nested-dir-doc.md"}
-		docPath := fmt.Sprintf("%s/nested-dir-1/nested-dir-2/nested-dir-doc.md",
-			config.DocumentationRoot)
+		docPath := testDocPath(config, "nested-dir-1/nested-dir-2/nested-dir-doc.md")
 		processor := newProcessor(docPath, config)
 
 		result, err := embedding.EmbedAll(config)
@@ -334,7 +315,7 @@ var _ = Describe("Embedding", func() {
 	It("should not embed to a file matched the `doc-excludes` pattern", func() {
 		config.DocExcludes = []string{"**/excluded-doc.*"}
 
-		docPath := fmt.Sprintf("%s/excluded-doc.md", config.DocumentationRoot)
+		docPath := testDocPath(config, "excluded-doc.md")
 		processor := newProcessor(docPath, config)
 
 		context, err := processor.Embed()
@@ -347,16 +328,20 @@ var _ = Describe("Embedding", func() {
 	})
 })
 
-// buildConfigWithSourceFiles returns a configuration using source-code fixtures.
-func buildConfigWithSourceFiles() configuration.Configuration {
+// buildConfigWithSourceFiles builds an embedding config with an isolated documentation root.
+func buildConfigWithSourceFiles(documentationRoot string) configuration.Configuration {
 	var config = configuration.NewConfiguration()
-	config.DocumentationRoot = temporaryTestDir
+	config.DocumentationRoot = documentationRoot
 	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
 
 	return config
 }
 
-// newProcessor creates an embedding processor for a test documentation file.
+// testDocPath returns the normalized path to a copied documentation fixture.
+func testDocPath(config configuration.Configuration, name string) string {
+	return filepath.ToSlash(filepath.Join(config.DocumentationRoot, name))
+}
+
 func newProcessor(
 	docPath string,
 	config configuration.Configuration,
@@ -366,70 +351,4 @@ func newProcessor(
 	Expect(err).ShouldNot(HaveOccurred())
 
 	return processor
-}
-
-// copyDirRecursive copies a directory tree into the test workspace.
-func copyDirRecursive(sourceDirPath string, targetDirPath string) {
-	info, err := os.Stat(sourceDirPath)
-	if err != nil {
-		panic(err)
-	}
-
-	err = os.MkdirAll(targetDirPath, info.Mode())
-	if err != nil {
-		panic(err)
-	}
-
-	entries, err := os.ReadDir(sourceDirPath)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, entry := range entries {
-		sourcePath := filepath.Join(sourceDirPath, entry.Name())
-		targetPath := filepath.Join(targetDirPath, entry.Name())
-
-		if entry.IsDir() {
-			copyDirRecursive(sourcePath, targetPath)
-		} else {
-			err = copyFile(sourcePath, targetPath)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-}
-
-// copyFile copies one fixture file into the test workspace.
-func copyFile(sourceFilePath string, targetFilePath string) (err error) {
-	sourceFile, err := os.Open(sourceFilePath)
-	if err != nil {
-		Fail(err.Error())
-	}
-
-	defer func(sourceFile *os.File) {
-		err = sourceFile.Close()
-		if err != nil {
-			Fail(err.Error())
-		}
-	}(sourceFile)
-
-	targetFile, err := os.Create(targetFilePath)
-	if err != nil {
-		return
-	}
-	defer func() {
-		err = targetFile.Close()
-		if err != nil {
-			Fail(err.Error())
-		}
-	}()
-
-	if _, err = io.Copy(targetFile, sourceFile); err != nil {
-		return
-	}
-
-	err = os.Chmod(targetFilePath, os.FileMode(files.WritePermission))
-
-	return
 }

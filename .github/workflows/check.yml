@@ -28,9 +28,7 @@ jobs:
           args: ./...
 
       - name: Run Tests
-        # Tests must be run sequentially because they create temporary files that can cause issues.
-        # Therefore, the "-p 1" argument is required.
-        run: go test -v ./... -p 1
+        run: go test -v ./...
 
       - name: Run E2E Tests
-        run: go test -v -tags showcase ./showcase -p 1
+        run: go test -v -tags showcase ./showcase

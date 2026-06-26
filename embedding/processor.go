@@ -29,6 +29,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding/parsing"
 	"embed-code/embed-code-go/files"
+	"embed-code/embed-code-go/fragmentation"
 	"embed-code/embed-code-go/logging"
 )
 
@@ -45,6 +46,9 @@ type Processor struct {
 
 	// requiredDocPaths contains documentation files included by the configuration.
 	requiredDocPaths []string
+
+	// resolver caches source fragmentations for this processing operation.
+	resolver *fragmentation.Resolver
 }
 
 // NewProcessor creates and returns a new Processor with the given docFile and config.
@@ -62,7 +66,13 @@ func NewProcessor(docFile string, config configuration.Configuration) (Processor
 		return Processor{}, err
 	}
 
-	return newProcessor(docFile, config, parsing.Transitions, requiredDocPaths), nil
+	return newProcessor(
+		docFile,
+		config,
+		parsing.Transitions,
+		requiredDocPaths,
+		fragmentation.NewResolver(),
+	), nil
 }
 
 // newProcessor creates a Processor with a precomputed documentation file list.
@@ -71,12 +81,14 @@ func newProcessor(
 	config configuration.Configuration,
 	transitions parsing.TransitionMap,
 	requiredDocPaths []string,
+	resolver *fragmentation.Resolver,
 ) Processor {
 	return Processor{
 		DocFilePath:      docFile,
 		Config:           config,
 		TransitionsMap:   transitions,
 		requiredDocPaths: requiredDocPaths,
+		resolver:         resolver,
 	}
 }
 
@@ -161,7 +173,7 @@ func (p Processor) isUpToDate() (bool, error) {
 // By the transition process, fills the parsing.Context accordingly, so it is ready to retrieve
 // the result.
 func (p Processor) fillEmbeddingContext() (parsing.Context, error) {
-	context, err := parsing.NewContext(p.DocFilePath)
+	context, err := parsing.NewContextWithResolver(p.DocFilePath, p.resolver)
 	if err != nil {
 		return context, err
 	}

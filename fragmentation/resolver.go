@@ -46,11 +46,21 @@ type fragmentedFile struct {
 // absolutePath is a resolved absolute filesystem path.
 type absolutePath string
 
-// resolverCache stores source fragmentations already resolved during the current run.
-var resolverCache = newCache[absolutePath, fragmentedFile](
-	resolverCacheLimit,
-	loadSourceFragments,
-)
+// Resolver resolves source files and caches fragmentations for one processing operation.
+type Resolver struct {
+	// cache stores source fragmentations for this resolver instance.
+	cache *cache[absolutePath, fragmentedFile]
+}
+
+// NewResolver creates a resolver with an independent source-fragment cache.
+func NewResolver() *Resolver {
+	return &Resolver{
+		cache: newCache[absolutePath, fragmentedFile](
+			resolverCacheLimit,
+			loadSourceFragments,
+		),
+	}
+}
 
 // ResolveContent returns source lines for the requested code file fragment.
 //
@@ -65,7 +75,7 @@ var resolverCache = newCache[absolutePath, fragmentedFile](
 // Returns:
 // []string - selected source lines.
 // error - when the source file or fragment cannot be resolved.
-func ResolveContent(
+func (r *Resolver) ResolveContent(
 	codePath string,
 	fragmentName string,
 	config config.Configuration,
@@ -74,7 +84,7 @@ func ResolveContent(
 		fragmentName = DefaultFragmentName
 	}
 
-	source, found, err := resolveSource(codePath, config)
+	source, found, err := r.resolveSource(codePath, config)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +97,7 @@ func ResolveContent(
 		return nil, unresolvedSourceError(codePath, fragmentName, config)
 	}
 
-	content, err := cachedSourceFragments(source)
+	content, err := r.cachedSourceFragments(source)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +133,11 @@ func missingFragmentLogMessage(fragmentName string, sourcePath absolutePath) str
 // Returns:
 // string - user-facing source file reference.
 // error - when source resolution fails.
-func ResolveCodeFileReference(codePath string, config config.Configuration) (string, error) {
-	source, found, err := resolveSource(codePath, config)
+func (r *Resolver) ResolveCodeFileReference(
+	codePath string,
+	config config.Configuration,
+) (string, error) {
+	source, found, err := r.resolveSource(codePath, config)
 	if err != nil {
 		return "", err
 	}
@@ -135,13 +148,11 @@ func ResolveCodeFileReference(codePath string, config config.Configuration) (str
 	return codeFileReference(codePath, config)
 }
 
-// ClearResolverCache removes cached source fragmentations.
-func ClearResolverCache() {
-	resolverCache.clear()
-}
-
 // resolveSource resolves the user-facing code path to the source file.
-func resolveSource(codePath string, config config.Configuration) (absolutePath, bool, error) {
+func (r *Resolver) resolveSource(
+	codePath string,
+	config config.Configuration,
+) (absolutePath, bool, error) {
 	codeRootName, relativePath, named := splitNamedPath(codePath)
 	for _, root := range config.CodeRoots {
 		if named && strings.TrimSpace(root.Name) != codeRootName {
@@ -160,7 +171,7 @@ func resolveSource(codePath string, config config.Configuration) (absolutePath, 
 			continue
 		}
 
-		_, err = cachedSourceFragments(source)
+		_, err = r.cachedSourceFragments(source)
 		var encodingError *unsupportedEncodingError
 		if errors.As(err, &encodingError) {
 			continue
@@ -199,8 +210,8 @@ func sourceFromRoot(root _type.NamedPath, relativePath string) (absolutePath, er
 }
 
 // cachedSourceFragments returns cached source fragmentation for an absolute source path.
-func cachedSourceFragments(source absolutePath) (fragmentedFile, error) {
-	return resolverCache.get(source)
+func (r *Resolver) cachedSourceFragments(source absolutePath) (fragmentedFile, error) {
+	return r.cache.get(source)
 }
 
 // loadSourceFragments reads and fragments the source file when it is not already cached.
