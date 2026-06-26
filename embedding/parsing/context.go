@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+
+	"embed-code/embed-code-go/fragmentation"
 )
 
 // Context represents the state of parsing a documentation file containing code embeddings.
@@ -70,6 +72,9 @@ type Context struct {
 
 	// embeddings contains accepted embedding instructions and their source positions.
 	embeddings []EmbeddingContext
+
+	// resolver owns source fragmentation cache state for this processing operation.
+	resolver *fragmentation.Resolver
 }
 
 // EmbeddingsCount returns the number of found embeddings.
@@ -102,6 +107,20 @@ type EmbeddingContext struct {
 // Context - initialized parsing context.
 // error - when the documentation file cannot be read.
 func NewContext(markdownFile string) (Context, error) {
+	return NewContextWithResolver(markdownFile, fragmentation.NewResolver())
+}
+
+// NewContextWithResolver creates a parsing context using the provided source resolver.
+//
+// If resolver is nil, it creates a default source resolver.
+func NewContextWithResolver(
+	markdownFile string,
+	resolver *fragmentation.Resolver,
+) (Context, error) {
+	if resolver == nil {
+		resolver = fragmentation.NewResolver()
+	}
+
 	source, err := readLines(markdownFile)
 	if err != nil {
 		return Context{}, err
@@ -112,6 +131,7 @@ func NewContext(markdownFile string) (Context, error) {
 		Result:           make([]string, 0),
 		source:           source,
 		lineIndex:        0,
+		resolver:         resolver,
 	}, nil
 }
 
@@ -203,6 +223,7 @@ func (c *Context) ResolveUnacceptedEmbedding() {
 // instruction - provides parsed embedding instruction data.
 func (c *Context) StartEmbedding(instruction Instruction) {
 	c.fileContainsEmbedding = true
+	instruction.resolver = c.resolver
 	embeddingContext := EmbeddingContext{
 		embeddingInstruction: instruction,
 	}
