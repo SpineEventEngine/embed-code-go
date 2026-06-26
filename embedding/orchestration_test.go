@@ -16,13 +16,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package embedding
+package embedding_test
 
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/embedding"
 	_type "embed-code/embed-code-go/type"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -32,55 +34,39 @@ import (
 var _ = Describe("Orchestration", func() {
 	It("should share resolver cache across documentation files in one operation", func() {
 		documentationRoot := GinkgoT().TempDir()
-		sourceRoot := GinkgoT().TempDir()
 		config := configuration.NewConfiguration()
 		config.DocumentationRoot = documentationRoot
-		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
-		config.DocIncludes = []string{"first.md", "second.md"}
-		sourcePath := filepath.Join(sourceRoot, "Example.java")
-		firstDoc := filepath.ToSlash(filepath.Join(documentationRoot, "first.md"))
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: documentationRoot}}
+		config.DocIncludes = []string{"source.md", "second.md"}
+		sourceDoc := filepath.ToSlash(filepath.Join(documentationRoot, "source.md"))
 		secondDoc := filepath.ToSlash(filepath.Join(documentationRoot, "second.md"))
-		writeEmbeddingDoc(firstDoc)
+		writeSourceEmbeddingDoc(sourceDoc)
 		writeEmbeddingDoc(secondDoc)
-		writeSource(sourcePath, "class Example { String version = \"first\"; }")
 
-		_, processingErrors := processRequiredDocs(config, func(
-			docFilePath string,
-			processor Processor,
-		) error {
-			_, err := processor.Embed()
-			if err != nil {
-				return err
-			}
-			if docFilePath == firstDoc {
-				writeSource(sourcePath, "class Example { String version = \"second\"; }")
-			}
+		_, err := embedding.EmbedAll(config)
 
-			return nil
-		})
-
-		Expect(processingErrors).Should(BeEmpty())
+		Expect(err).ShouldNot(HaveOccurred())
 		secondDocContent, err := os.ReadFile(secondDoc)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(string(secondDocContent)).Should(ContainSubstring(
-			"class Example { String version = \"first\"; }",
-		))
-		Expect(string(secondDocContent)).ShouldNot(ContainSubstring(
-			"class Example { String version = \"second\"; }",
-		))
+		Expect(strings.Count(string(secondDocContent), "original source line")).
+			Should(Equal(1))
 	})
 })
+
+// writeSourceEmbeddingDoc writes a source file that also acts as a target document.
+func writeSourceEmbeddingDoc(path string) {
+	Expect(os.WriteFile(
+		path,
+		[]byte("# Source\n\noriginal source line\n\n<embed-code file=\"source.md\"/>\n```md\n```\n"),
+		0600,
+	)).To(Succeed())
+}
 
 // writeEmbeddingDoc writes a target documentation file with one whole-file embedding.
 func writeEmbeddingDoc(path string) {
 	Expect(os.WriteFile(
 		path,
-		[]byte("<embed-code file=\"Example.java\"/>\n```java\n```\n"),
+		[]byte("# Second\n\n<embed-code file=\"source.md\"/>\n```md\n```\n"),
 		0600,
 	)).To(Succeed())
-}
-
-// writeSource writes source content used by the embedding resolver.
-func writeSource(path string, content string) {
-	Expect(os.WriteFile(path, []byte(content), 0600)).To(Succeed())
 }
