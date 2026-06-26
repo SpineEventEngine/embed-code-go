@@ -142,7 +142,6 @@ func NewInstruction(
 		LinePattern:   patterns.line,
 		CommentMode:   commentMode,
 		Configuration: config,
-		resolver:      fragmentation.NewResolver(),
 	}, nil
 }
 
