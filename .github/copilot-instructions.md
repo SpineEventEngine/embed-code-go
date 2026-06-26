@@ -10,6 +10,10 @@ snippets are up-to-date.
 Read [`AGENTS.md`](../AGENTS.md) first. It contains repository-wide agent
 rules, safety constraints, and Git history policy.
 
+This file is the Copilot-specific entry point. Keep it as a compact routing
+guide that points to the owning repository documents instead of duplicating
+their detailed policies.
+
 For project-specific context, also consult:
 
 - [`PROJECT.md`](../PROJECT.md) for the project overview, package map,
@@ -27,8 +31,8 @@ For project-specific context, also consult:
 
 ## Project Shape
 
-- Language: Go module `embed-code/embed-code-go`, using Go `1.26.4` from
-  [`go.mod`](../go.mod).
+- Language: Go module `embed-code/embed-code-go`, with Go `1.26.4` declared in
+  the root [`go.mod`](../go.mod) file.
 - Entry point: [`main.go`](../main.go), including mode dispatch, aggregate
   errors, version embedding from [`VERSION`](../VERSION), and final
   user-facing output.
@@ -46,15 +50,16 @@ For project-specific context, also consult:
 - Filesystem, indentation, logging, and YAML helper types live in `files/`,
   `indent/`, `logging/`, and `type/`. The import path segment is `type`, but
   the Go package identifier is `_type`.
-- Parser, embedding, configuration, and source-code fixtures live in
-  `test/resources/`.
+- Parser, embedding, configuration, and source-code fixtures live under the
+  `test/resources/` directory.
 - User guide and executable end-to-end examples live in `showcase/`.
 - Repository-specific skills live under `.agents/skills/`; they are part
   of the repository's agent workflow and should stay in sync with code and docs.
 
 Do not assume this repository is built with Gradle or npm, or contains a
 frontend/infrastructure stack; any such files may exist only as test fixtures.
-Do not assume Spine/config helper scripts, shared `.agents` submodules, or config-managed skip rules exist.
+Do not assume Spine/config helper scripts, shared `.agents` submodules, or
+config-managed skip rules exist.
 
 ## Implementation Notes
 
@@ -92,9 +97,8 @@ Do not assume Spine/config helper scripts, shared `.agents` submodules, or confi
   embedding syntax details.
 - Changes to public CLI flags, YAML keys, defaults, instruction attributes,
   comment modes, or mode behavior must update the owning showcase documentation.
-- Keep [`PROJECT.md`](../PROJECT.md) focused on project map, ownership, and CI
-  notes. Keep [`AGENTS.md`](../AGENTS.md) focused on repository-wide agent
-  policy.
+- Keep [`PROJECT.md`](../PROJECT.md) focused on project map, ownership, and CI notes.
+- Keep [`AGENTS.md`](../AGENTS.md) focused on repository-wide policy for agents.
 - Verify embedded examples through `embed` mode, `check` mode, or tests instead
   of editing rendered snippets by hand.
 
@@ -112,9 +116,8 @@ Prioritize:
   file references from `logging/`.
 - Documentation drift between code behavior, `README.md`, `PROJECT.md`, and
   the showcase guides.
-- Security and safety issues such as unsafe filesystem traversal, surprising
-  writes outside configured docs roots, secret leakage in logs, or broad global
-  state.
+- Security and safety issues such as unsafe filesystem traversal, broad global
+  state, secret leakage in logs, or writes outside configured docs roots.
 
 For reviews, lead with findings ordered by severity and include precise
 file/line references.
@@ -154,7 +157,7 @@ Do not suggest:
 - Rewriting showcase output by hand when `embed` mode or tests can prove the
   expected rendered snippets.
 - Broad parser rewrites when a local state transition or fixture can cover the
-  behavior.
+  intended behavior.
 - Reflection, unsafe code, hidden background work, or broad global state
   without explicit approval.
 - Committing secrets, credentials, tokens, customer data, local absolute paths,
@@ -179,20 +182,20 @@ goimports -w <files>
 Run focused package tests when they prove the change:
 
 ```bash
-go test -v ./cli -p 1
-go test -v ./embedding/parsing ./fragmentation -p 1
+go test -v ./cli
+go test -v ./embedding/parsing ./fragmentation
 ```
 
-Run the normal Go test suite sequentially, matching CI behavior:
+Run the normal Go test suite:
 
 ```bash
-go test -v ./... -p 1
+go test -v ./...
 ```
 
 Run the executable showcase tests:
 
 ```bash
-go test -v -tags showcase ./showcase -p 1
+go test -v -tags showcase ./showcase
 ```
 
 Run a focused CLI check when changing embedding or configuration examples:
