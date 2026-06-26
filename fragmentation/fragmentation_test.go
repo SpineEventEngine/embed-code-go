@@ -22,6 +22,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/fragmentation"
 	_type "embed-code/embed-code-go/type"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -53,7 +54,7 @@ var _ = Describe("Fragmentation", func() {
 	var resolver *fragmentation.Resolver
 
 	BeforeEach(func() {
-		resolver = fragmentation.NewResolver()
+		resolver = newTestResolver(fragmentation.DefaultResolverCacheLimit)
 		config = configuration.NewConfiguration()
 		config.DocumentationRoot = "../test/resources/docs"
 		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: "../test/resources/code/java"}}
@@ -149,7 +150,8 @@ var _ = Describe("Fragmentation", func() {
 			config,
 		)
 		Expect(err).ShouldNot(HaveOccurred())
-		freshContent, err := fragmentation.NewResolver().ResolveContent(
+		freshResolver := newTestResolver(fragmentation.DefaultResolverCacheLimit)
+		freshContent, err := freshResolver.ResolveContent(
 			fileName,
 			fragmentation.DefaultFragmentName,
 			config,
@@ -159,6 +161,36 @@ var _ = Describe("Fragmentation", func() {
 		Expect(firstContent).Should(Equal([]string{"class First {}"}))
 		Expect(cachedContent).Should(Equal(firstContent))
 		Expect(freshContent).Should(Equal([]string{"class Second {}"}))
+	})
+
+	It("should evict the least recently used source from a limited resolver cache", func() {
+		sourceRoot := GinkgoT().TempDir()
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+		resolver = newTestResolver(2)
+		writeSourceFile(sourceRoot, "A.java", "class A { String version = \"first\"; }")
+		writeSourceFile(sourceRoot, "B.java", "class B { String version = \"first\"; }")
+		writeSourceFile(sourceRoot, "C.java", "class C { String version = \"first\"; }")
+
+		firstA := resolveSourceFile(resolver, "A.java", config)
+		_ = resolveSourceFile(resolver, "B.java", config)
+		cachedA := resolveSourceFile(resolver, "A.java", config)
+		writeSourceFile(sourceRoot, "A.java", "class A { String version = \"second\"; }")
+		writeSourceFile(sourceRoot, "B.java", "class B { String version = \"second\"; }")
+		_ = resolveSourceFile(resolver, "C.java", config)
+
+		stillCachedA := resolveSourceFile(resolver, "A.java", config)
+		reloadedB := resolveSourceFile(resolver, "B.java", config)
+
+		Expect(cachedA).Should(Equal(firstA))
+		Expect(stillCachedA).Should(Equal(firstA))
+		Expect(reloadedB).Should(Equal([]string{"class B { String version = \"second\"; }"}))
+	})
+
+	It("should reject cache limits below one", func() {
+		resolver, err := fragmentation.NewResolver(0)
+
+		Expect(resolver).Should(BeNil())
+		Expect(errors.Is(err, fragmentation.ErrInvalidResolverCacheLimit)).Should(BeTrue())
 	})
 
 	It("should fail on an unopened fragment", func() {
@@ -323,6 +355,35 @@ func resolveTestFragment(
 		config,
 	)
 
+	Expect(err).ShouldNot(HaveOccurred())
+
+	return content
+}
+
+// newTestResolver creates a resolver with a test-provided cache limit.
+func newTestResolver(cacheLimit int) *fragmentation.Resolver {
+	resolver, err := fragmentation.NewResolver(cacheLimit)
+	Expect(err).ShouldNot(HaveOccurred())
+
+	return resolver
+}
+
+// writeSourceFile writes one source fixture into a temporary source root.
+func writeSourceFile(sourceRoot string, fileName string, content string) {
+	Expect(os.WriteFile(filepath.Join(sourceRoot, fileName), []byte(content), 0600)).To(Succeed())
+}
+
+// resolveSourceFile returns the whole-file content resolved from a temporary source root.
+func resolveSourceFile(
+	resolver *fragmentation.Resolver,
+	fileName string,
+	config configuration.Configuration,
+) []string {
+	content, err := resolver.ResolveContent(
+		fileName,
+		fragmentation.DefaultFragmentName,
+		config,
+	)
 	Expect(err).ShouldNot(HaveOccurred())
 
 	return content
