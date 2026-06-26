@@ -49,7 +49,7 @@ For project-specific context, also consult:
 - Parser, embedding, configuration, and source-code fixtures live in
   `test/resources/`.
 - User guide and executable end-to-end examples live in `showcase/`.
-- Repository-specific Codex skills live under `.agents/skills/`; they are part
+- Repository-specific skills live under `.agents/skills/`; they are part
   of the repository's agent workflow and should stay in sync with code and docs.
 
 Do not assume Gradle, npm, frontend, infrastructure, Spine/config helper
