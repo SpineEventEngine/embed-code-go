@@ -133,10 +133,6 @@ func NewInstruction(
 	if err != nil {
 		return Instruction{}, err
 	}
-	resolver, err := fragmentation.NewResolver(fragmentation.DefaultResolverCacheLimit)
-	if err != nil {
-		return Instruction{}, err
-	}
 
 	return Instruction{
 		CodeFile:      codeFile,
@@ -146,7 +142,6 @@ func NewInstruction(
 		LinePattern:   patterns.line,
 		CommentMode:   commentMode,
 		Configuration: config,
-		resolver:      resolver,
 	}, nil
 }
 
