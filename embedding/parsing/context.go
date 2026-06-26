@@ -106,14 +106,29 @@ type EmbeddingContext struct {
 // Context - initialized parsing context.
 // error - when the documentation file cannot be read.
 func NewContext(markdownFile string) (Context, error) {
-	return NewContextWithResolver(markdownFile, fragmentation.NewResolver())
+	resolver, err := fragmentation.NewResolver(fragmentation.DefaultResolverCacheLimit)
+	if err != nil {
+		return Context{}, err
+	}
+
+	return NewContextWithResolver(markdownFile, resolver)
 }
 
 // NewContextWithResolver creates a parsing context using the provided source resolver.
+//
+// If resolver is nil, it creates a resolver with the default cache limit.
 func NewContextWithResolver(
 	markdownFile string,
 	resolver *fragmentation.Resolver,
 ) (Context, error) {
+	if resolver == nil {
+		var err error
+		resolver, err = fragmentation.NewResolver(fragmentation.DefaultResolverCacheLimit)
+		if err != nil {
+			return Context{}, err
+		}
+	}
+
 	source, err := readLines(markdownFile)
 	if err != nil {
 		return Context{}, err
