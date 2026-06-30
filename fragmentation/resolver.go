@@ -35,9 +35,6 @@ import (
 // retained in a resolver cache.
 const DefaultResolverCacheLimit = 100
 
-// ErrInvalidResolverCacheLimit reports a resolver cache size below one.
-var ErrInvalidResolverCacheLimit = errors.New("resolver cache limit must be at least 1")
-
 // fragmentedFile stores cleaned source lines and parsed fragments for one source file.
 type fragmentedFile struct {
 	// lines contains the cleaned source lines.
@@ -66,7 +63,7 @@ type Resolver struct {
 // error - when cacheLimit is below one.
 func NewResolver(cacheLimit int) (*Resolver, error) {
 	if cacheLimit < 1 {
-		return nil, ErrInvalidResolverCacheLimit
+		return nil, errors.New("resolver cache limit must be at least 1")
 	}
 
 	return &Resolver{
