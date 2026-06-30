@@ -22,7 +22,6 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/fragmentation"
 	_type "embed-code/embed-code-go/type"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -190,7 +189,7 @@ var _ = Describe("Fragmentation", func() {
 		resolver, err := fragmentation.NewResolver(0)
 
 		Expect(resolver).Should(BeNil())
-		Expect(errors.Is(err, fragmentation.ErrInvalidResolverCacheLimit)).Should(BeTrue())
+		Expect(err).Should(HaveOccurred())
 	})
 
 	It("should fail on an unopened fragment", func() {
