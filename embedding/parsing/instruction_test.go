@@ -543,7 +543,7 @@ var _ = Describe("Instruction", func() {
 		))
 	})
 
-	It("should default a nil context resolver to a shared resolver", func() {
+	It("should use shared resolver as default", func() {
 		sourceRoot := GinkgoT().TempDir()
 		markdownPath := filepath.Join(GinkgoT().TempDir(), "doc.md")
 		codePath := filepath.Join(sourceRoot, "Example.java")
