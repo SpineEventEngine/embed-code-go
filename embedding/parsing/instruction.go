@@ -222,7 +222,11 @@ func parseInstructionPattern(attribute string, value string) (Pattern, error) {
 func (e Instruction) Content() ([]string, error) {
 	resolver := e.resolver
 	if resolver == nil {
-		resolver = fragmentation.NewResolver()
+		var err error
+		resolver, err = fragmentation.NewResolver(fragmentation.DefaultResolverCacheLimit)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	fileContent, err := resolver.ResolveContent(e.CodeFile, e.Fragment, e.Configuration)

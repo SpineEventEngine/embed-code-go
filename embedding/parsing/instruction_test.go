@@ -542,6 +542,40 @@ var _ = Describe("Instruction", func() {
 			),
 		))
 	})
+
+	It("should use shared resolver as default", func() {
+		sourceRoot := GinkgoT().TempDir()
+		markdownPath := filepath.Join(GinkgoT().TempDir(), "doc.md")
+		codePath := filepath.Join(sourceRoot, "Example.java")
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+		Expect(os.WriteFile(markdownPath, []byte(""), 0600)).To(Succeed())
+		Expect(os.WriteFile(
+			codePath,
+			[]byte("class Example { String version = \"first\"; }"),
+			0600,
+		)).To(Succeed())
+		context, err := parsing.NewContextWithResolver(markdownPath, nil)
+		Expect(err).ShouldNot(HaveOccurred())
+		context.StartEmbedding(parsing.Instruction{
+			CodeFile:      "Example.java",
+			Configuration: config,
+		})
+
+		firstContent, err := context.EmbeddingInstruction.Content()
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(os.WriteFile(
+			codePath,
+			[]byte("class Example { String version = \"second\"; }"),
+			0600,
+		)).To(Succeed())
+		secondContent, err := context.EmbeddingInstruction.Content()
+		Expect(err).ShouldNot(HaveOccurred())
+
+		Expect(secondContent).Should(Equal(firstContent))
+		Expect(secondContent).Should(Equal([]string{
+			"class Example { String version = \"first\"; }",
+		}))
+	})
 })
 
 // getXMLExtractionContent returns source lines selected by an XML instruction fixture.
