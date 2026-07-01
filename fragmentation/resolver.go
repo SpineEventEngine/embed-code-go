@@ -31,8 +31,9 @@ import (
 	_type "embed-code/embed-code-go/type"
 )
 
-// resolverCacheLimit is the maximum number of source files retained in the resolver cache.
-const resolverCacheLimit = 100
+// DefaultResolverCacheLimit is the default maximum number of source files
+// retained in a resolver cache.
+const DefaultResolverCacheLimit = 100
 
 // fragmentedFile stores cleaned source lines and parsed fragments for one source file.
 type fragmentedFile struct {
@@ -53,13 +54,24 @@ type Resolver struct {
 }
 
 // NewResolver creates a resolver with an independent source-fragment cache.
-func NewResolver() *Resolver {
+//
+// Parameters:
+// cacheLimit - maximum number of source files retained in the resolver cache.
+//
+// Returns:
+// *Resolver - resolver with an independent cache.
+// error - when cacheLimit is below one.
+func NewResolver(cacheLimit int) (*Resolver, error) {
+	if cacheLimit < 1 {
+		return nil, errors.New("resolver cache limit must be at least 1")
+	}
+
 	return &Resolver{
 		cache: newCache[absolutePath, fragmentedFile](
-			resolverCacheLimit,
+			cacheLimit,
 			loadSourceFragments,
 		),
-	}
+	}, nil
 }
 
 // ResolveContent returns source lines for the requested code file fragment.
