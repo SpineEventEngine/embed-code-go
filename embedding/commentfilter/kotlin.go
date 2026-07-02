@@ -146,6 +146,10 @@ func (f *kotlinLineFilter) consumeActiveBlock() bool {
 }
 
 // consumeRawString copies a Kotlin raw triple-quoted string without scanning comments inside it.
+//
+// It intentionally copies `${...}` inside raw strings verbatim, so real comments
+// inside raw-string interpolations are retained. It also treats the first three
+// quotes in a run of four or more quotes as the raw-string delimiter.
 func (f *kotlinLineFilter) consumeRawString() bool {
 	if !f.state.rawString && !strings.HasPrefix(f.line[f.position:], kotlinRawStringDelimiter) {
 		return false

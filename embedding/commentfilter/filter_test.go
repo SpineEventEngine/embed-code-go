@@ -120,6 +120,16 @@ var _ = Describe("Comment filter", func() {
 	})
 
 	Describe("Kotlin", func() {
+		It("should keep all comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			assertFiltered("Sample.kt", RetainAll, lines, lines)
+		})
+
 		It("should strip comments without treating raw string text as comments", func() {
 			lines := []string{
 				"/* outer /* nested */ still comment */",
@@ -139,6 +149,50 @@ var _ = Describe("Comment filter", func() {
 			}
 
 			assertFiltered("Sample.kt", RetainNone, lines, expected)
+		})
+
+		It("should keep KDoc comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			expected := []string{
+				"/** API docs. */",
+				"val value = 1 ",
+			}
+
+			assertFiltered("Sample.kt", RetainDocumentation, lines, expected)
+		})
+
+		It("should keep regular comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			expected := []string{
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			assertFiltered("Sample.kt", RetainRegular, lines, expected)
+		})
+
+		It("should keep inline comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			expected := []string{
+				"val value = 1 // inline note",
+			}
+
+			assertFiltered("Sample.kt", RetainInline, lines, expected)
 		})
 
 		It("should keep nested block comments", func() {
