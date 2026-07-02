@@ -119,6 +119,49 @@ var _ = Describe("Comment filter", func() {
 		})
 	})
 
+	Describe("Kotlin", func() {
+		It("should strip comments without treating raw string text as comments", func() {
+			lines := []string{
+				"/* outer /* nested */ still comment */",
+				"val text = \"\"\"",
+				"    This is not a /* comment */.",
+				"    This is not a // comment either.",
+				"\"\"\"",
+				"val message = \"value = ${render(/* real argument */ value)}\"",
+			}
+
+			expected := []string{
+				"val text = \"\"\"",
+				"    This is not a /* comment */.",
+				"    This is not a // comment either.",
+				"\"\"\"",
+				"val message = \"value = ${render( value)}\"",
+			}
+
+			assertFiltered("Sample.kt", RetainNone, lines, expected)
+		})
+
+		It("should keep nested block comments", func() {
+			lines := []string{
+				"val before = 1",
+				"/* outer",
+				"   /* nested */",
+				"   still outer */",
+				"val after = 2 // inline",
+			}
+
+			expected := []string{
+				"val before = 1",
+				"/* outer",
+				"   /* nested */",
+				"   still outer */",
+				"val after = 2 ",
+			}
+
+			assertFiltered("Sample.kts", RetainBlock, lines, expected)
+		})
+	})
+
 	Describe("JavaScript and TypeScript", func() {
 		It("should strip comments without treating template literals as comments", func() {
 			lines := []string{

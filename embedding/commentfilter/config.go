@@ -29,8 +29,8 @@ const (
 var filtersByExtension = map[string]filterEntry{
 	// Java/Kotlin
 	".java":   filterConfig(MarkerCommentFilter{Syntax: javaSyntax}, allModes),
-	".kt":     filterConfig(MarkerCommentFilter{Syntax: javaSyntax}, allModes),
-	".kts":    filterConfig(MarkerCommentFilter{Syntax: javaSyntax}, allModes),
+	".kt":     filterConfig(KotlinCommentFilter{}, allModes),
+	".kts":    filterConfig(KotlinCommentFilter{}, allModes),
 	".groovy": filterConfig(MarkerCommentFilter{Syntax: javaSyntax}, allModes),
 
 	// C#
