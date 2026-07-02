@@ -160,6 +160,21 @@ var _ = Describe("Comment filter", func() {
 
 			assertFiltered("Sample.kts", RetainBlock, lines, expected)
 		})
+
+		It("should close empty documentation block comments", func() {
+			lines := []string{
+				"/**/",
+				"val a = 1",
+				"val b = 2 /**/ val c = 3",
+			}
+
+			expected := []string{
+				"val a = 1",
+				"val b = 2  val c = 3",
+			}
+
+			assertFiltered("Sample.kt", RetainNone, lines, expected)
+		})
 	})
 
 	Describe("JavaScript and TypeScript", func() {

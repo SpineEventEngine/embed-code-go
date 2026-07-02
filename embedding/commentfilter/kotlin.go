@@ -234,31 +234,43 @@ func (f *kotlinLineFilter) consumeInterpolation() {
 
 			continue
 		}
-		switch f.line[f.position] {
-		case '{':
-			depth++
-			f.consumeCodeByte()
-		case '}':
-			depth--
-			f.consumeCodeByte()
-			if depth == 0 {
-				return
-			}
-		default:
-			f.consumeCodeByte()
+		var done bool
+		depth, done = f.consumeInterpolationCode(depth)
+		if done {
+			return
 		}
+	}
+}
+
+// consumeInterpolationCode copies expression code and updates interpolation brace depth.
+func (f *kotlinLineFilter) consumeInterpolationCode(depth int) (int, bool) {
+	switch f.line[f.position] {
+	case '{':
+		depth++
+		f.consumeCodeByte()
+
+		return depth, false
+	case '}':
+		depth--
+		f.consumeCodeByte()
+
+		return depth, depth == 0
+	default:
+		f.consumeCodeByte()
+
+		return depth, false
 	}
 }
 
 // consumeComment consumes a Kotlin comment and reports whether it ended the line.
 func (f *kotlinLineFilter) consumeComment() (bool, bool) {
 	if strings.HasPrefix(f.line[f.position:], cStyleDocCommentStart) {
-		f.startBlockComment(cStyleDocCommentStart, f.mode == RetainDocumentation)
+		f.startBlockComment(f.mode == RetainDocumentation)
 
 		return true, false
 	}
 	if strings.HasPrefix(f.line[f.position:], cStyleBlockCommentStart) {
-		f.startBlockComment(cStyleBlockCommentStart, f.mode == RetainBlock || f.mode == RetainRegular)
+		f.startBlockComment(f.mode == RetainBlock || f.mode == RetainRegular)
 
 		return true, false
 	}
@@ -276,14 +288,14 @@ func (f *kotlinLineFilter) consumeComment() (bool, bool) {
 }
 
 // startBlockComment starts a Kotlin block comment with nesting depth one.
-func (f *kotlinLineFilter) startBlockComment(start string, keep bool) {
+func (f *kotlinLineFilter) startBlockComment(keep bool) {
 	f.hadComment = true
 	f.state.blockDepth = 1
 	f.state.blockKeep = keep
 	if keep {
-		f.result.WriteString(start)
+		f.result.WriteString(cStyleBlockCommentStart)
 	}
-	f.position += len(start)
+	f.position += len(cStyleBlockCommentStart)
 }
 
 // writeBlockText appends block comment text when the active mode retains it.
