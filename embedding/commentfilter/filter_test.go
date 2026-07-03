@@ -355,6 +355,10 @@ var _ = Describe("Comment filter", func() {
 				"function parse() { return /\"/; } // real comment",
 				"case /\"/.source: // real comment",
 				"const type = typeof /\"/; // real comment",
+				"const match = await /\"/; // real comment",
+				"const hasValue = name in /\"/; // real comment",
+				"const isPattern = value instanceof /\"/; // real comment",
+				"if (missing) {} else /\"/.test(value); // real comment",
 				"const ratio = value++ / 2; // real comment",
 			}
 
@@ -362,6 +366,10 @@ var _ = Describe("Comment filter", func() {
 				"function parse() { return /\"/; } ",
 				"case /\"/.source: ",
 				"const type = typeof /\"/; ",
+				"const match = await /\"/; ",
+				"const hasValue = name in /\"/; ",
+				"const isPattern = value instanceof /\"/; ",
+				"if (missing) {} else /\"/.test(value); ",
 				"const ratio = value++ / 2; ",
 			}
 
