@@ -479,7 +479,8 @@ func previousSignificantToken(text string) string {
 // regexPrecedingKeyword reports whether keyword can precede a regex literal.
 func regexPrecedingKeyword(keyword string) bool {
 	switch keyword {
-	case "case", "delete", "return", "throw", "typeof", "void", "yield":
+	case "await", "case", "delete", "else", "in", "instanceof", "return",
+		"throw", "typeof", "void", "yield":
 		return true
 	default:
 		return false
