@@ -174,6 +174,30 @@ var _ = Describe("Comment filter", func() {
 			assertFiltered("Sample.kt", RetainNone, lines, expected)
 		})
 
+		It("should continue raw string interpolation after line comments", func() {
+			lines := []string{
+				"val text = \"\"\"",
+				"    ${render(",
+				"        value, // real line comment",
+				"        /* real block comment */ nextValue",
+				"    )}",
+				"    Keep // raw text.",
+				"\"\"\"",
+			}
+
+			expected := []string{
+				"val text = \"\"\"",
+				"    ${render(",
+				"        value, ",
+				"         nextValue",
+				"    )}",
+				"    Keep // raw text.",
+				"\"\"\"",
+			}
+
+			assertFiltered("Sample.kt", RetainNone, lines, expected)
+		})
+
 		It("should keep KDoc comments", func() {
 			lines := []string{
 				"/** API docs. */",
