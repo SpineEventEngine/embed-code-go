@@ -326,11 +326,15 @@ var _ = Describe("Comment filter", func() {
 			lines := []string{
 				"const msg = `${items.map(i => `// ${i}`).join()}`;",
 				"const braces = `${items.map(i => `}`).join()}`; // real comment",
+				"const multiline = `${items.map(i => `// text",
+				"still } /* text */ ${i}`).join()}`; // real comment",
 			}
 
 			expected := []string{
 				"const msg = `${items.map(i => `// ${i}`).join()}`;",
 				"const braces = `${items.map(i => `}`).join()}`; ",
+				"const multiline = `${items.map(i => `// text",
+				"still } /* text */ ${i}`).join()}`; ",
 			}
 
 			assertFiltered("sample.ts", RetainNone, lines, expected)
