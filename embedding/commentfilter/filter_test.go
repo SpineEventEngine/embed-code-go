@@ -301,15 +301,21 @@ var _ = Describe("Comment filter", func() {
 	})
 
 	Describe("JavaScript and TypeScript", func() {
-		It("should strip comments without treating template literals as comments", func() {
+		It("should strip comments without treating regex and template text as comments", func() {
 			lines := []string{
 				"// module comment",
 				"const url = `http://example.org/*not-comment*/`;",
+				"const pattern = /https?:\\/\\/example\\.com\\/docs/;",
+				"const help = `Keep // and /* markers */ in template text`;",
+				"const nested = `${format(value /* remove this real comment */)}`;",
 				"const value = 42; // inline comment",
 			}
 
 			expected := []string{
 				"const url = `http://example.org/*not-comment*/`;",
+				"const pattern = /https?:\\/\\/example\\.com\\/docs/;",
+				"const help = `Keep // and /* markers */ in template text`;",
+				"const nested = `${format(value )}`;",
 				"const value = 42; ",
 			}
 
