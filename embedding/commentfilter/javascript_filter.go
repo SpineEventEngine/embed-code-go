@@ -33,14 +33,14 @@ type javascriptState struct {
 	// blockKeep reports whether the active block comment should be retained.
 	blockKeep bool
 
-	// blockEnd contains the closing marker for the active block comment.
-	blockEnd string
-
 	// template reports whether scanning is inside template literal text.
 	template bool
 
 	// templateInterpolationDepth is the active brace depth of a template interpolation.
 	templateInterpolationDepth int
+
+	// nestedTemplate reports whether interpolation scanning is inside nested template text.
+	nestedTemplate bool
 }
 
 // javascriptLineFilter filters one JavaScript or TypeScript source line.
@@ -151,7 +151,7 @@ func (f *javascriptLineFilter) consumeActiveBlock() bool {
 		return false
 	}
 	f.hadComment = true
-	end := strings.Index(f.line[f.position:], f.state.blockEnd)
+	end := strings.Index(f.line[f.position:], cStyleBlockCommentEnd)
 	if end < 0 {
 		if f.state.blockKeep {
 			f.result.WriteString(f.line[f.position:])
@@ -160,13 +160,12 @@ func (f *javascriptLineFilter) consumeActiveBlock() bool {
 
 		return true
 	}
-	endPosition := f.position + end + len(f.state.blockEnd)
+	endPosition := f.position + end + len(cStyleBlockCommentEnd)
 	if f.state.blockKeep {
 		f.result.WriteString(f.line[f.position:endPosition])
 	}
 	f.position = endPosition
 	f.state.blockActive = false
-	f.state.blockEnd = ""
 
 	return true
 }
@@ -345,16 +344,16 @@ func (f *javascriptLineFilter) consumeInterpolationDepth(depth *int) {
 
 // consumeNestedTemplateLiteral copies a template literal found inside interpolation code.
 func (f *javascriptLineFilter) consumeNestedTemplateLiteral() bool {
-	if f.position >= len(f.line) || f.line[f.position] != '`' {
+	if !f.startOrResumeNestedTemplateLiteral() {
 		return false
 	}
-	f.consumeCodeByte()
 	for f.position < len(f.line) {
 		switch {
 		case f.line[f.position] == '\\':
 			f.writeEscapedByte()
 		case f.line[f.position] == '`':
 			f.consumeCodeByte()
+			f.state.nestedTemplate = false
 
 			return true
 		case strings.HasPrefix(f.line[f.position:], jsTemplateInterpolationStart):
@@ -369,6 +368,20 @@ func (f *javascriptLineFilter) consumeNestedTemplateLiteral() bool {
 			f.consumeCodeByte()
 		}
 	}
+
+	return true
+}
+
+// startOrResumeNestedTemplateLiteral enters or resumes nested template scanning.
+func (f *javascriptLineFilter) startOrResumeNestedTemplateLiteral() bool {
+	if f.state.nestedTemplate {
+		return true
+	}
+	if f.position >= len(f.line) || f.line[f.position] != '`' {
+		return false
+	}
+	f.state.nestedTemplate = true
+	f.consumeCodeByte()
 
 	return true
 }
@@ -430,7 +443,6 @@ func (f *javascriptLineFilter) startBlockComment(keep bool) {
 	f.hadComment = true
 	f.state.blockActive = true
 	f.state.blockKeep = keep
-	f.state.blockEnd = cStyleBlockCommentEnd
 }
 
 // writeEscapedByte copies an escaped byte pair from a literal.
