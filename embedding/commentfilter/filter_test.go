@@ -138,6 +138,26 @@ var _ = Describe("Comment filter", func() {
 
 			assertFiltered("Api.java", RetainNone, lines, expected)
 		})
+
+		It("should not close text blocks on escaped triple quotes", func() {
+			lines := []string{
+				"String help = \"\"\"",
+				`    Quote: \"""`,
+				"    Keep this // text.",
+				"    \"\"\";",
+				"String value = \"kept\"; // real comment",
+			}
+
+			expected := []string{
+				"String help = \"\"\"",
+				`    Quote: \"""`,
+				"    Keep this // text.",
+				"    \"\"\";",
+				"String value = \"kept\"; ",
+			}
+
+			assertFiltered("Api.java", RetainNone, lines, expected)
+		})
 	})
 
 	Describe("Kotlin", func() {
