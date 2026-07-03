@@ -145,11 +145,9 @@ func (f *kotlinLineFilter) consumeActiveBlock() bool {
 	return true
 }
 
-// consumeRawString copies a Kotlin raw triple-quoted string without scanning comments inside it.
+// consumeRawString copies Kotlin raw-string text and filters `${...}` interpolation code.
 //
-// It intentionally copies `${...}` inside raw strings verbatim, so real comments
-// inside raw-string interpolations are retained. It also treats the first three
-// quotes in a run of four or more quotes as the raw-string delimiter.
+// It treats the first three quotes in a run of four or more quotes as the raw-string delimiter.
 func (f *kotlinLineFilter) consumeRawString() bool {
 	if !f.state.rawString && !strings.HasPrefix(f.line[f.position:], kotlinRawStringDelimiter) {
 		return false
@@ -159,17 +157,24 @@ func (f *kotlinLineFilter) consumeRawString() bool {
 		f.result.WriteString(kotlinRawStringDelimiter)
 		f.position += len(kotlinRawStringDelimiter)
 	}
-	end := strings.Index(f.line[f.position:], kotlinRawStringDelimiter)
-	if end < 0 {
-		f.result.WriteString(f.line[f.position:])
-		f.position = len(f.line)
+	for f.position < len(f.line) {
+		switch {
+		case strings.HasPrefix(f.line[f.position:], kotlinRawStringDelimiter):
+			f.result.WriteString(kotlinRawStringDelimiter)
+			f.position += len(kotlinRawStringDelimiter)
+			f.state.rawString = false
 
-		return true
+			return true
+		case strings.HasPrefix(f.line[f.position:], "${"):
+			f.result.WriteString("${")
+			f.position += len("${")
+			f.state.rawString = false
+			f.consumeInterpolation()
+			f.state.rawString = true
+		default:
+			f.consumeCodeByte()
+		}
 	}
-	endPosition := f.position + end + len(kotlinRawStringDelimiter)
-	f.result.WriteString(f.line[f.position:endPosition])
-	f.position = endPosition
-	f.state.rawString = false
 
 	return true
 }
