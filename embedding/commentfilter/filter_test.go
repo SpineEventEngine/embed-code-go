@@ -117,6 +117,27 @@ var _ = Describe("Comment filter", func() {
 
 			assertFiltered("Api.java", RetainRegular, lines, expected)
 		})
+
+		It("should strip comments without treating text block content as comments", func() {
+			lines := []string{
+				"// header comment",
+				"String help = \"\"\"",
+				"    Keep this // text.",
+				"    Keep this /* text */ too.",
+				"    \"\"\";",
+				"String value = \"not a // comment\"; // inline comment",
+			}
+
+			expected := []string{
+				"String help = \"\"\"",
+				"    Keep this // text.",
+				"    Keep this /* text */ too.",
+				"    \"\"\";",
+				"String value = \"not a // comment\"; ",
+			}
+
+			assertFiltered("Api.java", RetainNone, lines, expected)
+		})
 	})
 
 	Describe("Kotlin", func() {
