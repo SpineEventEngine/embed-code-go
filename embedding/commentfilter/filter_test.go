@@ -136,6 +136,7 @@ var _ = Describe("Comment filter", func() {
 				"val text = \"\"\"",
 				"    This is not a /* comment */.",
 				"    This is not a // comment either.",
+				"    This removes a real comment: ${render(/* real raw argument */ value)}",
 				"\"\"\"",
 				"val message = \"value = ${render(/* real argument */ value)}\"",
 			}
@@ -144,6 +145,7 @@ var _ = Describe("Comment filter", func() {
 				"val text = \"\"\"",
 				"    This is not a /* comment */.",
 				"    This is not a // comment either.",
+				"    This removes a real comment: ${render( value)}",
 				"\"\"\"",
 				"val message = \"value = ${render( value)}\"",
 			}
