@@ -281,10 +281,13 @@ func (f *javascriptLineFilter) consumeRegexFlags() {
 	}
 }
 
-// consumeInterpolationDepth filters comments inside interpolation code until depth closes or line ends.
+// consumeInterpolationDepth filters interpolation code until depth closes or line ends.
 func (f *javascriptLineFilter) consumeInterpolationDepth(depth *int) {
 	for f.position < len(f.line) {
 		if f.consumeActiveBlock() {
+			continue
+		}
+		if f.consumeNestedTemplateLiteral() {
 			continue
 		}
 		if f.consumeString() {
@@ -308,6 +311,36 @@ func (f *javascriptLineFilter) consumeInterpolationDepth(depth *int) {
 			return
 		}
 	}
+}
+
+// consumeNestedTemplateLiteral copies a template literal found inside interpolation code.
+func (f *javascriptLineFilter) consumeNestedTemplateLiteral() bool {
+	if f.position >= len(f.line) || f.line[f.position] != '`' {
+		return false
+	}
+	f.consumeCodeByte()
+	for f.position < len(f.line) {
+		switch {
+		case f.line[f.position] == '\\':
+			f.writeEscapedByte()
+		case f.line[f.position] == '`':
+			f.consumeCodeByte()
+
+			return true
+		case strings.HasPrefix(f.line[f.position:], jsTemplateInterpolationStart):
+			f.result.WriteString(jsTemplateInterpolationStart)
+			f.position += len(jsTemplateInterpolationStart)
+			depth := 1
+			f.consumeInterpolationDepth(&depth)
+			if depth > 0 {
+				return true
+			}
+		default:
+			f.consumeCodeByte()
+		}
+	}
+
+	return true
 }
 
 // consumeInterpolationCode copies expression code and updates interpolation brace depth.
