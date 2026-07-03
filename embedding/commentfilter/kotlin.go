@@ -35,6 +35,9 @@ type kotlinState struct {
 
 	// rawString reports whether scanning is inside a raw triple-quoted string.
 	rawString bool
+
+	// rawInterpolationDepth is the active brace depth of a raw-string interpolation.
+	rawInterpolationDepth int
 }
 
 // kotlinLineFilter filters one Kotlin source line.
@@ -94,6 +97,9 @@ func filterKotlinLine(line string, mode Mode, state *kotlinState) (string, bool)
 func (f *kotlinLineFilter) filterLine() (string, bool) {
 	for f.position < len(f.line) {
 		if f.consumeActiveBlock() {
+			continue
+		}
+		if f.consumeRawInterpolation() {
 			continue
 		}
 		if f.consumeRawString() {
@@ -169,11 +175,27 @@ func (f *kotlinLineFilter) consumeRawString() bool {
 			f.result.WriteString("${")
 			f.position += len("${")
 			f.state.rawString = false
-			f.consumeInterpolation()
-			f.state.rawString = true
+			f.state.rawInterpolationDepth = 1
+			f.consumeRawInterpolation()
+			if f.state.rawInterpolationDepth > 0 {
+				return true
+			}
 		default:
 			f.consumeCodeByte()
 		}
+	}
+
+	return true
+}
+
+// consumeRawInterpolation resumes Kotlin expression scanning inside a raw-string interpolation.
+func (f *kotlinLineFilter) consumeRawInterpolation() bool {
+	if f.state.rawInterpolationDepth == 0 {
+		return false
+	}
+	f.consumeInterpolationDepth(&f.state.rawInterpolationDepth)
+	if f.state.rawInterpolationDepth == 0 {
+		f.state.rawString = true
 	}
 
 	return true
@@ -226,6 +248,12 @@ func (f *kotlinLineFilter) consumeQuotedString() {
 // consumeInterpolation filters comments inside a Kotlin string interpolation expression.
 func (f *kotlinLineFilter) consumeInterpolation() {
 	depth := 1
+	f.consumeInterpolationDepth(&depth)
+}
+
+// consumeInterpolationDepth filters comments inside interpolation code
+// until depth closes or line ends.
+func (f *kotlinLineFilter) consumeInterpolationDepth(depth *int) {
 	for f.position < len(f.line) {
 		if f.consumeActiveBlock() {
 			continue
@@ -244,8 +272,10 @@ func (f *kotlinLineFilter) consumeInterpolation() {
 			continue
 		}
 		var done bool
-		depth, done = f.consumeInterpolationCode(depth)
+		*depth, done = f.consumeInterpolationCode(*depth)
 		if done {
+			*depth = 0
+
 			return
 		}
 	}
