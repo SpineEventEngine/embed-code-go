@@ -467,6 +467,11 @@ func previousSignificantToken(text string) string {
 		if isASCIISpace(text[position]) {
 			continue
 		}
+		if previousPosition, skipped := skipTrailingBlockComment(text, position); skipped {
+			position = previousPosition + 1
+
+			continue
+		}
 		if isASCIIIdentifierByte(text[position]) {
 			end := position + 1
 			for position >= 0 && isASCIIIdentifierByte(text[position]) {
@@ -486,6 +491,20 @@ func previousSignificantToken(text string) string {
 	}
 
 	return ""
+}
+
+// skipTrailingBlockComment skips a block comment ending at position.
+func skipTrailingBlockComment(text string, position int) (int, bool) {
+	if position < len(cStyleBlockCommentEnd)-1 ||
+		text[position-len(cStyleBlockCommentEnd)+1:position+1] != cStyleBlockCommentEnd {
+		return position, false
+	}
+	start := strings.LastIndex(text[:position-len(cStyleBlockCommentEnd)+1], cStyleBlockCommentStart)
+	if start < 0 {
+		return position, false
+	}
+
+	return start - 1, true
 }
 
 // regexPrecedingKeyword reports whether keyword can precede a regex literal.

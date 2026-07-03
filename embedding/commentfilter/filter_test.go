@@ -363,6 +363,7 @@ var _ = Describe("Comment filter", func() {
 				"const hasValue = name in /\"/; // real comment",
 				"const isPattern = value instanceof /\"/; // real comment",
 				"if (missing) {} else /\"/.test(value); // real comment",
+				"function skipComment() { return /* stripped */ /\\/\\//; } // real comment",
 				"const ratio = value++ / 2; // real comment",
 			}
 
@@ -374,6 +375,7 @@ var _ = Describe("Comment filter", func() {
 				"const hasValue = name in /\"/; ",
 				"const isPattern = value instanceof /\"/; ",
 				"if (missing) {} else /\"/.test(value); ",
+				"function skipComment() { return  /\\/\\//; } ",
 				"const ratio = value++ / 2; ",
 			}
 
