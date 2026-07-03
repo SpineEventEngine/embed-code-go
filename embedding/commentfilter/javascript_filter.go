@@ -64,6 +64,24 @@ type javascriptLineFilter struct {
 	hadComment bool
 }
 
+// commentConsumeResult describes a consumed JavaScript comment.
+type commentConsumeResult struct {
+	// consumed reports whether a recognized comment marker was consumed.
+	consumed bool
+
+	// stopLine reports whether the consumed comment reaches the end of the source line.
+	stopLine bool
+}
+
+// interpolationCodeResult describes the effect of one consumed interpolation byte.
+type interpolationCodeResult struct {
+	// depth is the brace depth after consuming the byte at the scanner position.
+	depth int
+
+	// closed reports whether the consumed byte closed the current interpolation expression.
+	closed bool
+}
+
 // Filter removes or preserves JavaScript and TypeScript comments according to mode.
 //
 // Parameters:
@@ -114,8 +132,8 @@ func (f *javascriptLineFilter) filterLine() (string, bool) {
 		if f.consumeRegexLiteral() {
 			continue
 		}
-		if consumed, stop := f.consumeComment(); consumed {
-			if stop {
+		if comment := f.consumeComment(); comment.consumed {
+			if comment.stopLine {
 				break
 			}
 
@@ -262,12 +280,21 @@ func (f *javascriptLineFilter) regexStartsHere() bool {
 		strings.HasPrefix(f.line[f.position:], cStyleBlockCommentStart) {
 		return false
 	}
-	previous := previousSignificantByte(f.line[:f.position])
-	if previous == 0 {
+	previous := previousSignificantToken(f.line[:f.position])
+	if previous == "" {
 		return true
 	}
+	if previous == "++" || previous == "--" {
+		return false
+	}
+	if regexPrecedingKeyword(previous) {
+		return true
+	}
+	if len(previous) != 1 {
+		return false
+	}
 
-	return strings.ContainsRune("([{=,:;!&|?+-*~^<>%", rune(previous))
+	return strings.ContainsRune("([{=,:;!&|?+-*~^<>%", rune(previous[0]))
 }
 
 // consumeRegexFlags copies identifier characters after a regex literal closing slash.
@@ -282,6 +309,9 @@ func (f *javascriptLineFilter) consumeRegexFlags() {
 }
 
 // consumeInterpolationDepth filters interpolation code until depth closes or line ends.
+//
+// Parameters:
+// depth - current brace depth of the interpolation expression; updated in place.
 func (f *javascriptLineFilter) consumeInterpolationDepth(depth *int) {
 	for f.position < len(f.line) {
 		if f.consumeActiveBlock() {
@@ -296,16 +326,16 @@ func (f *javascriptLineFilter) consumeInterpolationDepth(depth *int) {
 		if f.consumeRegexLiteral() {
 			continue
 		}
-		if consumed, stop := f.consumeComment(); consumed {
-			if stop {
+		if comment := f.consumeComment(); comment.consumed {
+			if comment.stopLine {
 				return
 			}
 
 			continue
 		}
-		var done bool
-		*depth, done = f.consumeInterpolationCode(*depth)
-		if done {
+		code := f.consumeInterpolationCode(*depth)
+		*depth = code.depth
+		if code.closed {
 			*depth = 0
 
 			return
@@ -344,36 +374,43 @@ func (f *javascriptLineFilter) consumeNestedTemplateLiteral() bool {
 }
 
 // consumeInterpolationCode copies expression code and updates interpolation brace depth.
-func (f *javascriptLineFilter) consumeInterpolationCode(depth int) (int, bool) {
+//
+// Parameters:
+// depth - current brace depth before consuming the byte at the scanner position.
+//
+// Returns interpolation code result.
+func (f *javascriptLineFilter) consumeInterpolationCode(depth int) interpolationCodeResult {
 	switch f.line[f.position] {
 	case '{':
 		depth++
 		f.consumeCodeByte()
 
-		return depth, false
+		return interpolationCodeResult{depth: depth}
 	case '}':
 		depth--
 		f.consumeCodeByte()
 
-		return depth, depth == 0
+		return interpolationCodeResult{depth: depth, closed: depth == 0}
 	default:
 		f.consumeCodeByte()
 
-		return depth, false
+		return interpolationCodeResult{depth: depth}
 	}
 }
 
-// consumeComment consumes a JavaScript comment and reports whether it ended the line.
-func (f *javascriptLineFilter) consumeComment() (bool, bool) {
+// consumeComment consumes a JavaScript comment when one starts at the scanner position.
+//
+// Returns comment consume result.
+func (f *javascriptLineFilter) consumeComment() commentConsumeResult {
 	if strings.HasPrefix(f.line[f.position:], cStyleDocCommentStart) {
 		f.startBlockComment(f.mode == RetainDocumentation)
 
-		return true, false
+		return commentConsumeResult{consumed: true}
 	}
 	if strings.HasPrefix(f.line[f.position:], cStyleBlockCommentStart) {
 		f.startBlockComment(f.mode == RetainBlock || f.mode == RetainRegular)
 
-		return true, false
+		return commentConsumeResult{consumed: true}
 	}
 	if strings.HasPrefix(f.line[f.position:], "//") {
 		f.hadComment = true
@@ -382,10 +419,10 @@ func (f *javascriptLineFilter) consumeComment() (bool, bool) {
 		}
 		f.position = len(f.line)
 
-		return true, true
+		return commentConsumeResult{consumed: true, stopLine: true}
 	}
 
-	return false, false
+	return commentConsumeResult{}
 }
 
 // startBlockComment records the active block comment markers and whether to keep them.
@@ -412,15 +449,41 @@ func (f *javascriptLineFilter) consumeCodeByte() {
 	f.position++
 }
 
-// previousSignificantByte returns the last non-space byte in text.
-func previousSignificantByte(text string) byte {
+// previousSignificantToken returns the last non-space token in text.
+func previousSignificantToken(text string) string {
 	for position := len(text) - 1; position >= 0; position-- {
-		if !isASCIISpace(text[position]) {
-			return text[position]
+		if isASCIISpace(text[position]) {
+			continue
 		}
+		if isASCIIIdentifierByte(text[position]) {
+			end := position + 1
+			for position >= 0 && isASCIIIdentifierByte(text[position]) {
+				position--
+			}
+
+			return text[position+1 : end]
+		}
+		if position > 0 {
+			token := text[position-1 : position+1]
+			if token == "++" || token == "--" {
+				return token
+			}
+		}
+
+		return text[position : position+1]
 	}
 
-	return 0
+	return ""
+}
+
+// regexPrecedingKeyword reports whether keyword can precede a regex literal.
+func regexPrecedingKeyword(keyword string) bool {
+	switch keyword {
+	case "case", "delete", "return", "throw", "typeof", "void", "yield":
+		return true
+	default:
+		return false
+	}
 }
 
 // isASCIISpace reports whether char is an ASCII whitespace byte.
