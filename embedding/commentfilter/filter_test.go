@@ -321,6 +321,20 @@ var _ = Describe("Comment filter", func() {
 
 			assertFiltered("sample.ts", RetainNone, lines, expected)
 		})
+
+		It("should preserve nested template literals inside template interpolations", func() {
+			lines := []string{
+				"const msg = `${items.map(i => `// ${i}`).join()}`;",
+				"const braces = `${items.map(i => `}`).join()}`; // real comment",
+			}
+
+			expected := []string{
+				"const msg = `${items.map(i => `// ${i}`).join()}`;",
+				"const braces = `${items.map(i => `}`).join()}`; ",
+			}
+
+			assertFiltered("sample.ts", RetainNone, lines, expected)
+		})
 	})
 
 	Describe("C#", func() {
