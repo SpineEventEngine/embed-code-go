@@ -143,6 +143,7 @@ var _ = Describe("Comment filter", func() {
 			lines := []string{
 				"String help = \"\"\"",
 				`    Quote: \"""`,
+				`    Escaped quote: \"`,
 				"    Keep this // text.",
 				"    \"\"\";",
 				"String value = \"kept\"; // real comment",
@@ -151,6 +152,7 @@ var _ = Describe("Comment filter", func() {
 			expected := []string{
 				"String help = \"\"\"",
 				`    Quote: \"""`,
+				`    Escaped quote: \"`,
 				"    Keep this // text.",
 				"    \"\"\";",
 				"String value = \"kept\"; ",
