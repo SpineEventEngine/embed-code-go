@@ -335,6 +335,38 @@ var _ = Describe("Comment filter", func() {
 
 			assertFiltered("sample.ts", RetainNone, lines, expected)
 		})
+
+		It("should preserve multi-line template literal text", func() {
+			lines := []string{
+				"const help = `Keep // marker",
+				"and /* marker */ text`; // real comment",
+			}
+
+			expected := []string{
+				"const help = `Keep // marker",
+				"and /* marker */ text`; ",
+			}
+
+			assertFiltered("sample.ts", RetainNone, lines, expected)
+		})
+
+		It("should preserve regex literals after expression-starting keywords", func() {
+			lines := []string{
+				"function parse() { return /\"/; } // real comment",
+				"case /\"/.source: // real comment",
+				"const type = typeof /\"/; // real comment",
+				"const ratio = value++ / 2; // real comment",
+			}
+
+			expected := []string{
+				"function parse() { return /\"/; } ",
+				"case /\"/.source: ",
+				"const type = typeof /\"/; ",
+				"const ratio = value++ / 2; ",
+			}
+
+			assertFiltered("sample.ts", RetainNone, lines, expected)
+		})
 	})
 
 	Describe("C#", func() {
