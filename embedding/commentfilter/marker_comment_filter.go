@@ -199,20 +199,36 @@ func (f *markerLineFilter) consumeActiveTextBlock() bool {
 	if !f.state.textBlockActive {
 		return false
 	}
-	end := strings.Index(f.line[f.position:], f.state.textBlockDelimiter)
-	if end < 0 {
+	endPosition, found := textBlockEnd(f.line, f.position, f.state.textBlockDelimiter)
+	if !found {
 		f.result.WriteString(f.line[f.position:])
 		f.position = len(f.line)
 
 		return true
 	}
-	endPosition := f.position + end + len(f.state.textBlockDelimiter)
 	f.result.WriteString(f.line[f.position:endPosition])
 	f.position = endPosition
 	f.state.textBlockActive = false
 	f.state.textBlockDelimiter = ""
 
 	return true
+}
+
+// textBlockEnd returns the end offset of a text block close delimiter.
+func textBlockEnd(line string, position int, delimiter string) (int, bool) {
+	for cursor := position; cursor < len(line); {
+		if line[cursor] == '\\' {
+			cursor += 2
+
+			continue
+		}
+		if strings.HasPrefix(line[cursor:], delimiter) {
+			return cursor + len(delimiter), true
+		}
+		cursor++
+	}
+
+	return len(line), false
 }
 
 // consumeTextBlockStart starts a configured text block literal.
