@@ -55,6 +55,20 @@ var _ = Describe("C#", func() {
 		assertFiltered("Api.cs", RetainInline, lines, expected)
 	})
 
+	It("should strip comments after character literals", func() {
+		lines := []string{
+			`var quote = '"'; // inline comment`,
+			`var slash = '/'; // inline comment`,
+		}
+
+		expected := []string{
+			`var quote = '"'; `,
+			`var slash = '/'; `,
+		}
+
+		assertFiltered("Api.cs", RetainNone, lines, expected)
+	})
+
 	It("should strip comments without treating verbatim string text as comments", func() {
 		lines := []string{
 			"// header comment",

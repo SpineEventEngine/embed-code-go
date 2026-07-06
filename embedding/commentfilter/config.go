@@ -107,18 +107,6 @@ var javaSyntax = CommentMarker{
 	QuoteChars: "\"'",
 }
 
-var csharpSyntax = CommentMarker{
-	Inline: []string{"//"},
-	Block: []BlockMarker{
-		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
-	},
-	Documentation: DocumentationMarker{
-		Inline: []string{"///"},
-		Block:  []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
-	},
-	QuoteChars: jsQuoteChars,
-}
-
 var cStyleSyntax = CommentMarker{
 	Inline: []string{"//"},
 	Block: []BlockMarker{
