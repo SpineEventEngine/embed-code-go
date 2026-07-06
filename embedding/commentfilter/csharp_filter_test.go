@@ -54,4 +54,55 @@ var _ = Describe("C#", func() {
 
 		assertFiltered("Api.cs", RetainInline, lines, expected)
 	})
+
+	It("should strip comments without treating verbatim string text as comments", func() {
+		lines := []string{
+			"// header comment",
+			`var uri = @"https://example.com/*not-comment*/"; // inline comment`,
+			`var block = @"Keep // marker`,
+			`and /* marker */ text"; /* trailing block */`,
+		}
+
+		expected := []string{
+			`var uri = @"https://example.com/*not-comment*/"; `,
+			`var block = @"Keep // marker`,
+			`and /* marker */ text"; `,
+		}
+
+		assertFiltered("Api.cs", RetainNone, lines, expected)
+	})
+
+	It("should strip comments without treating interpolated string text as comments", func() {
+		lines := []string{
+			`var message = $"Keep // and /* markers */ {Format(value /* real comment */)}";`,
+			`var escaped = $"Keep {{ // text }} and {value}"; // inline comment`,
+			`var nested = $"Value {Format("/* not comment */")} // still text"; // inline comment`,
+		}
+
+		expected := []string{
+			`var message = $"Keep // and /* markers */ {Format(value )}";`,
+			`var escaped = $"Keep {{ // text }} and {value}"; `,
+			`var nested = $"Value {Format("/* not comment */")} // still text"; `,
+		}
+
+		assertFiltered("Api.cs", RetainNone, lines, expected)
+	})
+
+	It("should strip comments without treating verbatim interpolated string text as comments", func() {
+		lines := []string{
+			`var path = $@"C:\Temp\// not comment {name /* real comment */}";`,
+			`var template = @$"Keep /* marker */ and ""// marker""`,
+			`with {Format(value // real comment`,
+			`)}"; // trailing comment`,
+		}
+
+		expected := []string{
+			`var path = $@"C:\Temp\// not comment {name }";`,
+			`var template = @$"Keep /* marker */ and ""// marker""`,
+			`with {Format(value `,
+			`)}"; `,
+		}
+
+		assertFiltered("Api.cs", RetainNone, lines, expected)
+	})
 })

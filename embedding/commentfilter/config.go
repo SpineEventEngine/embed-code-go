@@ -37,7 +37,7 @@ var filtersByExtension = map[string]filterEntry{
 	".groovy": filterConfig(MarkerCommentFilter{Syntax: javaSyntax}, allModes),
 
 	// C#
-	".cs": filterConfig(MarkerCommentFilter{Syntax: csharpSyntax}, allModes),
+	".cs": filterConfig(CSharpCommentFilter{}, allModes),
 
 	// C/C++
 	".c":   filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
