@@ -23,6 +23,8 @@ const (
 	cStyleBlockCommentEnd   = "*/"
 	cStyleDocCommentStart   = "/**"
 	javaTextBlockDelimiter  = "\"\"\""
+	goRawStringDelimiter    = "`"
+	goQuoteChars            = "\"'"
 	jsQuoteChars            = "\"'`"
 )
 
@@ -128,7 +130,8 @@ var goSyntax = CommentMarker{
 	Block: []BlockMarker{
 		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
 	},
-	QuoteChars: jsQuoteChars,
+	TextBlocks: []string{goRawStringDelimiter},
+	QuoteChars: goQuoteChars,
 }
 
 var hashLineSyntax = CommentMarker{

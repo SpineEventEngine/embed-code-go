@@ -33,7 +33,11 @@ var _ = Describe("Go", func() {
 			"/* block comment */",
 			"const slash = '/'",
 			"const url = \"http://example.org\"",
-			"const raw = `/* not a comment */`",
+			"const raw = `Keep // and /* markers */ in raw strings`",
+			"const multi = `",
+			"Keep // and /* markers */ across lines",
+			"`",
+			"value := 1 // remove this real comment",
 			"func create() {} // inline comment",
 		}
 
@@ -42,7 +46,11 @@ var _ = Describe("Go", func() {
 			"",
 			"const slash = '/'",
 			"const url = \"http://example.org\"",
-			"const raw = `/* not a comment */`",
+			"const raw = `Keep // and /* markers */ in raw strings`",
+			"const multi = `",
+			"Keep // and /* markers */ across lines",
+			"`",
+			"value := 1 ",
 			"func create() {} ",
 		}
 
