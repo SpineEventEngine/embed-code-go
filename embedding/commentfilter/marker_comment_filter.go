@@ -47,6 +47,21 @@ type TextBlockMarker struct {
 	Escapes bool
 }
 
+// activeSegment describes a multi-line construct currently being scanned.
+type activeSegment struct {
+	// end closes the active construct.
+	end string
+
+	// keep reports whether the active construct is copied to output.
+	keep bool
+
+	// escapes reports whether backslashes escape bytes while searching for end.
+	escapes bool
+
+	// comment reports whether the active construct is a source comment.
+	comment bool
+}
+
 // CommentMarker describes lexical comment markers and string delimiters for a language family.
 type CommentMarker struct {
 	// Inline contains line-comment markers.
@@ -71,22 +86,13 @@ type MarkerCommentFilter struct {
 	Syntax CommentMarker
 }
 
-// blockState tracks active multi-line lexical constructs across source lines.
-type blockState struct {
-	// active reports whether scanning is inside a block comment.
+// markerState tracks active multi-line lexical constructs across source lines.
+type markerState struct {
+	// active reports whether scanning is inside a multi-line construct.
 	active bool
 
-	// block contains the active block comment markers.
-	block BlockMarker
-
-	// keep reports whether the active comment should be retained.
-	keep bool
-
-	// textBlockActive reports whether scanning is inside a text block.
-	textBlockActive bool
-
-	// textBlock contains the active text block marker.
-	textBlock TextBlockMarker
+	// segment contains the active construct configuration.
+	segment activeSegment
 }
 
 // markerLineFilter tracks lexical comment filtering state for one source line.
@@ -101,7 +107,7 @@ type markerLineFilter struct {
 	mode Mode
 
 	// state tracks multi-line lexical constructs across lines.
-	state *blockState
+	state *markerState
 
 	// result accumulates the filtered source line.
 	result strings.Builder
@@ -121,24 +127,18 @@ type markerLineFilter struct {
 //
 // Returns filtered source lines.
 func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
-	var filtered []string
-	state := blockState{}
-	for _, line := range lines {
-		filteredLine, hadComment := f.filterLine(line, mode, &state)
-		if hadComment && strings.TrimSpace(filteredLine) == "" {
-			continue
-		}
-		filtered = append(filtered, filteredLine)
-	}
+	state := markerState{}
 
-	return filtered
+	return filterLines(lines, func(line string) (string, bool) {
+		return f.filterLine(line, mode, &state)
+	})
 }
 
 // filterLine removes or preserves recognized comments from a single source line.
 func (f MarkerCommentFilter) filterLine(
 	line string,
 	mode Mode,
-	state *blockState,
+	state *markerState,
 ) (string, bool) {
 	filter := markerLineFilter{
 		filter: f,
@@ -153,10 +153,7 @@ func (f MarkerCommentFilter) filterLine(
 // filterLine walks the current line until it reaches its end or a line comment.
 func (f *markerLineFilter) filterLine() (string, bool) {
 	for f.position < len(f.line) {
-		if f.consumeActiveBlock() {
-			continue
-		}
-		if f.consumeActiveTextBlock() {
+		if f.consumeActiveSegment() {
 			continue
 		}
 		if f.consumeTextBlockStart() {
@@ -178,61 +175,44 @@ func (f *markerLineFilter) filterLine() (string, bool) {
 	return f.result.String(), f.hadComment
 }
 
-// consumeActiveBlock consumes text while the scanner is inside a block comment.
-func (f *markerLineFilter) consumeActiveBlock() bool {
+// consumeActiveSegment consumes text while the scanner is inside a multi-line construct.
+func (f *markerLineFilter) consumeActiveSegment() bool {
 	if !f.state.active {
 		return false
 	}
-	f.hadComment = true
-	end := strings.Index(f.line[f.position:], f.state.block.End)
-	if end < 0 {
-		if f.state.keep {
+	segment := f.state.segment
+	if segment.comment {
+		f.hadComment = true
+	}
+	endPosition, found := segmentEnd(f.line, f.position, segment)
+	if !found {
+		if segment.keep {
 			f.result.WriteString(f.line[f.position:])
 		}
 		f.position = len(f.line)
 
 		return true
 	}
-	endPosition := f.position + end + len(f.state.block.End)
-	if f.state.keep {
+	if segment.keep {
 		f.result.WriteString(f.line[f.position:endPosition])
 	}
 	f.position = endPosition
 	f.state.active = false
+	f.state.segment = activeSegment{}
 
 	return true
 }
 
-// consumeActiveTextBlock copies text block content until the closing delimiter.
-func (f *markerLineFilter) consumeActiveTextBlock() bool {
-	if !f.state.textBlockActive {
-		return false
-	}
-	endPosition, found := textBlockEnd(f.line, f.position, f.state.textBlock)
-	if !found {
-		f.result.WriteString(f.line[f.position:])
-		f.position = len(f.line)
-
-		return true
-	}
-	f.result.WriteString(f.line[f.position:endPosition])
-	f.position = endPosition
-	f.state.textBlockActive = false
-	f.state.textBlock = TextBlockMarker{}
-
-	return true
-}
-
-// textBlockEnd returns the end offset of a text block close delimiter.
-func textBlockEnd(line string, position int, marker TextBlockMarker) (int, bool) {
+// segmentEnd returns the end offset of an active segment close delimiter.
+func segmentEnd(line string, position int, segment activeSegment) (int, bool) {
 	for cursor := position; cursor < len(line); {
-		if marker.Escapes && line[cursor] == '\\' {
+		if segment.escapes && line[cursor] == '\\' {
 			cursor += 2
 
 			continue
 		}
-		if strings.HasPrefix(line[cursor:], marker.Delimiter) {
-			return cursor + len(marker.Delimiter), true
+		if strings.HasPrefix(line[cursor:], segment.end) {
+			return cursor + len(segment.end), true
 		}
 		cursor++
 	}
@@ -248,8 +228,12 @@ func (f *markerLineFilter) consumeTextBlockStart() bool {
 	}
 	f.result.WriteString(marker.Delimiter)
 	f.position += len(marker.Delimiter)
-	f.state.textBlockActive = true
-	f.state.textBlock = marker
+	f.state.active = true
+	f.state.segment = activeSegment{
+		end:     marker.Delimiter,
+		keep:    true,
+		escapes: marker.Escapes,
+	}
 
 	return true
 }
@@ -327,8 +311,11 @@ func (f *markerLineFilter) consumeInlineComment(keep bool) {
 func (f *markerLineFilter) startBlockComment(block BlockMarker, keep bool) {
 	f.hadComment = true
 	f.state.active = true
-	f.state.block = block
-	f.state.keep = keep
+	f.state.segment = activeSegment{
+		end:     block.End,
+		keep:    keep,
+		comment: true,
+	}
 }
 
 // consumeCodeByte copies one source byte that does not belong to a recognized comment.

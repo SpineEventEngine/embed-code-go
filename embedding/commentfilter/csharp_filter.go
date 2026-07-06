@@ -86,17 +86,11 @@ type csharpLineFilter struct {
 //
 // Returns filtered source lines.
 func (CSharpCommentFilter) Filter(lines []string, mode Mode) []string {
-	var filtered []string
 	state := csharpState{}
-	for _, line := range lines {
-		filteredLine, hadComment := filterCSharpLine(line, mode, &state)
-		if hadComment && strings.TrimSpace(filteredLine) == "" {
-			continue
-		}
-		filtered = append(filtered, filteredLine)
-	}
 
-	return filtered
+	return filterLines(lines, func(line string) (string, bool) {
+		return filterCSharpLine(line, mode, &state)
+	})
 }
 
 // filterCSharpLine removes or preserves recognized C# comments from one line.
