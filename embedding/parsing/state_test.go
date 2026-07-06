@@ -144,6 +144,24 @@ var _ = Describe("Parser states", func() {
 			"```",
 		}))
 	})
+
+	It("should report changed content when generated result is shorter than processed source", func() {
+		config := configuration.NewConfiguration()
+		context := newStateContext(
+			"<embed-code file=\"Example.java\"/>",
+			"```java",
+			"old source",
+		)
+		Expect(parsing.EmbedInstruction.Accept(&context, config)).Should(Succeed())
+		Expect(parsing.CodeFenceStart.Accept(&context, config)).Should(Succeed())
+		Expect(parsing.CodeSampleLine.Accept(&context, config)).Should(Succeed())
+
+		Expect(context.GetResult()).Should(Equal([]string{
+			"<embed-code file=\"Example.java\"/>",
+			"```java",
+		}))
+		Expect(context.IsContentChanged()).Should(BeTrue())
+	})
 })
 
 // newStateContext builds a parser context from in-memory source lines.
