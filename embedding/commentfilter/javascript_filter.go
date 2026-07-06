@@ -41,6 +41,9 @@ type javascriptState struct {
 
 	// nestedTemplate reports whether interpolation scanning is inside nested template text.
 	nestedTemplate bool
+
+	// nestedTemplateInterpolationDepth is the brace depth inside nested template code.
+	nestedTemplateInterpolationDepth int
 }
 
 // javascriptLineFilter filters one JavaScript or TypeScript source line.
@@ -174,6 +177,9 @@ func (f *javascriptLineFilter) consumeActiveBlock() bool {
 func (f *javascriptLineFilter) consumeTemplateInterpolation() bool {
 	if f.state.templateInterpolationDepth == 0 {
 		return false
+	}
+	if f.consumeNestedTemplateInterpolation() {
+		return true
 	}
 	f.consumeInterpolationDepth(&f.state.templateInterpolationDepth)
 	if f.state.templateInterpolationDepth == 0 {
@@ -359,14 +365,28 @@ func (f *javascriptLineFilter) consumeNestedTemplateLiteral() bool {
 		case strings.HasPrefix(f.line[f.position:], jsTemplateInterpolationStart):
 			f.result.WriteString(jsTemplateInterpolationStart)
 			f.position += len(jsTemplateInterpolationStart)
-			depth := 1
-			f.consumeInterpolationDepth(&depth)
-			if depth > 0 {
+			f.state.nestedTemplate = false
+			f.state.nestedTemplateInterpolationDepth = 1
+			f.consumeNestedTemplateInterpolation()
+			if f.state.nestedTemplateInterpolationDepth > 0 {
 				return true
 			}
 		default:
 			f.consumeCodeByte()
 		}
+	}
+
+	return true
+}
+
+// consumeNestedTemplateInterpolation resumes code inside nested template `${...}`.
+func (f *javascriptLineFilter) consumeNestedTemplateInterpolation() bool {
+	if f.state.nestedTemplateInterpolationDepth == 0 {
+		return false
+	}
+	f.consumeInterpolationDepth(&f.state.nestedTemplateInterpolationDepth)
+	if f.state.nestedTemplateInterpolationDepth == 0 {
+		f.state.nestedTemplate = true
 	}
 
 	return true
