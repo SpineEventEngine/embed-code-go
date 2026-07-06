@@ -23,6 +23,8 @@ const (
 	cStyleBlockCommentEnd   = "*/"
 	cStyleDocCommentStart   = "/**"
 	javaTextBlockDelimiter  = "\"\"\""
+	pythonDoubleQuoteBlock  = "\"\"\""
+	pythonSingleQuoteBlock  = "'''"
 	goRawStringDelimiter    = "`"
 	goQuoteChars            = "\"'"
 	jsQuoteChars            = "\"'`"
@@ -62,9 +64,9 @@ var filtersByExtension = map[string]filterEntry{
 	".proto": filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
 
 	// Python
-	".py":  filterConfig(MarkerCommentFilter{Syntax: hashLineSyntax}, noneMode),
-	".pyi": filterConfig(MarkerCommentFilter{Syntax: hashLineSyntax}, noneMode),
-	".pyw": filterConfig(MarkerCommentFilter{Syntax: hashLineSyntax}, noneMode),
+	".py":  filterConfig(MarkerCommentFilter{Syntax: pythonSyntax}, noneMode),
+	".pyi": filterConfig(MarkerCommentFilter{Syntax: pythonSyntax}, noneMode),
+	".pyw": filterConfig(MarkerCommentFilter{Syntax: pythonSyntax}, noneMode),
 
 	// YAML
 	".yml":  filterConfig(MarkerCommentFilter{Syntax: hashLineSyntax}, noneMode),
@@ -128,6 +130,15 @@ var goSyntax = CommentMarker{
 
 var hashLineSyntax = CommentMarker{
 	Inline:     []string{"#"},
+	QuoteChars: "\"'",
+}
+
+var pythonSyntax = CommentMarker{
+	Inline: []string{"#"},
+	TextBlocks: []TextBlockMarker{
+		{Delimiter: pythonDoubleQuoteBlock, Escapes: true},
+		{Delimiter: pythonSingleQuoteBlock, Escapes: true},
+	},
 	QuoteChars: "\"'",
 }
 
