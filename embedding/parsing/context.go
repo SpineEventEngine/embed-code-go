@@ -190,7 +190,7 @@ func (c *Context) ReachedEOF() bool {
 //
 // Returns true when generated lines differ from original source lines.
 func (c *Context) IsContentChanged() bool {
-	if len(c.Result) < c.lineIndex {
+	if len(c.Result) != c.lineIndex {
 		return true
 	}
 
