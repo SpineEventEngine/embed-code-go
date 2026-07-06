@@ -39,4 +39,31 @@ var _ = Describe("Python", func() {
 
 		assertFiltered("module.py", RetainNone, lines, expected)
 	})
+
+	It("should strip comments without treating triple-quoted string content as comments", func() {
+		lines := []string{
+			"# module comment",
+			"def message():",
+			"    \"\"\"",
+			"    Keep this # docstring text.",
+			"    \"\"\"",
+			"    value = '''",
+			"    Keep this # multiline text.",
+			"    ''' # inline comment",
+			"    return value # real comment",
+		}
+
+		expected := []string{
+			"def message():",
+			"    \"\"\"",
+			"    Keep this # docstring text.",
+			"    \"\"\"",
+			"    value = '''",
+			"    Keep this # multiline text.",
+			"    ''' ",
+			"    return value ",
+		}
+
+		assertFiltered("module.py", RetainNone, lines, expected)
+	})
 })
