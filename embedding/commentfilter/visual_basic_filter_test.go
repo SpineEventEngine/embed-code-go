@@ -30,6 +30,9 @@ var _ = Describe("Visual Basic", func() {
 			"' file comment",
 			"REM module comment",
 			"Dim text = \"REM not a comment\"",
+			"Dim quotedRem = \"\"\"REM not a comment\"",
+			"Dim quotedApostrophe = \"\"\"' not a comment\"",
+			"Dim escapedQuote = \"Say \"\"REM\"\" and keep going\" ' inline",
 			"Dim value = 1 ' inline",
 			"Dim ready = True : Rem after statement separator",
 			"Dim reminder = 1",
@@ -37,6 +40,9 @@ var _ = Describe("Visual Basic", func() {
 
 		expected := []string{
 			"Dim text = \"REM not a comment\"",
+			"Dim quotedRem = \"\"\"REM not a comment\"",
+			"Dim quotedApostrophe = \"\"\"' not a comment\"",
+			"Dim escapedQuote = \"Say \"\"REM\"\" and keep going\" ",
 			"Dim value = 1 ",
 			"Dim ready = True : ",
 			"Dim reminder = 1",
