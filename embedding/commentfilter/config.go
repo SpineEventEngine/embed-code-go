@@ -22,6 +22,7 @@ const (
 	cStyleBlockCommentStart = "/*"
 	cStyleBlockCommentEnd   = "*/"
 	cStyleDocCommentStart   = "/**"
+	javaTextBlockDelimiter  = "\"\"\""
 	jsQuoteChars            = "\"'`"
 )
 
@@ -98,6 +99,7 @@ var javaSyntax = CommentMarker{
 	Documentation: DocumentationMarker{
 		Block: []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
 	},
+	TextBlocks: []string{javaTextBlockDelimiter},
 	QuoteChars: "\"'",
 }
 
