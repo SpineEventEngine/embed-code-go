@@ -77,12 +77,14 @@ var _ = Describe("C#", func() {
 			`var message = $"Keep // and /* markers */ {Format(value /* real comment */)}";`,
 			`var escaped = $"Keep {{ // text }} and {value}"; // inline comment`,
 			`var nested = $"Value {Format("/* not comment */")} // still text"; // inline comment`,
+			`var url = $"{scheme://example.com/*path*/}"; // inline comment`,
 		}
 
 		expected := []string{
 			`var message = $"Keep // and /* markers */ {Format(value )}";`,
 			`var escaped = $"Keep {{ // text }} and {value}"; `,
 			`var nested = $"Value {Format("/* not comment */")} // still text"; `,
+			`var url = $"{scheme://example.com/*path*/}"; `,
 		}
 
 		assertFiltered("Api.cs", RetainNone, lines, expected)

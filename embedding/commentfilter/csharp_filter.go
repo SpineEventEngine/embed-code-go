@@ -52,6 +52,9 @@ type csharpState struct {
 
 	// interpolationDepth is the active brace depth inside an interpolation expression.
 	interpolationDepth int
+
+	// interpolationFormat reports whether scanning is inside interpolation format text.
+	interpolationFormat bool
 }
 
 // csharpLineFilter filters one C# source line.
@@ -171,6 +174,13 @@ func (f *csharpLineFilter) consumeStringInterpolation() bool {
 		if f.consumeActiveBlock() {
 			continue
 		}
+		if f.consumeInterpolationFormat() {
+			if f.state.interpolationDepth == 0 {
+				return true
+			}
+
+			continue
+		}
 		if f.consumeInterpolationString() {
 			continue
 		}
@@ -194,6 +204,29 @@ func (f *csharpLineFilter) consumeStringInterpolation() bool {
 		default:
 			f.consumeCodeByte()
 		}
+	}
+
+	return true
+}
+
+// consumeInterpolationFormat copies C# format text after a top-level interpolation colon.
+func (f *csharpLineFilter) consumeInterpolationFormat() bool {
+	if !f.state.interpolationFormat {
+		if f.state.interpolationDepth != 1 || f.line[f.position] != ':' {
+			return false
+		}
+		f.state.interpolationFormat = true
+		f.consumeCodeByte()
+	}
+	for f.position < len(f.line) {
+		if f.line[f.position] == '}' {
+			f.consumeCodeByte()
+			f.state.interpolationFormat = false
+			f.state.interpolationDepth = 0
+
+			return true
+		}
+		f.consumeCodeByte()
 	}
 
 	return true
@@ -321,6 +354,7 @@ func (f *csharpLineFilter) closeString() {
 	f.state.stringVerbatim = false
 	f.state.stringInterpolated = false
 	f.state.interpolationDepth = 0
+	f.state.interpolationFormat = false
 }
 
 // consumeComment consumes a C# comment when one starts at the scanner position.
