@@ -27,7 +27,6 @@ const (
 	pythonSingleQuoteBlock  = "'''"
 	goRawStringDelimiter    = "`"
 	goQuoteChars            = "\"'"
-	jsQuoteChars            = "\"'`"
 )
 
 // filtersByExtension is a mapping of the file extension to its comment filter.
