@@ -122,30 +122,35 @@ var _ = Describe("Main orchestrator", func() {
 })
 
 // captureStdout runs action and returns text written to standard output.
-func captureStdout(action func()) (output string) {
+func captureStdout(action func()) string {
 	originalStdout := os.Stdout
 	reader, writer, err := os.Pipe()
 	Expect(err).ShouldNot(HaveOccurred())
 	os.Stdout = writer
 	var buffer bytes.Buffer
 	readDone := make(chan error, 1)
+	closed := false
 	go func() {
 		_, err := io.Copy(&buffer, reader)
 		readDone <- err
 	}()
 	defer func() {
 		os.Stdout = originalStdout
-	}()
-	defer func() {
-		Expect(writer.Close()).Should(Succeed())
-		Expect(<-readDone).ShouldNot(HaveOccurred())
-		Expect(reader.Close()).Should(Succeed())
-		output = buffer.String()
+		if !closed {
+			_ = writer.Close()
+			<-readDone
+			_ = reader.Close()
+		}
 	}()
 
 	action()
 
-	return output
+	Expect(writer.Close()).Should(Succeed())
+	closed = true
+	Expect(<-readDone).ShouldNot(HaveOccurred())
+	Expect(reader.Close()).Should(Succeed())
+
+	return buffer.String()
 }
 
 // writeMainModeFixture creates one source file and one stale documentation file.
