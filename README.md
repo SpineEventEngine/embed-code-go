@@ -36,11 +36,12 @@ On Linux, for example:
 > chmod +x embed-code-linux
 > ```
 
-> Since binary file for macOS is not signed, it may be necessary 
-> to change its attributes to allow execution:
-> ```bash
-> xattr -d com.apple.quarantine embed-code-macos
-> ```
+On macOS, download `embed-code-macos.zip`, unzip it, and run the binary:
+
+```bash
+unzip embed-code-macos.zip
+./embed-code-macos -mode=check -config-path=showcase/embedding/embed-code.yml
+```
 
 Or run it with Go:
 

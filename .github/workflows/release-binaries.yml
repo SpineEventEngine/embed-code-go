@@ -17,8 +17,8 @@ concurrency:
 jobs:
 
   release:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    runs-on: macos-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout Repository
@@ -72,6 +72,101 @@ jobs:
           GOOS=linux GOARCH=amd64 go build -trimpath -o dist/embed-code-linux main.go
           GOOS=darwin GOARCH=amd64 go build -trimpath -o dist/embed-code-macos main.go
           chmod +x dist/embed-code-linux dist/embed-code-macos
+
+      # Sign the macOS binary with a Developer ID certificate stored in GitHub
+      # secrets. The certificate must be exported as a base64-encoded .p12 file.
+      - name: Sign macOS Binary
+        if: steps.release.outputs.publish == 'true'
+        shell: bash
+        env:
+          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+        run: |
+          missing=()
+          [[ -n "$MACOS_CERTIFICATE_P12_BASE64" ]] || missing+=("MACOS_CERTIFICATE_P12_BASE64")
+          [[ -n "$MACOS_CERTIFICATE_PASSWORD" ]] || missing+=("MACOS_CERTIFICATE_PASSWORD")
+          [[ -n "$MACOS_CODESIGN_IDENTITY" ]] || missing+=("MACOS_CODESIGN_IDENTITY")
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required GitHub secret: %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+
+          keychain_path="$RUNNER_TEMP/embed-code-signing.keychain-db"
+          certificate_path="$RUNNER_TEMP/embed-code-signing-certificate.p12"
+          keychain_password="$(uuidgen)"
+
+          # GNU base64 supports --decode; macOS base64 uses -D.
+          if printf '%s' "$MACOS_CERTIFICATE_P12_BASE64" | base64 --decode > "$certificate_path" 2>/dev/null; then
+            :
+          else
+            printf '%s' "$MACOS_CERTIFICATE_P12_BASE64" | base64 -D > "$certificate_path"
+          fi
+
+          security create-keychain -p "$keychain_password" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$keychain_password" "$keychain_path"
+
+          curl -fsSL https://www.apple.com/certificateauthority/AppleRootCA-G3.cer \
+            -o "$RUNNER_TEMP/AppleRootCA-G3.cer"
+          curl -fsSL https://www.apple.com/certificateauthority/AppleWWDRCAG6.cer \
+            -o "$RUNNER_TEMP/AppleWWDRCAG6.cer"
+          curl -fsSL https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer \
+            -o "$RUNNER_TEMP/DeveloperIDG2CA.cer"
+
+          security import "$RUNNER_TEMP/AppleRootCA-G3.cer" -k "$keychain_path"
+          security import "$RUNNER_TEMP/AppleWWDRCAG6.cer" -k "$keychain_path"
+          security import "$RUNNER_TEMP/DeveloperIDG2CA.cer" -k "$keychain_path"
+          security import "$certificate_path" \
+            -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$keychain_path"
+          security list-keychains -d user -s "$keychain_path"
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "$keychain_password" \
+            "$keychain_path"
+          security find-identity -v -p codesigning "$keychain_path"
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$MACOS_CODESIGN_IDENTITY" \
+            dist/embed-code-macos
+          codesign --verify --verbose=4 dist/embed-code-macos
+
+      # Notarize the macOS ZIP that will be published as the release asset.
+      - name: Notarize macOS Binary
+        if: steps.release.outputs.publish == 'true'
+        shell: bash
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          missing=()
+          [[ -n "$APPLE_ID" ]] || missing+=("APPLE_ID")
+          [[ -n "$APPLE_TEAM_ID" ]] || missing+=("APPLE_TEAM_ID")
+          [[ -n "$APPLE_APP_SPECIFIC_PASSWORD" ]] || missing+=("APPLE_APP_SPECIFIC_PASSWORD")
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required GitHub secret: %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+
+          pushd dist
+          ditto -c -k --keepParent embed-code-macos embed-code-macos.zip
+          popd
+
+          xcrun notarytool submit dist/embed-code-macos.zip \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --wait
+          rm dist/embed-code-macos
 
       # Create the release for the current commit and attach all generated binaries.
       - name: Publish GitHub Release

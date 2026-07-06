@@ -56,7 +56,8 @@ This repository is configured with these GitHub workflows:
 - `check`: runs linting, the normal Go test suite, and the showcase end-to-end
   tests across supported platforms.
 - `release-binaries`: reads `VERSION`, builds Linux, macOS, and Windows
-  binaries, and creates the matching GitHub Release on pushes to `master`.
+  binaries, signs and notarizes the macOS ZIP, and creates the matching GitHub
+  Release on pushes to `master`.
 
 The release tag is `v<version>` from `VERSION`. When the release already exists,
 the workflow emits a warning and finishes successfully without rebuilding or
