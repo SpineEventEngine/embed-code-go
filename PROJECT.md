@@ -30,6 +30,8 @@ them inside code fences, and checks whether existing snippets are up-to-date.
 - `type/`: YAML-compatible string and named-path list types. The import path
   segment is `type`, but the Go package identifier is `_type` because `type` is
   a Go keyword.
+- `scripts/release/`: helper scripts used by release workflows for signing and
+  notarizing macOS binaries.
 - `test/resources/`: parser, embedding, configuration, and source-code fixtures.
 - `showcase/`: executable user guide and end-to-end example suite.
 
