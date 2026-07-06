@@ -19,6 +19,7 @@
 package logging
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -27,8 +28,6 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
-
-	"golang.org/x/net/context"
 )
 
 const fileScheme = "file"
