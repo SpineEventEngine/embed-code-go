@@ -228,6 +228,8 @@ func (f *csharpLineFilter) consumeInterpolationCodeByte() bool {
 }
 
 // consumeInterpolationFormat copies C# format text after a top-level interpolation colon.
+// This lightweight scanner does not track parentheses inside interpolation expressions,
+// so a ternary colon in parentheses is treated as format text.
 func (f *csharpLineFilter) consumeInterpolationFormat() bool {
 	if !f.state.interpolationFormat {
 		if f.state.interpolationDepth != 1 || f.line[f.position] != ':' {
