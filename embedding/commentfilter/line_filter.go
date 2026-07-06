@@ -71,6 +71,15 @@ type lineFilter struct {
 	hadComment bool
 }
 
+// commentConsumeResult describes a consumed source comment.
+type commentConsumeResult struct {
+	// consumed reports whether a recognized comment marker was consumed.
+	consumed bool
+
+	// stopLine reports whether the consumed comment reaches the end of the source line.
+	stopLine bool
+}
+
 // blockCommentState tracks a non-nested block comment across source lines.
 type blockCommentState struct {
 	// active reports whether scanning is inside a block comment.
