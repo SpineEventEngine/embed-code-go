@@ -67,6 +67,14 @@ func (p Partition) Select(lines []string) ([]string, error) {
 		return lines[startPosition:], nil
 	}
 
+	if endPosition < startPosition-1 {
+		return nil, fmt.Errorf(
+			"fragment partition end position %d is before start position %d",
+			endPosition,
+			startPosition,
+		)
+	}
+
 	if !hasLineIndex(lines, endPosition) {
 		return nil, fmt.Errorf(
 			"fragment partition end position %d is outside source lines",

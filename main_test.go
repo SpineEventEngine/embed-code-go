@@ -19,6 +19,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -107,26 +108,44 @@ var _ = Describe("Main orchestrator", func() {
 				"- " + logging.FileReference(secondPath) + ".\n",
 		))
 	})
+
+	It("should capture output larger than the pipe buffer", func() {
+		largeOutput := bytes.Repeat([]byte("x"), 128*1024)
+
+		output := captureStdout(func() {
+			_, err := os.Stdout.Write(largeOutput)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+
+		Expect(output).Should(Equal(string(largeOutput)))
+	})
 })
 
 // captureStdout runs action and returns text written to standard output.
-func captureStdout(action func()) string {
+func captureStdout(action func()) (output string) {
 	originalStdout := os.Stdout
 	reader, writer, err := os.Pipe()
 	Expect(err).ShouldNot(HaveOccurred())
 	os.Stdout = writer
+	var buffer bytes.Buffer
+	readDone := make(chan error, 1)
+	go func() {
+		_, err := io.Copy(&buffer, reader)
+		readDone <- err
+	}()
 	defer func() {
 		os.Stdout = originalStdout
+	}()
+	defer func() {
+		Expect(writer.Close()).Should(Succeed())
+		Expect(<-readDone).ShouldNot(HaveOccurred())
+		Expect(reader.Close()).Should(Succeed())
+		output = buffer.String()
 	}()
 
 	action()
 
-	Expect(writer.Close()).Should(Succeed())
-	output, err := io.ReadAll(reader)
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(reader.Close()).Should(Succeed())
-
-	return string(output)
+	return output
 }
 
 // writeMainModeFixture creates one source file and one stale documentation file.
