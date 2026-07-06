@@ -50,6 +50,23 @@ type CommentFilter interface {
 	Filter(lines []string, mode Mode) []string
 }
 
+// filterLines applies a line filter and drops lines made empty by comment removal.
+func filterLines(
+	lines []string,
+	filterLine func(line string) (filteredLine string, hadComment bool),
+) []string {
+	var filtered []string
+	for _, line := range lines {
+		filteredLine, hadComment := filterLine(line)
+		if hadComment && strings.TrimSpace(filteredLine) == "" {
+			continue
+		}
+		filtered = append(filtered, filteredLine)
+	}
+
+	return filtered
+}
+
 // Filter returns source lines with comments stripped according to the requested mode.
 //
 // Parameters:

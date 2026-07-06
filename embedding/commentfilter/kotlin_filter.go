@@ -69,17 +69,11 @@ type kotlinLineFilter struct {
 //
 // Returns filtered source lines.
 func (KotlinCommentFilter) Filter(lines []string, mode Mode) []string {
-	var filtered []string
 	state := kotlinState{}
-	for _, line := range lines {
-		filteredLine, hadComment := filterKotlinLine(line, mode, &state)
-		if hadComment && strings.TrimSpace(filteredLine) == "" {
-			continue
-		}
-		filtered = append(filtered, filteredLine)
-	}
 
-	return filtered
+	return filterLines(lines, func(line string) (string, bool) {
+		return filterKotlinLine(line, mode, &state)
+	})
 }
 
 // filterKotlinLine removes or preserves recognized Kotlin comments from one line.

@@ -93,17 +93,11 @@ type interpolationCodeResult struct {
 //
 // Returns filtered source lines.
 func (JavaScriptCommentFilter) Filter(lines []string, mode Mode) []string {
-	var filtered []string
 	state := javascriptState{}
-	for _, line := range lines {
-		filteredLine, hadComment := filterJavaScriptLine(line, mode, &state)
-		if hadComment && strings.TrimSpace(filteredLine) == "" {
-			continue
-		}
-		filtered = append(filtered, filteredLine)
-	}
 
-	return filtered
+	return filterLines(lines, func(line string) (string, bool) {
+		return filterJavaScriptLine(line, mode, &state)
+	})
 }
 
 // filterJavaScriptLine removes or preserves recognized JavaScript comments from one line.
