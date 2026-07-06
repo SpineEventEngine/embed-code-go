@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"log/slog"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -178,7 +179,7 @@ func warnUnsupportedCommentsMode(
 	embeddingLine int,
 	supportedModes []Mode,
 ) bool {
-	if containsMode(supportedModes, mode) {
+	if slices.Contains(supportedModes, mode) {
 		return false
 	}
 	var wrappedModes []string
@@ -198,15 +199,4 @@ func warnUnsupportedCommentsMode(
 	)
 
 	return true
-}
-
-// containsMode reports whether the list includes the given mode.
-func containsMode(modes []Mode, mode Mode) bool {
-	for _, supportedMode := range modes {
-		if supportedMode == mode {
-			return true
-		}
-	}
-
-	return false
 }

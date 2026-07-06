@@ -43,26 +43,13 @@ type markerState struct {
 
 // markerLineFilter tracks lexical comment filtering state for one source line.
 type markerLineFilter struct {
+	lineFilter
+
 	// filter contains the language syntax configuration.
 	filter MarkerCommentFilter
 
-	// line is the source line being filtered.
-	line string
-
-	// mode selects which comments to retain.
-	mode Mode
-
 	// state tracks multi-line lexical constructs across lines.
 	state *markerState
-
-	// result accumulates the filtered source line.
-	result strings.Builder
-
-	// position is the current byte index in line.
-	position int
-
-	// hadComment reports whether the line contained a recognized comment.
-	hadComment bool
 }
 
 // Filter removes or preserves recognized comments across all lines.
@@ -76,24 +63,14 @@ func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
 	state := markerState{}
 
 	return filterLines(lines, func(line string) (string, bool) {
-		return f.filterLine(line, mode, &state)
+		filter := markerLineFilter{
+			lineFilter: lineFilter{line: line, mode: mode},
+			filter:     f,
+			state:      &state,
+		}
+
+		return filter.filterLine()
 	})
-}
-
-// filterLine removes or preserves recognized comments from a single source line.
-func (f MarkerCommentFilter) filterLine(
-	line string,
-	mode Mode,
-	state *markerState,
-) (string, bool) {
-	filter := markerLineFilter{
-		filter: f,
-		line:   line,
-		mode:   mode,
-		state:  state,
-	}
-
-	return filter.filterLine()
 }
 
 // filterLine walks the current line until it reaches its end or a line comment.
@@ -105,7 +82,7 @@ func (f *markerLineFilter) filterLine() (string, bool) {
 		if f.consumeTextBlockStart() {
 			continue
 		}
-		if f.consumeQuotedSegment() {
+		if f.consumeQuotedSegment(f.filter.Syntax.QuoteChars) {
 			continue
 		}
 		if comment := f.consumeComment(); comment.consumed {
@@ -171,8 +148,7 @@ func (f *markerLineFilter) consumeTextBlockStart() bool {
 	if !found {
 		return false
 	}
-	f.result.WriteString(marker.Delimiter)
-	f.position += len(marker.Delimiter)
+	f.consumeMarker(marker.Delimiter)
 	f.state.segment = &activeSegment{
 		end:     marker.Delimiter,
 		keep:    true,
@@ -182,44 +158,10 @@ func (f *markerLineFilter) consumeTextBlockStart() bool {
 	return true
 }
 
-// consumeQuotedSegment copies a quoted segment without scanning comment markers inside it.
-func (f *markerLineFilter) consumeQuotedSegment() bool {
-	quoteEnd := quotedSegmentEnd(f.line, f.position, f.filter.Syntax.QuoteChars)
-	if quoteEnd <= f.position {
-		return false
-	}
-	f.result.WriteString(f.line[f.position:quoteEnd])
-	f.position = quoteEnd
-
-	return true
-}
-
-// quotedSegmentEnd returns the end offset of a quoted string starting at position.
-func quotedSegmentEnd(line string, position int, quoteChars string) int {
-	if position >= len(line) || !strings.ContainsRune(quoteChars, rune(line[position])) {
-		return position
-	}
-	quote := line[position]
-	cursor := position + 1
-	for cursor < len(line) {
-		if line[cursor] == '\\' {
-			cursor += 2
-
-			continue
-		}
-		if line[cursor] == quote {
-			return cursor + 1
-		}
-		cursor++
-	}
-
-	return len(line)
-}
-
 // consumeComment consumes a comment when one starts at the scanner position.
 func (f *markerLineFilter) consumeComment() commentConsumeResult {
 	if prefixAt(f.line, f.position, f.filter.Syntax.Documentation.Inline) {
-		f.consumeInlineComment(f.mode == RetainDocumentation)
+		f.consumeLineComment(f.mode == RetainDocumentation)
 
 		return commentConsumeResult{consumed: true, stopLine: true}
 	}
@@ -229,7 +171,7 @@ func (f *markerLineFilter) consumeComment() commentConsumeResult {
 		return commentConsumeResult{consumed: true}
 	}
 	if prefixAt(f.line, f.position, f.filter.Syntax.Inline) {
-		f.consumeInlineComment(f.mode == RetainInline || f.mode == RetainRegular)
+		f.consumeLineComment(f.mode == RetainInline || f.mode == RetainRegular)
 
 		return commentConsumeResult{consumed: true, stopLine: true}
 	}
@@ -242,15 +184,6 @@ func (f *markerLineFilter) consumeComment() commentConsumeResult {
 	return commentConsumeResult{}
 }
 
-// consumeInlineComment consumes the rest of the line as a line comment.
-func (f *markerLineFilter) consumeInlineComment(keep bool) {
-	f.hadComment = true
-	if keep {
-		f.result.WriteString(f.line[f.position:])
-	}
-	f.position = len(f.line)
-}
-
 // startBlockComment records the active block comment markers and whether to keep them.
 func (f *markerLineFilter) startBlockComment(block BlockMarker, keep bool) {
 	f.hadComment = true
@@ -259,12 +192,6 @@ func (f *markerLineFilter) startBlockComment(block BlockMarker, keep bool) {
 		keep:    keep,
 		comment: true,
 	}
-}
-
-// consumeCodeByte copies one source byte that does not belong to a recognized comment.
-func (f *markerLineFilter) consumeCodeByte() {
-	f.result.WriteByte(f.line[f.position])
-	f.position++
 }
 
 // prefixAt reports whether one of the given prefixes starts at the position.
