@@ -122,6 +122,9 @@ func (f *csharpLineFilter) filterLine() (string, bool) {
 		if f.consumeStringText() {
 			continue
 		}
+		if f.consumeCharacterLiteral() {
+			continue
+		}
 		if f.consumeStringStart() {
 			continue
 		}
@@ -171,42 +174,57 @@ func (f *csharpLineFilter) consumeStringInterpolation() bool {
 		return false
 	}
 	for f.position < len(f.line) {
-		if f.consumeActiveBlock() {
-			continue
-		}
-		if f.consumeInterpolationFormat() {
+		if f.consumeInterpolationSegment() {
 			if f.state.interpolationDepth == 0 {
 				return true
 			}
 
 			continue
 		}
-		if f.consumeInterpolationString() {
-			continue
-		}
-		if comment := f.consumeComment(); comment.consumed {
-			if comment.stopLine {
-				return true
-			}
-
-			continue
-		}
-		switch f.line[f.position] {
-		case '{':
-			f.state.interpolationDepth++
-			f.consumeCodeByte()
-		case '}':
-			f.state.interpolationDepth--
-			f.consumeCodeByte()
-			if f.state.interpolationDepth == 0 {
-				return true
-			}
-		default:
-			f.consumeCodeByte()
+		if f.consumeInterpolationCodeByte() {
+			return true
 		}
 	}
 
 	return true
+}
+
+// consumeInterpolationSegment consumes multi-byte interpolation content.
+func (f *csharpLineFilter) consumeInterpolationSegment() bool {
+	if f.consumeActiveBlock() {
+		return true
+	}
+	if f.consumeInterpolationFormat() {
+		return true
+	}
+	if f.consumeInterpolationString() {
+		return true
+	}
+	if comment := f.consumeComment(); comment.consumed {
+		return true
+	}
+
+	return false
+}
+
+// consumeInterpolationCodeByte copies expression code and reports whether interpolation closed.
+func (f *csharpLineFilter) consumeInterpolationCodeByte() bool {
+	switch f.line[f.position] {
+	case '{':
+		f.state.interpolationDepth++
+		f.consumeCodeByte()
+
+		return false
+	case '}':
+		f.state.interpolationDepth--
+		f.consumeCodeByte()
+
+		return f.state.interpolationDepth == 0
+	default:
+		f.consumeCodeByte()
+
+		return false
+	}
 }
 
 // consumeInterpolationFormat copies C# format text after a top-level interpolation colon.
@@ -265,29 +283,47 @@ func (f *csharpLineFilter) consumeStringText() bool {
 		return false
 	}
 	for f.position < len(f.line) {
-		switch {
-		case f.state.stringVerbatim && strings.HasPrefix(f.line[f.position:], csharpEscapedQuote):
-			f.result.WriteString(csharpEscapedQuote)
-			f.position += len(csharpEscapedQuote)
-		case !f.state.stringVerbatim && f.line[f.position] == '\\':
-			f.writeEscapedByte()
-		case f.line[f.position] == '"':
-			f.consumeCodeByte()
-			f.closeString()
-
+		if f.consumeStringTextSegment() {
 			return true
-		case f.startsEscapedInterpolationBrace():
-			f.result.WriteString(f.line[f.position : f.position+2])
-			f.position += 2
-		case f.state.stringInterpolated && f.line[f.position] == '{':
-			f.consumeCodeByte()
-			f.state.interpolationDepth = 1
-
-			return true
-		default:
-			f.consumeCodeByte()
 		}
+		f.consumeCodeByte()
 	}
+
+	return true
+}
+
+// consumeStringTextSegment consumes special syntax inside active string text.
+func (f *csharpLineFilter) consumeStringTextSegment() bool {
+	switch {
+	case f.state.stringVerbatim && strings.HasPrefix(f.line[f.position:], csharpEscapedQuote):
+		f.result.WriteString(csharpEscapedQuote)
+		f.position += len(csharpEscapedQuote)
+	case !f.state.stringVerbatim && f.line[f.position] == '\\':
+		f.writeEscapedByte()
+	case f.line[f.position] == '"':
+		f.consumeCodeByte()
+		f.closeString()
+	case f.startsEscapedInterpolationBrace():
+		f.result.WriteString(f.line[f.position : f.position+2])
+		f.position += 2
+	case f.state.stringInterpolated && f.line[f.position] == '{':
+		f.consumeCodeByte()
+		f.state.interpolationDepth = 1
+	default:
+		return false
+	}
+
+	return true
+}
+
+// consumeCharacterLiteral copies a C# character literal.
+func (f *csharpLineFilter) consumeCharacterLiteral() bool {
+	quoteEnd := quotedSegmentEnd(f.line, f.position, "'")
+	if quoteEnd <= f.position {
+		return false
+	}
+	f.result.WriteString(f.line[f.position:quoteEnd])
+	f.position = quoteEnd
 
 	return true
 }
