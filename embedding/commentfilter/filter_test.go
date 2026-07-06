@@ -340,6 +340,22 @@ var _ = Describe("Comment filter", func() {
 			assertFiltered("sample.ts", RetainNone, lines, expected)
 		})
 
+		It("should filter comments inside multi-line nested template interpolations", func() {
+			lines := []string{
+				"const nestedExpression = `${items.map(i => `value ${format(",
+				"i, // real nested expression comment",
+				")}`).join()}`;",
+			}
+
+			expected := []string{
+				"const nestedExpression = `${items.map(i => `value ${format(",
+				"i, ",
+				")}`).join()}`;",
+			}
+
+			assertFiltered("sample.ts", RetainNone, lines, expected)
+		})
+
 		It("should preserve multi-line template literal text", func() {
 			lines := []string{
 				"const help = `Keep // marker",
@@ -380,6 +396,58 @@ var _ = Describe("Comment filter", func() {
 			}
 
 			assertFiltered("sample.ts", RetainNone, lines, expected)
+		})
+
+		It("should honor JavaScript comment retention modes around literals", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* setup block */",
+				"const regex = /\\/\\/literal\\/\\*not-comment\\*\\//; // inline note",
+				"const template = `Keep // and /* markers */ " +
+					"${format(value /* inner block */)}`; // trailing note",
+			}
+			cases := []struct {
+				mode     Mode
+				expected []string
+			}{
+				{
+					mode: RetainDocumentation,
+					expected: []string{
+						"/** API docs. */",
+						"const regex = /\\/\\/literal\\/\\*not-comment\\*\\//; ",
+						"const template = `Keep // and /* markers */ ${format(value )}`; ",
+					},
+				},
+				{
+					mode: RetainRegular,
+					expected: []string{
+						"/* setup block */",
+						"const regex = /\\/\\/literal\\/\\*not-comment\\*\\//; // inline note",
+						"const template = `Keep // and /* markers */ " +
+							"${format(value /* inner block */)}`; // trailing note",
+					},
+				},
+				{
+					mode: RetainInline,
+					expected: []string{
+						"const regex = /\\/\\/literal\\/\\*not-comment\\*\\//; // inline note",
+						"const template = `Keep // and /* markers */ ${format(value )}`; // trailing note",
+					},
+				},
+				{
+					mode: RetainBlock,
+					expected: []string{
+						"/* setup block */",
+						"const regex = /\\/\\/literal\\/\\*not-comment\\*\\//; ",
+						"const template = `Keep // and /* markers */ ${format(value /* inner block */)}`; ",
+					},
+				},
+			}
+
+			for _, tc := range cases {
+				By(string(tc.mode))
+				assertFiltered("sample.ts", tc.mode, lines, tc.expected)
+			}
 		})
 	})
 
