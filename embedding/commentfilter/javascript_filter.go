@@ -67,15 +67,6 @@ type javascriptLineFilter struct {
 	hadComment bool
 }
 
-// commentConsumeResult describes a consumed JavaScript comment.
-type commentConsumeResult struct {
-	// consumed reports whether a recognized comment marker was consumed.
-	consumed bool
-
-	// stopLine reports whether the consumed comment reaches the end of the source line.
-	stopLine bool
-}
-
 // interpolationCodeResult describes the effect of one consumed interpolation byte.
 type interpolationCodeResult struct {
 	// depth is the brace depth after consuming the byte at the scanner position.

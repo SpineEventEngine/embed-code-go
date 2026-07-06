@@ -102,8 +102,8 @@ func (f *kotlinLineFilter) filterLine() (string, bool) {
 		if f.consumeString() {
 			continue
 		}
-		if consumed, stop := f.consumeComment(); consumed {
-			if stop {
+		if comment := f.consumeComment(); comment.consumed {
+			if comment.stopLine {
 				break
 			}
 
@@ -258,8 +258,8 @@ func (f *kotlinLineFilter) consumeInterpolationDepth(depth *int) {
 		if f.consumeString() {
 			continue
 		}
-		if consumed, stop := f.consumeComment(); consumed {
-			if stop {
+		if comment := f.consumeComment(); comment.consumed {
+			if comment.stopLine {
 				return
 			}
 
@@ -295,17 +295,17 @@ func (f *kotlinLineFilter) consumeInterpolationCode(depth int) (int, bool) {
 	}
 }
 
-// consumeComment consumes a Kotlin comment and reports whether it ended the line.
-func (f *kotlinLineFilter) consumeComment() (bool, bool) {
+// consumeComment consumes a Kotlin comment when one starts at the scanner position.
+func (f *kotlinLineFilter) consumeComment() commentConsumeResult {
 	if strings.HasPrefix(f.line[f.position:], cStyleDocCommentStart) {
 		f.startBlockComment(f.mode == RetainDocumentation)
 
-		return true, false
+		return commentConsumeResult{consumed: true}
 	}
 	if strings.HasPrefix(f.line[f.position:], cStyleBlockCommentStart) {
 		f.startBlockComment(f.mode == RetainBlock || f.mode == RetainRegular)
 
-		return true, false
+		return commentConsumeResult{consumed: true}
 	}
 	if strings.HasPrefix(f.line[f.position:], "//") {
 		f.hadComment = true
@@ -314,10 +314,10 @@ func (f *kotlinLineFilter) consumeComment() (bool, bool) {
 		}
 		f.position = len(f.line)
 
-		return true, true
+		return commentConsumeResult{consumed: true, stopLine: true}
 	}
 
-	return false, false
+	return commentConsumeResult{}
 }
 
 // startBlockComment starts a Kotlin block comment with nesting depth one.

@@ -20,33 +20,6 @@ package commentfilter
 
 import "strings"
 
-// BlockMarker describes a block comment marker pair.
-type BlockMarker struct {
-	// Start is the block comment opening marker.
-	Start string
-
-	// End is the block comment closing marker.
-	End string
-}
-
-// DocumentationMarker describes API documentation comment markers.
-type DocumentationMarker struct {
-	// Inline contains documentation line-comment markers.
-	Inline []string
-
-	// Block contains documentation block-comment marker pairs.
-	Block []BlockMarker
-}
-
-// TextBlockMarker describes a multi-line text literal delimiter.
-type TextBlockMarker struct {
-	// Delimiter opens and closes the text literal.
-	Delimiter string
-
-	// Escapes reports whether backslashes escape delimiter bytes.
-	Escapes bool
-}
-
 // activeSegment describes a multi-line construct currently being scanned.
 type activeSegment struct {
 	// end closes the active construct.
@@ -62,37 +35,10 @@ type activeSegment struct {
 	comment bool
 }
 
-// CommentMarker describes lexical comment markers and string delimiters for a language family.
-type CommentMarker struct {
-	// Inline contains line-comment markers.
-	Inline []string
-
-	// Block contains block-comment marker pairs.
-	Block []BlockMarker
-
-	// Documentation contains API documentation comment markers.
-	Documentation DocumentationMarker
-
-	// TextBlocks contains markers that open and close multi-line text literals.
-	TextBlocks []TextBlockMarker
-
-	// QuoteChars contains characters that open and close quoted strings.
-	QuoteChars string
-}
-
-// MarkerCommentFilter removes comments using lexical markers declared in CommentMarker.
-type MarkerCommentFilter struct {
-	// Syntax contains the comment markers and string delimiters to recognize.
-	Syntax CommentMarker
-}
-
 // markerState tracks active multi-line lexical constructs across source lines.
 type markerState struct {
-	// active reports whether scanning is inside a multi-line construct.
-	active bool
-
-	// segment contains the active construct configuration.
-	segment activeSegment
+	// segment contains the active construct configuration, if one is open.
+	segment *activeSegment
 }
 
 // markerLineFilter tracks lexical comment filtering state for one source line.
@@ -162,8 +108,8 @@ func (f *markerLineFilter) filterLine() (string, bool) {
 		if f.consumeQuotedSegment() {
 			continue
 		}
-		if consumed, stop := f.consumeComment(); consumed {
-			if stop {
+		if comment := f.consumeComment(); comment.consumed {
+			if comment.stopLine {
 				break
 			}
 
@@ -177,14 +123,14 @@ func (f *markerLineFilter) filterLine() (string, bool) {
 
 // consumeActiveSegment consumes text while the scanner is inside a multi-line construct.
 func (f *markerLineFilter) consumeActiveSegment() bool {
-	if !f.state.active {
+	segment := f.state.segment
+	if segment == nil {
 		return false
 	}
-	segment := f.state.segment
 	if segment.comment {
 		f.hadComment = true
 	}
-	endPosition, found := segmentEnd(f.line, f.position, segment)
+	endPosition, found := segmentEnd(f.line, f.position, *segment)
 	if !found {
 		if segment.keep {
 			f.result.WriteString(f.line[f.position:])
@@ -197,8 +143,7 @@ func (f *markerLineFilter) consumeActiveSegment() bool {
 		f.result.WriteString(f.line[f.position:endPosition])
 	}
 	f.position = endPosition
-	f.state.active = false
-	f.state.segment = activeSegment{}
+	f.state.segment = nil
 
 	return true
 }
@@ -228,8 +173,7 @@ func (f *markerLineFilter) consumeTextBlockStart() bool {
 	}
 	f.result.WriteString(marker.Delimiter)
 	f.position += len(marker.Delimiter)
-	f.state.active = true
-	f.state.segment = activeSegment{
+	f.state.segment = &activeSegment{
 		end:     marker.Delimiter,
 		keep:    true,
 		escapes: marker.Escapes,
@@ -272,30 +216,30 @@ func quotedSegmentEnd(line string, position int, quoteChars string) int {
 	return len(line)
 }
 
-// consumeComment consumes a comment and reports whether it consumed input and ended the line.
-func (f *markerLineFilter) consumeComment() (bool, bool) {
+// consumeComment consumes a comment when one starts at the scanner position.
+func (f *markerLineFilter) consumeComment() commentConsumeResult {
 	if prefixAt(f.line, f.position, f.filter.Syntax.Documentation.Inline) {
 		f.consumeInlineComment(f.mode == RetainDocumentation)
 
-		return true, true
+		return commentConsumeResult{consumed: true, stopLine: true}
 	}
 	if block, found := blockAt(f.line, f.position, f.filter.Syntax.Documentation.Block); found {
 		f.startBlockComment(block, f.mode == RetainDocumentation)
 
-		return true, false
+		return commentConsumeResult{consumed: true}
 	}
 	if prefixAt(f.line, f.position, f.filter.Syntax.Inline) {
 		f.consumeInlineComment(f.mode == RetainInline || f.mode == RetainRegular)
 
-		return true, true
+		return commentConsumeResult{consumed: true, stopLine: true}
 	}
 	if block, found := blockAt(f.line, f.position, f.filter.Syntax.Block); found {
 		f.startBlockComment(block, f.mode == RetainBlock || f.mode == RetainRegular)
 
-		return true, false
+		return commentConsumeResult{consumed: true}
 	}
 
-	return false, false
+	return commentConsumeResult{}
 }
 
 // consumeInlineComment consumes the rest of the line as a line comment.
@@ -310,8 +254,7 @@ func (f *markerLineFilter) consumeInlineComment(keep bool) {
 // startBlockComment records the active block comment markers and whether to keep them.
 func (f *markerLineFilter) startBlockComment(block BlockMarker, keep bool) {
 	f.hadComment = true
-	f.state.active = true
-	f.state.segment = activeSegment{
+	f.state.segment = &activeSegment{
 		end:     block.End,
 		keep:    keep,
 		comment: true,
@@ -326,20 +269,13 @@ func (f *markerLineFilter) consumeCodeByte() {
 
 // prefixAt reports whether one of the given prefixes starts at the position.
 func prefixAt(line string, position int, prefixes []string) bool {
-	_, found := prefixFrom(line, position, prefixes)
-
-	return found
-}
-
-// prefixFrom returns the prefix starting at position when one exists.
-func prefixFrom(line string, position int, prefixes []string) (string, bool) {
 	for _, prefix := range prefixes {
 		if strings.HasPrefix(line[position:], prefix) {
-			return prefix, true
+			return true
 		}
 	}
 
-	return "", false
+	return false
 }
 
 // textBlockAt reports whether one of the given text block markers starts at the position.
