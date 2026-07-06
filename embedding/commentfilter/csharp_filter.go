@@ -250,7 +250,8 @@ func (f *csharpLineFilter) consumeInterpolationFormat() bool {
 	return true
 }
 
-// consumeInterpolationString copies a string literal inside interpolation code.
+// consumeInterpolationString copies a line-local string literal inside interpolation code.
+// Nested multi-line verbatim strings intentionally resume as interpolation code on the next line.
 func (f *csharpLineFilter) consumeInterpolationString() bool {
 	token, verbatim, found := csharpStringTokenAt(f.line, f.position)
 	if !found {
