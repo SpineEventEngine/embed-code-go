@@ -28,18 +28,24 @@ const (
 	csharpEscapedQuote                    = `""`
 	csharpEscapedOpenBrace                = `{{`
 	csharpEscapedCloseBrace               = `}}`
+	csharpDocLineComment                  = `///`
 )
+
+// csharpInterpolation describes the C# `{...}` string interpolation form.
+// Holes open with a bare `{` inside interpolated string text.
+var csharpInterpolation = interpolationForm{
+	start:      "{",
+	openBrace:  '{',
+	closeBrace: '}',
+}
 
 // CSharpCommentFilter filters C# comments while preserving string literal text.
 type CSharpCommentFilter struct{}
 
 // csharpState tracks C# lexical state that can span source lines.
 type csharpState struct {
-	// blockActive reports whether scanning is inside a block comment.
-	blockActive bool
-
-	// blockKeep reports whether the active block comment should be retained.
-	blockKeep bool
+	// block tracks a block comment across source lines.
+	block blockCommentState
 
 	// stringActive reports whether scanning is inside a string.
 	stringActive bool
@@ -59,23 +65,10 @@ type csharpState struct {
 
 // csharpLineFilter filters one C# source line.
 type csharpLineFilter struct {
-	// line is the source line being filtered.
-	line string
-
-	// mode selects which comments to retain.
-	mode Mode
+	lineFilter
 
 	// state tracks C# constructs across lines.
 	state *csharpState
-
-	// result accumulates the filtered source line.
-	result strings.Builder
-
-	// position is the current byte index in line.
-	position int
-
-	// hadComment reports whether the line contained a recognized comment.
-	hadComment bool
 }
 
 // Filter removes or preserves C# comments according to mode.
@@ -89,25 +82,19 @@ func (CSharpCommentFilter) Filter(lines []string, mode Mode) []string {
 	state := csharpState{}
 
 	return filterLines(lines, func(line string) (string, bool) {
-		return filterCSharpLine(line, mode, &state)
+		filter := csharpLineFilter{
+			lineFilter: lineFilter{line: line, mode: mode},
+			state:      &state,
+		}
+
+		return filter.filterLine()
 	})
-}
-
-// filterCSharpLine removes or preserves recognized C# comments from one line.
-func filterCSharpLine(line string, mode Mode, state *csharpState) (string, bool) {
-	filter := csharpLineFilter{
-		line:  line,
-		mode:  mode,
-		state: state,
-	}
-
-	return filter.filterLine()
 }
 
 // filterLine walks the current line until it reaches its end or a line comment.
 func (f *csharpLineFilter) filterLine() (string, bool) {
 	for f.position < len(f.line) {
-		if f.consumeActiveBlock() {
+		if f.consumeActiveBlock(&f.state.block) {
 			continue
 		}
 		if f.consumeStringInterpolation() {
@@ -116,7 +103,7 @@ func (f *csharpLineFilter) filterLine() (string, bool) {
 		if f.consumeStringText() {
 			continue
 		}
-		if f.consumeCharacterLiteral() {
+		if f.consumeQuotedSegment("'") {
 			continue
 		}
 		if f.consumeStringStart() {
@@ -137,31 +124,6 @@ func (f *csharpLineFilter) filterLine() (string, bool) {
 	return f.result.String(), f.hadComment
 }
 
-// consumeActiveBlock consumes text while the scanner is inside a block comment.
-func (f *csharpLineFilter) consumeActiveBlock() bool {
-	if !f.state.blockActive {
-		return false
-	}
-	f.hadComment = true
-	end := strings.Index(f.line[f.position:], cStyleBlockCommentEnd)
-	if end < 0 {
-		if f.state.blockKeep {
-			f.result.WriteString(f.line[f.position:])
-		}
-		f.position = len(f.line)
-
-		return true
-	}
-	endPosition := f.position + end + len(cStyleBlockCommentEnd)
-	if f.state.blockKeep {
-		f.result.WriteString(f.line[f.position:endPosition])
-	}
-	f.position = endPosition
-	f.state.blockActive = false
-
-	return true
-}
-
 // consumeStringInterpolation filters code inside an active interpolation expression.
 func (f *csharpLineFilter) consumeStringInterpolation() bool {
 	if !f.state.stringActive || f.state.interpolationDepth == 0 {
@@ -175,7 +137,7 @@ func (f *csharpLineFilter) consumeStringInterpolation() bool {
 
 			continue
 		}
-		if f.consumeInterpolationCodeByte() {
+		if f.consumeInterpolationCodeByte(csharpInterpolation, &f.state.interpolationDepth) {
 			return true
 		}
 	}
@@ -185,7 +147,7 @@ func (f *csharpLineFilter) consumeStringInterpolation() bool {
 
 // consumeInterpolationSegment consumes multi-byte interpolation content.
 func (f *csharpLineFilter) consumeInterpolationSegment() bool {
-	if f.consumeActiveBlock() {
+	if f.consumeActiveBlock(&f.state.block) {
 		return true
 	}
 	if f.consumeInterpolationFormat() {
@@ -199,26 +161,6 @@ func (f *csharpLineFilter) consumeInterpolationSegment() bool {
 	}
 
 	return false
-}
-
-// consumeInterpolationCodeByte copies expression code and reports whether interpolation closed.
-func (f *csharpLineFilter) consumeInterpolationCodeByte() bool {
-	switch f.line[f.position] {
-	case '{':
-		f.state.interpolationDepth++
-		f.consumeCodeByte()
-
-		return false
-	case '}':
-		f.state.interpolationDepth--
-		f.consumeCodeByte()
-
-		return f.state.interpolationDepth == 0
-	default:
-		f.consumeCodeByte()
-
-		return false
-	}
 }
 
 // consumeInterpolationFormat copies C# format text after a top-level interpolation colon.
@@ -253,13 +195,11 @@ func (f *csharpLineFilter) consumeInterpolationString() bool {
 	if !found {
 		return false
 	}
-	f.result.WriteString(token)
-	f.position += len(token)
+	f.consumeMarker(token)
 	for f.position < len(f.line) {
 		switch {
-		case verbatim && strings.HasPrefix(f.line[f.position:], csharpEscapedQuote):
-			f.result.WriteString(csharpEscapedQuote)
-			f.position += len(csharpEscapedQuote)
+		case verbatim && f.hasPrefix(csharpEscapedQuote):
+			f.consumeMarker(csharpEscapedQuote)
 		case !verbatim && f.line[f.position] == '\\':
 			f.writeEscapedByte()
 		case f.line[f.position] == '"':
@@ -292,35 +232,21 @@ func (f *csharpLineFilter) consumeStringText() bool {
 // consumeStringTextSegment consumes special syntax inside active string text.
 func (f *csharpLineFilter) consumeStringTextSegment() bool {
 	switch {
-	case f.state.stringVerbatim && strings.HasPrefix(f.line[f.position:], csharpEscapedQuote):
-		f.result.WriteString(csharpEscapedQuote)
-		f.position += len(csharpEscapedQuote)
+	case f.state.stringVerbatim && f.hasPrefix(csharpEscapedQuote):
+		f.consumeMarker(csharpEscapedQuote)
 	case !f.state.stringVerbatim && f.line[f.position] == '\\':
 		f.writeEscapedByte()
 	case f.line[f.position] == '"':
 		f.consumeCodeByte()
 		f.closeString()
 	case f.startsEscapedInterpolationBrace():
-		f.result.WriteString(f.line[f.position : f.position+2])
-		f.position += 2
+		f.consumeMarker(f.line[f.position : f.position+2])
 	case f.state.stringInterpolated && f.line[f.position] == '{':
 		f.consumeCodeByte()
 		f.state.interpolationDepth = 1
 	default:
 		return false
 	}
-
-	return true
-}
-
-// consumeCharacterLiteral copies a C# character literal.
-func (f *csharpLineFilter) consumeCharacterLiteral() bool {
-	quoteEnd := quotedSegmentEnd(f.line, f.position, "'")
-	if quoteEnd <= f.position {
-		return false
-	}
-	f.result.WriteString(f.line[f.position:quoteEnd])
-	f.position = quoteEnd
 
 	return true
 }
@@ -332,7 +258,10 @@ func (f *csharpLineFilter) consumeStringStart() bool {
 		return false
 	}
 	interpolated := strings.HasPrefix(token, "$") || strings.HasPrefix(token, "@$")
-	f.startString(token, verbatim, interpolated)
+	f.consumeMarker(token)
+	f.state.stringActive = true
+	f.state.stringVerbatim = verbatim
+	f.state.stringInterpolated = interpolated
 
 	return true
 }
@@ -355,23 +284,13 @@ func csharpStringTokenAt(line string, position int) (string, bool, bool) {
 	}
 }
 
-// startString records the active string literal and copies its opening token.
-func (f *csharpLineFilter) startString(token string, verbatim bool, interpolated bool) {
-	f.result.WriteString(token)
-	f.position += len(token)
-	f.state.stringActive = true
-	f.state.stringVerbatim = verbatim
-	f.state.stringInterpolated = interpolated
-}
-
 // startsEscapedInterpolationBrace reports whether the position starts {{ or }} in string text.
 func (f *csharpLineFilter) startsEscapedInterpolationBrace() bool {
 	if !f.state.stringInterpolated || f.position+1 >= len(f.line) {
 		return false
 	}
 
-	return strings.HasPrefix(f.line[f.position:], csharpEscapedOpenBrace) ||
-		strings.HasPrefix(f.line[f.position:], csharpEscapedCloseBrace)
+	return f.hasPrefix(csharpEscapedOpenBrace) || f.hasPrefix(csharpEscapedCloseBrace)
 }
 
 // closeSingleLineStringAtLineEnd clears invalid single-line strings at end of line.
@@ -392,57 +311,10 @@ func (f *csharpLineFilter) closeString() {
 
 // consumeComment consumes a C# comment when one starts at the scanner position.
 func (f *csharpLineFilter) consumeComment() commentConsumeResult {
-	if strings.HasPrefix(f.line[f.position:], cStyleDocCommentStart) {
-		f.startBlockComment(f.mode == RetainDocumentation)
-
-		return commentConsumeResult{consumed: true}
-	}
-	if strings.HasPrefix(f.line[f.position:], cStyleBlockCommentStart) {
-		f.startBlockComment(f.mode == RetainBlock || f.mode == RetainRegular)
-
-		return commentConsumeResult{consumed: true}
-	}
-	if strings.HasPrefix(f.line[f.position:], "///") {
-		f.hadComment = true
-		if f.mode == RetainDocumentation {
-			f.result.WriteString(f.line[f.position:])
-		}
-		f.position = len(f.line)
-
-		return commentConsumeResult{consumed: true, stopLine: true}
-	}
-	if strings.HasPrefix(f.line[f.position:], "//") {
-		f.hadComment = true
-		if f.mode == RetainInline || f.mode == RetainRegular {
-			f.result.WriteString(f.line[f.position:])
-		}
-		f.position = len(f.line)
-
-		return commentConsumeResult{consumed: true, stopLine: true}
-	}
-
-	return commentConsumeResult{}
+	return f.consumeCStyleComment(csharpDocLineComment, f.startBlockComment)
 }
 
 // startBlockComment records the active block comment and whether to keep it.
 func (f *csharpLineFilter) startBlockComment(keep bool) {
-	f.hadComment = true
-	f.state.blockActive = true
-	f.state.blockKeep = keep
-}
-
-// writeEscapedByte copies an escaped byte pair from a regular string.
-func (f *csharpLineFilter) writeEscapedByte() {
-	f.result.WriteByte(f.line[f.position])
-	f.position++
-	if f.position < len(f.line) {
-		f.result.WriteByte(f.line[f.position])
-		f.position++
-	}
-}
-
-// consumeCodeByte copies one source byte.
-func (f *csharpLineFilter) consumeCodeByte() {
-	f.result.WriteByte(f.line[f.position])
-	f.position++
+	f.lineFilter.startBlockComment(&f.state.block, keep)
 }
