@@ -56,9 +56,7 @@ func (p Partition) Select(lines []string) ([]string, error) {
 	startPosition := p.StartPosition
 	endPosition := p.EndPosition
 
-	// Verify source lines actually contain configured partition indexes.
-	hasStartPosition := safeAccess(lines, startPosition)
-	if !hasStartPosition {
+	if !hasLineIndex(lines, startPosition) {
 		return nil, fmt.Errorf(
 			"fragment partition start position %d is outside source lines",
 			startPosition,
@@ -69,8 +67,7 @@ func (p Partition) Select(lines []string) ([]string, error) {
 		return lines[startPosition:], nil
 	}
 
-	hasEndPosition := safeAccess(lines, endPosition)
-	if !hasEndPosition {
+	if !hasLineIndex(lines, endPosition) {
 		return nil, fmt.Errorf(
 			"fragment partition end position %d is outside source lines",
 			endPosition,
@@ -80,16 +77,7 @@ func (p Partition) Select(lines []string) ([]string, error) {
 	return lines[startPosition : endPosition+1], nil
 }
 
-// safeAccess reports whether slice contains index.
-func safeAccess(slice []string, index int) bool {
-	var hasIndex bool
-	defer func() {
-		if r := recover(); r != nil {
-			hasIndex = false
-		}
-	}()
-	_ = slice[index]
-	hasIndex = true
-
-	return hasIndex
+// hasLineIndex reports whether lines contain index.
+func hasLineIndex(lines []string, index int) bool {
+	return index >= 0 && index < len(lines)
 }
