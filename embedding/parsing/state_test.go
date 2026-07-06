@@ -162,6 +162,15 @@ var _ = Describe("Parser states", func() {
 		}))
 		Expect(context.IsContentChanged()).Should(BeTrue())
 	})
+
+	It("should report changed content when generated result is longer than processed source", func() {
+		config := configuration.NewConfiguration()
+		context := newStateContext("original source")
+		Expect(parsing.RegularLine.Accept(&context, config)).Should(Succeed())
+		context.Result = append(context.Result, "extra generated line")
+
+		Expect(context.IsContentChanged()).Should(BeTrue())
+	})
 })
 
 // newStateContext builds a parser context from in-memory source lines.
