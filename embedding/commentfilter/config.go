@@ -48,10 +48,10 @@ var filtersByExtension = map[string]filterEntry{
 	".hxx": filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
 
 	// JavaScript
-	".js":  filterConfig(MarkerCommentFilter{Syntax: jsSyntax}, allModes),
-	".jsx": filterConfig(MarkerCommentFilter{Syntax: jsSyntax}, allModes),
-	".ts":  filterConfig(MarkerCommentFilter{Syntax: jsSyntax}, allModes),
-	".tsx": filterConfig(MarkerCommentFilter{Syntax: jsSyntax}, allModes),
+	".js":  filterConfig(JavaScriptCommentFilter{}, allModes),
+	".jsx": filterConfig(JavaScriptCommentFilter{}, allModes),
+	".ts":  filterConfig(JavaScriptCommentFilter{}, allModes),
+	".tsx": filterConfig(JavaScriptCommentFilter{}, allModes),
 
 	// Go
 	".go": filterConfig(MarkerCommentFilter{Syntax: goSyntax}, regularModes),
@@ -101,17 +101,6 @@ var javaSyntax = CommentMarker{
 	},
 	TextBlocks: []string{javaTextBlockDelimiter},
 	QuoteChars: "\"'",
-}
-
-var jsSyntax = CommentMarker{
-	Inline: []string{"//"},
-	Block: []BlockMarker{
-		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
-	},
-	Documentation: DocumentationMarker{
-		Block: []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
-	},
-	QuoteChars: jsQuoteChars,
 }
 
 var csharpSyntax = CommentMarker{
