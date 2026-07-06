@@ -119,6 +119,144 @@ var _ = Describe("Comment filter", func() {
 		})
 	})
 
+	Describe("Kotlin", func() {
+		It("should keep all comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			assertFiltered("Sample.kt", RetainAll, lines, lines)
+		})
+
+		It("should strip comments without treating raw string text as comments", func() {
+			lines := []string{
+				"/* outer /* nested */ still comment */",
+				"val text = \"\"\"",
+				"    This is not a /* comment */.",
+				"    This is not a // comment either.",
+				"    This removes a real comment: ${render(/* real raw argument */ value)}",
+				"\"\"\"",
+				"val message = \"value = ${render(/* real argument */ value)}\"",
+			}
+
+			expected := []string{
+				"val text = \"\"\"",
+				"    This is not a /* comment */.",
+				"    This is not a // comment either.",
+				"    This removes a real comment: ${render( value)}",
+				"\"\"\"",
+				"val message = \"value = ${render( value)}\"",
+			}
+
+			assertFiltered("Sample.kt", RetainNone, lines, expected)
+		})
+
+		It("should continue raw string interpolation after line comments", func() {
+			lines := []string{
+				"val text = \"\"\"",
+				"    ${render(",
+				"        value, // real line comment",
+				"        /* real block comment */ nextValue",
+				"    )}",
+				"    Keep // raw text.",
+				"\"\"\"",
+			}
+
+			expected := []string{
+				"val text = \"\"\"",
+				"    ${render(",
+				"        value, ",
+				"         nextValue",
+				"    )}",
+				"    Keep // raw text.",
+				"\"\"\"",
+			}
+
+			assertFiltered("Sample.kt", RetainNone, lines, expected)
+		})
+
+		It("should keep KDoc comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			expected := []string{
+				"/** API docs. */",
+				"val value = 1 ",
+			}
+
+			assertFiltered("Sample.kt", RetainDocumentation, lines, expected)
+		})
+
+		It("should keep regular comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			expected := []string{
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			assertFiltered("Sample.kt", RetainRegular, lines, expected)
+		})
+
+		It("should keep inline comments", func() {
+			lines := []string{
+				"/** API docs. */",
+				"/* implementation note */",
+				"val value = 1 // inline note",
+			}
+
+			expected := []string{
+				"val value = 1 // inline note",
+			}
+
+			assertFiltered("Sample.kt", RetainInline, lines, expected)
+		})
+
+		It("should keep nested block comments", func() {
+			lines := []string{
+				"val before = 1",
+				"/* outer",
+				"   /* nested */",
+				"   still outer */",
+				"val after = 2 // inline",
+			}
+
+			expected := []string{
+				"val before = 1",
+				"/* outer",
+				"   /* nested */",
+				"   still outer */",
+				"val after = 2 ",
+			}
+
+			assertFiltered("Sample.kts", RetainBlock, lines, expected)
+		})
+
+		It("should close empty documentation block comments", func() {
+			lines := []string{
+				"/**/",
+				"val a = 1",
+				"val b = 2 /**/ val c = 3",
+			}
+
+			expected := []string{
+				"val a = 1",
+				"val b = 2  val c = 3",
+			}
+
+			assertFiltered("Sample.kt", RetainNone, lines, expected)
+		})
+	})
+
 	Describe("JavaScript and TypeScript", func() {
 		It("should strip comments without treating template literals as comments", func() {
 			lines := []string{
