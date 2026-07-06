@@ -101,7 +101,9 @@ var javaSyntax = CommentMarker{
 	Documentation: DocumentationMarker{
 		Block: []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
 	},
-	TextBlocks: []string{javaTextBlockDelimiter},
+	TextBlocks: []TextBlockMarker{
+		{Delimiter: javaTextBlockDelimiter, Escapes: true},
+	},
 	QuoteChars: "\"'",
 }
 
@@ -130,7 +132,9 @@ var goSyntax = CommentMarker{
 	Block: []BlockMarker{
 		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
 	},
-	TextBlocks: []string{goRawStringDelimiter},
+	TextBlocks: []TextBlockMarker{
+		{Delimiter: goRawStringDelimiter},
+	},
 	QuoteChars: goQuoteChars,
 }
 
