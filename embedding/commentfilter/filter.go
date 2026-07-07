@@ -31,6 +31,7 @@ import (
 	"fmt"
 	"log/slog"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -56,6 +57,23 @@ type CommentFilter interface {
 	//
 	// Returns filtered source lines.
 	Filter(lines []string, mode Mode) []string
+}
+
+// filterLines applies a line filter and drops lines made empty by comment removal.
+func filterLines(
+	lines []string,
+	filterLine func(line string) (filteredLine string, hadComment bool),
+) []string {
+	var filtered []string
+	for _, line := range lines {
+		filteredLine, hadComment := filterLine(line)
+		if hadComment && strings.TrimSpace(filteredLine) == "" {
+			continue
+		}
+		filtered = append(filtered, filteredLine)
+	}
+
+	return filtered
 }
 
 // Filter returns source lines with comments stripped according to the requested mode.
@@ -169,7 +187,7 @@ func warnUnsupportedCommentsMode(
 	embeddingLine int,
 	supportedModes []Mode,
 ) bool {
-	if containsMode(supportedModes, mode) {
+	if slices.Contains(supportedModes, mode) {
 		return false
 	}
 	var wrappedModes []string
@@ -189,15 +207,4 @@ func warnUnsupportedCommentsMode(
 	)
 
 	return true
-}
-
-// containsMode reports whether the list includes the given mode.
-func containsMode(modes []Mode, mode Mode) bool {
-	for _, supportedMode := range modes {
-		if supportedMode == mode {
-			return true
-		}
-	}
-
-	return false
 }

@@ -80,4 +80,16 @@ var _ = Describe("C and C++", func() {
 
 		assertFiltered("sample.hpp", RetainBlock, lines, expected)
 	})
+
+	It("should not close block comments on an overlapping end marker", func() {
+		lines := []string{
+			"int before = 1; /*/ still comment */ int after = 2;",
+		}
+
+		expected := []string{
+			"int before = 1;  int after = 2;",
+		}
+
+		assertFiltered("sample.cpp", RetainNone, lines, expected)
+	})
 })

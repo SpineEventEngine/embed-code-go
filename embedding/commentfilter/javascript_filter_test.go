@@ -173,4 +173,16 @@ var _ = Describe("JavaScript and TypeScript", func() {
 			assertFiltered("sample.ts", tc.mode, lines, tc.expected)
 		}
 	})
+
+	It("should not close block comments on an overlapping end marker", func() {
+		lines := []string{
+			"const before = 1; /*/ still comment */ const after = 2;",
+		}
+
+		expected := []string{
+			"const before = 1;  const after = 2;",
+		}
+
+		assertFiltered("sample.ts", RetainNone, lines, expected)
+	})
 })

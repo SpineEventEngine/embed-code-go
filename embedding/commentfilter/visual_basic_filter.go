@@ -51,16 +51,9 @@ type VisualBasicCommentFilter struct{}
 //
 // Returns filtered source lines.
 func (VisualBasicCommentFilter) Filter(lines []string, mode Mode) []string {
-	var filtered []string
-	for _, line := range lines {
-		filteredLine, hadComment := filterVisualBasicLine(line, mode)
-		if hadComment && strings.TrimSpace(filteredLine) == "" {
-			continue
-		}
-		filtered = append(filtered, filteredLine)
-	}
-
-	return filtered
+	return filterLines(lines, func(line string) (string, bool) {
+		return filterVisualBasicLine(line, mode)
+	})
 }
 
 // filterVisualBasicLine removes or preserves one Visual Basic comment.
