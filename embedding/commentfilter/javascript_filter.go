@@ -59,6 +59,7 @@ type javascriptState struct {
 
 // javascriptLineFilter filters one JavaScript or TypeScript source line.
 type javascriptLineFilter struct {
+	// lineFilter provides shared line scanning state and helpers.
 	lineFilter
 
 	// state tracks JavaScript constructs across lines.
