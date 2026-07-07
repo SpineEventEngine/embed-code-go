@@ -125,4 +125,18 @@ var _ = Describe("C and C++", func() {
 
 		assertFiltered("sample.cpp", RetainNone, lines, expected)
 	})
+
+	It("should not treat raw string prefixes inside identifiers as raw strings", func() {
+		lines := []string{
+			`SOME_MACRO(BAR"abc(x)")`,
+			"int value = 1; // real comment",
+		}
+
+		expected := []string{
+			`SOME_MACRO(BAR"abc(x)")`,
+			"int value = 1; ",
+		}
+
+		assertFiltered("sample.cpp", RetainNone, lines, expected)
+	})
 })

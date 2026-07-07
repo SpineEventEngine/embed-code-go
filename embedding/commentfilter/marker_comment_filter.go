@@ -264,6 +264,9 @@ func rawStringAt(line string, position int, prefixes []string) (rawStringStart, 
 // rawStringStartAt returns raw string markers for a specific prefix.
 func rawStringStartAt(line string, position int, prefix string) (string, string, bool) {
 	marker := prefix + `"`
+	if position > 0 && rawStringIdentifierByte(line[position-1]) {
+		return "", "", false
+	}
 	if !strings.HasPrefix(line[position:], marker) {
 		return "", "", false
 	}
@@ -286,6 +289,14 @@ func rawStringStartAt(line string, position int, prefix string) (string, string,
 // validRawStringDelimiterByte reports whether a byte is valid in a raw string delimiter.
 func validRawStringDelimiterByte(char byte) bool {
 	return char > ' ' && char != '(' && char != ')' && char != '\\'
+}
+
+// rawStringIdentifierByte reports whether a byte can continue a C/C++ identifier.
+func rawStringIdentifierByte(char byte) bool {
+	return (char >= 'A' && char <= 'Z') ||
+		(char >= 'a' && char <= 'z') ||
+		(char >= '0' && char <= '9') ||
+		char == '_'
 }
 
 // textBlockAt reports whether one of the given text block markers starts at the position.
