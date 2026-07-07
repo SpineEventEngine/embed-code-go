@@ -29,6 +29,7 @@ package parsing
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
@@ -36,6 +37,15 @@ import (
 	"embed-code/embed-code-go/fragmentation"
 	"embed-code/embed-code-go/indent"
 )
+
+var supportedInstructionAttributes = []string{
+	"comments",
+	"end",
+	"file",
+	"fragment",
+	"line",
+	"start",
+}
 
 // Instruction specifies the code fragment to embed into a Markdown file.
 //
@@ -123,6 +133,10 @@ func (e PatternNotFoundError) Error() string {
 // error - when instruction attributes are invalid.
 func NewInstruction(
 	attributes map[string]string, config configuration.Configuration) (Instruction, error) {
+	if err := validateInstructionAttributes(attributes); err != nil {
+		return Instruction{}, err
+	}
+
 	codeFile := attributes["file"]
 	fragment := attributes["fragment"]
 	startValue := attributes["start"]
@@ -151,6 +165,30 @@ func NewInstruction(
 		CommentMode:   commentMode,
 		Configuration: config,
 	}, nil
+}
+
+// validateInstructionAttributes reports unsupported or missing instruction attributes.
+func validateInstructionAttributes(attributes map[string]string) error {
+	var unsupported []string
+	for attribute := range attributes {
+		if !slices.Contains(supportedInstructionAttributes, attribute) {
+			unsupported = append(unsupported, attribute)
+		}
+	}
+	if len(unsupported) > 0 {
+		slices.Sort(unsupported)
+
+		return fmt.Errorf(
+			"unsupported <embed-code> attribute `%s`; expected one of `%s`",
+			strings.Join(unsupported, "`, `"),
+			strings.Join(supportedInstructionAttributes, "`, `"),
+		)
+	}
+	if strings.TrimSpace(attributes["file"]) == "" {
+		return fmt.Errorf("<embed-code> must specify a non-empty `file` attribute")
+	}
+
+	return nil
 }
 
 // validateExclusiveAttributes reports mutually exclusive instruction attributes.
