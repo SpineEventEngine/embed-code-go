@@ -68,7 +68,7 @@ func filterVisualBasicLine(line string, mode Mode) (string, bool) {
 	var result strings.Builder
 	position := 0
 	for position < len(line) {
-		if quoteEnd := quotedSegmentEnd(line, position, "\""); quoteEnd > position {
+		if quoteEnd := visualBasicQuotedSegmentEnd(line, position); quoteEnd > position {
 			result.WriteString(line[position:quoteEnd])
 			position = quoteEnd
 
@@ -93,6 +93,30 @@ func filterVisualBasicLine(line string, mode Mode) (string, bool) {
 	}
 
 	return result.String(), false
+}
+
+// visualBasicQuotedSegmentEnd returns the end offset of a Visual Basic quoted string.
+func visualBasicQuotedSegmentEnd(line string, position int) int {
+	if position >= len(line) || line[position] != '"' {
+		return position
+	}
+	cursor := position + 1
+	for cursor < len(line) {
+		if line[cursor] != '"' {
+			cursor++
+
+			continue
+		}
+		if cursor+1 < len(line) && line[cursor+1] == '"' {
+			cursor += 2
+
+			continue
+		}
+
+		return cursor + 1
+	}
+
+	return len(line)
 }
 
 // remCommentAt reports whether a Visual Basic REM comment starts at position.

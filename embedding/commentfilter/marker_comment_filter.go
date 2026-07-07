@@ -46,6 +46,15 @@ type DocumentationMarker struct {
 	Block []BlockMarker
 }
 
+// TextBlockMarker describes a multi-line text literal delimiter.
+type TextBlockMarker struct {
+	// Delimiter opens and closes the text literal.
+	Delimiter string
+
+	// Escapes reports whether backslashes escape delimiter bytes.
+	Escapes bool
+}
+
 // CommentMarker describes lexical comment markers and string delimiters for a language family.
 type CommentMarker struct {
 	// Inline contains line-comment markers.
@@ -57,8 +66,8 @@ type CommentMarker struct {
 	// Documentation contains API documentation comment markers.
 	Documentation DocumentationMarker
 
-	// TextBlocks contains delimiters that open and close multi-line text literals.
-	TextBlocks []string
+	// TextBlocks contains markers that open and close multi-line text literals.
+	TextBlocks []TextBlockMarker
 
 	// QuoteChars contains characters that open and close quoted strings.
 	QuoteChars string
@@ -84,8 +93,8 @@ type blockState struct {
 	// textBlockActive reports whether scanning is inside a text block.
 	textBlockActive bool
 
-	// textBlockDelimiter contains the marker that closes the active text block.
-	textBlockDelimiter string
+	// textBlock contains the active text block marker.
+	textBlock TextBlockMarker
 }
 
 // markerLineFilter tracks lexical comment filtering state for one source line.
@@ -207,7 +216,7 @@ func (f *markerLineFilter) consumeActiveTextBlock() bool {
 	if !f.state.textBlockActive {
 		return false
 	}
-	endPosition, found := textBlockEnd(f.line, f.position, f.state.textBlockDelimiter)
+	endPosition, found := textBlockEnd(f.line, f.position, f.state.textBlock)
 	if !found {
 		f.result.WriteString(f.line[f.position:])
 		f.position = len(f.line)
@@ -217,21 +226,21 @@ func (f *markerLineFilter) consumeActiveTextBlock() bool {
 	f.result.WriteString(f.line[f.position:endPosition])
 	f.position = endPosition
 	f.state.textBlockActive = false
-	f.state.textBlockDelimiter = ""
+	f.state.textBlock = TextBlockMarker{}
 
 	return true
 }
 
 // textBlockEnd returns the end offset of a text block close delimiter.
-func textBlockEnd(line string, position int, delimiter string) (int, bool) {
+func textBlockEnd(line string, position int, marker TextBlockMarker) (int, bool) {
 	for cursor := position; cursor < len(line); {
-		if line[cursor] == '\\' {
+		if marker.Escapes && line[cursor] == '\\' {
 			cursor += 2
 
 			continue
 		}
-		if strings.HasPrefix(line[cursor:], delimiter) {
-			return cursor + len(delimiter), true
+		if strings.HasPrefix(line[cursor:], marker.Delimiter) {
+			return cursor + len(marker.Delimiter), true
 		}
 		cursor++
 	}
@@ -241,14 +250,14 @@ func textBlockEnd(line string, position int, delimiter string) (int, bool) {
 
 // consumeTextBlockStart starts a configured text block literal.
 func (f *markerLineFilter) consumeTextBlockStart() bool {
-	delimiter, found := prefixFrom(f.line, f.position, f.filter.Syntax.TextBlocks)
+	marker, found := textBlockAt(f.line, f.position, f.filter.Syntax.TextBlocks)
 	if !found {
 		return false
 	}
-	f.result.WriteString(delimiter)
-	f.position += len(delimiter)
+	f.result.WriteString(marker.Delimiter)
+	f.position += len(marker.Delimiter)
 	f.state.textBlockActive = true
-	f.state.textBlockDelimiter = delimiter
+	f.state.textBlock = marker
 
 	return true
 }
@@ -352,6 +361,17 @@ func prefixFrom(line string, position int, prefixes []string) (string, bool) {
 	}
 
 	return "", false
+}
+
+// textBlockAt reports whether one of the given text block markers starts at the position.
+func textBlockAt(line string, position int, markers []TextBlockMarker) (TextBlockMarker, bool) {
+	for _, marker := range markers {
+		if strings.HasPrefix(line[position:], marker.Delimiter) {
+			return marker, true
+		}
+	}
+
+	return TextBlockMarker{}, false
 }
 
 // blockAt reports whether one of the given block markers starts at the position.

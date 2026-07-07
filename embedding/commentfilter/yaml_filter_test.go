@@ -1,11 +1,5 @@
 // Copyright 2026, TeamDev. All rights reserved.
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// https://www.apache.org/licenses/LICENSE-2.0
-//
 // Redistribution and use in source and/or binary forms, with or without
 // modification, must retain the above copyright notice and the following
 // disclaimer.
@@ -22,26 +16,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-module embed-code/embed-code-go
+package commentfilter_test
 
-go 1.26.4
+import (
+	. "embed-code/embed-code-go/embedding/commentfilter"
 
-require (
-	github.com/bmatcuk/doublestar/v4 v4.6.1
-	github.com/gobwas/glob v0.2.3
-	github.com/onsi/ginkgo/v2 v2.20.2
-	github.com/onsi/gomega v1.34.2
-	gopkg.in/yaml.v3 v3.0.1
+	. "github.com/onsi/ginkgo/v2"
 )
 
-require (
-	github.com/go-logr/logr v1.4.2 // indirect
-	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/pprof v0.0.0-20240827171923-fa2c70bbbfe5 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
-	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
-	golang.org/x/tools v0.24.0 // indirect
-)
+var _ = Describe("YAML", func() {
+	It("should strip all comments", func() {
+		lines := []string{
+			"name: test # inline",
+			"# standalone",
+			"value: \"# literal\"",
+		}
+
+		expected := []string{
+			"name: test ",
+			"value: \"# literal\"",
+		}
+
+		assertFiltered("config.yml", RetainNone, lines, expected)
+	})
+})
