@@ -41,6 +41,7 @@ func FuzzPatternFindIn(f *testing.F) {
 	f.Add("        return;", "        System.out.println(\"Hi\");\n  \n        return;", 0)
 	f.Add("[", "invalid pattern is rejected", 0)
 	f.Add("0{$", "0", 0)
+	f.Add("0{}", "0", 0)
 
 	f.Fuzz(func(t *testing.T, sourceGlob string, source string, startFrom int) {
 		if len(sourceGlob) > 4096 || len(source) > 8192 {
@@ -58,14 +59,25 @@ func FuzzPatternFindIn(f *testing.F) {
 		if !found {
 			return
 		}
-		if start < 0 || start >= len(lines) {
-			t.Fatalf("start index %d is outside %d source lines", start, len(lines))
-		}
-		if end < start || end >= len(lines) {
-			t.Fatalf("end index %d is outside matched range starting at %d in %d source lines", end, start, len(lines))
-		}
-		if startFrom >= 0 && start < startFrom {
-			t.Fatalf("match starts at %d before requested start %d", start, startFrom)
-		}
+		assertValidPatternMatch(t, lines, startFrom, start, end)
 	})
+}
+
+// assertValidPatternMatch checks the public range contract returned by FindIn.
+func assertValidPatternMatch(t *testing.T, lines []string, startFrom int, start int, end int) {
+	t.Helper()
+	if start < 0 || start >= len(lines) {
+		t.Fatalf("start index %d is outside %d source lines", start, len(lines))
+	}
+	if end < start || end >= len(lines) {
+		t.Fatalf(
+			"end index %d is outside matched range starting at %d in %d source lines",
+			end,
+			start,
+			len(lines),
+		)
+	}
+	if startFrom >= 0 && start < startFrom {
+		t.Fatalf("match starts at %d before requested start %d", start, startFrom)
+	}
 }
