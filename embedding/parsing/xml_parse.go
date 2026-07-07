@@ -90,7 +90,8 @@ func ParseXMLLine(xmlLine string) (map[string]string, error) {
 
 	if root.XMLName.Local != EmbeddingTag {
 		return map[string]string{},
-			fmt.Errorf("the provided line's header is not `%s`:\n%s", EmbeddingTag, xmlLine)
+			fmt.Errorf("expected `<%s>` instruction tag, got `<%s>`",
+				EmbeddingTag, root.XMLName.Local)
 	}
 
 	attributes := make(map[string]string)

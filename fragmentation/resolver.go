@@ -55,6 +55,28 @@ type fragmentedFile struct {
 // absolutePath is a resolved absolute filesystem path.
 type absolutePath string
 
+// unsupportedSourceEncodingError reports a source file that exists but cannot be decoded.
+type unsupportedSourceEncodingError struct {
+	// sourcePath is the source file with unsupported encoding.
+	sourcePath absolutePath
+
+	// err is the underlying encoding validation error.
+	err error
+}
+
+// Error describes the source file and expected text encoding.
+func (e unsupportedSourceEncodingError) Error() string {
+	return fmt.Sprintf(
+		"code file `%s` uses unsupported encoding; expected UTF-8",
+		logging.FileReference(string(e.sourcePath)),
+	)
+}
+
+// Unwrap returns the underlying encoding validation error.
+func (e unsupportedSourceEncodingError) Unwrap() error {
+	return e.err
+}
+
 // Resolver resolves source files and caches fragmentations for one processing operation.
 type Resolver struct {
 	// cache stores source fragmentations for this resolver instance.
@@ -174,36 +196,66 @@ func (r *Resolver) resolveSource(
 	config config.Configuration,
 ) (absolutePath, bool, error) {
 	codeRootName, relativePath, named := splitNamedPath(codePath)
+	var unsupportedEncodingErr error
+	var unsupportedEncodingSource absolutePath
 	for _, root := range config.CodeRoots {
 		if named && strings.TrimSpace(root.Name) != codeRootName {
 			continue
 		}
 
-		source, err := sourceFromRoot(root, relativePath)
-		if err != nil {
-			return "", false, err
-		}
-		exists, err := files.IsFileExist(string(source))
-		if err != nil {
-			return "", false, err
-		}
-		if !exists {
-			continue
-		}
-
-		_, err = r.cachedSourceFragments(source)
+		source, found, err := r.resolveSourceInRoot(root, relativePath)
 		var encodingError *unsupportedEncodingError
 		if errors.As(err, &encodingError) {
+			if unsupportedEncodingErr == nil {
+				unsupportedEncodingErr = encodingError
+				unsupportedEncodingSource = source
+			}
+
 			continue
 		}
 		if err != nil {
 			return "", false, err
+		}
+		if !found {
+			continue
 		}
 
 		return source, true, nil
 	}
 
+	if unsupportedEncodingErr != nil {
+		return "", false, unsupportedSourceEncodingError{
+			sourcePath: unsupportedEncodingSource,
+			err:        unsupportedEncodingErr,
+		}
+	}
+
 	return "", false, nil
+}
+
+// resolveSourceInRoot checks one configured source root for the requested relative path.
+func (r *Resolver) resolveSourceInRoot(
+	root _type.NamedPath,
+	relativePath string,
+) (absolutePath, bool, error) {
+	source, err := sourceFromRoot(root, relativePath)
+	if err != nil {
+		return "", false, err
+	}
+	exists, err := files.IsFileExist(string(source))
+	if err != nil {
+		return "", false, err
+	}
+	if !exists {
+		return "", false, nil
+	}
+
+	_, err = r.cachedSourceFragments(source)
+	if err != nil {
+		return source, false, err
+	}
+
+	return source, true, nil
 }
 
 // splitNamedPath separates a named-code-root prefix from a code path.

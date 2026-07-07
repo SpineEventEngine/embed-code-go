@@ -294,6 +294,28 @@ var _ = Describe("Embedding", func() {
 		))
 	})
 
+	It("should report a missing file attribute with documentation context", func() {
+		docPath := testDocPath(config, "missing-file-attribute.md")
+		Expect(os.WriteFile(
+			docPath,
+			[]byte("# Missing file attribute\n\n"+
+				"<embed-code fragment=\"main()\"/>\n"+
+				"```java\n"+
+				"```\n"),
+			0600,
+		)).To(Succeed())
+		processor := newProcessor(docPath, config)
+
+		_, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(ContainSubstring(
+			"missing-file-attribute.md:3`: " +
+				"failed to parse an embedding instruction: " +
+				"<embed-code> must specify a non-empty `file` attribute",
+		))
+	})
+
 	It("should report an unclosed code fence after the instruction", func() {
 		docPath := testDocPath(config, "unclosed-code-fence.md")
 		processor := newProcessor(docPath, config)
