@@ -28,6 +28,7 @@ package parsing_test
 
 import (
 	_type "embed-code/embed-code-go/type"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -562,6 +563,27 @@ var _ = Describe("Instruction", func() {
 				logging.FileReference(absTestCodeFile("org/example/Hello.java")),
 			),
 		))
+	})
+
+	It("should report pattern not found when the glob matcher panics", func() {
+		sourceRoot := GinkgoT().TempDir()
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+		Expect(os.WriteFile(
+			filepath.Join(sourceRoot, "panic-pattern.txt"),
+			[]byte("0\n"),
+			0600,
+		)).To(Succeed())
+		xmlString := buildInstruction("panic-pattern.txt", TestInstructionParams{
+			lineGlob: "0{}",
+		})
+		instruction := createInstructionFromXML(xmlString, config)
+
+		_, err := instruction.Content()
+
+		var patternErr parsing.PatternNotFoundError
+		Expect(errors.As(err, &patternErr)).Should(BeTrue())
+		Expect(patternErr.Kind).Should(Equal("line"))
+		Expect(err).Should(MatchError(ContainSubstring("line pattern `0{}`")))
 	})
 
 	It("should use shared resolver as default", func() {
