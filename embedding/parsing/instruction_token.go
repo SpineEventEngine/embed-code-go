@@ -156,14 +156,13 @@ func instructionClosed(instructionBody []string) bool {
 	instruction := strings.Join(instructionBody, " ")
 	closingTag := "</" + EmbeddingTag + ">"
 	insideValue := false
-	for i := 0; i < len(instruction); i++ {
-		char := instruction[i]
-		if char == '\\' && i+1 < len(instruction) && instruction[i+1] == '"' {
-			i++
+	for index := 0; index < len(instruction); index++ {
+		if isEscapedQuote(instruction, index) {
+			index++
 
 			continue
 		}
-		if char == '"' {
+		if instruction[index] == '"' {
 			insideValue = !insideValue
 
 			continue
@@ -171,8 +170,8 @@ func instructionClosed(instructionBody []string) bool {
 		if insideValue {
 			continue
 		}
-		if strings.HasPrefix(instruction[i:], "/>") ||
-			strings.HasPrefix(instruction[i:], closingTag) {
+		if strings.HasPrefix(instruction[index:], "/>") ||
+			strings.HasPrefix(instruction[index:], closingTag) {
 			return true
 		}
 	}
