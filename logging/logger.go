@@ -159,6 +159,31 @@ func FileReferenceWithLine(path string, line int) string {
 	return reference + ":" + strconv.Itoa(line)
 }
 
+// FileReferenceWithPosition returns a clickable file URL with line and column
+// suffixes.
+//
+// The `file://...:line:column` form is the one IDEs such as IntelliJ IDEA
+// recognize for navigation; a line-only suffix is not enough. When no column
+// is known, pass 1 to point at the beginning of the line.
+//
+// Parameters:
+// path - provides a local file path.
+// line - provides an optional one-based line number.
+// column - provides an optional one-based column number.
+//
+// Returns file reference with line and column suffixes when both are positive.
+func FileReferenceWithPosition(path string, line int, column int) string {
+	if column <= 0 {
+		return FileReferenceWithLine(path, line)
+	}
+	reference := FileReferenceWithLine(path, line)
+	if line <= 0 {
+		return reference
+	}
+
+	return reference + ":" + strconv.Itoa(column)
+}
+
 // fileURLFromAbsolutePath formats an absolute local path as an OS-neutral file URL.
 func fileURLFromAbsolutePath(path string) string {
 	normalizedPath := filepath.ToSlash(strings.ReplaceAll(path, "\\", "/"))

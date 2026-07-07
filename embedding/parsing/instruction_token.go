@@ -129,6 +129,13 @@ func (e EmbedInstructionTokenState) Accept(context *Context,
 
 		context.Result = append(context.Result, line)
 		context.ToNextLine()
+
+		// Once the tag is syntactically closed, the following lines are not
+		// part of the instruction. Stop here instead of consuming the rest of
+		// the document trying to parse a complete but invalid instruction.
+		if context.EmbeddingInstruction == nil && instructionClosed(instructionBody) {
+			break
+		}
 	}
 	if context.EmbeddingInstruction == nil {
 		return InstructionParseError{
@@ -140,11 +147,42 @@ func (e EmbedInstructionTokenState) Accept(context *Context,
 	return nil
 }
 
+// instructionClosed reports whether the accumulated instruction body contains a
+// closing tag, meaning any following lines are not part of the instruction.
+//
+// The terminator is only recognized outside quoted attribute values, so a
+// value such as `line="<br/>"` does not end the instruction early.
+func instructionClosed(instructionBody []string) bool {
+	instruction := strings.Join(instructionBody, " ")
+	closingTag := "</" + EmbeddingTag + ">"
+	insideValue := false
+	for i := 0; i < len(instruction); i++ {
+		char := instruction[i]
+		if char == '\\' && i+1 < len(instruction) && instruction[i+1] == '"' {
+			i++
+
+			continue
+		}
+		if char == '"' {
+			insideValue = !insideValue
+
+			continue
+		}
+		if insideValue {
+			continue
+		}
+		if strings.HasPrefix(instruction[i:], "/>") ||
+			strings.HasPrefix(instruction[i:], closingTag) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // parseFailureReason explains why an embedding instruction could not be parsed.
 func parseFailureReason(instructionBody []string, parseErr error) string {
-	instruction := strings.TrimSpace(strings.Join(instructionBody, " "))
-	if !strings.Contains(instruction, "/>") &&
-		!strings.Contains(instruction, "</"+EmbeddingTag+">") {
+	if !instructionClosed(instructionBody) {
 		return fmt.Sprintf("the `<%s>` tag is not closed",
 			EmbeddingTag,
 		)
