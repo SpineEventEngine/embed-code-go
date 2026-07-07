@@ -88,6 +88,9 @@ func (f *markerLineFilter) filterLine() (string, bool) {
 		if f.consumeActiveSegment() {
 			continue
 		}
+		if f.consumeRawStringStart() {
+			continue
+		}
 		if f.consumeTextBlockStart() {
 			continue
 		}
@@ -105,6 +108,21 @@ func (f *markerLineFilter) filterLine() (string, bool) {
 	}
 
 	return f.result.String(), f.hadComment
+}
+
+// consumeRawStringStart starts a raw string literal with a dynamic closing marker.
+func (f *markerLineFilter) consumeRawStringStart() bool {
+	rawString, found := rawStringAt(f.line, f.position, f.filter.Syntax.RawStringPrefixes)
+	if !found {
+		return false
+	}
+	f.consumeMarker(rawString.open)
+	f.state.segment = &activeSegment{
+		end:  rawString.end,
+		keep: true,
+	}
+
+	return true
 }
 
 // consumeActiveSegment consumes text while the scanner is inside a multi-line construct.
@@ -220,6 +238,65 @@ func prefixAt(line string, position int, prefixes []string) bool {
 	}
 
 	return false
+}
+
+// rawStringStart describes an opened raw string literal.
+type rawStringStart struct {
+	// open is the complete opening marker copied to output.
+	open string
+
+	// end is the dynamic marker that closes the literal.
+	end string
+}
+
+// rawStringAt reports whether a raw string starts at position.
+func rawStringAt(line string, position int, prefixes []string) (rawStringStart, bool) {
+	for _, prefix := range prefixes {
+		open, end, found := rawStringStartAt(line, position, prefix)
+		if found {
+			return rawStringStart{open: open, end: end}, true
+		}
+	}
+
+	return rawStringStart{}, false
+}
+
+// rawStringStartAt returns raw string markers for a specific prefix.
+func rawStringStartAt(line string, position int, prefix string) (string, string, bool) {
+	marker := prefix + `"`
+	if position > 0 && rawStringIdentifierByte(line[position-1]) {
+		return "", "", false
+	}
+	if !strings.HasPrefix(line[position:], marker) {
+		return "", "", false
+	}
+	delimiterStart := position + len(marker)
+	delimiterEnd := delimiterStart
+	for delimiterEnd < len(line) && line[delimiterEnd] != '(' {
+		if !validRawStringDelimiterByte(line[delimiterEnd]) {
+			return "", "", false
+		}
+		delimiterEnd++
+	}
+	if delimiterEnd >= len(line) {
+		return "", "", false
+	}
+	delimiter := line[delimiterStart:delimiterEnd]
+
+	return line[position : delimiterEnd+1], ")" + delimiter + `"`, true
+}
+
+// validRawStringDelimiterByte reports whether a byte is valid in a raw string delimiter.
+func validRawStringDelimiterByte(char byte) bool {
+	return char > ' ' && char != '(' && char != ')' && char != '\\'
+}
+
+// rawStringIdentifierByte reports whether a byte can continue a C/C++ identifier.
+func rawStringIdentifierByte(char byte) bool {
+	return (char >= 'A' && char <= 'Z') ||
+		(char >= 'a' && char <= 'z') ||
+		(char >= '0' && char <= '9') ||
+		char == '_'
 }
 
 // textBlockAt reports whether one of the given text block markers starts at the position.
