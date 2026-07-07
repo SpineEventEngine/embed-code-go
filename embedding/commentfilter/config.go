@@ -35,7 +35,6 @@ const (
 	pythonSingleQuoteBlock  = "'''"
 	goRawStringDelimiter    = "`"
 	goQuoteChars            = "\"'"
-	jsQuoteChars            = "\"'`"
 )
 
 // filtersByExtension is a mapping of the file extension to its comment filter.
@@ -72,9 +71,9 @@ var filtersByExtension = map[string]filterEntry{
 	".proto": filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
 
 	// Python
-	".py":  filterConfig(MarkerCommentFilter{Syntax: pythonSyntax}, noneMode),
-	".pyi": filterConfig(MarkerCommentFilter{Syntax: pythonSyntax}, noneMode),
-	".pyw": filterConfig(MarkerCommentFilter{Syntax: pythonSyntax}, noneMode),
+	".py":  filterConfig(PythonCommentFilter{}, noneMode),
+	".pyi": filterConfig(PythonCommentFilter{}, noneMode),
+	".pyw": filterConfig(PythonCommentFilter{}, noneMode),
 
 	// YAML
 	".yml":  filterConfig(MarkerCommentFilter{Syntax: hashLineSyntax}, noneMode),
@@ -138,15 +137,6 @@ var goSyntax = CommentMarker{
 
 var hashLineSyntax = CommentMarker{
 	Inline:     []string{"#"},
-	QuoteChars: "\"'",
-}
-
-var pythonSyntax = CommentMarker{
-	Inline: []string{"#"},
-	TextBlocks: []TextBlockMarker{
-		{Delimiter: pythonDoubleQuoteBlock, Escapes: true},
-		{Delimiter: pythonSingleQuoteBlock, Escapes: true},
-	},
 	QuoteChars: "\"'",
 }
 
