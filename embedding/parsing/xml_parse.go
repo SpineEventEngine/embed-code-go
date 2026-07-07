@@ -116,47 +116,61 @@ func quoteEscapedXMLLine(xmlLine string) string {
 	var builder strings.Builder
 	builder.Grow(len(xmlLine))
 	insideValue := false
-	for i := 0; i < len(xmlLine); i++ {
-		char := xmlLine[i]
-		if char == '\\' && i+1 < len(xmlLine) && xmlLine[i+1] == '"' {
+	for index := 0; index < len(xmlLine); index++ {
+		if isEscapedQuote(xmlLine, index) {
 			builder.WriteString("&quot;")
-			i++
+			index++
 
 			continue
 		}
+		char := xmlLine[index]
 		if char == '"' {
 			insideValue = !insideValue
 			builder.WriteByte(char)
 
 			continue
 		}
-		if insideValue {
-			switch char {
-			case '&':
-				// Preserve a pre-escaped entity such as `&quot;`; escape a
-				// raw ampersand so xml.Unmarshal accepts it.
-				if entity := xmlEntityPrefix(xmlLine[i:]); entity != "" {
-					builder.WriteString(entity)
-					i += len(entity) - 1
-				} else {
-					builder.WriteString("&amp;")
-				}
+		if escaped, consumed := escapeValueByte(xmlLine[index:], insideValue); consumed > 0 {
+			builder.WriteString(escaped)
+			index += consumed - 1
 
-				continue
-			case '<':
-				builder.WriteString("&lt;")
-
-				continue
-			case '>':
-				builder.WriteString("&gt;")
-
-				continue
-			}
+			continue
 		}
 		builder.WriteByte(char)
 	}
 
 	return builder.String()
+}
+
+// isEscapedQuote reports whether a backslash-escaped quote (`\"`) starts at index.
+func isEscapedQuote(text string, index int) bool {
+	return text[index] == '\\' && index+1 < len(text) && text[index+1] == '"'
+}
+
+// escapeValueByte returns the XML escaping for the metacharacter that starts
+// value together with the number of source bytes it consumes.
+//
+// It escapes only when insideValue is set. A pre-existing entity such as
+// `&quot;` is preserved rather than re-escaped; a raw ampersand becomes
+// `&amp;`. A consumed count of zero means the leading byte needs no escaping.
+func escapeValueByte(value string, insideValue bool) (string, int) {
+	if !insideValue {
+		return "", 0
+	}
+	switch value[0] {
+	case '<':
+		return "&lt;", 1
+	case '>':
+		return "&gt;", 1
+	case '&':
+		if entity := xmlEntityPrefix(value); entity != "" {
+			return entity, len(entity)
+		}
+
+		return "&amp;", 1
+	default:
+		return "", 0
+	}
 }
 
 // xmlEntityPrefix returns the leading XML character entity reference in text,
@@ -167,10 +181,13 @@ func quoteEscapedXMLLine(xmlLine string) string {
 // pattern author may include a pre-escaped entity without it being re-escaped.
 func xmlEntityPrefix(text string) string {
 	semicolon := strings.IndexByte(text, ';')
-	if semicolon < 2 {
+	if semicolon <= 0 {
 		return ""
 	}
 	name := text[1:semicolon]
+	if name == "" {
+		return ""
+	}
 	switch name {
 	case "amp", "lt", "gt", "quot", "apos":
 		return text[:semicolon+1]
