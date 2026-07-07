@@ -11,6 +11,11 @@ configured `code-path`. With named source roots, start the value with `$name/`,
 such as `$java/org/showcase/Greeting.java`. With one unnamed source root, use a
 path relative to that root.
 
+Embed-code treats documentation files and embedding instructions as trusted
+local input. The `file` value may intentionally use relative path segments such
+as `../`; embed-code resolves the path against the selected source root but does
+not enforce that the final path stays inside that root.
+
 Use one source-selection shape per instruction:
 
 - `file` alone embeds the whole source file.
