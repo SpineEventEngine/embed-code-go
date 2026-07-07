@@ -44,13 +44,22 @@ type ProcessingError struct {
 	Err error
 }
 
+// errorLocationColumn is the column reported for a processing failure. The
+// parser tracks line granularity only, so the location points at the beginning
+// of the offending line.
+const errorLocationColumn = 1
+
 // Error returns a user-facing description of the failed documentation processing operation.
+//
+// The documentation location is emitted as a bare `file://...:line:column`
+// URL, without surrounding backticks, so IDEs such as IntelliJ IDEA can open
+// it from the console.
 //
 // Returns formatted processing error text.
 func (e ProcessingError) Error() string {
 	return fmt.Sprintf(
-		"failed to embed code fragment into doc file `%s`: %s",
-		logging.FileReferenceWithLine(e.DocFilePath, e.Line),
+		"failed to embed code fragment into doc file %s: %s",
+		logging.FileReferenceWithPosition(e.DocFilePath, e.Line, errorLocationColumn),
 		e.Err,
 	)
 }

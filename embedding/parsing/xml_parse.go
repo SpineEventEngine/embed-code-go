@@ -101,7 +101,119 @@ func ParseXMLLine(xmlLine string) (map[string]string, error) {
 	return attributes, nil
 }
 
-// quoteEscapedXMLLine converts backslash-escaped quotes into XML entities.
+// quoteEscapedXMLLine escapes characters that XML forbids inside attribute
+// values, so instruction patterns may contain raw source-code characters.
+//
+// Backslash-escaped quotes become the `&quot;` entity, and the XML
+// metacharacters `&`, `<`, and `>` appearing inside a quoted attribute value
+// are escaped to their entities. Source-line patterns such as
+// `line="if (a < b)"` or `end="while (x && y)"` routinely contain these
+// characters; without escaping, xml.Unmarshal rejects the whole instruction
+// and the parser fails with an InstructionParseError. Markup outside quoted
+// values, such as the `<embed-code` header and the `/>` terminator, is left
+// untouched.
 func quoteEscapedXMLLine(xmlLine string) string {
-	return strings.ReplaceAll(xmlLine, `\"`, "&quot;")
+	var builder strings.Builder
+	builder.Grow(len(xmlLine))
+	insideValue := false
+	for i := 0; i < len(xmlLine); i++ {
+		char := xmlLine[i]
+		if char == '\\' && i+1 < len(xmlLine) && xmlLine[i+1] == '"' {
+			builder.WriteString("&quot;")
+			i++
+
+			continue
+		}
+		if char == '"' {
+			insideValue = !insideValue
+			builder.WriteByte(char)
+
+			continue
+		}
+		if insideValue {
+			switch char {
+			case '&':
+				// Preserve a pre-escaped entity such as `&quot;`; escape a
+				// raw ampersand so xml.Unmarshal accepts it.
+				if entity := xmlEntityPrefix(xmlLine[i:]); entity != "" {
+					builder.WriteString(entity)
+					i += len(entity) - 1
+				} else {
+					builder.WriteString("&amp;")
+				}
+
+				continue
+			case '<':
+				builder.WriteString("&lt;")
+
+				continue
+			case '>':
+				builder.WriteString("&gt;")
+
+				continue
+			}
+		}
+		builder.WriteByte(char)
+	}
+
+	return builder.String()
+}
+
+// xmlEntityPrefix returns the leading XML character entity reference in text,
+// or an empty string when text does not begin with one.
+//
+// It recognizes the predefined entities (`&amp;`, `&lt;`, `&gt;`, `&quot;`,
+// `&apos;`) and numeric character references such as `&#39;` or `&#x1F;`, so a
+// pattern author may include a pre-escaped entity without it being re-escaped.
+func xmlEntityPrefix(text string) string {
+	semicolon := strings.IndexByte(text, ';')
+	if semicolon < 2 {
+		return ""
+	}
+	name := text[1:semicolon]
+	switch name {
+	case "amp", "lt", "gt", "quot", "apos":
+		return text[:semicolon+1]
+	}
+	if isNumericCharRef(name) {
+		return text[:semicolon+1]
+	}
+
+	return ""
+}
+
+// isNumericCharRef reports whether name is the body of an XML numeric character
+// reference, such as `#39` (decimal) or `#x1F` (hexadecimal).
+func isNumericCharRef(name string) bool {
+	if len(name) < 2 || name[0] != '#' {
+		return false
+	}
+	digits := name[1:]
+	hexadecimal := digits[0] == 'x' || digits[0] == 'X'
+	if hexadecimal {
+		digits = digits[1:]
+	}
+	if digits == "" {
+		return false
+	}
+	for i := 0; i < len(digits); i++ {
+		if !isReferenceDigit(digits[i], hexadecimal) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// isReferenceDigit reports whether char is a valid digit for a numeric
+// character reference, allowing hexadecimal digits when hexadecimal is set.
+func isReferenceDigit(char byte, hexadecimal bool) bool {
+	if char >= '0' && char <= '9' {
+		return true
+	}
+	if !hexadecimal {
+		return false
+	}
+
+	return (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')
 }
