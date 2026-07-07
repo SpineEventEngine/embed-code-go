@@ -27,7 +27,6 @@
 package parsing
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"unicode"
@@ -102,10 +101,6 @@ func NewPattern(globString string) (Pattern, error) {
 
 // compileLineMatcher compiles one source-line pattern into a glob matcher.
 func compileLineMatcher(patternLine string) (lineMatcher, error) {
-	if err := validateClosedAlternatives(patternLine); err != nil {
-		return lineMatcher{}, err
-	}
-
 	pattern := patternLine
 
 	startOfLine := strings.HasPrefix(patternLine, lineStart)
@@ -125,58 +120,55 @@ func compileLineMatcher(patternLine string) (lineMatcher, error) {
 		pattern = pattern[:lastIndex]
 	}
 
-	compiledGlob, err := glob.Compile(pattern)
-	if err != nil {
-		return lineMatcher{}, err
-	}
-
-	return lineMatcher{compiled: compiledGlob}, nil
-}
-
-// validateClosedAlternatives rejects unclosed glob alternative groups.
-func validateClosedAlternatives(patternLine string) error {
-	var alternativeDepth int
-	var inRange bool
-	var escaped bool
-	for _, r := range patternLine {
-		if escaped {
-			escaped = false
-			continue
-		}
-		if r == '\\' {
-			escaped = true
-			continue
-		}
-		if r == '[' && !inRange {
-			inRange = true
-			continue
-		}
-		if r == ']' && inRange {
-			inRange = false
-			continue
-		}
-		if inRange {
-			continue
-		}
-		switch r {
-		case '{':
-			alternativeDepth++
-		case '}':
-			if alternativeDepth > 0 {
-				alternativeDepth--
+	var matcher lineMatcher
+	var compileErr error
+	func() {
+		defer func() {
+			recovered := recover()
+			if recovered != nil {
+				compileErr = fmt.Errorf("glob pattern compiler panicked: %v", recovered)
 			}
+		}()
+
+		compiledGlob, err := glob.Compile(pattern)
+		if err != nil {
+			compileErr = err
+
+			return
 		}
-	}
-	if alternativeDepth > 0 {
-		return errors.New("unclosed alternative pattern")
+		matcher = lineMatcher{compiled: compiledGlob}
+	}()
+	if compileErr != nil {
+		return lineMatcher{}, compileErr
 	}
 
-	return nil
+	return matcher, nil
 }
 
 // matches reports whether the source line matches the compiled pattern.
 func (m lineMatcher) matches(line string) bool {
-	return m.compiled != nil && m.compiled.Match(line)
+	if m.compiled == nil {
+		return false
+	}
+
+	return matchGlob(m.compiled, line)
+}
+
+// matchGlob reports whether a glob matches and treats dependency panics as misses.
+func matchGlob(compiledGlob glob.Glob, line string) bool {
+	var matched bool
+	func() {
+		defer func() {
+			recovered := recover()
+			if recovered != nil {
+				matched = false
+			}
+		}()
+
+		matched = compiledGlob.Match(line)
+	}()
+
+	return matched
 }
 
 // FindIn returns the first source-line range matching the pattern.

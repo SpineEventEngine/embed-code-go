@@ -136,15 +136,17 @@ var _ = Describe("Instruction", func() {
 		Expect(err).Should(MatchError(ContainSubstring("invalid start pattern `[`")))
 	})
 
-	It("should have an error for an unclosed alternative pattern", func() {
+	It("should embed a line ending with a literal opening brace pattern", func() {
 		instructionParams := TestInstructionParams{
-			startGlob: "0{$",
+			lineGlob: "class Hello {",
 		}
-		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
 
-		_, err := parsing.FromXML(xmlString, config)
+		actualLines := getXMLExtractionContent(
+			"org/example/Hello.java", instructionParams, config)
 
-		Expect(err).Should(MatchError(ContainSubstring("invalid start pattern `0{$`")))
+		Expect(actualLines).Should(Equal([]string{
+			"public class Hello {",
+		}))
 	})
 
 	It("should successfully read source content", func() {

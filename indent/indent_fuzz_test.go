@@ -49,17 +49,21 @@ func FuzzCutIndent(f *testing.F) {
 		if len(changedLines) != len(lines) {
 			t.Fatalf("CutIndent returned %d lines for %d input lines", len(changedLines), len(lines))
 		}
-		for i, line := range lines {
-			if commonIndent <= len(line) && changedLines[i] != line[commonIndent:] {
+		for lineIndex, line := range lines {
+			if commonIndent <= len(line) && changedLines[lineIndex] != line[commonIndent:] {
 				t.Fatalf(
 					"line %d was cut incorrectly: got %q, want %q",
-					i,
-					changedLines[i],
+					lineIndex,
+					changedLines[lineIndex],
 					line[commonIndent:],
 				)
 			}
-			if commonIndent > len(line) && changedLines[i] != "" {
-				t.Fatalf("short line %d was not fully removed: got %q", i, changedLines[i])
+			if commonIndent > len(line) && changedLines[lineIndex] != "" {
+				t.Fatalf(
+					"short line %d was not fully removed: got %q",
+					lineIndex,
+					changedLines[lineIndex],
+				)
 			}
 		}
 	})
