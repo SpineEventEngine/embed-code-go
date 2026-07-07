@@ -154,6 +154,24 @@ var _ = Describe("Parser states", func() {
 		))
 	})
 
+	It("should report a mistyped non-self-closing instruction tag", func() {
+		config := configuration.NewConfiguration()
+		context := newStateContext(
+			"<embed-codex file=\"Example.java\">",
+			"</embed-codex>",
+		)
+
+		err := parsing.EmbedInstruction.Accept(&context, config)
+
+		Expect(err).Should(HaveOccurred())
+		var parseErr parsing.InstructionParseError
+		Expect(errors.As(err, &parseErr)).Should(BeTrue())
+		Expect(parseErr.Line).Should(Equal(1))
+		Expect(parseErr.Reason).Should(Equal(
+			"expected `<embed-code>` instruction tag, got `<embed-codex>`",
+		))
+	})
+
 	It("should render source and close the embedding fence when the end state is accepted", func() {
 		sourceRoot := GinkgoT().TempDir()
 		Expect(os.WriteFile(

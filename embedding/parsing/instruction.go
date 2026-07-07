@@ -177,9 +177,14 @@ func validateInstructionAttributes(attributes map[string]string) error {
 	}
 	if len(unsupported) > 0 {
 		slices.Sort(unsupported)
+		attributeLabel := "attribute"
+		if len(unsupported) > 1 {
+			attributeLabel = "attributes"
+		}
 
 		return fmt.Errorf(
-			"unsupported <embed-code> attribute `%s`; expected one of `%s`",
+			"unsupported <embed-code> %s `%s`; expected one of `%s`",
+			attributeLabel,
 			strings.Join(unsupported, "`, `"),
 			strings.Join(supportedInstructionAttributes, "`, `"),
 		)

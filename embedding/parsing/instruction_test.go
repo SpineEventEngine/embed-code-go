@@ -146,6 +146,20 @@ var _ = Describe("Instruction", func() {
 		))
 	})
 
+	It("should report unsupported instruction attributes", func() {
+		xmlString := `<embed-code ` +
+			`fil="org/example/Hello.java" ` +
+			`unknown="value" ` +
+			`file="org/example/Hello.java"/>`
+
+		_, err := parsing.FromXML(xmlString, config)
+
+		Expect(err).Should(MatchError(
+			"unsupported <embed-code> attributes `fil`, `unknown`; " +
+				"expected one of `comments`, `end`, `file`, `fragment`, `line`, `start`",
+		))
+	})
+
 	It("should report a mistyped instruction tag", func() {
 		xmlString := `<embed-codee file="org/example/Hello.java"/>`
 
