@@ -36,6 +36,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/embedding"
 	"embed-code/embed-code-go/embedding/parsing"
+	"embed-code/embed-code-go/logging"
 	_type "embed-code/embed-code-go/type"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -142,6 +143,27 @@ var _ = Describe("Embedding", func() {
 		Expect(errors.As(err, &parseErr)).Should(BeTrue())
 	})
 
+	// Regresses https://github.com/SpineEventEngine/embed-code-go/issues/19.
+	//
+	// The failure location must be a bare `file://...:line:column` URL so an
+	// IDE such as IntelliJ IDEA can open it from the console. Backticks around
+	// the URL and a missing column component prevent that navigation.
+	It("should format the failure location as a bare file URL with line and column", func() {
+		docPath := filepath.Join(GinkgoT().TempDir(), "doc.md")
+		processingErr := embedding.ProcessingError{
+			DocFilePath: docPath,
+			Line:        2,
+			Err:         errors.New("boom"),
+		}
+
+		message := processingErr.Error()
+
+		Expect(message).Should(ContainSubstring(
+			logging.FileReferenceWithPosition(docPath, 2, 1)))
+		Expect(message).Should(ContainSubstring(":2:1"))
+		Expect(message).ShouldNot(ContainSubstring("`"))
+	})
+
 	It("should report all pattern matching errors", func() {
 		config.DocIncludes = []string{"missing-start-pattern.md", "missing-end-pattern.md"}
 
@@ -243,7 +265,7 @@ var _ = Describe("Embedding", func() {
 
 		Expect(err).Should(HaveOccurred())
 		Expect(err.Error()).Should(ContainSubstring(
-			"missing-closing-tag.md:3`: " +
+			"missing-closing-tag.md:3:1: " +
 				"failed to parse an embedding instruction: " +
 				"the `<embed-code>` tag is not closed",
 		))
@@ -275,7 +297,7 @@ var _ = Describe("Embedding", func() {
 
 		Expect(err).Should(HaveOccurred())
 		Expect(err.Error()).Should(ContainSubstring(
-			"unclosed-nested-tag.md:3`: " +
+			"unclosed-nested-tag.md:3:1: " +
 				"failed to parse an embedding instruction: " +
 				"element <unexpected> closed by </embed-code>",
 		))
@@ -289,7 +311,7 @@ var _ = Describe("Embedding", func() {
 
 		Expect(err).Should(HaveOccurred())
 		Expect(err.Error()).Should(ContainSubstring(
-			"missing-code-fence.md:3`: " +
+			"missing-code-fence.md:3:1: " +
 				"expected a markdown code fence after the embedding instruction",
 		))
 	})
@@ -302,7 +324,7 @@ var _ = Describe("Embedding", func() {
 
 		Expect(err).Should(HaveOccurred())
 		Expect(err.Error()).Should(ContainSubstring(
-			"unclosed-code-fence.md:3`: " +
+			"unclosed-code-fence.md:3:1: " +
 				"the markdown code fence after the embedding instruction is not closed",
 		))
 	})

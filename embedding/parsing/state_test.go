@@ -120,6 +120,100 @@ var _ = Describe("Parser states", func() {
 		}))
 	})
 
+	// The following specs reproduce
+	// https://github.com/SpineEventEngine/embed-code-go/issues/19.
+	//
+	// A self-closed `<embed-code .../>` instruction that fails validation is a
+	// complete, single-line instruction, yet `Accept` keeps re-parsing the
+	// joined body and consumes every following line up to EOF before reporting
+	// the failure. That is why a single malformed instruction near the top of a
+	// document surfaces its error many lines later (line 76 -> line 404 in the
+	// original report) and destroys the parse of everything after it.
+	//
+	// The parser should report the InstructionParseError but stop right after
+	// the instruction's `/>` terminator, leaving the code fence and the rest of
+	// the document intact. These specs assert that bounded behavior and
+	// therefore FAIL until the over-consumption is fixed.
+	It("should not consume the rest of the document when a start pattern is invalid", func() {
+		assertBoundedMalformedInstruction(`<embed-code file="Example.java" start="["/>`)
+	})
+
+	It("should not consume the rest of the document when the comments mode is invalid", func() {
+		assertBoundedMalformedInstruction(`<embed-code file="Example.java" comments="bogus"/>`)
+	})
+
+	It("should not consume the rest of the document when attributes are mutually exclusive", func() {
+		assertBoundedMalformedInstruction(`<embed-code file="Example.java" fragment="f" line="l"/>`)
+	})
+
+	// Reproduces https://github.com/SpineEventEngine/embed-code-go/issues/19.
+	//
+	// A self-closed instruction whose start/end/line pattern contains raw XML
+	// metacharacters (`<`, `&`) is legitimate user input (e.g. matching a Java
+	// generic or comparison), yet `quoteEscapedXMLLine` only escapes `\"`, so
+	// `xml.Unmarshal` rejects it. Because the tag is self-closed, this is NOT
+	// the "tag is not closed" case; instead `Accept` keeps re-parsing and
+	// consumes every following line up to EOF, then fails with
+	// InstructionParseError -- swallowing the code fence and the rest of the
+	// document, exactly the behavior reported in the issue.
+	//
+	// This test asserts the desired behavior and therefore FAILS until the XML
+	// metacharacters in attribute values are escaped before unmarshalling.
+	It("should parse an instruction whose pattern contains XML metacharacters", func() {
+		config := configuration.NewConfiguration()
+		context := newStateContext(
+			"<embed-code file=\"Example.java\" line=\"if (a < b)\"/>",
+			"```java",
+			"old source",
+			"```",
+			"text after the fence",
+		)
+
+		Expect(parsing.EmbedInstruction.Recognize(context)).Should(BeTrue())
+
+		err := parsing.EmbedInstruction.Accept(&context, config)
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(context.EmbeddingInstruction).ShouldNot(BeNil())
+		Expect(context.EmbeddingInstruction.LinePattern).ShouldNot(BeNil())
+		// The parser must stop right after the instruction line rather than
+		// swallowing the code fence and the rest of the document.
+		Expect(context.ReachedEOF()).Should(BeFalse())
+		Expect(context.GetResult()).Should(Equal([]string{
+			"<embed-code file=\"Example.java\" line=\"if (a < b)\"/>",
+		}))
+	})
+
+	// Regresses https://github.com/SpineEventEngine/embed-code-go/issues/19.
+	//
+	// The `/>` inside the `line` value must not be mistaken for the tag
+	// terminator: the instruction spans several lines and only closes on the
+	// last one. Recognizing the inner `/>` would stop accumulation early and
+	// fail with an "unexpected EOF" before the real closing `/>`.
+	It("should accept a multiline instruction whose value contains a slash-close sequence", func() {
+		config := configuration.NewConfiguration()
+		context := newStateContext(
+			"<embed-code",
+			`    line="<br/>"`,
+			`    file="Example.java"/>`,
+			"```java",
+			"old source",
+			"```",
+		)
+
+		Expect(parsing.EmbedInstruction.Recognize(context)).Should(BeTrue())
+		Expect(parsing.EmbedInstruction.Accept(&context, config)).Should(Succeed())
+
+		Expect(context.EmbeddingInstruction).ShouldNot(BeNil())
+		Expect(context.EmbeddingInstruction.CodeFile).Should(Equal("Example.java"))
+		Expect(context.EmbeddingInstruction.LinePattern).ShouldNot(BeNil())
+		Expect(context.GetResult()).Should(Equal([]string{
+			"<embed-code",
+			`    line="<br/>"`,
+			`    file="Example.java"/>`,
+		}))
+	})
+
 	It("should render source and close the embedding fence when the end state is accepted", func() {
 		sourceRoot := GinkgoT().TempDir()
 		Expect(os.WriteFile(
@@ -180,6 +274,32 @@ var _ = Describe("Parser states", func() {
 		Expect(context.IsContentChanged()).Should(BeTrue())
 	})
 })
+
+// assertBoundedMalformedInstruction drives EmbedInstruction.Accept over a
+// document whose first line is a self-closed but invalid instruction, followed
+// by a code fence and trailing content.
+//
+// It asserts that the parser reports the failure as an InstructionParseError
+// without consuming past the instruction line. See issue #19.
+func assertBoundedMalformedInstruction(instruction string) {
+	config := configuration.NewConfiguration()
+	context := newStateContext(
+		instruction,
+		"```java",
+		"old source",
+		"```",
+		"text after the fence",
+	)
+
+	Expect(parsing.EmbedInstruction.Recognize(context)).Should(BeTrue())
+
+	err := parsing.EmbedInstruction.Accept(&context, config)
+
+	var parseErr parsing.InstructionParseError
+	Expect(errors.As(err, &parseErr)).Should(BeTrue())
+	Expect(context.ReachedEOF()).Should(BeFalse())
+	Expect(context.GetResult()).Should(Equal([]string{instruction}))
+}
 
 // newStateContext builds a parser context from in-memory source lines.
 func newStateContext(lines ...string) parsing.Context {
