@@ -136,6 +136,17 @@ var _ = Describe("Instruction", func() {
 		Expect(err).Should(MatchError(ContainSubstring("invalid start pattern `[`")))
 	})
 
+	It("should have an error for an unclosed alternative pattern", func() {
+		instructionParams := TestInstructionParams{
+			startGlob: "0{$",
+		}
+		xmlString := buildInstruction("org/example/Hello.java", instructionParams)
+
+		_, err := parsing.FromXML(xmlString, config)
+
+		Expect(err).Should(MatchError(ContainSubstring("invalid start pattern `0{$`")))
+	})
+
 	It("should successfully read source content", func() {
 		instructionParams := TestInstructionParams{
 			closeTag: true,

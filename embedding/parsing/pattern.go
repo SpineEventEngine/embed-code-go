@@ -27,6 +27,7 @@
 package parsing
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"unicode"
@@ -101,6 +102,10 @@ func NewPattern(globString string) (Pattern, error) {
 
 // compileLineMatcher compiles one source-line pattern into a glob matcher.
 func compileLineMatcher(patternLine string) (lineMatcher, error) {
+	if err := validateClosedAlternatives(patternLine); err != nil {
+		return lineMatcher{}, err
+	}
+
 	pattern := patternLine
 
 	startOfLine := strings.HasPrefix(patternLine, lineStart)
@@ -126,6 +131,47 @@ func compileLineMatcher(patternLine string) (lineMatcher, error) {
 	}
 
 	return lineMatcher{compiled: compiledGlob}, nil
+}
+
+// validateClosedAlternatives rejects unclosed glob alternative groups.
+func validateClosedAlternatives(patternLine string) error {
+	var alternativeDepth int
+	var inRange bool
+	var escaped bool
+	for _, r := range patternLine {
+		if escaped {
+			escaped = false
+			continue
+		}
+		if r == '\\' {
+			escaped = true
+			continue
+		}
+		if r == '[' && !inRange {
+			inRange = true
+			continue
+		}
+		if r == ']' && inRange {
+			inRange = false
+			continue
+		}
+		if inRange {
+			continue
+		}
+		switch r {
+		case '{':
+			alternativeDepth++
+		case '}':
+			if alternativeDepth > 0 {
+				alternativeDepth--
+			}
+		}
+	}
+	if alternativeDepth > 0 {
+		return errors.New("unclosed alternative pattern")
+	}
+
+	return nil
 }
 
 // matches reports whether the source line matches the compiled pattern.
