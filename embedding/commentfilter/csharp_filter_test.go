@@ -121,4 +121,40 @@ var _ = Describe("C#", func() {
 
 		assertFiltered("Api.cs", RetainNone, lines, expected)
 	})
+
+	It("should strip comments without treating raw string text as comments", func() {
+		lines := []string{
+			`var raw = """`,
+			`Keep // text`,
+			`Keep /* text */`,
+			`"""; // trailing comment`,
+			`var interpolated = $"""`,
+			`Keep // text {Format(value /* real comment */)}`,
+			`"""; // trailing comment`,
+		}
+
+		expected := []string{
+			`var raw = """`,
+			`Keep // text`,
+			`Keep /* text */`,
+			`"""; `,
+			`var interpolated = $"""`,
+			`Keep // text {Format(value )}`,
+			`"""; `,
+		}
+
+		assertFiltered("Api.cs", RetainNone, lines, expected)
+	})
+
+	It("should not close block comments on an overlapping end marker", func() {
+		lines := []string{
+			"var before = 1; /*/ still comment */ var after = 2;",
+		}
+
+		expected := []string{
+			"var before = 1;  var after = 2;",
+		}
+
+		assertFiltered("Api.cs", RetainNone, lines, expected)
+	})
 })

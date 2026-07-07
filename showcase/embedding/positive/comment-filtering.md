@@ -24,6 +24,9 @@ embedded unchanged. Not every supported language distinguishes documentation,
 regular, inline, and block comments, so unsupported categories simply have no
 comments to keep.
 
+For Python f-strings, `#` text in the literal part stays unchanged, while real
+`#` comments inside `{...}` expression holes are filtered.
+
 ## Language Support
 
 | Language               | Extensions                                               | Supported `comments` modes                                   |

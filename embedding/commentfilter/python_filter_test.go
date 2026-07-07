@@ -68,4 +68,48 @@ var _ = Describe("Python", func() {
 
 		assertFiltered("module.py", RetainNone, lines, expected)
 	})
+
+	It("should strip hash comments inside multi-line f-string expressions", func() {
+		lines := []string{
+			"message = f\"\"\"",
+			"Keep this # f-string text.",
+			"Total: {",
+			"    compute_total(items)  # expression comment",
+			"}",
+			"\"\"\"",
+			`formatted = f"{value:#x}" # inline comment`,
+			"slice = f\"\"\"",
+			"{",
+			"    values[",
+			"        :  # slice comment",
+			"    ]",
+			"}",
+			"\"\"\"",
+			`braces = rf"{{ # literal }} {value # expression comment`,
+			`}"`,
+			"value = 1 # real comment",
+		}
+
+		expected := []string{
+			"message = f\"\"\"",
+			"Keep this # f-string text.",
+			"Total: {",
+			"    compute_total(items)  ",
+			"}",
+			"\"\"\"",
+			`formatted = f"{value:#x}" `,
+			"slice = f\"\"\"",
+			"{",
+			"    values[",
+			"        :  ",
+			"    ]",
+			"}",
+			"\"\"\"",
+			`braces = rf"{{ # literal }} {value `,
+			`}"`,
+			"value = 1 ",
+		}
+
+		assertFiltered("module.py", RetainNone, lines, expected)
+	})
 })
