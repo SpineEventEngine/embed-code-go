@@ -25,6 +25,8 @@ const (
 	csharpVerbatimInterpolatedStringStart = `@$"`
 	csharpVerbatimStringStart             = `@"`
 	csharpInterpolatedStringStart         = `$"`
+	csharpInterpolatedRawStringStart      = `$"""`
+	csharpRawStringDelimiter              = `"""`
 	csharpEscapedQuote                    = `""`
 	csharpEscapedOpenBrace                = `{{`
 	csharpEscapedCloseBrace               = `}}`
@@ -37,6 +39,21 @@ var csharpInterpolation = interpolationForm{
 	start:      "{",
 	openBrace:  '{',
 	closeBrace: '}',
+}
+
+// csharpStringStart describes a C# string opening token.
+type csharpStringStart struct {
+	// token is the source text that opens the string.
+	token string
+
+	// verbatim reports whether the string uses verbatim escaping.
+	verbatim bool
+
+	// interpolated reports whether the string contains interpolation holes.
+	interpolated bool
+
+	// rawDelimiter closes a raw string; empty for regular and verbatim strings.
+	rawDelimiter string
 }
 
 // CSharpCommentFilter filters C# comments while preserving string literal text.
@@ -55,6 +72,9 @@ type csharpState struct {
 
 	// stringInterpolated reports whether the active string has interpolation holes.
 	stringInterpolated bool
+
+	// stringRawDelimiter closes an active raw string.
+	stringRawDelimiter string
 
 	// interpolationDepth is the active brace depth inside an interpolation expression.
 	interpolationDepth int
@@ -191,16 +211,19 @@ func (f *csharpLineFilter) consumeInterpolationFormat() bool {
 // consumeInterpolationString copies a line-local string literal inside interpolation code.
 // Nested multi-line verbatim strings intentionally resume as interpolation code on the next line.
 func (f *csharpLineFilter) consumeInterpolationString() bool {
-	token, verbatim, found := csharpStringTokenAt(f.line, f.position)
+	start, found := csharpStringStartAt(f.line, f.position)
 	if !found {
 		return false
 	}
-	f.consumeMarker(token)
+	f.consumeMarker(start.token)
+	if start.rawDelimiter != "" {
+		return f.consumeLineLocalRawString(start.rawDelimiter)
+	}
 	for f.position < len(f.line) {
 		switch {
-		case verbatim && f.hasPrefix(csharpEscapedQuote):
+		case start.verbatim && f.hasPrefix(csharpEscapedQuote):
 			f.consumeMarker(csharpEscapedQuote)
-		case !verbatim && f.line[f.position] == '\\':
+		case !start.verbatim && f.line[f.position] == '\\':
 			f.writeEscapedByte()
 		case f.line[f.position] == '"':
 			f.consumeCodeByte()
@@ -209,6 +232,20 @@ func (f *csharpLineFilter) consumeInterpolationString() bool {
 		default:
 			f.consumeCodeByte()
 		}
+	}
+
+	return true
+}
+
+// consumeLineLocalRawString copies raw string text until the closing delimiter or line end.
+func (f *csharpLineFilter) consumeLineLocalRawString(delimiter string) bool {
+	for f.position < len(f.line) {
+		if f.hasPrefix(delimiter) {
+			f.consumeMarker(delimiter)
+
+			return true
+		}
+		f.consumeCodeByte()
 	}
 
 	return true
@@ -232,6 +269,16 @@ func (f *csharpLineFilter) consumeStringText() bool {
 // consumeStringTextSegment consumes special syntax inside active string text.
 func (f *csharpLineFilter) consumeStringTextSegment() bool {
 	switch {
+	case f.state.stringRawDelimiter != "" && f.hasPrefix(f.state.stringRawDelimiter):
+		f.consumeMarker(f.state.stringRawDelimiter)
+		f.closeString()
+	case f.state.stringRawDelimiter != "" && f.startsEscapedInterpolationBrace():
+		f.consumeMarker(f.line[f.position : f.position+2])
+	case f.state.stringRawDelimiter != "" && f.state.stringInterpolated && f.line[f.position] == '{':
+		f.consumeCodeByte()
+		f.state.interpolationDepth = 1
+	case f.state.stringRawDelimiter != "":
+		return false
 	case f.state.stringVerbatim && f.hasPrefix(csharpEscapedQuote):
 		f.consumeMarker(csharpEscapedQuote)
 	case !f.state.stringVerbatim && f.line[f.position] == '\\':
@@ -253,34 +300,59 @@ func (f *csharpLineFilter) consumeStringTextSegment() bool {
 
 // consumeStringStart starts a C# string literal at the current position.
 func (f *csharpLineFilter) consumeStringStart() bool {
-	token, verbatim, found := csharpStringTokenAt(f.line, f.position)
+	start, found := csharpStringStartAt(f.line, f.position)
 	if !found {
 		return false
 	}
-	interpolated := strings.HasPrefix(token, "$") || strings.HasPrefix(token, "@$")
-	f.consumeMarker(token)
+	f.consumeMarker(start.token)
 	f.state.stringActive = true
-	f.state.stringVerbatim = verbatim
-	f.state.stringInterpolated = interpolated
+	f.state.stringVerbatim = start.verbatim
+	f.state.stringInterpolated = start.interpolated
+	f.state.stringRawDelimiter = start.rawDelimiter
 
 	return true
 }
 
-// csharpStringTokenAt returns a C# string opener at position.
-func csharpStringTokenAt(line string, position int) (string, bool, bool) {
+// csharpStringStartAt returns a C# string opener at position.
+func csharpStringStartAt(line string, position int) (csharpStringStart, bool) {
 	switch {
+	case strings.HasPrefix(line[position:], csharpInterpolatedRawStringStart):
+		return csharpStringStart{
+			token:        csharpInterpolatedRawStringStart,
+			interpolated: true,
+			rawDelimiter: csharpRawStringDelimiter,
+		}, true
 	case strings.HasPrefix(line[position:], csharpInterpolatedVerbatimStringStart):
-		return csharpInterpolatedVerbatimStringStart, true, true
+		return csharpStringStart{
+			token:        csharpInterpolatedVerbatimStringStart,
+			verbatim:     true,
+			interpolated: true,
+		}, true
 	case strings.HasPrefix(line[position:], csharpVerbatimInterpolatedStringStart):
-		return csharpVerbatimInterpolatedStringStart, true, true
+		return csharpStringStart{
+			token:        csharpVerbatimInterpolatedStringStart,
+			verbatim:     true,
+			interpolated: true,
+		}, true
 	case strings.HasPrefix(line[position:], csharpVerbatimStringStart):
-		return csharpVerbatimStringStart, true, true
+		return csharpStringStart{
+			token:    csharpVerbatimStringStart,
+			verbatim: true,
+		}, true
 	case strings.HasPrefix(line[position:], csharpInterpolatedStringStart):
-		return csharpInterpolatedStringStart, false, true
+		return csharpStringStart{
+			token:        csharpInterpolatedStringStart,
+			interpolated: true,
+		}, true
+	case strings.HasPrefix(line[position:], csharpRawStringDelimiter):
+		return csharpStringStart{
+			token:        csharpRawStringDelimiter,
+			rawDelimiter: csharpRawStringDelimiter,
+		}, true
 	case line[position] == '"':
-		return `"`, false, true
+		return csharpStringStart{token: `"`}, true
 	default:
-		return "", false, false
+		return csharpStringStart{}, false
 	}
 }
 
@@ -295,7 +367,10 @@ func (f *csharpLineFilter) startsEscapedInterpolationBrace() bool {
 
 // closeSingleLineStringAtLineEnd clears invalid single-line strings at end of line.
 func (f *csharpLineFilter) closeSingleLineStringAtLineEnd() {
-	if f.state.stringActive && !f.state.stringVerbatim && f.state.interpolationDepth == 0 {
+	if f.state.stringActive &&
+		!f.state.stringVerbatim &&
+		f.state.stringRawDelimiter == "" &&
+		f.state.interpolationDepth == 0 {
 		f.closeString()
 	}
 }
@@ -305,6 +380,7 @@ func (f *csharpLineFilter) closeString() {
 	f.state.stringActive = false
 	f.state.stringVerbatim = false
 	f.state.stringInterpolated = false
+	f.state.stringRawDelimiter = ""
 	f.state.interpolationDepth = 0
 	f.state.interpolationFormat = false
 }

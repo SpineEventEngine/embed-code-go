@@ -187,6 +187,14 @@ func (f *markerLineFilter) consumeComment() commentConsumeResult {
 // startBlockComment records the active block comment markers and whether to keep them.
 func (f *markerLineFilter) startBlockComment(block BlockMarker, keep bool) {
 	f.hadComment = true
+	start := block.Start
+	if block.End == cStyleBlockCommentEnd && strings.HasPrefix(start, cStyleDocCommentStart) {
+		start = cStyleBlockCommentStart
+	}
+	if keep {
+		f.result.WriteString(start)
+	}
+	f.position += len(start)
 	f.state.segment = &activeSegment{
 		end:     block.End,
 		keep:    keep,
