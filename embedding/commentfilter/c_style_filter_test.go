@@ -100,4 +100,29 @@ var _ = Describe("C and C++", func() {
 
 		assertFiltered("sample.cpp", RetainNone, lines, expected)
 	})
+
+	It("should strip comments without treating raw string text as comments", func() {
+		lines := []string{
+			"// header comment",
+			`const char* single = R"(Keep // and /* markers */ in raw text)";`,
+			`const char* tagged = R"tag(Keep )" and // markers)tag"; // inline comment`,
+			`const char* multi = R"(`,
+			`Keep // marker`,
+			`Keep /* marker */`,
+			`)"; /* trailing block */`,
+			"int value = 1; // inline comment",
+		}
+
+		expected := []string{
+			`const char* single = R"(Keep // and /* markers */ in raw text)";`,
+			`const char* tagged = R"tag(Keep )" and // markers)tag"; `,
+			`const char* multi = R"(`,
+			`Keep // marker`,
+			`Keep /* marker */`,
+			`)"; `,
+			"int value = 1; ",
+		}
+
+		assertFiltered("sample.cpp", RetainNone, lines, expected)
+	})
 })
