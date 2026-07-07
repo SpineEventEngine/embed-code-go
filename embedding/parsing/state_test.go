@@ -111,13 +111,47 @@ var _ = Describe("Parser states", func() {
 		var parseErr parsing.InstructionParseError
 		Expect(errors.As(err, &parseErr)).Should(BeTrue())
 		Expect(parseErr.Line).Should(Equal(2))
-		Expect(parseErr.Reason).Should(Equal("the `<embed-code>` tag is not closed"))
+		Expect(parseErr.Reason).Should(Equal(
+			"the opening `<embed-code>` tag is not closed; add `>` or `/>` before the code fence",
+		))
 		Expect(context.ReachedEOF()).Should(BeTrue())
 		Expect(context.GetResult()).Should(Equal([]string{
 			"preface",
 			"<embed-code",
 			"    file=\"Example.java\"",
 		}))
+	})
+
+	It("should report a missing opening tag end before a code fence", func() {
+		config := configuration.NewConfiguration()
+		context := newStateContext(
+			"<embed-code",
+			"file=\"$test/JunitTest.java\"",
+			"start=\"Test\"",
+			"end=\"assertEquals(2, value)\\n\\n\\n\"",
+			"",
+			"",
+			"```",
+			"old source",
+			"```",
+			"",
+			"<embed-code",
+			"file=\"$test/Hello.kt\"",
+			"line=\"public void subscribe\">",
+			"</embed-code>",
+			"```",
+			"```",
+		)
+
+		err := parsing.EmbedInstruction.Accept(&context, config)
+
+		Expect(err).Should(HaveOccurred())
+		var parseErr parsing.InstructionParseError
+		Expect(errors.As(err, &parseErr)).Should(BeTrue())
+		Expect(parseErr.Line).Should(Equal(1))
+		Expect(parseErr.Reason).Should(Equal(
+			"the opening `<embed-code>` tag is not closed; add `>` or `/>` before the code fence",
+		))
 	})
 
 	It("should render source and close the embedding fence when the end state is accepted", func() {

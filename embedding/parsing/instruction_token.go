@@ -142,13 +142,18 @@ func (e EmbedInstructionTokenState) Accept(context *Context,
 
 // parseFailureReason explains why an embedding instruction could not be parsed.
 func parseFailureReason(instructionBody []string, parseErr error) string {
-	instruction := strings.TrimSpace(strings.Join(instructionBody, " "))
-	if !strings.Contains(instruction, "/>") &&
-		!strings.Contains(instruction, "</"+EmbeddingTag+">") {
-		return fmt.Sprintf("the `<%s>` tag is not closed",
+	if !openingTagClosed(instructionBody) {
+		return fmt.Sprintf("the opening `<%s>` tag is not closed; add `>` or `/>` before the code fence",
 			EmbeddingTag,
 		)
 	}
+	if !instructionClosed(instructionBody) {
+		return fmt.Sprintf("the `<%s>` instruction is not closed; add `</%s>` or use `/>`",
+			EmbeddingTag,
+			EmbeddingTag,
+		)
+	}
+
 	if parseErr != nil {
 		var syntaxErr *xml.SyntaxError
 		if errors.As(parseErr, &syntaxErr) {
@@ -159,4 +164,125 @@ func parseFailureReason(instructionBody []string, parseErr error) string {
 	}
 
 	return "invalid embedding instruction"
+}
+
+// openingTagClosed reports whether the first embed-code opening tag reaches `>`.
+func openingTagClosed(instructionBody []string) bool {
+	return scanInstructionBody(instructionBody, func(remaining string) (bool, bool) {
+		switch {
+		case strings.HasPrefix(remaining, ">"):
+			return true, true
+		case strings.HasPrefix(remaining, "</"+EmbeddingTag):
+			return false, true
+		case strings.HasPrefix(remaining, "<"+EmbeddingTag):
+			return false, true
+		default:
+			return false, false
+		}
+	})
+}
+
+// instructionClosed reports whether the instruction has a self-closing or closing tag.
+func instructionClosed(instructionBody []string) bool {
+	return scanInstructionBody(instructionBody, func(remaining string) (bool, bool) {
+		switch {
+		case strings.HasPrefix(remaining, "/>"):
+			return true, true
+		case strings.HasPrefix(remaining, "</"+EmbeddingTag+">"):
+			return true, true
+		default:
+			return false, false
+		}
+	})
+}
+
+// scanInstructionBody scans instruction text outside quoted attribute values.
+func scanInstructionBody(
+	instructionBody []string,
+	check func(remaining string) (bool, bool),
+) bool {
+	inTag := false
+	inQuote := false
+	var quote byte
+	for _, line := range instructionBody {
+		if inTag && !inQuote && markdownCodeFenceStart(line) {
+			return false
+		}
+		matched, done := scanInstructionLine(line, check, &inTag, &inQuote, &quote)
+		if done {
+			return matched
+		}
+	}
+
+	return false
+}
+
+// scanInstructionLine scans one instruction line outside quoted attribute values.
+func scanInstructionLine(
+	line string,
+	check func(remaining string) (bool, bool),
+	inTag *bool,
+	inQuote *bool,
+	quote *byte,
+) (bool, bool) {
+	for lineCursor := 0; lineCursor < len(line); lineCursor++ {
+		if !*inTag {
+			if !startInstructionScan(line, &lineCursor, inTag) {
+				break
+			}
+
+			continue
+		}
+		if *inQuote {
+			skipQuotedCharacter(line, &lineCursor, inQuote, quote)
+
+			continue
+		}
+		if line[lineCursor] == '"' || line[lineCursor] == '\'' {
+			*inQuote = true
+			*quote = line[lineCursor]
+
+			continue
+		}
+		matched, done := check(line[lineCursor:])
+		if done {
+			return matched, true
+		}
+	}
+
+	return false, false
+}
+
+// startInstructionScan moves lineCursor to the first embed-code tag.
+func startInstructionScan(line string, lineCursor *int, inTag *bool) bool {
+	tagStart := strings.Index(line[*lineCursor:], "<"+EmbeddingTag)
+	if tagStart < 0 {
+		return false
+	}
+	*lineCursor += tagStart + len("<"+EmbeddingTag) - 1
+	*inTag = true
+
+	return true
+}
+
+// skipQuotedCharacter updates quote state while scanning an attribute value.
+func skipQuotedCharacter(line string, lineCursor *int, inQuote *bool, quote *byte) {
+	if line[*lineCursor] == '\\' {
+		*lineCursor++
+
+		return
+	}
+	if line[*lineCursor] == *quote {
+		*inQuote = false
+	}
+}
+
+// markdownCodeFenceStart reports whether a line starts a Markdown code fence.
+func markdownCodeFenceStart(line string) bool {
+	trimmedLine := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmedLine, "```") {
+		return false
+	}
+
+	return len(codeFenceMarker(trimmedLine)) >= minCodeFenceMarkerLength
 }
