@@ -194,11 +194,15 @@ func (f *lineFilter) consumeCStyleComment(
 	return commentConsumeResult{}
 }
 
-// startBlockComment records an opened non-nested block comment and whether to keep it.
+// startBlockComment records and consumes an opened non-nested C-style block comment.
 func (f *lineFilter) startBlockComment(state *blockCommentState, keep bool) {
 	f.hadComment = true
 	state.active = true
 	state.keep = keep
+	if keep {
+		f.result.WriteString(cStyleBlockCommentStart)
+	}
+	f.position += len(cStyleBlockCommentStart)
 }
 
 // consumeActiveBlock consumes text while the scanner is inside a non-nested block comment.
