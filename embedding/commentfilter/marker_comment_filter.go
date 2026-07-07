@@ -43,6 +43,7 @@ type markerState struct {
 
 // markerLineFilter tracks lexical comment filtering state for one source line.
 type markerLineFilter struct {
+	// lineFilter provides shared line scanning state and helpers.
 	lineFilter
 
 	// filter contains the language syntax configuration.

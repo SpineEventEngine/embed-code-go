@@ -88,6 +88,7 @@ type pythonState struct {
 
 // pythonLineFilter filters one Python source line.
 type pythonLineFilter struct {
+	// lineFilter provides shared line scanning state and helpers.
 	lineFilter
 
 	// state tracks Python constructs across lines.

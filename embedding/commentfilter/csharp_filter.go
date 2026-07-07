@@ -85,6 +85,7 @@ type csharpState struct {
 
 // csharpLineFilter filters one C# source line.
 type csharpLineFilter struct {
+	// lineFilter provides shared line scanning state and helpers.
 	lineFilter
 
 	// state tracks C# constructs across lines.

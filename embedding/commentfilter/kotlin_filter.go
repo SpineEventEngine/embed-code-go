@@ -54,6 +54,7 @@ type kotlinState struct {
 
 // kotlinLineFilter filters one Kotlin source line.
 type kotlinLineFilter struct {
+	// lineFilter provides shared line scanning state and helpers.
 	lineFilter
 
 	// state tracks Kotlin constructs across lines.
