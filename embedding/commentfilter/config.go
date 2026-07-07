@@ -37,7 +37,7 @@ var filtersByExtension = map[string]filterEntry{
 	".groovy": filterConfig(MarkerCommentFilter{Syntax: javaSyntax}, allModes),
 
 	// C#
-	".cs": filterConfig(MarkerCommentFilter{Syntax: csharpSyntax}, allModes),
+	".cs": filterConfig(CSharpCommentFilter{}, allModes),
 
 	// C/C++
 	".c":   filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
@@ -105,18 +105,6 @@ var javaSyntax = CommentMarker{
 		{Delimiter: javaTextBlockDelimiter, Escapes: true},
 	},
 	QuoteChars: "\"'",
-}
-
-var csharpSyntax = CommentMarker{
-	Inline: []string{"//"},
-	Block: []BlockMarker{
-		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
-	},
-	Documentation: DocumentationMarker{
-		Inline: []string{"///"},
-		Block:  []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
-	},
-	QuoteChars: jsQuoteChars,
 }
 
 var cStyleSyntax = CommentMarker{
