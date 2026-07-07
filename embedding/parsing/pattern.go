@@ -155,6 +155,9 @@ func (m lineMatcher) matches(line string) bool {
 }
 
 // matchGlob reports whether a glob matches and treats dependency panics as misses.
+//
+// A miss lets the instruction layer report PatternNotFoundError with source
+// context instead of exposing a third-party matcher panic to users.
 func matchGlob(compiledGlob glob.Glob, line string) bool {
 	var matched bool
 	func() {
