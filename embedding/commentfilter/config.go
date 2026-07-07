@@ -31,6 +31,10 @@ const (
 	cStyleBlockCommentEnd   = "*/"
 	cStyleDocCommentStart   = "/**"
 	javaTextBlockDelimiter  = "\"\"\""
+	pythonDoubleQuoteBlock  = "\"\"\""
+	pythonSingleQuoteBlock  = "'''"
+	goRawStringDelimiter    = "`"
+	goQuoteChars            = "\"'"
 	jsQuoteChars            = "\"'`"
 )
 
@@ -43,7 +47,7 @@ var filtersByExtension = map[string]filterEntry{
 	".groovy": filterConfig(MarkerCommentFilter{Syntax: javaSyntax}, allModes),
 
 	// C#
-	".cs": filterConfig(MarkerCommentFilter{Syntax: csharpSyntax}, allModes),
+	".cs": filterConfig(CSharpCommentFilter{}, allModes),
 
 	// C/C++
 	".c":   filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
@@ -56,10 +60,10 @@ var filtersByExtension = map[string]filterEntry{
 	".hxx": filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
 
 	// JavaScript
-	".js":  filterConfig(MarkerCommentFilter{Syntax: jsSyntax}, allModes),
-	".jsx": filterConfig(MarkerCommentFilter{Syntax: jsSyntax}, allModes),
-	".ts":  filterConfig(MarkerCommentFilter{Syntax: jsSyntax}, allModes),
-	".tsx": filterConfig(MarkerCommentFilter{Syntax: jsSyntax}, allModes),
+	".js":  filterConfig(JavaScriptCommentFilter{}, allModes),
+	".jsx": filterConfig(JavaScriptCommentFilter{}, allModes),
+	".ts":  filterConfig(JavaScriptCommentFilter{}, allModes),
+	".tsx": filterConfig(JavaScriptCommentFilter{}, allModes),
 
 	// Go
 	".go": filterConfig(MarkerCommentFilter{Syntax: goSyntax}, regularModes),
@@ -68,9 +72,9 @@ var filtersByExtension = map[string]filterEntry{
 	".proto": filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
 
 	// Python
-	".py":  filterConfig(MarkerCommentFilter{Syntax: hashLineSyntax}, noneMode),
-	".pyi": filterConfig(MarkerCommentFilter{Syntax: hashLineSyntax}, noneMode),
-	".pyw": filterConfig(MarkerCommentFilter{Syntax: hashLineSyntax}, noneMode),
+	".py":  filterConfig(MarkerCommentFilter{Syntax: pythonSyntax}, noneMode),
+	".pyi": filterConfig(MarkerCommentFilter{Syntax: pythonSyntax}, noneMode),
+	".pyw": filterConfig(MarkerCommentFilter{Syntax: pythonSyntax}, noneMode),
 
 	// YAML
 	".yml":  filterConfig(MarkerCommentFilter{Syntax: hashLineSyntax}, noneMode),
@@ -107,31 +111,10 @@ var javaSyntax = CommentMarker{
 	Documentation: DocumentationMarker{
 		Block: []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
 	},
-	TextBlocks: []string{javaTextBlockDelimiter},
+	TextBlocks: []TextBlockMarker{
+		{Delimiter: javaTextBlockDelimiter, Escapes: true},
+	},
 	QuoteChars: "\"'",
-}
-
-var jsSyntax = CommentMarker{
-	Inline: []string{"//"},
-	Block: []BlockMarker{
-		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
-	},
-	Documentation: DocumentationMarker{
-		Block: []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
-	},
-	QuoteChars: jsQuoteChars,
-}
-
-var csharpSyntax = CommentMarker{
-	Inline: []string{"//"},
-	Block: []BlockMarker{
-		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
-	},
-	Documentation: DocumentationMarker{
-		Inline: []string{"///"},
-		Block:  []BlockMarker{{Start: cStyleDocCommentStart, End: cStyleBlockCommentEnd}},
-	},
-	QuoteChars: jsQuoteChars,
 }
 
 var cStyleSyntax = CommentMarker{
@@ -147,11 +130,23 @@ var goSyntax = CommentMarker{
 	Block: []BlockMarker{
 		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
 	},
-	QuoteChars: jsQuoteChars,
+	TextBlocks: []TextBlockMarker{
+		{Delimiter: goRawStringDelimiter},
+	},
+	QuoteChars: goQuoteChars,
 }
 
 var hashLineSyntax = CommentMarker{
 	Inline:     []string{"#"},
+	QuoteChars: "\"'",
+}
+
+var pythonSyntax = CommentMarker{
+	Inline: []string{"#"},
+	TextBlocks: []TextBlockMarker{
+		{Delimiter: pythonDoubleQuoteBlock, Escapes: true},
+		{Delimiter: pythonSingleQuoteBlock, Escapes: true},
+	},
 	QuoteChars: "\"'",
 }
 

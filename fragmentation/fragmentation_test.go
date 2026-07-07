@@ -208,6 +208,64 @@ var _ = Describe("Fragmentation", func() {
 		Expect(err).Should(HaveOccurred())
 	})
 
+	Describe("Partition.Select", func() {
+		It("should reject a start position before source lines", func() {
+			partition := fragmentation.Partition{
+				StartPosition: -1,
+				EndPosition:   0,
+			}
+
+			lines, err := partition.Select([]string{"first line"})
+
+			Expect(lines).Should(BeNil())
+			Expect(err).Should(MatchError(
+				"fragment partition start position -1 is outside source lines",
+			))
+		})
+
+		It("should reject a start position after source lines", func() {
+			partition := fragmentation.Partition{
+				StartPosition: 1,
+				EndPosition:   1,
+			}
+
+			lines, err := partition.Select([]string{"first line"})
+
+			Expect(lines).Should(BeNil())
+			Expect(err).Should(MatchError(
+				"fragment partition start position 1 is outside source lines",
+			))
+		})
+
+		It("should reject an end position after source lines", func() {
+			partition := fragmentation.Partition{
+				StartPosition: 0,
+				EndPosition:   1,
+			}
+
+			lines, err := partition.Select([]string{"first line"})
+
+			Expect(lines).Should(BeNil())
+			Expect(err).Should(MatchError(
+				"fragment partition end position 1 is outside source lines",
+			))
+		})
+
+		It("should reject an end position before the start position", func() {
+			partition := fragmentation.Partition{
+				StartPosition: 2,
+				EndPosition:   0,
+			}
+
+			lines, err := partition.Select([]string{"first line", "second line", "third line"})
+
+			Expect(lines).Should(BeNil())
+			Expect(err).Should(MatchError(
+				"fragment partition end position 0 is before start position 2",
+			))
+		})
+	})
+
 	Context("fragments parsing", func() {
 		mainFragment := "main"
 		subMainFragment := "sub-main"
