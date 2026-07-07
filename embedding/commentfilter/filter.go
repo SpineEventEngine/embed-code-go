@@ -1,20 +1,28 @@
-// Copyright 2026, TeamDev. All rights reserved.
-//
-// Redistribution and use in source and/or binary forms, with or without
-// modification, must retain the above copyright notice and the following
-// disclaimer.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+ * Copyright 2026, TeamDev. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Redistribution and use in source and/or binary forms, with or without
+ * modification, must retain the above copyright notice and the following
+ * disclaimer.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 package commentfilter
 
@@ -23,6 +31,7 @@ import (
 	"fmt"
 	"log/slog"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -48,6 +57,23 @@ type CommentFilter interface {
 	//
 	// Returns filtered source lines.
 	Filter(lines []string, mode Mode) []string
+}
+
+// filterLines applies a line filter and drops lines made empty by comment removal.
+func filterLines(
+	lines []string,
+	filterLine func(line string) (filteredLine string, hadComment bool),
+) []string {
+	var filtered []string
+	for _, line := range lines {
+		filteredLine, hadComment := filterLine(line)
+		if hadComment && strings.TrimSpace(filteredLine) == "" {
+			continue
+		}
+		filtered = append(filtered, filteredLine)
+	}
+
+	return filtered
 }
 
 // Filter returns source lines with comments stripped according to the requested mode.
@@ -161,7 +187,7 @@ func warnUnsupportedCommentsMode(
 	embeddingLine int,
 	supportedModes []Mode,
 ) bool {
-	if containsMode(supportedModes, mode) {
+	if slices.Contains(supportedModes, mode) {
 		return false
 	}
 	var wrappedModes []string
@@ -181,15 +207,4 @@ func warnUnsupportedCommentsMode(
 	)
 
 	return true
-}
-
-// containsMode reports whether the list includes the given mode.
-func containsMode(modes []Mode, mode Mode) bool {
-	for _, supportedMode := range modes {
-		if supportedMode == mode {
-			return true
-		}
-	}
-
-	return false
 }

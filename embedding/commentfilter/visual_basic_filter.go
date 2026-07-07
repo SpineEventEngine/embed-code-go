@@ -1,20 +1,28 @@
-// Copyright 2026, TeamDev. All rights reserved.
-//
-// Redistribution and use in source and/or binary forms, with or without
-// modification, must retain the above copyright notice and the following
-// disclaimer.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+ * Copyright 2026, TeamDev. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Redistribution and use in source and/or binary forms, with or without
+ * modification, must retain the above copyright notice and the following
+ * disclaimer.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 package commentfilter
 
@@ -43,16 +51,9 @@ type VisualBasicCommentFilter struct{}
 //
 // Returns filtered source lines.
 func (VisualBasicCommentFilter) Filter(lines []string, mode Mode) []string {
-	var filtered []string
-	for _, line := range lines {
-		filteredLine, hadComment := filterVisualBasicLine(line, mode)
-		if hadComment && strings.TrimSpace(filteredLine) == "" {
-			continue
-		}
-		filtered = append(filtered, filteredLine)
-	}
-
-	return filtered
+	return filterLines(lines, func(line string) (string, bool) {
+		return filterVisualBasicLine(line, mode)
+	})
 }
 
 // filterVisualBasicLine removes or preserves one Visual Basic comment.
@@ -60,7 +61,7 @@ func filterVisualBasicLine(line string, mode Mode) (string, bool) {
 	var result strings.Builder
 	position := 0
 	for position < len(line) {
-		if quoteEnd := quotedSegmentEnd(line, position, "\""); quoteEnd > position {
+		if quoteEnd := visualBasicQuotedSegmentEnd(line, position); quoteEnd > position {
 			result.WriteString(line[position:quoteEnd])
 			position = quoteEnd
 
@@ -85,6 +86,30 @@ func filterVisualBasicLine(line string, mode Mode) (string, bool) {
 	}
 
 	return result.String(), false
+}
+
+// visualBasicQuotedSegmentEnd returns the end offset of a Visual Basic quoted string.
+func visualBasicQuotedSegmentEnd(line string, position int) int {
+	if position >= len(line) || line[position] != '"' {
+		return position
+	}
+	cursor := position + 1
+	for cursor < len(line) {
+		if line[cursor] != '"' {
+			cursor++
+
+			continue
+		}
+		if cursor+1 < len(line) && line[cursor+1] == '"' {
+			cursor += 2
+
+			continue
+		}
+
+		return cursor + 1
+	}
+
+	return len(line)
 }
 
 // remCommentAt reports whether a Visual Basic REM comment starts at position.

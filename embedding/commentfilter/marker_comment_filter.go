@@ -1,107 +1,64 @@
-// Copyright 2026, TeamDev. All rights reserved.
-//
-// Redistribution and use in source and/or binary forms, with or without
-// modification, must retain the above copyright notice and the following
-// disclaimer.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+ * Copyright 2026, TeamDev. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Redistribution and use in source and/or binary forms, with or without
+ * modification, must retain the above copyright notice and the following
+ * disclaimer.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 package commentfilter
 
 import "strings"
 
-// BlockMarker describes a block comment marker pair.
-type BlockMarker struct {
-	// Start is the block comment opening marker.
-	Start string
+// activeSegment describes a multi-line construct currently being scanned.
+type activeSegment struct {
+	// end closes the active construct.
+	end string
 
-	// End is the block comment closing marker.
-	End string
-}
-
-// DocumentationMarker describes API documentation comment markers.
-type DocumentationMarker struct {
-	// Inline contains documentation line-comment markers.
-	Inline []string
-
-	// Block contains documentation block-comment marker pairs.
-	Block []BlockMarker
-}
-
-// CommentMarker describes lexical comment markers and string delimiters for a language family.
-type CommentMarker struct {
-	// Inline contains line-comment markers.
-	Inline []string
-
-	// Block contains block-comment marker pairs.
-	Block []BlockMarker
-
-	// Documentation contains API documentation comment markers.
-	Documentation DocumentationMarker
-
-	// TextBlocks contains delimiters that open and close multi-line text literals.
-	TextBlocks []string
-
-	// QuoteChars contains characters that open and close quoted strings.
-	QuoteChars string
-}
-
-// MarkerCommentFilter removes comments using lexical markers declared in CommentMarker.
-type MarkerCommentFilter struct {
-	// Syntax contains the comment markers and string delimiters to recognize.
-	Syntax CommentMarker
-}
-
-// blockState tracks active multi-line lexical constructs across source lines.
-type blockState struct {
-	// active reports whether scanning is inside a block comment.
-	active bool
-
-	// block contains the active block comment markers.
-	block BlockMarker
-
-	// keep reports whether the active comment should be retained.
+	// keep reports whether the active construct is copied to output.
 	keep bool
 
-	// textBlockActive reports whether scanning is inside a text block.
-	textBlockActive bool
+	// escapes reports whether backslashes escape bytes while searching for end.
+	escapes bool
 
-	// textBlockDelimiter contains the marker that closes the active text block.
-	textBlockDelimiter string
+	// comment reports whether the active construct is a source comment.
+	comment bool
+}
+
+// markerState tracks active multi-line lexical constructs across source lines.
+type markerState struct {
+	// segment contains the active construct configuration, if one is open.
+	segment *activeSegment
 }
 
 // markerLineFilter tracks lexical comment filtering state for one source line.
 type markerLineFilter struct {
+	// lineFilter provides shared line scanning state and helpers.
+	lineFilter
+
 	// filter contains the language syntax configuration.
 	filter MarkerCommentFilter
 
-	// line is the source line being filtered.
-	line string
-
-	// mode selects which comments to retain.
-	mode Mode
-
 	// state tracks multi-line lexical constructs across lines.
-	state *blockState
-
-	// result accumulates the filtered source line.
-	result strings.Builder
-
-	// position is the current byte index in line.
-	position int
-
-	// hadComment reports whether the line contained a recognized comment.
-	hadComment bool
+	state *markerState
 }
 
 // Filter removes or preserves recognized comments across all lines.
@@ -112,52 +69,33 @@ type markerLineFilter struct {
 //
 // Returns filtered source lines.
 func (f MarkerCommentFilter) Filter(lines []string, mode Mode) []string {
-	var filtered []string
-	state := blockState{}
-	for _, line := range lines {
-		filteredLine, hadComment := f.filterLine(line, mode, &state)
-		if hadComment && strings.TrimSpace(filteredLine) == "" {
-			continue
+	state := markerState{}
+
+	return filterLines(lines, func(line string) (string, bool) {
+		filter := markerLineFilter{
+			lineFilter: lineFilter{line: line, mode: mode},
+			filter:     f,
+			state:      &state,
 		}
-		filtered = append(filtered, filteredLine)
-	}
 
-	return filtered
-}
-
-// filterLine removes or preserves recognized comments from a single source line.
-func (f MarkerCommentFilter) filterLine(
-	line string,
-	mode Mode,
-	state *blockState,
-) (string, bool) {
-	filter := markerLineFilter{
-		filter: f,
-		line:   line,
-		mode:   mode,
-		state:  state,
-	}
-
-	return filter.filterLine()
+		return filter.filterLine()
+	})
 }
 
 // filterLine walks the current line until it reaches its end or a line comment.
 func (f *markerLineFilter) filterLine() (string, bool) {
 	for f.position < len(f.line) {
-		if f.consumeActiveBlock() {
-			continue
-		}
-		if f.consumeActiveTextBlock() {
+		if f.consumeActiveSegment() {
 			continue
 		}
 		if f.consumeTextBlockStart() {
 			continue
 		}
-		if f.consumeQuotedSegment() {
+		if f.consumeQuotedSegment(f.filter.Syntax.QuoteChars) {
 			continue
 		}
-		if consumed, stop := f.consumeComment(); consumed {
-			if stop {
+		if comment := f.consumeComment(); comment.consumed {
+			if comment.stopLine {
 				break
 			}
 
@@ -169,61 +107,43 @@ func (f *markerLineFilter) filterLine() (string, bool) {
 	return f.result.String(), f.hadComment
 }
 
-// consumeActiveBlock consumes text while the scanner is inside a block comment.
-func (f *markerLineFilter) consumeActiveBlock() bool {
-	if !f.state.active {
+// consumeActiveSegment consumes text while the scanner is inside a multi-line construct.
+func (f *markerLineFilter) consumeActiveSegment() bool {
+	segment := f.state.segment
+	if segment == nil {
 		return false
 	}
-	f.hadComment = true
-	end := strings.Index(f.line[f.position:], f.state.block.End)
-	if end < 0 {
-		if f.state.keep {
+	if segment.comment {
+		f.hadComment = true
+	}
+	endPosition, found := segmentEnd(f.line, f.position, *segment)
+	if !found {
+		if segment.keep {
 			f.result.WriteString(f.line[f.position:])
 		}
 		f.position = len(f.line)
 
 		return true
 	}
-	endPosition := f.position + end + len(f.state.block.End)
-	if f.state.keep {
+	if segment.keep {
 		f.result.WriteString(f.line[f.position:endPosition])
 	}
 	f.position = endPosition
-	f.state.active = false
+	f.state.segment = nil
 
 	return true
 }
 
-// consumeActiveTextBlock copies text block content until the closing delimiter.
-func (f *markerLineFilter) consumeActiveTextBlock() bool {
-	if !f.state.textBlockActive {
-		return false
-	}
-	endPosition, found := textBlockEnd(f.line, f.position, f.state.textBlockDelimiter)
-	if !found {
-		f.result.WriteString(f.line[f.position:])
-		f.position = len(f.line)
-
-		return true
-	}
-	f.result.WriteString(f.line[f.position:endPosition])
-	f.position = endPosition
-	f.state.textBlockActive = false
-	f.state.textBlockDelimiter = ""
-
-	return true
-}
-
-// textBlockEnd returns the end offset of a text block close delimiter.
-func textBlockEnd(line string, position int, delimiter string) (int, bool) {
+// segmentEnd returns the end offset of an active segment close delimiter.
+func segmentEnd(line string, position int, segment activeSegment) (int, bool) {
 	for cursor := position; cursor < len(line); {
-		if line[cursor] == '\\' {
+		if segment.escapes && line[cursor] == '\\' {
 			cursor += 2
 
 			continue
 		}
-		if strings.HasPrefix(line[cursor:], delimiter) {
-			return cursor + len(delimiter), true
+		if strings.HasPrefix(line[cursor:], segment.end) {
+			return cursor + len(segment.end), true
 		}
 		cursor++
 	}
@@ -233,117 +153,84 @@ func textBlockEnd(line string, position int, delimiter string) (int, bool) {
 
 // consumeTextBlockStart starts a configured text block literal.
 func (f *markerLineFilter) consumeTextBlockStart() bool {
-	delimiter, found := prefixFrom(f.line, f.position, f.filter.Syntax.TextBlocks)
+	marker, found := textBlockAt(f.line, f.position, f.filter.Syntax.TextBlocks)
 	if !found {
 		return false
 	}
-	f.result.WriteString(delimiter)
-	f.position += len(delimiter)
-	f.state.textBlockActive = true
-	f.state.textBlockDelimiter = delimiter
+	f.consumeMarker(marker.Delimiter)
+	f.state.segment = &activeSegment{
+		end:     marker.Delimiter,
+		keep:    true,
+		escapes: marker.Escapes,
+	}
 
 	return true
 }
 
-// consumeQuotedSegment copies a quoted segment without scanning comment markers inside it.
-func (f *markerLineFilter) consumeQuotedSegment() bool {
-	quoteEnd := quotedSegmentEnd(f.line, f.position, f.filter.Syntax.QuoteChars)
-	if quoteEnd <= f.position {
-		return false
-	}
-	f.result.WriteString(f.line[f.position:quoteEnd])
-	f.position = quoteEnd
-
-	return true
-}
-
-// quotedSegmentEnd returns the end offset of a quoted string starting at position.
-func quotedSegmentEnd(line string, position int, quoteChars string) int {
-	if position >= len(line) || !strings.ContainsRune(quoteChars, rune(line[position])) {
-		return position
-	}
-	quote := line[position]
-	cursor := position + 1
-	for cursor < len(line) {
-		if line[cursor] == '\\' {
-			cursor += 2
-
-			continue
-		}
-		if line[cursor] == quote {
-			return cursor + 1
-		}
-		cursor++
-	}
-
-	return len(line)
-}
-
-// consumeComment consumes a comment and reports whether it consumed input and ended the line.
-func (f *markerLineFilter) consumeComment() (bool, bool) {
+// consumeComment consumes a comment when one starts at the scanner position.
+func (f *markerLineFilter) consumeComment() commentConsumeResult {
 	if prefixAt(f.line, f.position, f.filter.Syntax.Documentation.Inline) {
-		f.consumeInlineComment(f.mode == RetainDocumentation)
+		f.consumeLineComment(f.mode == RetainDocumentation)
 
-		return true, true
+		return commentConsumeResult{consumed: true, stopLine: true}
 	}
 	if block, found := blockAt(f.line, f.position, f.filter.Syntax.Documentation.Block); found {
 		f.startBlockComment(block, f.mode == RetainDocumentation)
 
-		return true, false
+		return commentConsumeResult{consumed: true}
 	}
 	if prefixAt(f.line, f.position, f.filter.Syntax.Inline) {
-		f.consumeInlineComment(f.mode == RetainInline || f.mode == RetainRegular)
+		f.consumeLineComment(f.mode == RetainInline || f.mode == RetainRegular)
 
-		return true, true
+		return commentConsumeResult{consumed: true, stopLine: true}
 	}
 	if block, found := blockAt(f.line, f.position, f.filter.Syntax.Block); found {
 		f.startBlockComment(block, f.mode == RetainBlock || f.mode == RetainRegular)
 
-		return true, false
+		return commentConsumeResult{consumed: true}
 	}
 
-	return false, false
-}
-
-// consumeInlineComment consumes the rest of the line as a line comment.
-func (f *markerLineFilter) consumeInlineComment(keep bool) {
-	f.hadComment = true
-	if keep {
-		f.result.WriteString(f.line[f.position:])
-	}
-	f.position = len(f.line)
+	return commentConsumeResult{}
 }
 
 // startBlockComment records the active block comment markers and whether to keep them.
 func (f *markerLineFilter) startBlockComment(block BlockMarker, keep bool) {
 	f.hadComment = true
-	f.state.active = true
-	f.state.block = block
-	f.state.keep = keep
-}
-
-// consumeCodeByte copies one source byte that does not belong to a recognized comment.
-func (f *markerLineFilter) consumeCodeByte() {
-	f.result.WriteByte(f.line[f.position])
-	f.position++
+	start := block.Start
+	if block.End == cStyleBlockCommentEnd && strings.HasPrefix(start, cStyleDocCommentStart) {
+		start = cStyleBlockCommentStart
+	}
+	if keep {
+		f.result.WriteString(start)
+	}
+	f.position += len(start)
+	f.state.segment = &activeSegment{
+		end:     block.End,
+		keep:    keep,
+		comment: true,
+	}
 }
 
 // prefixAt reports whether one of the given prefixes starts at the position.
 func prefixAt(line string, position int, prefixes []string) bool {
-	_, found := prefixFrom(line, position, prefixes)
-
-	return found
-}
-
-// prefixFrom returns the prefix starting at position when one exists.
-func prefixFrom(line string, position int, prefixes []string) (string, bool) {
 	for _, prefix := range prefixes {
 		if strings.HasPrefix(line[position:], prefix) {
-			return prefix, true
+			return true
 		}
 	}
 
-	return "", false
+	return false
+}
+
+// textBlockAt reports whether one of the given text block markers starts at the position.
+func textBlockAt(line string, position int, markers []TextBlockMarker) (TextBlockMarker, bool) {
+	for _, marker := range markers {
+		if strings.HasPrefix(line[position:], marker.Delimiter) {
+			return marker, true
+		}
+	}
+
+	return TextBlockMarker{}, false
 }
 
 // blockAt reports whether one of the given block markers starts at the position.
