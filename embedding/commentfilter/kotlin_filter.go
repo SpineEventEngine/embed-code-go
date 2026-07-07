@@ -1,26 +1,46 @@
-// Copyright 2026, TeamDev. All rights reserved.
-//
-// Redistribution and use in source and/or binary forms, with or without
-// modification, must retain the above copyright notice and the following
-// disclaimer.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+ * Copyright 2026, TeamDev. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Redistribution and use in source and/or binary forms, with or without
+ * modification, must retain the above copyright notice and the following
+ * disclaimer.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 package commentfilter
 
-import "strings"
-
 const kotlinRawStringDelimiter = "\"\"\""
+
+// kotlinInterpolation describes the Kotlin `${...}` string interpolation form.
+var kotlinInterpolation = interpolationForm{
+	start:      "${",
+	openBrace:  '{',
+	closeBrace: '}',
+}
+
+// kotlinRawStringLiteral describes the Kotlin raw triple-quoted string form.
+// Raw strings have no backslash escapes.
+var kotlinRawStringLiteral = interpolatedLiteral{
+	delimiter:     kotlinRawStringDelimiter,
+	interpolation: kotlinInterpolation,
+}
 
 // KotlinCommentFilter filters Kotlin comments while preserving Kotlin string forms.
 type KotlinCommentFilter struct{}
@@ -42,23 +62,11 @@ type kotlinState struct {
 
 // kotlinLineFilter filters one Kotlin source line.
 type kotlinLineFilter struct {
-	// line is the source line being filtered.
-	line string
-
-	// mode selects which comments to retain.
-	mode Mode
+	// lineFilter provides shared line scanning state and helpers.
+	lineFilter
 
 	// state tracks Kotlin constructs across lines.
 	state *kotlinState
-
-	// result accumulates the filtered source line.
-	result strings.Builder
-
-	// position is the current byte index in line.
-	position int
-
-	// hadComment reports whether the line contained a recognized comment.
-	hadComment bool
 }
 
 // Filter removes or preserves Kotlin comments according to mode.
@@ -69,28 +77,16 @@ type kotlinLineFilter struct {
 //
 // Returns filtered source lines.
 func (KotlinCommentFilter) Filter(lines []string, mode Mode) []string {
-	var filtered []string
 	state := kotlinState{}
-	for _, line := range lines {
-		filteredLine, hadComment := filterKotlinLine(line, mode, &state)
-		if hadComment && strings.TrimSpace(filteredLine) == "" {
-			continue
+
+	return filterLines(lines, func(line string) (string, bool) {
+		filter := kotlinLineFilter{
+			lineFilter: lineFilter{line: line, mode: mode},
+			state:      &state,
 		}
-		filtered = append(filtered, filteredLine)
-	}
 
-	return filtered
-}
-
-// filterKotlinLine removes or preserves recognized Kotlin comments from one line.
-func filterKotlinLine(line string, mode Mode, state *kotlinState) (string, bool) {
-	filter := kotlinLineFilter{
-		line:  line,
-		mode:  mode,
-		state: state,
-	}
-
-	return filter.filterLine()
+		return filter.filterLine()
+	})
 }
 
 // filterLine walks the current line until it reaches its end or a line comment.
@@ -108,8 +104,8 @@ func (f *kotlinLineFilter) filterLine() (string, bool) {
 		if f.consumeString() {
 			continue
 		}
-		if consumed, stop := f.consumeComment(); consumed {
-			if stop {
+		if comment := f.consumeComment(); comment.consumed {
+			if comment.stopLine {
 				break
 			}
 
@@ -129,11 +125,11 @@ func (f *kotlinLineFilter) consumeActiveBlock() bool {
 	f.hadComment = true
 	for f.position < len(f.line) {
 		switch {
-		case strings.HasPrefix(f.line[f.position:], cStyleBlockCommentStart):
+		case f.hasPrefix(cStyleBlockCommentStart):
 			f.writeBlockText(cStyleBlockCommentStart)
 			f.state.blockDepth++
 			f.position += len(cStyleBlockCommentStart)
-		case strings.HasPrefix(f.line[f.position:], cStyleBlockCommentEnd):
+		case f.hasPrefix(cStyleBlockCommentEnd):
 			f.writeBlockText(cStyleBlockCommentEnd)
 			f.state.blockDepth--
 			f.position += len(cStyleBlockCommentEnd)
@@ -155,37 +151,12 @@ func (f *kotlinLineFilter) consumeActiveBlock() bool {
 //
 // It treats the first three quotes in a run of four or more quotes as the raw-string delimiter.
 func (f *kotlinLineFilter) consumeRawString() bool {
-	if !f.state.rawString && !strings.HasPrefix(f.line[f.position:], kotlinRawStringDelimiter) {
-		return false
-	}
-	if !f.state.rawString {
-		f.state.rawString = true
-		f.result.WriteString(kotlinRawStringDelimiter)
-		f.position += len(kotlinRawStringDelimiter)
-	}
-	for f.position < len(f.line) {
-		switch {
-		case strings.HasPrefix(f.line[f.position:], kotlinRawStringDelimiter):
-			f.result.WriteString(kotlinRawStringDelimiter)
-			f.position += len(kotlinRawStringDelimiter)
-			f.state.rawString = false
-
-			return true
-		case strings.HasPrefix(f.line[f.position:], "${"):
-			f.result.WriteString("${")
-			f.position += len("${")
-			f.state.rawString = false
-			f.state.rawInterpolationDepth = 1
-			f.consumeRawInterpolation()
-			if f.state.rawInterpolationDepth > 0 {
-				return true
-			}
-		default:
-			f.consumeCodeByte()
-		}
-	}
-
-	return true
+	return f.consumeInterpolatedText(
+		kotlinRawStringLiteral,
+		&f.state.rawString,
+		&f.state.rawInterpolationDepth,
+		f.consumeRawInterpolation,
+	)
 }
 
 // consumeRawInterpolation resumes Kotlin expression scanning inside a raw-string interpolation.
@@ -212,11 +183,7 @@ func (f *kotlinLineFilter) consumeString() bool {
 
 		return true
 	case '\'':
-		quoteEnd := quotedSegmentEnd(f.line, f.position, "'")
-		f.result.WriteString(f.line[f.position:quoteEnd])
-		f.position = quoteEnd
-
-		return true
+		return f.consumeQuotedSegment("'")
 	default:
 		return false
 	}
@@ -224,20 +191,17 @@ func (f *kotlinLineFilter) consumeString() bool {
 
 // consumeQuotedString copies a Kotlin quoted string and filters comments inside `${...}`.
 func (f *kotlinLineFilter) consumeQuotedString() {
-	f.result.WriteByte(f.line[f.position])
-	f.position++
+	f.consumeCodeByte()
 	for f.position < len(f.line) {
 		switch {
 		case f.line[f.position] == '\\':
 			f.writeEscapedByte()
 		case f.line[f.position] == '"':
-			f.result.WriteByte(f.line[f.position])
-			f.position++
+			f.consumeCodeByte()
 
 			return
-		case strings.HasPrefix(f.line[f.position:], "${"):
-			f.result.WriteString("${")
-			f.position += len("${")
+		case f.hasPrefix(kotlinInterpolation.start):
+			f.consumeMarker(kotlinInterpolation.start)
 			f.consumeInterpolation()
 		default:
 			f.consumeCodeByte()
@@ -264,66 +228,22 @@ func (f *kotlinLineFilter) consumeInterpolationDepth(depth *int) {
 		if f.consumeString() {
 			continue
 		}
-		if consumed, stop := f.consumeComment(); consumed {
-			if stop {
+		if comment := f.consumeComment(); comment.consumed {
+			if comment.stopLine {
 				return
 			}
 
 			continue
 		}
-		var done bool
-		*depth, done = f.consumeInterpolationCode(*depth)
-		if done {
-			*depth = 0
-
+		if f.consumeInterpolationCodeByte(kotlinInterpolation, depth) {
 			return
 		}
 	}
 }
 
-// consumeInterpolationCode copies expression code and updates interpolation brace depth.
-func (f *kotlinLineFilter) consumeInterpolationCode(depth int) (int, bool) {
-	switch f.line[f.position] {
-	case '{':
-		depth++
-		f.consumeCodeByte()
-
-		return depth, false
-	case '}':
-		depth--
-		f.consumeCodeByte()
-
-		return depth, depth == 0
-	default:
-		f.consumeCodeByte()
-
-		return depth, false
-	}
-}
-
-// consumeComment consumes a Kotlin comment and reports whether it ended the line.
-func (f *kotlinLineFilter) consumeComment() (bool, bool) {
-	if strings.HasPrefix(f.line[f.position:], cStyleDocCommentStart) {
-		f.startBlockComment(f.mode == RetainDocumentation)
-
-		return true, false
-	}
-	if strings.HasPrefix(f.line[f.position:], cStyleBlockCommentStart) {
-		f.startBlockComment(f.mode == RetainBlock || f.mode == RetainRegular)
-
-		return true, false
-	}
-	if strings.HasPrefix(f.line[f.position:], "//") {
-		f.hadComment = true
-		if f.mode == RetainInline || f.mode == RetainRegular {
-			f.result.WriteString(f.line[f.position:])
-		}
-		f.position = len(f.line)
-
-		return true, true
-	}
-
-	return false, false
+// consumeComment consumes a Kotlin comment when one starts at the scanner position.
+func (f *kotlinLineFilter) consumeComment() commentConsumeResult {
+	return f.consumeCStyleComment("", f.startBlockComment)
 }
 
 // startBlockComment starts a Kotlin block comment with nesting depth one.
@@ -342,20 +262,4 @@ func (f *kotlinLineFilter) writeBlockText(text string) {
 	if f.state.blockKeep {
 		f.result.WriteString(text)
 	}
-}
-
-// writeEscapedByte copies an escaped byte pair from a quoted string.
-func (f *kotlinLineFilter) writeEscapedByte() {
-	f.result.WriteByte(f.line[f.position])
-	f.position++
-	if f.position < len(f.line) {
-		f.result.WriteByte(f.line[f.position])
-		f.position++
-	}
-}
-
-// consumeCodeByte copies one source byte.
-func (f *kotlinLineFilter) consumeCodeByte() {
-	f.result.WriteByte(f.line[f.position])
-	f.position++
 }

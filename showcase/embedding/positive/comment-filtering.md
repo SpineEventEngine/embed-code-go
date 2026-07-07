@@ -24,6 +24,9 @@ embedded unchanged. Not every supported language distinguishes documentation,
 regular, inline, and block comments, so unsupported categories simply have no
 comments to keep.
 
+For Python f-strings, `#` text in the literal part stays unchanged, while real
+`#` comments inside `{...}` expression holes are filtered.
+
 ## Language Support
 
 | Language               | Extensions                                               | Supported `comments` modes                                   |
@@ -51,6 +54,12 @@ produce the same result because `all` is the default.
 ```java
 /*
  * Copyright 2026, TeamDev. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -132,6 +141,12 @@ documentation comments.
 /*
  * Copyright 2026, TeamDev. All rights reserved.
  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
  * disclaimer.
@@ -189,6 +204,12 @@ documentation comments.
 ```java
 /*
  * Copyright 2026, TeamDev. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
