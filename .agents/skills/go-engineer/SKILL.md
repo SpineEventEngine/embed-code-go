@@ -33,8 +33,8 @@ lives in `.agents/skills/review-docs/SKILL.md`.
    compatibility constraints, or verification target is not explicit.
 3. Apply the MUST / MUST NOT rules while editing.
 4. Defer test structure and fixtures to `go-tester` for test changes.
-5. Verify with the narrowest relevant Go test first, then the repository-level
-   checks listed below.
+5. Verify with the narrowest relevant Go test and lint target first, then the
+   repository-level checks listed below.
 6. Follow the git-history policy in `AGENTS.md`.
 
 ## Setup Check
@@ -47,9 +47,10 @@ Run this before non-trivial Go changes or when the package baseline is unclear:
    support package.
 3. **Test owner** - identify the package test suite and fixtures that already
    cover the behavior.
-4. **Commands** - plan `gofmt`, focused `go test`, `go vet ./...`, full
-   `go test ./...`, and `go build -trimpath main.go` when integration or CLI
-   behavior changes.
+4. **Commands** - plan `gofmt`, focused `go test`, focused
+   `golangci-lint run`, `go vet ./...`, full `go test ./...`,
+   `golangci-lint run ./...`, and `go build -trimpath main.go` when
+   integration or CLI behavior changes.
 
 ## Processing Flow
 
@@ -150,9 +151,12 @@ Run the narrowest relevant checks first, then broaden:
 
 1. `gofmt -w <changed-go-files>`
 2. `go test ./<affected-package>`
-3. `go vet ./...`
-4. `go test ./...`
-5. `go build -trimpath main.go` when CLI, configuration, embedding, or package
+3. `golangci-lint run ./<affected-package>` or the smallest package set that
+   contains touched Go files
+4. `go vet ./...`
+5. `go test ./...`
+6. `golangci-lint run ./...`
+7. `go build -trimpath main.go` when CLI, configuration, embedding, or package
    integration behavior changed
 
 For user-visible CLI behavior, run a focused `go run ./main.go ...` scenario
