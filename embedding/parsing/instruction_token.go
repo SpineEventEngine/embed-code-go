@@ -142,6 +142,10 @@ func (e EmbedInstructionTokenState) Accept(context *Context,
 
 // parseFailureReason explains why an embedding instruction could not be parsed.
 func parseFailureReason(instructionBody []string, parseErr error) string {
+	var wrongTagErr WrongInstructionTagError
+	if errors.As(parseErr, &wrongTagErr) {
+		return wrongTagErr.Error()
+	}
 	if !openingTagClosed(instructionBody) {
 		return fmt.Sprintf("the opening `<%s>` tag is not closed; add `>` or `/>` before the code fence",
 			EmbeddingTag,

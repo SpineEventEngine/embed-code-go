@@ -42,6 +42,23 @@ type Item struct {
 	Attrs []xml.Attr `xml:",any,attr"`
 }
 
+// WrongInstructionTagError reports an XML tag that is not an embed-code instruction.
+type WrongInstructionTagError struct {
+	// Expected is the supported instruction tag name.
+	Expected string
+
+	// Actual is the tag name found in the parsed XML.
+	Actual string
+}
+
+// Error describes the expected and actual instruction tag names.
+func (e WrongInstructionTagError) Error() string {
+	return fmt.Sprintf("expected `<%s>` instruction tag, got `<%s>`",
+		e.Expected,
+		e.Actual,
+	)
+}
+
 // FromXML parses an XML-like `<embed-code>` tag into an Instruction.
 //
 // The line can be self-closing:
@@ -90,8 +107,10 @@ func ParseXMLLine(xmlLine string) (map[string]string, error) {
 
 	if root.XMLName.Local != EmbeddingTag {
 		return map[string]string{},
-			fmt.Errorf("expected `<%s>` instruction tag, got `<%s>`",
-				EmbeddingTag, root.XMLName.Local)
+			WrongInstructionTagError{
+				Expected: EmbeddingTag,
+				Actual:   root.XMLName.Local,
+			}
 	}
 
 	attributes := make(map[string]string)
