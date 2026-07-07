@@ -158,6 +158,8 @@ func (m lineMatcher) matches(line string) bool {
 //
 // A miss lets the instruction layer report PatternNotFoundError with source
 // context instead of exposing a third-party matcher panic to users.
+// Recovery stays at single-line matcher granularity so one panicking candidate
+// does not abort the rest of the source scan.
 func matchGlob(compiledGlob glob.Glob, line string) bool {
 	var matched bool
 	func() {
