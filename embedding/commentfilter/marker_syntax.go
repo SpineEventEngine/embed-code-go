@@ -67,6 +67,9 @@ type CommentMarker struct {
 	// TextBlocks contains markers that open and close multi-line text literals.
 	TextBlocks []TextBlockMarker
 
+	// RawStringPrefixes contains prefixes that open raw string literals with dynamic delimiters.
+	RawStringPrefixes []string
+
 	// QuoteChars contains characters that open and close quoted strings.
 	QuoteChars string
 }
