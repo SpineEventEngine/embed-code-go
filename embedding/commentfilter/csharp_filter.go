@@ -268,17 +268,34 @@ func (f *csharpLineFilter) consumeStringText() bool {
 
 // consumeStringTextSegment consumes special syntax inside active string text.
 func (f *csharpLineFilter) consumeStringTextSegment() bool {
+	if f.state.stringRawDelimiter != "" {
+		return f.consumeRawStringTextSegment()
+	}
+
+	return f.consumeRegularStringTextSegment()
+}
+
+// consumeRawStringTextSegment consumes special syntax inside active raw string text.
+func (f *csharpLineFilter) consumeRawStringTextSegment() bool {
 	switch {
-	case f.state.stringRawDelimiter != "" && f.hasPrefix(f.state.stringRawDelimiter):
+	case f.hasPrefix(f.state.stringRawDelimiter):
 		f.consumeMarker(f.state.stringRawDelimiter)
 		f.closeString()
-	case f.state.stringRawDelimiter != "" && f.startsEscapedInterpolationBrace():
+	case f.startsEscapedInterpolationBrace():
 		f.consumeMarker(f.line[f.position : f.position+2])
-	case f.state.stringRawDelimiter != "" && f.state.stringInterpolated && f.line[f.position] == '{':
+	case f.state.stringInterpolated && f.line[f.position] == '{':
 		f.consumeCodeByte()
 		f.state.interpolationDepth = 1
-	case f.state.stringRawDelimiter != "":
+	default:
 		return false
+	}
+
+	return true
+}
+
+// consumeRegularStringTextSegment consumes special syntax inside regular string text.
+func (f *csharpLineFilter) consumeRegularStringTextSegment() bool {
+	switch {
 	case f.state.stringVerbatim && f.hasPrefix(csharpEscapedQuote):
 		f.consumeMarker(csharpEscapedQuote)
 	case !f.state.stringVerbatim && f.line[f.position] == '\\':
