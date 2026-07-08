@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+: "${GODOC_MODULE:=embed-code/embed-code-go}"
+: "${GODOC_EXCLUDE_REGEX:=/my-test/}"
+: "${GODOC_OUT:=build/godoc}"
+: "${GODOC:=go run golang.org/x/tools/cmd/godoc@v0.24.0}"
+
+if [[ -z "${GODOC_GOCACHE:-}" ]]; then
+  GODOC_GOCACHE="$(mktemp -d "${TMPDIR:-/tmp}/embed-code-go-godoc-cache.XXXXXXXXXX")"
+  trap 'rm -rf "${GODOC_GOCACHE}"' EXIT
+fi
+
+relative_prefix() {
+  local rel_path="$1"
+  local prefix="."
+
+  if [[ -n "${rel_path}" ]]; then
+    IFS="/" read -r -a parts <<< "${rel_path}"
+    prefix=".."
+    for ((i = 1; i < ${#parts[@]}; i++)); do
+      prefix="${prefix}/.."
+    done
+  fi
+
+  printf "%s" "${prefix}"
+}
+
+rewrite_links() {
+  local html_file="$1"
+  local current_rel="$2"
+  local prefix
+
+  prefix="$(relative_prefix "${current_rel}")"
+  sed -i.bak "s#=\"/lib/godoc/#=\"${prefix}/lib/godoc/#g" "${html_file}"
+  sed -i.bak "s#href=\"/pkg/\"#href=\"${prefix}/index.html\"#g" "${html_file}"
+  sed -i.bak "s#href=\"/src/${GODOC_MODULE}/#href=\"${prefix}/../../#g" "${html_file}"
+
+  for target_rel in "${package_rels[@]}"; do
+    local search
+    local replacement
+
+    if [[ -z "${target_rel}" ]]; then
+      search="href=\"/pkg/${GODOC_MODULE}/"
+      replacement="href=\"${prefix}/index.html"
+    else
+      search="href=\"/pkg/${GODOC_MODULE}/${target_rel}/"
+      if [[ "${prefix}" == "." ]]; then
+        replacement="href=\"${target_rel}/index.html"
+        sed -i.bak "s#href=\"${target_rel}/\"#href=\"${target_rel}/index.html\"#g" "${html_file}"
+      else
+        replacement="href=\"${prefix}/${target_rel}/index.html"
+        if [[ "${target_rel}" == "${current_rel}/"* ]]; then
+          child_rel="${target_rel#${current_rel}/}"
+          if [[ "${child_rel}" != */* ]]; then
+            sed -i.bak "s#href=\"${child_rel}/\"#href=\"${child_rel}/index.html\"#g" "${html_file}"
+          fi
+        fi
+      fi
+    fi
+    sed -i.bak "s#${search}#${replacement}#g" "${html_file}"
+  done
+
+  LC_ALL=C perl -0pi.bak -e 's~href="/pkg/([^"#]+)(#[^"]*)?"~href="https://pkg.go.dev/$1$2"~g' "${html_file}"
+  rm -f "${html_file}.bak"
+}
+
+rm -rf "${GODOC_OUT}"
+mkdir -p "${GODOC_OUT}/lib/godoc"
+
+read -r -a godoc_command <<< "${GODOC}"
+package_paths=()
+package_rels=()
+
+while IFS= read -r package_path; do
+  package_paths+=("${package_path}")
+  package_rel="${package_path#${GODOC_MODULE}}"
+  package_rels+=("${package_rel#/}")
+done < <(GOCACHE="${GODOC_GOCACHE}" go list ./... | grep -Ev "${GODOC_EXCLUDE_REGEX}")
+
+for asset in style.css jquery.js godocs.js; do
+  GOCACHE="${GODOC_GOCACHE}" "${godoc_command[@]}" \
+    -url="/lib/godoc/${asset}" > "${GODOC_OUT}/lib/godoc/${asset}"
+done
+
+for i in "${!package_paths[@]}"; do
+  package_path="${package_paths[$i]}"
+  package_rel="${package_rels[$i]}"
+
+  if [[ -z "${package_rel}" ]]; then
+    html_file="${GODOC_OUT}/index.html"
+  else
+    html_file="${GODOC_OUT}/${package_rel}/index.html"
+  fi
+
+  mkdir -p "$(dirname "${html_file}")"
+  GOCACHE="${GODOC_GOCACHE}" "${godoc_command[@]}" \
+    -links=false \
+    -url="/pkg/${package_path}/" > "${html_file}"
+  rewrite_links "${html_file}" "${package_rel}"
+done
+
+index_file="${GODOC_OUT}/index.html"
+index_path="$(cd "$(dirname "${index_file}")" && pwd)/$(basename "${index_file}")"
+printf "GoDoc API documentation generated successfully.\nMain index: file://%s\n" "${index_path}"
