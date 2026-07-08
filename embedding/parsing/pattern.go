@@ -120,17 +120,60 @@ func compileLineMatcher(patternLine string) (lineMatcher, error) {
 		pattern = pattern[:lastIndex]
 	}
 
-	compiledGlob, err := glob.Compile(pattern)
-	if err != nil {
-		return lineMatcher{}, err
+	var matcher lineMatcher
+	var compileErr error
+	func() {
+		defer func() {
+			recovered := recover()
+			if recovered != nil {
+				compileErr = fmt.Errorf("glob pattern compiler panicked: %v", recovered)
+			}
+		}()
+
+		compiledGlob, err := glob.Compile(pattern)
+		if err != nil {
+			compileErr = err
+
+			return
+		}
+		matcher = lineMatcher{compiled: compiledGlob}
+	}()
+	if compileErr != nil {
+		return lineMatcher{}, compileErr
 	}
 
-	return lineMatcher{compiled: compiledGlob}, nil
+	return matcher, nil
 }
 
 // matches reports whether the source line matches the compiled pattern.
 func (m lineMatcher) matches(line string) bool {
-	return m.compiled != nil && m.compiled.Match(line)
+	if m.compiled == nil {
+		return false
+	}
+
+	return matchGlob(m.compiled, line)
+}
+
+// matchGlob reports whether a glob matches and treats dependency panics as misses.
+//
+// A miss lets the instruction layer report PatternNotFoundError with source
+// context instead of exposing a third-party matcher panic to users.
+// Recovery stays at single-line matcher granularity so one panicking candidate
+// does not abort the rest of the source scan.
+func matchGlob(compiledGlob glob.Glob, line string) bool {
+	var matched bool
+	func() {
+		defer func() {
+			recovered := recover()
+			if recovered != nil {
+				matched = false
+			}
+		}()
+
+		matched = compiledGlob.Match(line)
+	}()
+
+	return matched
 }
 
 // FindIn returns the first source-line range matching the pattern.
