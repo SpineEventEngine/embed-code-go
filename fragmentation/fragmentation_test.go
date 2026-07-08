@@ -136,6 +136,26 @@ var _ = Describe("Fragmentation", func() {
 		Expect(content).Should(Equal([]string{"class Example {}"}))
 	})
 
+	It("should report a non-UTF-8 source when no other code root resolves the file", func() {
+		sourceRoot := GinkgoT().TempDir()
+		fileName := "Example.java"
+		Expect(os.WriteFile(filepath.Join(sourceRoot, fileName), []byte{0xff}, 0600)).
+			To(Succeed())
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+
+		content, err := resolver.ResolveContent(
+			fileName,
+			fragmentation.DefaultFragmentName,
+			config,
+		)
+
+		Expect(content).Should(BeNil())
+		Expect(err).Should(MatchError(And(
+			ContainSubstring("Example.java"),
+			ContainSubstring("uses unsupported encoding; expected UTF-8"),
+		)))
+	})
+
 	It("should isolate cached source content between resolvers", func() {
 		sourceRoot := GinkgoT().TempDir()
 		fileName := "Example.java"
