@@ -2,7 +2,6 @@
 name: Release Binaries
 
 on:
-  pull_request:
   push:
     branches: [ master ]
 
@@ -135,6 +134,9 @@ jobs:
             for (const assetName of fs.readdirSync('dist').sort()) {
               const assetPath = path.join('dist', assetName);
               const assetData = fs.readFileSync(assetPath);
+              const sizeMb = (assetData.length / 1024 / 1024).toFixed(2);
+              const startedAt = Date.now();
+              core.info(`Uploading ${assetName} (${sizeMb} MB).`);
               await github.rest.repos.uploadReleaseAsset({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -146,4 +148,6 @@ jobs:
                 },
                 data: assetData,
               });
+              const durationSeconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+              core.info(`Uploaded ${assetName} in ${durationSeconds}s.`);
             }
