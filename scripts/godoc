@@ -7,9 +7,13 @@ cd "${repo_root}"
 
 : "${GODOC_MODULE:=embed-code/embed-code-go}"
 : "${GODOC_EXCLUDE_REGEX:=/my-test/}"
-: "${GODOC_GOCACHE:=/tmp/embed-code-go-godoc-cache}"
 : "${GODOC_OUT:=build/godoc}"
 : "${GODOC:=go run golang.org/x/tools/cmd/godoc@v0.24.0}"
+
+if [[ -z "${GODOC_GOCACHE:-}" ]]; then
+  GODOC_GOCACHE="$(mktemp -d "${TMPDIR:-/tmp}/embed-code-go-godoc-cache.XXXXXXXXXX")"
+  trap 'rm -rf "${GODOC_GOCACHE}"' EXIT
+fi
 
 relative_prefix() {
   local rel_path="$1"
