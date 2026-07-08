@@ -131,7 +131,9 @@ var _ = Describe("Embedding", func() {
 		Expect(err).Should(HaveOccurred())
 		Expect(err.Error()).Should(And(
 			ContainSubstring("missing-closing-tag.md"),
-			ContainSubstring("the `<embed-code>` tag is not closed"),
+			ContainSubstring(
+				"the `<embed-code>` instruction is not closed; add `</embed-code>` or use `/>`",
+			),
 			ContainSubstring("unclosed-nested-tag.md"),
 			ContainSubstring("element <unexpected> closed by </embed-code>"),
 		))
@@ -245,7 +247,7 @@ var _ = Describe("Embedding", func() {
 		Expect(err.Error()).Should(ContainSubstring(
 			"missing-closing-tag.md:3`: " +
 				"failed to parse an embedding instruction: " +
-				"the `<embed-code>` tag is not closed",
+				"the `<embed-code>` instruction is not closed; add `</embed-code>` or use `/>`",
 		))
 	})
 
@@ -264,7 +266,9 @@ var _ = Describe("Embedding", func() {
 		var parseErr parsing.InstructionParseError
 		Expect(errors.As(err, &parseErr)).Should(BeTrue())
 		Expect(parseErr.Line).Should(Equal(3))
-		Expect(parseErr.Reason).Should(Equal("the `<embed-code>` tag is not closed"))
+		Expect(parseErr.Reason).Should(Equal(
+			"the `<embed-code>` instruction is not closed; add `</embed-code>` or use `/>`",
+		))
 	})
 
 	It("should report the XML parser error", func() {
@@ -291,6 +295,28 @@ var _ = Describe("Embedding", func() {
 		Expect(err.Error()).Should(ContainSubstring(
 			"missing-code-fence.md:3`: " +
 				"expected a markdown code fence after the embedding instruction",
+		))
+	})
+
+	It("should report a missing file attribute with documentation context", func() {
+		docPath := testDocPath(config, "missing-file-attribute.md")
+		Expect(os.WriteFile(
+			docPath,
+			[]byte("# Missing file attribute\n\n"+
+				"<embed-code fragment=\"main()\"/>\n"+
+				"```java\n"+
+				"```\n"),
+			0600,
+		)).To(Succeed())
+		processor := newProcessor(docPath, config)
+
+		_, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		Expect(err.Error()).Should(ContainSubstring(
+			"missing-file-attribute.md:3`: " +
+				"failed to parse an embedding instruction: " +
+				"<embed-code> must specify a non-empty `file` attribute",
 		))
 	})
 
