@@ -85,8 +85,9 @@ jobs:
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
         run: |
-          scripts/release/sign-macos-binary.sh dist/embed-code-macos-arm64
-          scripts/release/sign-macos-binary.sh dist/embed-code-macos-x64
+          scripts/release/sign-macos-binary.sh \
+            dist/embed-code-macos-arm64 \
+            dist/embed-code-macos-x64
 
       # Notarize the macOS ZIPs that will be published as release assets.
       - name: Notarize macOS Binaries
