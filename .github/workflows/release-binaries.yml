@@ -2,6 +2,7 @@
 name: Release Binaries
 
 on:
+  pull_request:
   push:
     branches: [ master ]
 
