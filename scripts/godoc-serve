@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+: "${GODOC_MODULE:=embed-code/embed-code-go}"
+: "${GODOC_HOST:=localhost}"
+: "${GODOC_PORT:=6061}"
+: "${GODOC:=go run golang.org/x/tools/cmd/godoc@v0.24.0}"
+
+if [[ -z "${GODOC_GOCACHE:-}" ]]; then
+  GODOC_GOCACHE="$(mktemp -d "${TMPDIR:-/tmp}/embed-code-go-godoc-cache.XXXXXXXXXX")"
+  trap 'rm -rf "${GODOC_GOCACHE}"' EXIT
+fi
+
+read -r -a godoc_command <<< "${GODOC}"
+
+printf "Open: http://%s:%s/pkg/%s/\n" "${GODOC_HOST}" "${GODOC_PORT}" "${GODOC_MODULE}"
+GOCACHE="${GODOC_GOCACHE}" "${godoc_command[@]}" -http="${GODOC_HOST}:${GODOC_PORT}"
