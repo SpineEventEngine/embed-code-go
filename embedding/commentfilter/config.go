@@ -30,6 +30,11 @@ const (
 	cStyleBlockCommentStart = "/*"
 	cStyleBlockCommentEnd   = "*/"
 	cStyleDocCommentStart   = "/**"
+	cPlusPlusRawString      = "R"
+	cPlusPlusURawString     = "uR"
+	cPlusPlusU8RawString    = "u8R"
+	cPlusPlusURawStringWide = "UR"
+	cPlusPlusLRawString     = "LR"
 	javaTextBlockDelimiter  = "\"\"\""
 	pythonDoubleQuoteBlock  = "\"\"\""
 	pythonSingleQuoteBlock  = "'''"
@@ -50,13 +55,13 @@ var filtersByExtension = map[string]filterEntry{
 
 	// C/C++
 	".c":   filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
-	".h":   filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
-	".cc":  filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
-	".cpp": filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
-	".cxx": filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
-	".hh":  filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
-	".hpp": filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
-	".hxx": filterConfig(MarkerCommentFilter{Syntax: cStyleSyntax}, regularModes),
+	".h":   filterConfig(MarkerCommentFilter{Syntax: cPlusPlusSyntax}, regularModes),
+	".cc":  filterConfig(MarkerCommentFilter{Syntax: cPlusPlusSyntax}, regularModes),
+	".cpp": filterConfig(MarkerCommentFilter{Syntax: cPlusPlusSyntax}, regularModes),
+	".cxx": filterConfig(MarkerCommentFilter{Syntax: cPlusPlusSyntax}, regularModes),
+	".hh":  filterConfig(MarkerCommentFilter{Syntax: cPlusPlusSyntax}, regularModes),
+	".hpp": filterConfig(MarkerCommentFilter{Syntax: cPlusPlusSyntax}, regularModes),
+	".hxx": filterConfig(MarkerCommentFilter{Syntax: cPlusPlusSyntax}, regularModes),
 
 	// JavaScript
 	".js":  filterConfig(JavaScriptCommentFilter{}, allModes),
@@ -120,6 +125,21 @@ var cStyleSyntax = CommentMarker{
 	Inline: []string{"//"},
 	Block: []BlockMarker{
 		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
+	},
+	QuoteChars: "\"'",
+}
+
+var cPlusPlusSyntax = CommentMarker{
+	Inline: []string{"//"},
+	Block: []BlockMarker{
+		{Start: cStyleBlockCommentStart, End: cStyleBlockCommentEnd},
+	},
+	RawStringPrefixes: []string{
+		cPlusPlusU8RawString,
+		cPlusPlusURawStringWide,
+		cPlusPlusLRawString,
+		cPlusPlusURawString,
+		cPlusPlusRawString,
 	},
 	QuoteChars: "\"'",
 }

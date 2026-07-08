@@ -52,7 +52,8 @@ Two companions own neighboring concerns:
    fixture needed to express the behavior.
 5. **Assert behavior, not implementation trivia.** Prefer outputs, changed-file
    lists, typed errors, and line numbers over private state.
-6. **Run the narrowest test first.** Broaden only after the focused test passes.
+6. **Run the narrowest test and lint target first.** Broaden only after the
+   focused package passes.
 
 ## Naming And Structure
 
@@ -112,7 +113,10 @@ After Go test code changes, run:
 
 1. `gofmt -w <changed-go-files>`
 2. the focused package test
-3. `go test ./...`
+3. `golangci-lint run ./<affected-package>` or the smallest package set that
+   contains touched Go files
+4. `go test ./...`
+5. `golangci-lint run ./...`
 
 Run `go vet ./...` when the test change also changes helper code, exported
 test support, or production code.
