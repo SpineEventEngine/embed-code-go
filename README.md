@@ -77,5 +77,27 @@ Run the executable showcase:
 go test -tags showcase ./showcase
 ```
 
+## Documentation
+
+The main user guide is the [showcase](showcase/README.md).
+Go package docs are useful for maintainers who need to browse package comments
+and exported APIs.
+
+Generate static API docs:
+
+```bash
+./scripts/godoc
+```
+
+The script writes `build/godoc/` and prints the generated main index file link.
+
+Launch the GoDoc server:
+
+```bash
+./scripts/godoc-serve
+```
+
+Open the package link printed by the script.
+
 [embed-code-jekyll]: https://github.com/SpineEventEngine/embed-code
 [releases]: https://github.com/SpineEventEngine/embed-code-go/releases
