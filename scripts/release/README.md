@@ -24,8 +24,9 @@ Optional environment variable:
 Example:
 
 ```bash
-scripts/release/sign-macos-binary.sh dist/embed-code-macos-arm64
-scripts/release/sign-macos-binary.sh dist/embed-code-macos-x64
+scripts/release/sign-macos-binary.sh \
+  dist/embed-code-macos-arm64 \
+  dist/embed-code-macos-x64
 ```
 
 ## Notarization
