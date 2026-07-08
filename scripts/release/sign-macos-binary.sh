@@ -66,8 +66,18 @@ keychain_password="${MACOS_KEYCHAIN_PASSWORD:-$(uuidgen)}"
 apple_root_certificate_path="$temp_dir/AppleRootCA-G3-$signing_id.cer"
 apple_wwdr_certificate_path="$temp_dir/AppleWWDRCAG6-$signing_id.cer"
 developer_id_certificate_path="$temp_dir/DeveloperIDG2CA-$signing_id.cer"
+original_keychains=()
+
+while IFS= read -r keychain; do
+  keychain="${keychain#\"}"
+  keychain="${keychain%\"}"
+  original_keychains+=("$keychain")
+done < <(security list-keychains -d user)
 
 cleanup() {
+  if (( ${#original_keychains[@]} > 0 )); then
+    security list-keychains -d user -s "${original_keychains[@]}" >/dev/null 2>&1 || true
+  fi
   security delete-keychain "$keychain_path" >/dev/null 2>&1 || true
   rm -f \
     "$certificate_path" \
@@ -88,6 +98,7 @@ fi
 security create-keychain -p "$keychain_password" "$keychain_path"
 security set-keychain-settings -lut 21600 "$keychain_path"
 security unlock-keychain -p "$keychain_password" "$keychain_path"
+security list-keychains -d user -s "$keychain_path" "${original_keychains[@]}"
 
 # Import Apple's public certificate chain into the temporary keychain.
 # Some runners do not have the current Developer ID intermediate certificates.
@@ -124,7 +135,6 @@ for binary_path in "${binary_paths[@]}"; do
     --force \
     --options runtime \
     --timestamp \
-    --keychain "$keychain_path" \
     --sign "$MACOS_CODESIGN_IDENTITY" \
     "$binary_path"
   codesign --verify --verbose=4 "$binary_path"
