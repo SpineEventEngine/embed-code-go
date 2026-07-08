@@ -2,6 +2,7 @@
 name: Release Binaries
 
 on:
+  pull_request:
   push:
     branches: [ master ]
 
@@ -17,8 +18,8 @@ concurrency:
 jobs:
 
   release:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    runs-on: [ self-hosted, macOS, ARM64 ]
+    timeout-minutes: 30
 
     steps:
       - name: Checkout Repository
@@ -50,17 +51,25 @@ jobs:
       # If current app version already exist in release, emits a warning, but flow counts as passed.
       - name: Check Release Version
         id: release
-        shell: bash
+        uses: actions/github-script@v8
         env:
-          GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
-        run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            echo "::warning title=Release already exists::Release $RELEASE_TAG already exists. Bump VERSION to publish a new release."
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "publish=true" >> "$GITHUB_OUTPUT"
-          fi
+        with:
+          script: |
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: process.env.RELEASE_TAG,
+              });
+              core.warning(`Release ${process.env.RELEASE_TAG} already exists. Bump VERSION to publish a new release.`);
+              core.setOutput('publish', 'false');
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+              core.setOutput('publish', 'true');
+            }
 
       # Build binaries only for new releases.
       - name: Build Binaries
@@ -70,19 +79,71 @@ jobs:
           mkdir -p dist
           GOOS=windows GOARCH=amd64 go build -trimpath -o dist/embed-code-windows.exe main.go
           GOOS=linux GOARCH=amd64 go build -trimpath -o dist/embed-code-linux main.go
-          GOOS=darwin GOARCH=amd64 go build -trimpath -o dist/embed-code-macos main.go
-          chmod +x dist/embed-code-linux dist/embed-code-macos
+          GOOS=darwin GOARCH=arm64 go build -trimpath -o dist/embed-code-macos-arm64 main.go
+          GOOS=darwin GOARCH=amd64 go build -trimpath -o dist/embed-code-macos-x64 main.go
+          chmod +x dist/embed-code-linux dist/embed-code-macos-arm64 dist/embed-code-macos-x64
+
+      # Sign the macOS binaries with a Developer ID certificate stored in GitHub
+      # secrets. The certificate must be exported as a base64-encoded .p12 file.
+      - name: Sign macOS Binaries
+        if: steps.release.outputs.publish == 'true'
+        shell: bash
+        env:
+          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+        run: |
+          scripts/release/sign-macos-binary.sh \
+            dist/embed-code-macos-arm64 \
+            dist/embed-code-macos-x64
+
+      # Notarize the macOS ZIPs that will be published as release assets.
+      - name: Notarize macOS Binaries
+        if: steps.release.outputs.publish == 'true'
+        shell: bash
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          scripts/release/notarize-macos-zip.sh dist/embed-code-macos-arm64 dist/embed-code-macos-arm64.zip
+          scripts/release/notarize-macos-zip.sh dist/embed-code-macos-x64 dist/embed-code-macos-x64.zip
+          rm dist/embed-code-macos-arm64 dist/embed-code-macos-x64
 
       # Create the release for the current commit and attach all generated binaries.
       - name: Publish GitHub Release
         if: steps.release.outputs.publish == 'true'
-        shell: bash
+        uses: actions/github-script@v8
         env:
-          GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
-        run: |
-          release_notes="$(printf 'Embed Code %s\n\nThis release contains pre-built Embed Code binaries for macOS, Linux, and Windows.' "$RELEASE_TAG")"
-          gh release create "$RELEASE_TAG" dist/* \
-            --target "$GITHUB_SHA" \
-            --title "embed-code $RELEASE_TAG" \
-            --notes "$release_notes"
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const releaseTag = process.env.RELEASE_TAG;
+            const releaseNotes = `Embed Code ${releaseTag}\n\nThis release contains pre-built Embed Code binaries for macOS ARM64, macOS x64, Linux, and Windows.`;
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: releaseTag,
+              target_commitish: context.sha,
+              name: `embed-code ${releaseTag}`,
+              body: releaseNotes,
+            });
+
+            for (const assetName of fs.readdirSync('dist').sort()) {
+              const assetPath = path.join('dist', assetName);
+              const assetData = fs.readFileSync(assetPath);
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.data.id,
+                name: assetName,
+                headers: {
+                  'content-type': 'application/octet-stream',
+                  'content-length': assetData.length,
+                },
+                data: assetData,
+              });
+            }

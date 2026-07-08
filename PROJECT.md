@@ -30,6 +30,8 @@ them inside code fences, and checks whether existing snippets are up-to-date.
 - `type/`: YAML-compatible string and named-path list types. The import path
   segment is `type`, but the Go package identifier is `_type` because `type` is
   a Go keyword.
+- `scripts/release/`: helper scripts used by release workflows for signing and
+  notarizing macOS binaries.
 - `test/resources/`: parser, embedding, configuration, and source-code fixtures.
 - `showcase/`: executable user guide and end-to-end example suite.
 
@@ -56,7 +58,9 @@ This repository is configured with these GitHub workflows:
 - `check`: runs linting, the normal Go test suite, and the showcase end-to-end
   tests across supported platforms.
 - `release-binaries`: reads `VERSION`, builds Linux, macOS, and Windows
-  binaries, and creates the matching GitHub Release on pushes to `master`.
+  binaries, signs and notarizes the macOS ARM64 and x64 ZIPs, and creates the
+  matching GitHub Release on pushes to `master`. It runs on a self-hosted macOS
+  ARM64 runner because Apple signing and notarization require macOS tooling.
 
 The release tag is `v<version>` from `VERSION`. When the release already exists,
 the workflow emits a warning and finishes successfully without rebuilding or
