@@ -126,6 +126,51 @@ var _ = Describe("Instruction", func() {
 		Expect(parsing.FromXML(xmlString, config)).Error().Should(HaveOccurred())
 	})
 
+	It("should report a missing file attribute", func() {
+		xmlString := `<embed-code fragment="main()"/>`
+
+		_, err := parsing.FromXML(xmlString, config)
+
+		Expect(err).Should(MatchError(
+			"<embed-code> must specify a non-empty `file` attribute",
+		))
+	})
+
+	It("should report an unsupported instruction attribute", func() {
+		xmlString := `<embed-code fil="org/example/Hello.java"/>`
+
+		_, err := parsing.FromXML(xmlString, config)
+
+		Expect(err).Should(MatchError(
+			"unsupported <embed-code> attribute `fil`; " +
+				"expected one of `comments`, `end`, `file`, `fragment`, `line`, `start`",
+		))
+	})
+
+	It("should report unsupported instruction attributes", func() {
+		xmlString := `<embed-code ` +
+			`fil="org/example/Hello.java" ` +
+			`unknown="value" ` +
+			`file="org/example/Hello.java"/>`
+
+		_, err := parsing.FromXML(xmlString, config)
+
+		Expect(err).Should(MatchError(
+			"unsupported <embed-code> attributes `fil`, `unknown`; " +
+				"expected one of `comments`, `end`, `file`, `fragment`, `line`, `start`",
+		))
+	})
+
+	It("should report a mistyped instruction tag", func() {
+		xmlString := `<embed-codee file="org/example/Hello.java"/>`
+
+		_, err := parsing.FromXML(xmlString, config)
+
+		Expect(err).Should(MatchError(
+			"expected `<embed-code>` instruction tag, got `<embed-codee>`",
+		))
+	})
+
 	It("should have an error for an invalid glob pattern", func() {
 		instructionParams := TestInstructionParams{
 			startGlob: "[",
