@@ -1,7 +1,7 @@
 # Release Scripts
 
-These scripts support the `release-binaries` GitHub workflow. 
-They are intended for the macOS release job.
+These scripts support the `release-binaries` GitHub workflow. They are intended
+for the self-hosted macOS ARM64 release job.
 
 ## Signing
 
@@ -24,7 +24,8 @@ Optional environment variable:
 Example:
 
 ```bash
-scripts/release/sign-macos-binary.sh dist/embed-code-macos
+scripts/release/sign-macos-binary.sh dist/embed-code-macos-arm64
+scripts/release/sign-macos-binary.sh dist/embed-code-macos-x64
 ```
 
 ## Notarization
@@ -42,6 +43,9 @@ Example:
 
 ```bash
 scripts/release/notarize-macos-zip.sh \
-  dist/embed-code-macos \
-  dist/embed-code-macos.zip
+  dist/embed-code-macos-arm64 \
+  dist/embed-code-macos-arm64.zip
+scripts/release/notarize-macos-zip.sh \
+  dist/embed-code-macos-x64 \
+  dist/embed-code-macos-x64.zip
 ```

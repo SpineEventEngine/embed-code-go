@@ -36,11 +36,12 @@ On Linux, for example:
 > chmod +x embed-code-linux
 > ```
 
-On macOS, download `embed-code-macos.zip`, unzip it, and run the binary:
+On macOS, download `embed-code-macos-arm64.zip` for Apple silicon or
+`embed-code-macos-x64.zip` for Intel Macs. Then unzip it and run the binary:
 
 ```bash
-unzip embed-code-macos.zip
-./embed-code-macos -mode=check -config-path=showcase/embedding/embed-code.yml
+unzip embed-code-macos-arm64.zip
+./embed-code-macos-arm64 -mode=check -config-path=showcase/embedding/embed-code.yml
 ```
 
 Or run it with Go:

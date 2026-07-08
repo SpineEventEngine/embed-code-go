@@ -17,7 +17,7 @@ concurrency:
 jobs:
 
   release:
-    runs-on: macos-latest
+    runs-on: [ self-hosted, macOS, ARM64 ]
     timeout-minutes: 30
 
     steps:
@@ -70,12 +70,13 @@ jobs:
           mkdir -p dist
           GOOS=windows GOARCH=amd64 go build -trimpath -o dist/embed-code-windows.exe main.go
           GOOS=linux GOARCH=amd64 go build -trimpath -o dist/embed-code-linux main.go
-          GOOS=darwin GOARCH=amd64 go build -trimpath -o dist/embed-code-macos main.go
-          chmod +x dist/embed-code-linux dist/embed-code-macos
+          GOOS=darwin GOARCH=arm64 go build -trimpath -o dist/embed-code-macos-arm64 main.go
+          GOOS=darwin GOARCH=amd64 go build -trimpath -o dist/embed-code-macos-x64 main.go
+          chmod +x dist/embed-code-linux dist/embed-code-macos-arm64 dist/embed-code-macos-x64
 
-      # Sign the macOS binary with a Developer ID certificate stored in GitHub
+      # Sign the macOS binaries with a Developer ID certificate stored in GitHub
       # secrets. The certificate must be exported as a base64-encoded .p12 file.
-      - name: Sign macOS Binary
+      - name: Sign macOS Binaries
         if: steps.release.outputs.publish == 'true'
         shell: bash
         env:
@@ -83,10 +84,11 @@ jobs:
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
         run: |
-          scripts/release/sign-macos-binary.sh dist/embed-code-macos
+          scripts/release/sign-macos-binary.sh dist/embed-code-macos-arm64
+          scripts/release/sign-macos-binary.sh dist/embed-code-macos-x64
 
-      # Notarize the macOS ZIP that will be published as the release asset.
-      - name: Notarize macOS Binary
+      # Notarize the macOS ZIPs that will be published as release assets.
+      - name: Notarize macOS Binaries
         if: steps.release.outputs.publish == 'true'
         shell: bash
         env:
@@ -94,8 +96,9 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: |
-          scripts/release/notarize-macos-zip.sh dist/embed-code-macos dist/embed-code-macos.zip
-          rm dist/embed-code-macos
+          scripts/release/notarize-macos-zip.sh dist/embed-code-macos-arm64 dist/embed-code-macos-arm64.zip
+          scripts/release/notarize-macos-zip.sh dist/embed-code-macos-x64 dist/embed-code-macos-x64.zip
+          rm dist/embed-code-macos-arm64 dist/embed-code-macos-x64
 
       # Create the release for the current commit and attach all generated binaries.
       - name: Publish GitHub Release
@@ -105,7 +108,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
-          release_notes="$(printf 'Embed Code %s\n\nThis release contains pre-built Embed Code binaries for macOS, Linux, and Windows.' "$RELEASE_TAG")"
+          release_notes="$(printf 'Embed Code %s\n\nThis release contains pre-built Embed Code binaries for macOS ARM64, macOS x64, Linux, and Windows.' "$RELEASE_TAG")"
           gh release create "$RELEASE_TAG" dist/* \
             --target "$GITHUB_SHA" \
             --title "embed-code $RELEASE_TAG" \
