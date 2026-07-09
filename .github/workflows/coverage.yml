@@ -28,7 +28,7 @@ jobs:
         run: go test ./... -covermode=atomic -coverpkg=./... -coverprofile=cover.out
 
       - name: Upload Coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: ./cover.out
           fail_ci_if_error: true
