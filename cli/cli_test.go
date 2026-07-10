@@ -122,6 +122,17 @@ var _ = Describe("CLI validation", func() {
 				Equal("expected to use config file, but it does not exist"))
 		})
 
+		It("should fail validation when config path points to a directory", func() {
+			invalidConfig := cli.Config{
+				Mode:       cli.ModeEmbed,
+				ConfigPath: docsResourcePath(""),
+			}
+
+			Expect(cli.ValidateConfigFile(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfigFile(invalidConfig).Error()).Should(Equal(
+				docsResourcePath("") + " is a directory, the file was expected"))
+		})
+
 		It("should fail validation when mode is not set", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.Mode = ""
@@ -133,6 +144,48 @@ var _ = Describe("CLI validation", func() {
 		It("should fail validation when docs path is missed", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.BaseDocsPath = ""
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"`code-path` and `docs-path` must both be set"))
+		})
+
+		It("should fail validation when docs path does not exist", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.BaseDocsPath = missingPath("docs")
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"the given path `" + missingPath("docs") + "` does not exist"))
+		})
+
+		It("should fail validation when docs path points to a file", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.BaseDocsPath = configFilePath()
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				configFilePath() + " is a file, the directory was expected"))
+		})
+
+		It("should fail validation when code path does not exist", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.BaseCodePaths = _type.NamedPathList{
+				_type.NamedPath{Path: missingPath("code")},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(ContainSubstring(
+				"the given path `"))
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(ContainSubstring(
+				"does not exist"))
+		})
+
+		It("should fail validation when code path entry is empty", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.BaseCodePaths = _type.NamedPathList{
+				_type.NamedPath{Path: " "},
+			}
 
 			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
 			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
@@ -155,6 +208,34 @@ var _ = Describe("CLI validation", func() {
 			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
 			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
 				"`code-path` and `docs-path` cannot be set when `embeddings` are set"))
+		})
+
+		It("should reject embeddings when root code path points to a file", func() {
+			invalidConfig := cli.Config{
+				Mode: cli.ModeCheck,
+				BaseCodePaths: _type.NamedPathList{
+					_type.NamedPath{Path: configFilePath()},
+				},
+				Embeddings: []cli.EmbeddingConfig{baseEmbeddingConfig()},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(ContainSubstring(
+				"the given path `"))
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(ContainSubstring(
+				"does not exist"))
+		})
+
+		It("should reject embeddings when root docs path points to a file", func() {
+			invalidConfig := cli.Config{
+				Mode:         cli.ModeCheck,
+				BaseDocsPath: configFilePath(),
+				Embeddings:   []cli.EmbeddingConfig{baseEmbeddingConfig()},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				configFilePath() + " is a file, the directory was expected"))
 		})
 
 		It("should reject embeddings with root optional params", func() {
@@ -204,6 +285,49 @@ var _ = Describe("CLI validation", func() {
 			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
 			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
 				"embedding `docs`: `code-path` and `docs-path` must both be set"))
+		})
+
+		It("should fail validation when embedding code path points to a file", func() {
+			invalidConfig := cli.Config{
+				Mode:       cli.ModeCheck,
+				Embeddings: []cli.EmbeddingConfig{baseEmbeddingConfig()},
+			}
+			invalidConfig.Embeddings[0].CodePaths = _type.NamedPathList{
+				_type.NamedPath{Path: configFilePath()},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(ContainSubstring(
+				"embedding `docs`: the given path `"))
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(ContainSubstring(
+				"does not exist"))
+		})
+
+		It("should fail validation when embedding source code path names are duplicated", func() {
+			invalidConfig := cli.Config{
+				Mode:       cli.ModeCheck,
+				Embeddings: []cli.EmbeddingConfig{baseEmbeddingConfig()},
+			}
+			invalidConfig.Embeddings[0].CodePaths = _type.NamedPathList{
+				_type.NamedPath{Name: "samples", Path: codeResourcePath("java")},
+				_type.NamedPath{Name: "samples", Path: codeResourcePath("kotlin")},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"embedding `docs`: duplicate source code path names detected:\n- samples"))
+		})
+
+		It("should fail validation when embedding docs path points to a file", func() {
+			invalidConfig := cli.Config{
+				Mode:       cli.ModeCheck,
+				Embeddings: []cli.EmbeddingConfig{baseEmbeddingConfig()},
+			}
+			invalidConfig.Embeddings[0].DocsPath = configFilePath()
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"embedding `docs`: " + configFilePath() + " is a file, the directory was expected"))
 		})
 
 		It("should fail validation when embedding names are duplicated", func() {
@@ -505,6 +629,11 @@ func docsResourcePath(name string) string {
 	parentDir := filepath.Dir(currentDir)
 
 	return filepath.Join(parentDir, "test/resources/docs", name)
+}
+
+// missingPath builds a path that should not exist in the test environment.
+func missingPath(name string) string {
+	return filepath.Join(os.TempDir(), "embed-code-go-cli-missing-"+name)
 }
 
 // readArgs runs CLI argument parsing with isolated global flag state.
