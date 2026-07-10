@@ -30,9 +30,11 @@ import (
 	"embed-code/embed-code-go/configuration"
 	"embed-code/embed-code-go/fragmentation"
 	_type "embed-code/embed-code-go/type"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -46,6 +48,7 @@ const (
 	complexFragmentsFileName     = "Complex.java"
 	twoFragmentsFileName         = "TwoFragments.java"
 	overlappingFragmentsFileName = "OverlappingFragments.java"
+	emptyLaterPartitionsFileName = "EmptyLaterPartitions.java"
 	emptyFileName                = "Empty.java"
 	indent                       = "    "
 )
@@ -154,6 +157,23 @@ var _ = Describe("Fragmentation", func() {
 			ContainSubstring("Example.java"),
 			ContainSubstring("uses unsupported encoding; expected UTF-8"),
 		)))
+		Expect(errors.Unwrap(err)).Should(MatchError("unsupported source encoding: expected UTF-8"))
+	})
+
+	It("should report unsupported source encoding while resolving code file references", func() {
+		sourceRoot := GinkgoT().TempDir()
+		fileName := "Example.java"
+		Expect(os.WriteFile(filepath.Join(sourceRoot, fileName), []byte{0xff}, 0600)).
+			To(Succeed())
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+
+		reference, err := resolver.ResolveCodeFileReference(fileName, config)
+
+		Expect(reference).Should(BeEmpty())
+		Expect(err).Should(MatchError(And(
+			ContainSubstring("Example.java"),
+			ContainSubstring("uses unsupported encoding; expected UTF-8"),
+		)))
 	})
 
 	It("should isolate cached source content between resolvers", func() {
@@ -213,11 +233,190 @@ var _ = Describe("Fragmentation", func() {
 		Expect(reloadedB).Should(Equal([]string{"class B { String version = \"second\"; }"}))
 	})
 
+	It("should resolve content and references from a named code root", func() {
+		sourceRoot := GinkgoT().TempDir()
+		otherRoot := GinkgoT().TempDir()
+		config.CodeRoots = _type.NamedPathList{
+			_type.NamedPath{Name: "library", Path: sourceRoot},
+			_type.NamedPath{Name: "other", Path: otherRoot},
+		}
+		writeSourceFile(sourceRoot, "Example.java", "class LibraryExample {}")
+		writeSourceFile(otherRoot, "Example.java", "class OtherExample {}")
+
+		content, err := resolver.ResolveContent(
+			"$library/Example.java",
+			fragmentation.DefaultFragmentName,
+			config,
+		)
+		Expect(err).ShouldNot(HaveOccurred())
+		reference, err := resolver.ResolveCodeFileReference("$library/Example.java", config)
+		Expect(err).ShouldNot(HaveOccurred())
+		missingReference, err := resolver.ResolveCodeFileReference("$library/Missing.java", config)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		Expect(content).Should(Equal([]string{"class LibraryExample {}"}))
+		Expect(reference).Should(And(
+			HavePrefix("file://"),
+			ContainSubstring("Example.java"),
+		))
+		Expect(missingReference).Should(And(
+			ContainSubstring("$library/Missing.java"),
+			ContainSubstring("file://"),
+			ContainSubstring("Missing.java"),
+		))
+	})
+
+	It("should report unresolved source references", func() {
+		sourceRoot := GinkgoT().TempDir()
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+
+		defaultContent, defaultErr := resolver.ResolveContent(
+			"Missing.java",
+			fragmentation.DefaultFragmentName,
+			config,
+		)
+		fragmentContent, fragmentErr := resolver.ResolveContent("Missing.java", "custom", config)
+
+		Expect(defaultContent).Should(BeNil())
+		Expect(defaultErr).Should(MatchError(And(
+			ContainSubstring("code file"),
+			ContainSubstring("file://"),
+			ContainSubstring("Missing.java"),
+			ContainSubstring("not found"),
+		)))
+		Expect(fragmentContent).Should(BeNil())
+		Expect(fragmentErr).Should(MatchError(And(
+			ContainSubstring("fragment `custom`"),
+			ContainSubstring("file://"),
+			ContainSubstring("Missing.java"),
+			ContainSubstring("not found"),
+		)))
+	})
+
+	It("should report unresolved source references across multiple unnamed roots", func() {
+		config.CodeRoots = _type.NamedPathList{
+			_type.NamedPath{Path: GinkgoT().TempDir()},
+			_type.NamedPath{Path: GinkgoT().TempDir()},
+		}
+
+		content, err := resolver.ResolveContent(
+			"Missing.java",
+			fragmentation.DefaultFragmentName,
+			config,
+		)
+
+		Expect(content).Should(BeNil())
+		Expect(err).Should(MatchError("code file `Missing.java` not found"))
+	})
+
+	It("should report directories where source files are expected", func() {
+		sourceRoot := GinkgoT().TempDir()
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+
+		content, err := resolver.ResolveContent(
+			".",
+			fragmentation.DefaultFragmentName,
+			config,
+		)
+
+		Expect(content).Should(BeNil())
+		Expect(err).Should(MatchError(And(
+			ContainSubstring(sourceRoot),
+			ContainSubstring("is a directory, the file was expected"),
+		)))
+	})
+
+	It("should report missing named code roots", func() {
+		config.CodeRoots = _type.NamedPathList{
+			_type.NamedPath{Name: "library", Path: GinkgoT().TempDir()},
+		}
+
+		reference, err := resolver.ResolveCodeFileReference("$missing/Example.java", config)
+
+		Expect(reference).Should(BeEmpty())
+		Expect(err).Should(MatchError(
+			"code root with name `missing` not found for path `$missing/Example.java`",
+		))
+	})
+
+	It("should report missing fragments from resolved source files", func() {
+		sourceRoot := GinkgoT().TempDir()
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+		writeSourceFile(sourceRoot, "Example.java", "class Example {}")
+
+		content, err := resolver.ResolveContent("Example.java", "missing", config)
+
+		Expect(content).Should(BeNil())
+		Expect(err).Should(MatchError(And(
+			ContainSubstring("fragment `missing`"),
+			ContainSubstring("file://"),
+			ContainSubstring("Example.java"),
+			ContainSubstring("not found"),
+		)))
+	})
+
+	It("should resolve empty source files as empty content", func() {
+		sourceRoot := GinkgoT().TempDir()
+		config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: sourceRoot}}
+		writeSourceFile(sourceRoot, "Empty.java", "")
+
+		content, err := resolver.ResolveContent(
+			"Empty.java",
+			"",
+			config,
+		)
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(content).Should(BeEmpty())
+	})
+
 	It("should reject cache limits below one", func() {
 		resolver, err := fragmentation.NewResolver(0)
 
 		Expect(resolver).Should(BeNil())
 		Expect(err).Should(HaveOccurred())
+	})
+
+	It("should report source read failures during fragmentation", func() {
+		frag, err := fragmentation.NewFragmentation(
+			filepath.Join(GinkgoT().TempDir(), "Missing.java"),
+		)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		lines, fragments, err := frag.DoFragmentation()
+
+		Expect(lines).Should(BeNil())
+		Expect(fragments).Should(BeNil())
+		Expect(err).Should(HaveOccurred())
+	})
+
+	It("should report unsupported source encoding during fragmentation", func() {
+		sourceRoot := GinkgoT().TempDir()
+		sourcePath := filepath.Join(sourceRoot, "Invalid.java")
+		Expect(os.WriteFile(sourcePath, []byte{0xff}, 0600)).To(Succeed())
+		frag, err := fragmentation.NewFragmentation(sourcePath)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		lines, fragments, err := frag.DoFragmentation()
+
+		Expect(lines).Should(BeNil())
+		Expect(fragments).Should(BeNil())
+		Expect(err).Should(MatchError("unsupported source encoding: expected UTF-8"))
+	})
+
+	It("should report scanner failures during fragmentation", func() {
+		sourceRoot := GinkgoT().TempDir()
+		sourcePath := filepath.Join(sourceRoot, "LongLine.java")
+		Expect(os.WriteFile(sourcePath, []byte(strings.Repeat("x", 64*1024+1)), 0600)).
+			To(Succeed())
+		frag, err := fragmentation.NewFragmentation(sourcePath)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		lines, fragments, err := frag.DoFragmentation()
+
+		Expect(lines).Should(BeNil())
+		Expect(fragments).Should(BeNil())
+		Expect(err).Should(MatchError("bufio.Scanner: token too long"))
 	})
 
 	It("should fail on an unopened fragment", func() {
@@ -226,6 +425,126 @@ var _ = Describe("Fragmentation", func() {
 		_, _, err := frag.DoFragmentation()
 
 		Expect(err).Should(HaveOccurred())
+	})
+
+	It("should report malformed fragment markers with source line context", func() {
+		sourceRoot := GinkgoT().TempDir()
+		sourcePath := filepath.Join(sourceRoot, "Malformed.java")
+		Expect(os.WriteFile(sourcePath, []byte("// #docfragment"), 0600)).To(Succeed())
+		frag, err := fragmentation.NewFragmentation(sourcePath)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		lines, fragments, err := frag.DoFragmentation()
+
+		Expect(lines).Should(BeNil())
+		Expect(fragments).Should(BeNil())
+		Expect(err).Should(MatchError(And(
+			ContainSubstring("failed to do fragmentation"),
+			ContainSubstring("file://"),
+			ContainSubstring("Malformed.java:1"),
+			ContainSubstring("without any name"),
+		)))
+	})
+
+	It("should report malformed end fragment markers with source line context", func() {
+		sourceRoot := GinkgoT().TempDir()
+		sourcePath := filepath.Join(sourceRoot, "MalformedEnd.java")
+		Expect(os.WriteFile(sourcePath, []byte("// #enddocfragment"), 0600)).To(Succeed())
+		frag, err := fragmentation.NewFragmentation(sourcePath)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		lines, fragments, err := frag.DoFragmentation()
+
+		Expect(lines).Should(BeNil())
+		Expect(fragments).Should(BeNil())
+		Expect(err).Should(MatchError(And(
+			ContainSubstring("failed to do fragmentation"),
+			ContainSubstring("file://"),
+			ContainSubstring("MalformedEnd.java:1"),
+			ContainSubstring("without any name"),
+		)))
+	})
+
+	It("should reject a repeated fragment start before an end marker", func() {
+		sourceRoot := GinkgoT().TempDir()
+		sourcePath := filepath.Join(sourceRoot, "RepeatedStart.java")
+		Expect(os.WriteFile(sourcePath, []byte(`// #docfragment "main"
+// #docfragment "main"`), 0600)).To(Succeed())
+		frag, err := fragmentation.NewFragmentation(sourcePath)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		lines, fragments, err := frag.DoFragmentation()
+
+		Expect(lines).Should(BeNil())
+		Expect(fragments).Should(BeNil())
+		Expect(err).Should(MatchError(And(
+			ContainSubstring("RepeatedStart.java:2"),
+			ContainSubstring("last added partition has no end position"),
+		)))
+	})
+
+	It("should reject a repeated fragment end marker", func() {
+		sourceRoot := GinkgoT().TempDir()
+		sourcePath := filepath.Join(sourceRoot, "RepeatedEnd.java")
+		Expect(os.WriteFile(sourcePath, []byte(`// #docfragment "main"
+line
+// #enddocfragment "main"
+// #enddocfragment "main"`), 0600)).To(Succeed())
+		frag, err := fragmentation.NewFragmentation(sourcePath)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		lines, fragments, err := frag.DoFragmentation()
+
+		Expect(lines).Should(BeNil())
+		Expect(fragments).Should(BeNil())
+		Expect(err).Should(MatchError(And(
+			ContainSubstring("RepeatedEnd.java:4"),
+			ContainSubstring("unexpected #enddocfragment statement"),
+		)))
+	})
+
+	Describe("FragmentBuilder", func() {
+		It("should reject an end position before a start position", func() {
+			builder := fragmentation.FragmentBuilder{
+				CodeFilePath: "Example.java",
+				Name:         "main",
+			}
+
+			err := builder.AddEndPosition(0)
+
+			Expect(err).Should(MatchError("the list of partitions is empty"))
+		})
+
+		It("should reject a new start while the latest partition is still open", func() {
+			builder := fragmentation.FragmentBuilder{
+				CodeFilePath: "Example.java",
+				Name:         "main",
+			}
+
+			Expect(builder.AddStartPosition(0)).To(Succeed())
+			err := builder.AddStartPosition(1)
+
+			Expect(err).Should(MatchError(And(
+				ContainSubstring("fragment \"main\""),
+				ContainSubstring("last added partition has no end position"),
+			)))
+		})
+
+		It("should reject a duplicate end position", func() {
+			builder := fragmentation.FragmentBuilder{
+				CodeFilePath: "Example.java",
+				Name:         "main",
+			}
+
+			Expect(builder.AddStartPosition(0)).To(Succeed())
+			Expect(builder.AddEndPosition(0)).To(Succeed())
+			err := builder.AddEndPosition(1)
+
+			Expect(err).Should(MatchError(And(
+				ContainSubstring("unexpected #enddocfragment statement"),
+				ContainSubstring("Example.java:0"),
+			)))
+		})
 	})
 
 	Describe("Partition.Select", func() {
@@ -325,6 +644,35 @@ var _ = Describe("Fragmentation", func() {
 			endings, _ := fragmentation.FindDocFragments(endDocFragment)
 			Expect(endings).Should(BeEmpty())
 		})
+
+		It("should report a fragment marker without a name", func() {
+			openings, err := fragmentation.FindDocFragments("// #docfragment")
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(
+				"found `#docfragment` pefix without any name",
+			))
+		})
+
+		It("should report an unquoted fragment name", func() {
+			openings, err := fragmentation.FindDocFragments("// #docfragment main")
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(And(
+				ContainSubstring("failed to unquote name `main`"),
+				ContainSubstring("invalid syntax"),
+			)))
+		})
+	})
+
+	It("should render empty later partitions with an unindented separator", func() {
+		content := resolveTestFragment(resolver, emptyLaterPartitionsFileName, "piece", config)
+
+		Expect(content).Should(Equal([]string{
+			"call();",
+			config.Separator,
+			"",
+		}))
 	})
 
 	It("should correctly parse file into many partitions", func() {
