@@ -57,6 +57,10 @@ This repository is configured with these GitHub workflows:
 
 - `check`: runs linting, the normal Go test suite, and the showcase end-to-end
   tests across supported platforms.
+- `coverage`: uploads Go coverage to Codecov, where `codecov.yml` requires
+  90% patch coverage for pull requests. The workflow also runs on pushes to
+  `master` to populate base coverage for later pull-request diffs and the
+  README badge; `master` pushes do not have a coverage status gate by design.
 - `release-binaries`: reads `VERSION`, builds Linux, macOS, and Windows
   binaries, signs and notarizes the macOS ARM64 and x64 ZIPs, and creates the
   matching GitHub Release on pushes to `master`. It runs on a self-hosted macOS

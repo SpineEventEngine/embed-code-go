@@ -1,5 +1,7 @@
 # Embed Code
 
+[![Coverage](https://codecov.io/gh/SpineEventEngine/embed-code-go/branch/master/graph/badge.svg)](https://codecov.io/gh/SpineEventEngine/embed-code-go)
+
 Embed Code is a Go command-line tool that keeps documentation snippets in sync
 with source files. It scans Markdown and HTML documents for `<embed-code>`
 instructions, resolves the requested source content, and manages the following
