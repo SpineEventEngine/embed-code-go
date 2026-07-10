@@ -1,0 +1,10 @@
+code-path:
+  - name: java
+    path: test/resources/code/java
+docs-path: test/resources/docs
+doc-includes:
+  - "**/*.md"
+doc-excludes: "archive/**/*, drafts/**/*.md"
+separator: "---"
+info: true
+stacktrace: true

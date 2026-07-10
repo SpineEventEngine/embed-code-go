@@ -28,7 +28,10 @@ package cli_test
 
 import (
 	"embed-code/embed-code-go/cli"
+	"embed-code/embed-code-go/configuration"
 	_type "embed-code/embed-code-go/type"
+	"flag"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -68,8 +71,18 @@ var _ = Describe("CLI validation", func() {
 				ConfigPath: configFilePath(),
 			}
 
+			Expect(cli.IsUsingConfigFile(config)).To(BeTrue())
 			Expect(cli.ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
 			Expect(cli.ValidateConfigFile(config)).Error().ShouldNot(HaveOccurred())
+		})
+
+		It("should pass validation when no roots are set", func() {
+			config := cli.Config{
+				Mode: cli.ModeCheck,
+			}
+
+			Expect(cli.IsUsingConfigFile(config)).To(BeFalse())
+			Expect(cli.ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
 		})
 
 		It("should pass validation when embeddings are set", func() {
@@ -168,6 +181,31 @@ var _ = Describe("CLI validation", func() {
 				"embedding #1: `name` must be set"))
 		})
 
+		It("should fail validation when embedding name contains illegal folder characters", func() {
+			invalidConfig := cli.Config{
+				Mode:       cli.ModeCheck,
+				Embeddings: []cli.EmbeddingConfig{baseEmbeddingConfig()},
+			}
+			invalidConfig.Embeddings[0].Name = "bad/name"
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"embedding `bad/name`: `name` `bad/name` is not valid, " +
+					"those characters are not allowed `/\\ *?:\"<>|`"))
+		})
+
+		It("should fail validation when embedding roots are incomplete", func() {
+			invalidConfig := cli.Config{
+				Mode:       cli.ModeCheck,
+				Embeddings: []cli.EmbeddingConfig{baseEmbeddingConfig()},
+			}
+			invalidConfig.Embeddings[0].DocsPath = ""
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"embedding `docs`: `code-path` and `docs-path` must both be set"))
+		})
+
 		It("should fail validation when embedding names are duplicated", func() {
 			embedding := baseEmbeddingConfig()
 			duplicateEmbedding := baseEmbeddingConfig()
@@ -193,6 +231,18 @@ var _ = Describe("CLI validation", func() {
 				"duplicate source code path names detected:\n- samples"))
 		})
 
+		It("should fail validation when code path name contains illegal folder characters", func() {
+			invalidConfig := baseCliConfig()
+			invalidConfig.BaseCodePaths = _type.NamedPathList{
+				_type.NamedPath{Name: "bad/name", Path: codeResourcePath("java")},
+			}
+
+			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
+			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
+				"the given code path name `bad/name` is not a valid name for the folder, " +
+					"those characters are not allowed `/\\ *?:\"<>|`"))
+		})
+
 		It("should fail validation when multiple unnamed sources code paths are configured", func() {
 			invalidConfig := baseCliConfig()
 			invalidConfig.BaseCodePaths = _type.NamedPathList{
@@ -215,6 +265,29 @@ var _ = Describe("CLI validation", func() {
 			Expect(cli.ValidateConfig(invalidConfig)).Error().Should(HaveOccurred())
 			Expect(cli.ValidateConfig(invalidConfig).Error()).Should(Equal(
 				"named and unnamed source code paths cannot be mixed"))
+		})
+
+		It("should pass validation and warn when duplicate docs paths are configured", func() {
+			first := baseEmbeddingConfig()
+			first.Name = "first"
+			second := baseEmbeddingConfig()
+			second.Name = "second"
+			config := cli.Config{
+				Mode:       cli.ModeCheck,
+				Embeddings: []cli.EmbeddingConfig{first, second},
+			}
+
+			Expect(cli.ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
+		})
+
+		It("should pass validation and warn when duplicate named code paths are configured", func() {
+			config := baseCliConfig()
+			config.BaseCodePaths = _type.NamedPathList{
+				_type.NamedPath{Name: "first", Path: codeResourcePath("java")},
+				_type.NamedPath{Name: "second", Path: codeResourcePath("java")},
+			}
+
+			Expect(cli.ValidateConfig(config)).Error().ShouldNot(HaveOccurred())
 		})
 
 		It("should correctly convert embeddings to a few configs", func() {
@@ -250,6 +323,127 @@ var _ = Describe("CLI validation", func() {
 			Expect(embedConfigs[0].DocExcludes).To(Equal([]string(config.DocExcludes)))
 		})
 
+	})
+
+})
+
+var _ = Describe("CLI arguments", func() {
+
+	It("should read command-line arguments", func() {
+		config := readArgs(
+			"-mode=embed",
+			"-code-path=/code",
+			"-docs-path=/docs",
+			"-doc-includes=**/*.md, guides/*.html, ,",
+			"-doc-excludes=archive/**/*, drafts/**/*.md",
+			"-separator=---",
+			"-config-path=config.yml",
+			"-info=true",
+			"-stacktrace=true",
+		)
+
+		Expect(config.Mode).To(Equal(cli.ModeEmbed))
+		Expect(config.BaseCodePaths).To(Equal(_type.NamedPathList{
+			_type.NamedPath{Path: "/code"},
+		}))
+		Expect(config.BaseDocsPath).To(Equal("/docs"))
+		Expect(config.DocIncludes).To(Equal(_type.StringList{"**/*.md", "guides/*.html"}))
+		Expect(config.DocExcludes).To(Equal(_type.StringList{"archive/**/*", "drafts/**/*.md"}))
+		Expect(config.Separator).To(Equal("---"))
+		Expect(config.ConfigPath).To(Equal("config.yml"))
+		Expect(config.Info).To(BeTrue())
+		Expect(config.Stacktrace).To(BeTrue())
+	})
+
+})
+
+var _ = Describe("CLI configuration building", func() {
+
+	It("should fill args from a config file with optional root settings", func() {
+		config := cli.Config{
+			Mode:       cli.ModeCheck,
+			ConfigPath: "../test/resources/config_files/optional_root_config.yml",
+		}
+
+		fileConfig, err := cli.FillArgsFromConfigFile(config)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(fileConfig.BaseCodePaths).To(Equal(_type.NamedPathList{
+			_type.NamedPath{Name: "java", Path: "test/resources/code/java"},
+		}))
+		Expect(fileConfig.BaseDocsPath).To(Equal("test/resources/docs"))
+		Expect(fileConfig.DocIncludes).To(Equal(_type.StringList{"**/*.md"}))
+		Expect(fileConfig.DocExcludes).To(Equal(_type.StringList{"archive/**/*", "drafts/**/*.md"}))
+		Expect(fileConfig.Separator).To(Equal("---"))
+		Expect(fileConfig.Info).To(BeTrue())
+		Expect(fileConfig.Stacktrace).To(BeTrue())
+	})
+
+	It("should return an error when config file YAML is invalid", func() {
+		configPath := writeTempConfigFile("doc-includes: [")
+		config := cli.Config{
+			Mode:       cli.ModeCheck,
+			ConfigPath: configPath,
+		}
+
+		_, err := cli.FillArgsFromConfigFile(config)
+
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should build default command-line configuration without roots", func() {
+		configs := cli.BuildEmbedCodeConfiguration(cli.Config{})
+
+		Expect(configs).To(HaveLen(1))
+		Expect(configs[0]).To(Equal(configuration.NewConfiguration()))
+	})
+
+	It("should build embedding configuration with optional settings", func() {
+		embedding := baseEmbeddingConfig()
+		embedding.CodePaths = _type.NamedPathList{
+			_type.NamedPath{Name: "java", Path: codeResourcePath("java")},
+			_type.NamedPath{Name: "kotlin", Path: codeResourcePath("kotlin")},
+		}
+		embedding.DocIncludes = []string{"guides/**/*.md"}
+		embedding.DocExcludes = []string{"archive/**/*"}
+		embedding.Separator = "---"
+		config := cli.Config{
+			Mode:       cli.ModeCheck,
+			Embeddings: []cli.EmbeddingConfig{embedding},
+		}
+
+		configs := cli.BuildEmbedCodeConfiguration(config)
+
+		Expect(configs).To(HaveLen(1))
+		Expect(configs[0].Name).To(Equal("docs"))
+		Expect(configs[0].CodeRoots).To(Equal(embedding.CodePaths))
+		Expect(configs[0].DocumentationRoot).To(Equal(embedding.DocsPath))
+		Expect(configs[0].DocIncludes).To(Equal([]string{"guides/**/*.md"}))
+		Expect(configs[0].DocExcludes).To(Equal([]string{"archive/**/*"}))
+		Expect(configs[0].Separator).To(Equal("---"))
+	})
+
+})
+
+var _ = Describe("CLI processing wrappers", func() {
+
+	It("should check selected docs through the public wrapper", func() {
+		config := noEmbeddingInstructionsConfig()
+
+		staleDocs, err := cli.CheckCodeSamples(config)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(staleDocs).To(BeEmpty())
+	})
+
+	It("should embed selected docs through the public wrapper", func() {
+		config := noEmbeddingInstructionsConfig()
+
+		result, err := cli.EmbedCodeSamples(config)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(result.TotalEmbeddings).To(Equal(0))
+		Expect(result.UpdatedTargetFiles).To(BeEmpty())
 	})
 
 })
@@ -300,4 +494,59 @@ func codeResourcePath(name string) string {
 	parentDir := filepath.Dir(currentDir)
 
 	return filepath.Join(parentDir, "test/resources/code", name)
+}
+
+// docsResourcePath builds an absolute path to a test documentation fixture path.
+func docsResourcePath(name string) string {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	parentDir := filepath.Dir(currentDir)
+
+	return filepath.Join(parentDir, "test/resources/docs", name)
+}
+
+// readArgs runs CLI argument parsing with isolated global flag state.
+func readArgs(args ...string) cli.Config {
+	oldArgs := os.Args
+	oldCommandLine := flag.CommandLine
+	defer func() {
+		os.Args = oldArgs
+		flag.CommandLine = oldCommandLine
+	}()
+
+	os.Args = append([]string{"embed-code"}, args...)
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	flag.CommandLine.SetOutput(io.Discard)
+
+	return cli.ReadArgs()
+}
+
+// writeTempConfigFile writes a YAML config fixture and returns its path.
+func writeTempConfigFile(content string) string {
+	configFile, err := os.CreateTemp("", "embed-code-cli-*.yml")
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err = configFile.Close(); err != nil {
+			panic(err)
+		}
+	}()
+	if _, err = configFile.WriteString(content); err != nil {
+		panic(err)
+	}
+
+	return configFile.Name()
+}
+
+// noEmbeddingInstructionsConfig builds a config selecting a document without embed-code tags.
+func noEmbeddingInstructionsConfig() configuration.Configuration {
+	config := configuration.NewConfiguration()
+	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: codeResourcePath("java")}}
+	config.DocumentationRoot = docsResourcePath("")
+	config.DocIncludes = []string{"no-embedding-doc.md"}
+
+	return config
 }
