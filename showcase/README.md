@@ -1,53 +1,21 @@
 # Embed Code Showcase
 
-This is the complete usage guide for `embed-code-go`. It is also executable:
-the showcase test runs the examples through the real CLI so the guide stays in
-sync with the application.
+This showcase explains how to use the Embed Code application to embed code
+samples into Markdown or HTML documentation.
 
-## Workflow
+Embed Code can read any text-based source: Java, JavaScript, Python, plain text,
+or any other format used by your project.
 
-1. Configure source roots and documentation roots.
-2. Add an `<embed-code>` instruction followed by a managed code fence.
-3. Run check mode in CI to detect stale snippets.
-4. Run embed mode when documentation should be rewritten from source.
+The examples in this showcase use `go run` so they can execute directly from
+the project source tree. In other projects, the intended workflow is to use a
+downloaded [release binary](https://github.com/SpineEventEngine/embed-code-go/releases)
+with the same configuration shapes shown here.
 
 ## Guide Map
 
+- [Quick start](quick-start/README.md): the smallest runnable setup for a project.
 - [Configuration](configuration/README.md): how the CLI finds source files and documentation files.
 - [Embedding](embedding/README.md): how instructions select and render source content.
 - [Positive examples](embedding/positive): runnable examples that should pass.
 - [Negative examples](embedding/negative/docs): intentionally broken examples
   that document diagnostics.
-
-## Run the Showcase
-
-Run commands from the repository root.
-
-The end-to-end suite checks positive examples, expected failures, and all
-configuration shapes:
-
-```bash
-go test -tags showcase ./showcase
-```
-
-Check the positive embedding examples directly:
-
-```bash
-go run ./main.go -mode=check -config-path=showcase/embedding/embed-code.yml
-```
-
-Check the configuration examples directly:
-
-```bash
-go run ./main.go -mode=check -config-path=showcase/configuration/single-source.yml
-go run ./main.go -mode=check -config-path=showcase/configuration/named-sources.yml
-go run ./main.go -mode=check -config-path=showcase/configuration/include-exclude.yml
-go run ./main.go -mode=check -config-path=showcase/configuration/multiple-embeddings.yml
-```
-
-The negative examples are intentionally broken, so these commands should fail:
-
-```bash
-go run ./main.go -mode=check -config-path=showcase/embedding/negative/processing-errors.yml
-go run ./main.go -mode=check -config-path=showcase/embedding/negative/stale.yml
-```

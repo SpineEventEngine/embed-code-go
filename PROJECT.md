@@ -39,7 +39,9 @@ them inside code fences, and checks whether existing snippets are up-to-date.
 
 - `README.md`: project entry point, short run/build instructions, and links to
   the complete guide.
-- `showcase/README.md`: complete user guide entry point and runnable workflow.
+- `showcase/README.md`: complete user guide entry point and guide map.
+- `showcase/quick-start/README.md`: smallest runnable setup for new users.
+- `showcase/end-to-end-tests.md`: commands for validating the executable showcase.
 - `showcase/configuration/README.md`: command-line flags, YAML configuration,
   source roots, include/exclude patterns, and multiple embedding targets.
 - `showcase/embedding/README.md`: `<embed-code>` instruction syntax, source
@@ -62,9 +64,10 @@ This repository is configured with these GitHub workflows:
   `master` to populate base coverage for later pull-request diffs and the
   README badge; `master` pushes do not have a coverage status gate by design.
 - `release-binaries`: reads `VERSION`, builds Linux, macOS, and Windows
-  binaries, signs and notarizes the macOS ARM64 and x64 ZIPs, and creates the
-  matching GitHub Release on pushes to `master`. It runs on a self-hosted macOS
-  ARM64 runner because Apple signing and notarization require macOS tooling.
+  binaries, packages Linux and macOS as ZIP archives, signs and notarizes the
+  macOS ARM64 and x64 ZIPs, and creates the matching GitHub Release on pushes
+  to `master`. It runs on a self-hosted macOS ARM64 runner because Apple
+  signing and notarization require macOS tooling.
 
 The release tag is `v<version>` from `VERSION`. When the release already exists,
 the workflow emits a warning and finishes successfully without rebuilding or

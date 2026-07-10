@@ -100,6 +100,20 @@ var _ = Describe("Showcase", func() {
 		})
 	})
 
+	Describe("quick start", func() {
+		It("should check the quick-start target", func() {
+			quickStartRoot := filepath.Join(repoRoot, "showcase", "quick-start")
+
+			output, err := runEmbedCodeFromDir(
+				quickStartRoot,
+				filepath.Join("..", "..", "main.go"),
+				"check",
+				"config.yml",
+			)
+			Expect(err).ShouldNot(HaveOccurred(), "expected quick-start example to pass:\n%s", output)
+		})
+	})
+
 	Describe("configuration examples", func() {
 		for _, config := range []string{
 			"single-source.yml",
@@ -326,8 +340,15 @@ func writeConfig(
 func runEmbedCode(repoRoot string, mode string, configPath string) (string, error) {
 	GinkgoHelper()
 
-	cmd := exec.Command("go", "run", "./main.go", "-mode="+mode, "-config-path="+configPath)
-	cmd.Dir = repoRoot
+	return runEmbedCodeFromDir(repoRoot, "./main.go", mode, configPath)
+}
+
+// runEmbedCodeFromDir executes the CLI through `go run` from workDir.
+func runEmbedCodeFromDir(workDir string, mainPath string, mode string, configPath string) (string, error) {
+	GinkgoHelper()
+
+	cmd := exec.Command("go", "run", mainPath, "-mode="+mode, "-config-path="+configPath)
+	cmd.Dir = workDir
 	output, err := cmd.CombinedOutput()
 
 	return string(output), err

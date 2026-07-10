@@ -11,9 +11,16 @@ This project replaces the earlier [`embed-code` utility for Ruby/Jekyll][embed-c
 
 ## Start Here
 
-The complete usage guide lives in the [showcase](showcase/README.md). It covers
+Start with the [quick start](showcase/quick-start/README.md). The complete
+usage guide lives in the [showcase](showcase/README.md) and covers
 configuration, embedding instructions, check mode, embed mode, expected
 failures, and runnable examples.
+
+The tool is implemented in Go, but using it does not require a Go project. The
+showcase examples embed Java, Kotlin, and plain-text sources into Markdown and
+HTML documentation. Commands that use `go run` are for running this repository
+from source; regular projects can run a downloaded [release binary][releases]
+instead.
 
 ## What It Does
 
@@ -27,16 +34,12 @@ failures, and runnable examples.
 
 Download the asset for your platform from [GitHub Releases][releases].
 
-On Linux, for example:
+On Linux, download `embed-code-linux.zip`, unzip it, and run the binary:
 
 ```bash
+unzip embed-code-linux.zip
 ./embed-code-linux -mode=check -config-path=showcase/embedding/embed-code.yml
 ```
-
-> It may be necessary to give the executable permission with `chmod +x` on Unix-like systems:
-> ```bash
-> chmod +x embed-code-linux
-> ```
 
 On macOS, download `embed-code-macos-arm64.zip` for Apple silicon or
 `embed-code-macos-x64.zip` for Intel Macs. Then unzip it and run the binary:
