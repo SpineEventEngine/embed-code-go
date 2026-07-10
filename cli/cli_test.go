@@ -439,12 +439,16 @@ var _ = Describe("CLI validation", func() {
 
 		It("should copy command line doc excludes to the runtime config", func() {
 			config := baseCliConfig()
+			config.DocIncludes = []string{"guides/**/*.md"}
 			config.DocExcludes = []string{"old-docs/**/*.md", "drafts/**/*"}
+			config.Separator = "---"
 
 			embedConfigs := cli.BuildEmbedCodeConfiguration(config)
 
 			Expect(embedConfigs).To(HaveLen(1))
+			Expect(embedConfigs[0].DocIncludes).To(Equal([]string(config.DocIncludes)))
 			Expect(embedConfigs[0].DocExcludes).To(Equal([]string(config.DocExcludes)))
+			Expect(embedConfigs[0].Separator).To(Equal("---"))
 		})
 
 	})
@@ -515,6 +519,17 @@ var _ = Describe("CLI configuration building", func() {
 		Expect(err).To(HaveOccurred())
 	})
 
+	It("should return an error when config file cannot be read", func() {
+		config := cli.Config{
+			Mode:       cli.ModeCheck,
+			ConfigPath: missingPath("config.yml"),
+		}
+
+		_, err := cli.FillArgsFromConfigFile(config)
+
+		Expect(err).To(HaveOccurred())
+	})
+
 	It("should build default command-line configuration without roots", func() {
 		configs := cli.BuildEmbedCodeConfiguration(cli.Config{})
 
@@ -568,6 +583,17 @@ var _ = Describe("CLI processing wrappers", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(result.TotalEmbeddings).To(Equal(0))
 		Expect(result.UpdatedTargetFiles).To(BeEmpty())
+	})
+
+	It("should return embedding errors through the public wrapper", func() {
+		config := noEmbeddingInstructionsConfig()
+		config.DocIncludes = []string{"missing-code-fence.md"}
+
+		result, err := cli.EmbedCodeSamples(config)
+
+		Expect(err).To(HaveOccurred())
+		Expect(result).To(Equal(cli.EmbedCodeSamplesResult{}))
+		Expect(err.Error()).To(ContainSubstring("missing-code-fence.md"))
 	})
 
 })
