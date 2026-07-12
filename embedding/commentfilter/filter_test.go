@@ -44,6 +44,19 @@ func TestCommentFilter(t *testing.T) {
 }
 
 var _ = Describe("Comment filter", func() {
+	It("should parse supported comment modes", func() {
+		mode, err := ParseMode("")
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(mode).Should(Equal(RetainAll))
+
+		mode, err = ParseMode(string(RetainBlock))
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(mode).Should(Equal(RetainBlock))
+
+		_, err = ParseMode("unsupported")
+		Expect(err).Should(HaveOccurred())
+	})
+
 	Describe("unsupported extensions", func() {
 		It("should return unsupported files unchanged", func() {
 			lines := []string{

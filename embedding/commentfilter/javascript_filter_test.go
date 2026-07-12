@@ -193,4 +193,31 @@ var _ = Describe("JavaScript and TypeScript", func() {
 
 		assertFiltered("sample.ts", RetainNone, lines, expected)
 	})
+
+	It("should preserve JavaScript regex, string, and interpolation variants", func() {
+		lines := []string{
+			`const text = "escaped \\" // literal"; // comment`,
+			`const classPattern = /[\\/]/gi; // comment`,
+			`/start/.test(value); // comment`,
+			`const open = /unterminated`,
+			`const division = identifier / 2; // comment`,
+			"const template = `escaped \\` text ${value}`; // comment",
+			"const nested = `${{ value: /[}]/g, text: \"}\" }}`; // comment",
+			`const unusual = */ /regex/; // comment`,
+			`*/ /regex/; // comment`,
+		}
+		expected := []string{
+			`const text = "escaped \\" `,
+			`const classPattern = /[\\/]/gi; `,
+			`/start/.test(value); `,
+			`const open = /unterminated`,
+			`const division = identifier / 2; `,
+			"const template = `escaped \\` text ${value}`; ",
+			"const nested = `${{ value: /[}]/g, text: \"}\" }}`; ",
+			`const unusual = */ /regex/; `,
+			`*/ /regex/; `,
+		}
+
+		assertFiltered("sample.ts", RetainNone, lines, expected)
+	})
 })

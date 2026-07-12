@@ -182,6 +182,36 @@ var _ = Describe("Instruction", func() {
 		Expect(err).Should(MatchError(ContainSubstring("invalid start pattern `[`")))
 	})
 
+	It("should report invalid end and line patterns", func() {
+		for _, params := range []TestInstructionParams{
+			{endGlob: "["},
+			{lineGlob: "["},
+		} {
+			xmlString := buildInstruction("org/example/Hello.java", params)
+
+			_, err := parsing.FromXML(xmlString, config)
+
+			Expect(err).Should(HaveOccurred())
+		}
+	})
+
+	It("should expose instruction and pattern diagnostic strings", func() {
+		pattern, err := parsing.NewPattern("class")
+		Expect(err).ShouldNot(HaveOccurred())
+		instruction := parsing.Instruction{
+			CodeFile:     "Example.java",
+			StartPattern: &pattern,
+		}
+
+		Expect(pattern.String()).Should(Equal("Pattern class"))
+		Expect(instruction.String()).Should(ContainSubstring("file=`Example.java`"))
+		Expect(instruction.String()).Should(ContainSubstring("start=`Pattern class`"))
+		_, _, found := pattern.FindIn([]string{"class Example"}, -1)
+		Expect(found).Should(BeFalse())
+		_, _, found = (parsing.Pattern{}).FindIn([]string{"class Example"}, 0)
+		Expect(found).Should(BeFalse())
+	})
+
 	It("should embed a line ending with a literal opening brace pattern", func() {
 		instructionParams := TestInstructionParams{
 			lineGlob: "class Hello {",
