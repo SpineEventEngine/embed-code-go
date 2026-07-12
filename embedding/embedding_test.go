@@ -360,6 +360,131 @@ var _ = Describe("Embedding", func() {
 		Expect(context.IsContainsEmbedding()).Should(BeFalse())
 		Expect(processor.IsUpToDate()).Should(BeTrue())
 	})
+
+	It("should report an invalid include pattern", func() {
+		config := configuration.NewConfiguration()
+		config.DocumentationRoot = GinkgoT().TempDir()
+		config.DocIncludes = []string{"["}
+
+		_, err := embedding.NewProcessor("unused.md", config)
+
+		Expect(err).Should(HaveOccurred())
+
+		_, err = embedding.EmbedAll(config)
+
+		Expect(err).Should(HaveOccurred())
+	})
+
+	It("should report an invalid exclude pattern", func() {
+		config := configuration.NewConfiguration()
+		config.DocumentationRoot = GinkgoT().TempDir()
+		config.DocIncludes = nil
+		config.DocExcludes = []string{"["}
+
+		_, err := embedding.NewProcessor("unused.md", config)
+
+		Expect(err).Should(HaveOccurred())
+	})
+
+	It("should return an empty result when embedding fails", func() {
+		documentationRoot := GinkgoT().TempDir()
+		config := configuration.NewConfiguration()
+		config.DocumentationRoot = documentationRoot
+		config.DocIncludes = []string{"*.md"}
+		Expect(os.WriteFile(
+			filepath.Join(documentationRoot, "invalid.md"),
+			[]byte("<embed-code file=\"missing.java\"/>\n"),
+			0600,
+		)).To(Succeed())
+
+		result, err := embedding.EmbedAll(config)
+
+		Expect(err).Should(HaveOccurred())
+		Expect(result).Should(Equal(embedding.EmbedAllResult{}))
+	})
+
+	It("should return an empty named embedding result when no documents match", func() {
+		config := configuration.NewConfiguration()
+		config.Name = "empty"
+		config.DocumentationRoot = GinkgoT().TempDir()
+		config.DocIncludes = nil
+
+		result, err := embedding.EmbedAll(config)
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(result).Should(Equal(embedding.EmbedAllResult{}))
+	})
+
+	It("should return a document write error", func() {
+		documentationRoot := GinkgoT().TempDir()
+		docPath := filepath.Join(documentationRoot, "doc.md")
+		config := configuration.NewConfiguration()
+		config.DocumentationRoot = documentationRoot
+		config.DocIncludes = []string{"doc.md"}
+		Expect(os.WriteFile(docPath, []byte("content"), 0600)).To(Succeed())
+		processor, err := embedding.NewProcessor(filepath.ToSlash(docPath), config)
+		Expect(err).ShouldNot(HaveOccurred())
+		state := writeFailureState{path: docPath}
+		processor.TransitionsMap = parsing.TransitionMap{
+			parsing.Start: []parsing.State{state},
+			state:         []parsing.State{parsing.Finish},
+		}
+
+		context, err := processor.Embed()
+
+		Expect(err).Should(HaveOccurred())
+		Expect(context).ShouldNot(BeNil())
+	})
+
+	It("should report an unreadable selected document as not up to date", func() {
+		documentationRoot := GinkgoT().TempDir()
+		docPath := filepath.Join(documentationRoot, "removed.md")
+		config := configuration.NewConfiguration()
+		config.DocumentationRoot = documentationRoot
+		config.DocIncludes = []string{"removed.md"}
+		Expect(os.WriteFile(docPath, []byte("content"), 0600)).To(Succeed())
+		processor, err := embedding.NewProcessor(docPath, config)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(os.Remove(docPath)).To(Succeed())
+
+		Expect(processor.IsUpToDate()).Should(BeFalse())
+	})
+
+	It("should select fallback error lines from parser context", func() {
+		documentationRoot := GinkgoT().TempDir()
+		docPath := filepath.Join(documentationRoot, "doc.md")
+		config := configuration.NewConfiguration()
+		config.DocumentationRoot = documentationRoot
+		config.DocIncludes = []string{"doc.md"}
+		Expect(os.WriteFile(docPath, []byte("first\nsecond"), 0600)).To(Succeed())
+		processor, err := embedding.NewProcessor(docPath, config)
+		Expect(err).ShouldNot(HaveOccurred())
+		processor.TransitionsMap = parsing.TransitionMap{
+			parsing.Start: []parsing.State{failingEmbeddingState{}},
+		}
+
+		_, err = processor.Embed()
+
+		var processingErr embedding.ProcessingError
+		Expect(errors.As(err, &processingErr)).Should(BeTrue())
+		Expect(processingErr.Line).Should(Equal(1))
+	})
+
+	It("should report an unexpected transition without an active embedding", func() {
+		documentationRoot := GinkgoT().TempDir()
+		docPath := filepath.Join(documentationRoot, "doc.md")
+		config := configuration.NewConfiguration()
+		config.DocumentationRoot = documentationRoot
+		config.DocIncludes = []string{"doc.md"}
+		Expect(os.WriteFile(docPath, []byte("content"), 0600)).To(Succeed())
+		processor, err := embedding.NewProcessor(docPath, config)
+		Expect(err).ShouldNot(HaveOccurred())
+		processor.TransitionsMap = parsing.TransitionMap{}
+
+		_, err = processor.Embed()
+
+		Expect(err).Should(MatchError(ContainSubstring("unexpected parser state at line 1")))
+	})
 })
 
 // buildConfigWithSourceFiles builds an embedding config with an isolated documentation root.
@@ -385,4 +510,53 @@ func newProcessor(
 	Expect(err).ShouldNot(HaveOccurred())
 
 	return processor
+}
+
+// failingEmbeddingState starts an embedding and returns a generic parser error.
+type failingEmbeddingState struct{}
+
+// Accept starts an embedding at the second source line and fails.
+func (failingEmbeddingState) Accept(
+	context *parsing.Context,
+	_ configuration.Configuration,
+) error {
+	context.StartEmbedding(parsing.Instruction{})
+	context.ToNextLine()
+	context.ToNextLine()
+	context.SetCodeStart()
+
+	return errors.New("failure")
+}
+
+// Recognize accepts every parser context.
+func (failingEmbeddingState) Recognize(parsing.Context) bool {
+	return true
+}
+
+// writeFailureState replaces the parsed document with a directory before it is written.
+type writeFailureState struct {
+	// path is the document path to replace.
+	path string
+}
+
+// Accept produces changed embedding content and makes the document path unwritable as a file.
+func (s writeFailureState) Accept(
+	context *parsing.Context,
+	_ configuration.Configuration,
+) error {
+	context.StartEmbedding(parsing.Instruction{})
+	context.Result = append(context.Result, "changed")
+	for !context.ReachedEOF() {
+		context.ToNextLine()
+	}
+	context.FinishEmbedding()
+	Expect(os.Remove(s.path)).To(Succeed())
+	Expect(os.Mkdir(s.path, 0700)).To(Succeed())
+
+	return nil
+}
+
+// Recognize accepts every parser context.
+func (writeFailureState) Recognize(parsing.Context) bool {
+	return true
 }
