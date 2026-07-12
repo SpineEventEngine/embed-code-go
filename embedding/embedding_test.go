@@ -417,12 +417,12 @@ var _ = Describe("Embedding", func() {
 
 	It("should return a document write error", func() {
 		documentationRoot := GinkgoT().TempDir()
-		docPath := filepath.Join(documentationRoot, "doc.md")
+		docPath := filepath.ToSlash(filepath.Join(documentationRoot, "doc.md"))
 		config := configuration.NewConfiguration()
 		config.DocumentationRoot = documentationRoot
 		config.DocIncludes = []string{"doc.md"}
 		Expect(os.WriteFile(docPath, []byte("content"), 0600)).To(Succeed())
-		processor, err := embedding.NewProcessor(filepath.ToSlash(docPath), config)
+		processor, err := embedding.NewProcessor(docPath, config)
 		Expect(err).ShouldNot(HaveOccurred())
 		state := writeFailureState{path: docPath}
 		processor.TransitionsMap = parsing.TransitionMap{
@@ -438,7 +438,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should report an unreadable selected document as not up to date", func() {
 		documentationRoot := GinkgoT().TempDir()
-		docPath := filepath.Join(documentationRoot, "removed.md")
+		docPath := filepath.ToSlash(filepath.Join(documentationRoot, "removed.md"))
 		config := configuration.NewConfiguration()
 		config.DocumentationRoot = documentationRoot
 		config.DocIncludes = []string{"removed.md"}
@@ -452,7 +452,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should select fallback error lines from parser context", func() {
 		documentationRoot := GinkgoT().TempDir()
-		docPath := filepath.Join(documentationRoot, "doc.md")
+		docPath := filepath.ToSlash(filepath.Join(documentationRoot, "doc.md"))
 		config := configuration.NewConfiguration()
 		config.DocumentationRoot = documentationRoot
 		config.DocIncludes = []string{"doc.md"}
@@ -472,7 +472,7 @@ var _ = Describe("Embedding", func() {
 
 	It("should report an unexpected transition without an active embedding", func() {
 		documentationRoot := GinkgoT().TempDir()
-		docPath := filepath.Join(documentationRoot, "doc.md")
+		docPath := filepath.ToSlash(filepath.Join(documentationRoot, "doc.md"))
 		config := configuration.NewConfiguration()
 		config.DocumentationRoot = documentationRoot
 		config.DocIncludes = []string{"doc.md"}
