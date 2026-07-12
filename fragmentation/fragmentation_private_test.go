@@ -24,6 +24,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+//nolint:testpackage // Covers package-private cache and resolver branches.
 package fragmentation
 
 import (
