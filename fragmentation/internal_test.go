@@ -29,6 +29,9 @@ package fragmentation
 import (
 	"embed-code/embed-code-go/configuration"
 	_type "embed-code/embed-code-go/type"
+	"errors"
+	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -130,4 +133,94 @@ var _ = Describe("Fragmentation internals", func() {
 			ContainSubstring("Source.java"),
 		))
 	})
+
+	Describe("resolver error propagation", func() {
+		It("should propagate cached source reload errors while resolving content", func() {
+			sourceRoot := GinkgoT().TempDir()
+			sourcePath := filepath.Join(sourceRoot, "Example.java")
+			Expect(os.WriteFile(sourcePath, []byte("class Example {}"), 0600)).To(Succeed())
+			loads := 0
+			resolver := Resolver{
+				cache: newCache[absolutePath, fragmentedFile](0,
+					func(_ absolutePath) (fragmentedFile, error) {
+						loads++
+						if loads > 1 {
+							return fragmentedFile{}, errors.New("source reload failed")
+						}
+
+						return fragmentedFile{
+							lines: []string{"class Example {}"},
+							fragments: map[string]Fragment{
+								DefaultFragmentName: CreateDefaultFragment(),
+							},
+						}, nil
+					},
+				),
+			}
+			config := configuration.Configuration{
+				CodeRoots: _type.NamedPathList{
+					_type.NamedPath{Path: sourceRoot},
+				},
+			}
+
+			content, err := resolver.ResolveContent("Example.java", DefaultFragmentName, config)
+
+			Expect(content).Should(BeNil())
+			Expect(err).Should(MatchError("source reload failed"))
+			Expect(loads).Should(Equal(2))
+		})
+
+		It("should propagate absolute path errors while resolving a source in a root", func() {
+			resolver, err := NewResolver(DefaultResolverCacheLimit)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			withAbsolutePathError(func() {
+				source, found, err := resolver.resolveSourceInRoot(
+					_type.NamedPath{Path: "relative-root"},
+					"Example.java",
+				)
+
+				Expect(source).Should(BeEmpty())
+				Expect(found).Should(BeFalse())
+				Expect(err).Should(MatchError("absolute path failed"))
+			})
+		})
+
+		It("should propagate absolute path errors while loading source fragments", func() {
+			withAbsolutePathError(func() {
+				content, err := loadSourceFragments("Example.java")
+
+				Expect(content).Should(Equal(fragmentedFile{}))
+				Expect(err).Should(MatchError("absolute path failed"))
+			})
+		})
+
+		It("should propagate absolute path errors while building code file references", func() {
+			config := configuration.Configuration{
+				CodeRoots: _type.NamedPathList{
+					_type.NamedPath{Path: "relative-root"},
+				},
+			}
+
+			withAbsolutePathError(func() {
+				reference, err := codeFileReference("Example.java", config)
+
+				Expect(reference).Should(BeEmpty())
+				Expect(err).Should(MatchError("absolute path failed"))
+			})
+		})
+	})
 })
+
+// withAbsolutePathError replaces absolute path resolution with a deterministic failure.
+func withAbsolutePathError(action func()) {
+	originalMakeAbsolutePath := makeAbsolutePath
+	makeAbsolutePath = func(_ string) (string, error) {
+		return "", errors.New("absolute path failed")
+	}
+	defer func() {
+		makeAbsolutePath = originalMakeAbsolutePath
+	}()
+
+	action()
+}
