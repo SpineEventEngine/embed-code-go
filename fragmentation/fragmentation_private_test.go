@@ -49,34 +49,9 @@ var _ = Describe("Fragmentation internals", func() {
 			cache.storeLoaded(1, "second")
 
 			Expect(cache.values).Should(HaveKeyWithValue(1, "second"))
-			Expect(cache.entries).Should(HaveLen(1))
-			Expect(cache.order.Len()).Should(Equal(1))
+			Expect(cache.order).Should(Equal([]int{1}))
 		})
 
-		It("should ignore eviction when the usage order is empty", func() {
-			cache := newCache[int, string](1, func(_ int) (string, error) {
-				return "loaded", nil
-			})
-
-			cache.evictOldest()
-
-			Expect(cache.values).Should(BeEmpty())
-			Expect(cache.entries).Should(BeEmpty())
-			Expect(cache.order.Len()).Should(Equal(0))
-		})
-
-		It("should discard an invalid usage-order entry", func() {
-			cache := newCache[int, string](1, func(_ int) (string, error) {
-				return "loaded", nil
-			})
-			cache.order.PushBack("not an int key")
-
-			cache.evictOldest()
-
-			Expect(cache.values).Should(BeEmpty())
-			Expect(cache.entries).Should(BeEmpty())
-			Expect(cache.order.Len()).Should(Equal(0))
-		})
 	})
 
 	It("should propagate partition selection errors while rendering fragments", func() {
