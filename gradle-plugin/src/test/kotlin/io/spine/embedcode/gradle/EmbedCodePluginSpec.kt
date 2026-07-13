@@ -15,6 +15,7 @@ import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Properties
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -55,6 +56,24 @@ internal class EmbedCodePluginSpec {
         arguments shouldContain "-separator=---"
         arguments shouldContain "-info=true"
         arguments shouldContain "-stacktrace=true"
+    }
+
+    @Test
+    fun `allow overriding the bundled Embed Code version`() {
+        val overrideVersion = "0.0.0-test"
+        createFakeRelease(releaseDirectory, overrideVersion)
+        writeBuildFile(overrideVersion)
+
+        val result = runner(":checkEmbedding").build()
+
+        result.task(":checkEmbedding")?.outcome shouldBe TaskOutcome.SUCCESS
+        val executableName = EmbedCodePlatform.detect(
+            System.getProperty("os.name"),
+            System.getProperty("os.arch"),
+        ).executableName
+        Files.exists(
+            projectDirectory.resolve("build/embed-code/$overrideVersion/$executableName"),
+        ) shouldBe true
     }
 
     @Test
@@ -199,8 +218,9 @@ internal class EmbedCodePluginSpec {
     }
 
     /** Writes a consuming build configured entirely through the plugin extension. */
-    private fun writeBuildFile() {
+    private fun writeBuildFile(version: String? = null) {
         val baseUrl = releaseDirectory.toUri().toString().trimEnd('/')
+        val versionConfiguration = version?.let { "version.set(\"$it\")" }.orEmpty()
         Files.writeString(
             projectDirectory.resolve("build.gradle.kts"),
             """
@@ -209,7 +229,7 @@ internal class EmbedCodePluginSpec {
             }
 
             embedCode {
-                version.set("1.2.4")
+                $versionConfiguration
                 downloadBaseUrl.set("$baseUrl")
                 codePath.set(layout.projectDirectory.dir("code"))
                 docsPath.set(layout.projectDirectory.dir("docs"))
@@ -239,7 +259,6 @@ internal class EmbedCodePluginSpec {
             }
 
             embedCode {
-                version.set("1.2.4")
                 downloadBaseUrl.set("$baseUrl")
                 $directSource
                 namedSource("company-site", layout.projectDirectory.dir("company-site"))
@@ -251,12 +270,12 @@ internal class EmbedCodePluginSpec {
     }
 
     /** Creates a host-specific fake release asset that records received arguments. */
-    private fun createFakeRelease(root: Path) {
+    private fun createFakeRelease(root: Path, version: String = bundledVersion()) {
         val platform = EmbedCodePlatform.detect(
             System.getProperty("os.name"),
             System.getProperty("os.arch"),
         )
-        val versionDirectory = root.resolve("v1.2.4")
+        val versionDirectory = root.resolve("v$version")
         Files.createDirectories(versionDirectory)
         val executable = projectDirectory.resolve(platform.executableName)
         Files.writeString(
@@ -285,5 +304,17 @@ internal class EmbedCodePluginSpec {
         } else {
             Files.copy(executable, asset)
         }
+    }
+
+    /** Returns the Embed Code version generated from the plugin project's VERSION file. */
+    private fun bundledVersion(): String {
+        val properties = Properties()
+        val resource = requireNotNull(
+            EmbedCodePlugin::class.java.getResourceAsStream(
+                "/io/spine/embedcode/gradle/version.properties",
+            ),
+        )
+        resource.use { properties.load(it) }
+        return requireNotNull(properties.getProperty("version")).trim()
     }
 }

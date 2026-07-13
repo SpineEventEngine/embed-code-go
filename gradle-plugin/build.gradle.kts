@@ -7,8 +7,16 @@ plugins {
     `maven-publish`
 }
 
+val versionFile = layout.projectDirectory.file("../VERSION")
+val embedCodeVersion = providers.fileContents(
+    providers.provider { versionFile },
+).asText.map { it.trim() }.get()
+require(embedCodeVersion.isNotEmpty()) {
+    "The Embed Code version in ../VERSION must not be empty."
+}
+
 group = "io.spine.tools"
-version = "0.1.0"
+version = embedCodeVersion
 
 kotlin {
     jvmToolchain(17)
@@ -40,6 +48,14 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.processResources {
+    val versionProperties = mapOf("embedCodeVersion" to project.version.toString())
+    inputs.properties(versionProperties)
+    filesMatching("**/version.properties") {
+        expand(versionProperties)
+    }
 }
 
 gradlePlugin {

@@ -17,7 +17,9 @@ import org.gradle.api.provider.Provider;
  */
 public abstract class EmbedCodeExtension {
 
-    /** Returns the Embed Code release version to download and run. */
+    /**
+     * Returns the Embed Code release version to download and run, defaulting to the plugin version.
+     */
     public abstract Property<String> getVersion();
 
     /** Returns the root directory containing source files used by embedding instructions. */

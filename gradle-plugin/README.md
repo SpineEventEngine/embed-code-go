@@ -11,7 +11,7 @@ After the plugin is published, apply its released version:
 
 ```kotlin
 plugins {
-    id("io.spine.embed-code") version "0.1.0"
+    id("io.spine.embed-code") version "1.2.4"
 }
 ```
 
@@ -32,7 +32,6 @@ is required:
 
 ```kotlin
 embedCode {
-    version.set("1.2.4")
     codePath.set(layout.projectDirectory.dir("src/main/java"))
     docsPath.set(layout.projectDirectory.dir("docs"))
     docIncludes.set(listOf("**/*.md", "**/*.html"))
@@ -43,22 +42,32 @@ embedCode {
 }
 ```
 
-`version` and `docsPath` are required. Configure either one unnamed `codePath`
-or one or more named sources. The other properties use the same defaults as
-the Embed Code command-line application.
+`docsPath` is required. Configure either one unnamed `codePath` or one or more
+named sources. By default, the plugin downloads the Embed Code release with the
+same version as the plugin. The other properties use the same defaults as the
+Embed Code command-line application.
 
-| Property | Default | Purpose |
-|---|---|---|
-| `version` | Required | Selects the GitHub release tag and executable version. |
-| `codePath` | Required without named sources | Sets one unnamed source root. |
-| `namedSource(name, directory)` | Required without `codePath` | Adds a source root selected with `$name/`. |
-| `docsPath` | Required | Sets the documentation root to scan. |
-| `docIncludes` | `**/*.md`, `**/*.html` | Selects documentation files. |
-| `docExcludes` | Empty | Skips matching documentation files. |
-| `separator` | `...` | Separates joined fragment parts. |
-| `info` | `false` | Enables informational logging. |
-| `stacktrace` | `false` | Prints stack traces after panics. |
-| `downloadBaseUrl` | GitHub Releases | Selects a release mirror or test repository. |
+| Property                       | Default                        | Purpose                                                |
+|--------------------------------|--------------------------------|--------------------------------------------------------|
+| `version`                      | Applied plugin version         | Overrides the GitHub release tag and executable version. |
+| `codePath`                     | Required without named sources | Sets one unnamed source root.                          |
+| `namedSource(name, directory)` | Required without `codePath`    | Adds a source root selected with `$name/`.             |
+| `docsPath`                     | Required                       | Sets the documentation root to scan.                   |
+| `docIncludes`                  | `**/*.md`, `**/*.html`         | Selects documentation files.                           |
+| `docExcludes`                  | Empty                          | Skips matching documentation files.                    |
+| `separator`                    | `...`                          | Separates joined fragment parts.                       |
+| `info`                         | `false`                        | Enables informational logging.                         |
+| `stacktrace`                   | `false`                        | Prints stack traces after panics.                      |
+| `downloadBaseUrl`              | GitHub Releases                | Selects a release mirror or test repository.           |
+
+If a matching CLI release has a problem, override only the executable version
+while keeping the applied plugin version unchanged:
+
+```kotlin
+embedCode {
+    version.set("1.2.3")
+}
+```
 
 ### Named Source Roots
 
@@ -66,7 +75,6 @@ Use `namedSource` when documentation embeds code from multiple modules:
 
 ```kotlin
 embedCode {
-    version.set("1.2.4")
     namedSource(
         "company-site",
         layout.projectDirectory.dir("company-site"),
@@ -149,3 +157,6 @@ it from another checkout:
 ```bash
 ./gradlew publishToMavenLocal
 ```
+
+The plugin publication version and its default Embed Code executable version
+are both read from the repository's root `VERSION` file.

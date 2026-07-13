@@ -1,17 +1,23 @@
 package io.spine.embedcode.gradle;
 
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskProvider;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Properties;
 
 /** Registers automatic installation and execution tasks for Embed Code. */
 public final class EmbedCodePlugin implements Plugin<Project> {
 
     private static final String DEFAULT_DOWNLOAD_BASE_URL =
             "https://github.com/SpineEventEngine/embed-code-go/releases/download";
+    private static final String VERSION_RESOURCE =
+            "/io/spine/embedcode/gradle/version.properties";
     private static final String TASK_GROUP = "embed code";
 
     /** Applies the plugin to {@code project}. */
@@ -23,6 +29,7 @@ public final class EmbedCodePlugin implements Plugin<Project> {
                 "embedCode",
                 EmbedCodeExtension.class
         );
+        extension.getVersion().convention(pluginVersion());
         extension.getDocIncludes().convention(Arrays.asList("**/*.md", "**/*.html"));
         extension.getDocExcludes().convention(Collections.emptyList());
         extension.getNamedSources().convention(Collections.emptyMap());
@@ -107,5 +114,26 @@ public final class EmbedCodePlugin implements Plugin<Project> {
             candidate = '_' + candidate;
         }
         return candidate;
+    }
+
+    /** Returns the Embed Code version packaged into the plugin at build time. */
+    private static String pluginVersion() {
+        Properties properties = new Properties();
+        try (InputStream resource = EmbedCodePlugin.class.getResourceAsStream(VERSION_RESOURCE)) {
+            if (resource == null) {
+                throw new GradleException(
+                        "Embed Code plugin version resource is missing: " + VERSION_RESOURCE
+                );
+            }
+            properties.load(resource);
+        } catch (IOException error) {
+            throw new GradleException("Could not read the Embed Code plugin version.", error);
+        }
+
+        String version = properties.getProperty("version", "").trim();
+        if (version.isEmpty()) {
+            throw new GradleException("The Embed Code plugin version must not be empty.");
+        }
+        return version;
     }
 }
