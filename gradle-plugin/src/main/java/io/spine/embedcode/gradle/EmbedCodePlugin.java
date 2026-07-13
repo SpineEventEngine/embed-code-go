@@ -2,7 +2,6 @@ package io.spine.embedcode.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
 import java.util.Arrays;
@@ -30,12 +29,10 @@ public final class EmbedCodePlugin implements Plugin<Project> {
         extension.getStacktrace().convention(false);
         extension.getDownloadBaseUrl().convention(DEFAULT_DOWNLOAD_BASE_URL);
 
-        Provider<EmbedCodePlatform> platform = project.getProviders()
-                .systemProperty("os.name")
-                .zip(
-                        project.getProviders().systemProperty("os.arch"),
-                        EmbedCodePlatform::detect
-                );
+        EmbedCodePlatform platform = EmbedCodePlatform.detect(
+                System.getProperty("os.name"),
+                System.getProperty("os.arch")
+        );
         TaskProvider<InstallEmbedCodeTask> installTask = project.getTasks().register(
                 "installEmbedCode",
                 InstallEmbedCodeTask.class,
@@ -44,14 +41,13 @@ public final class EmbedCodePlugin implements Plugin<Project> {
                     task.setDescription("Installs the requested Embed Code executable");
                     task.getVersion().set(extension.getVersion());
                     task.getDownloadBaseUrl().set(extension.getDownloadBaseUrl());
-                    task.getAssetName().set(platform.map(EmbedCodePlatform::getAssetName));
-                    task.getExecutableName().set(platform.map(EmbedCodePlatform::getExecutableName));
+                    task.getAssetName().set(platform.getAssetName());
+                    task.getExecutableName().set(platform.getExecutableName());
                     task.getExecutableFile().set(
                             project.getLayout().getBuildDirectory().file(
-                                    extension.getVersion().zip(
-                                            platform,
-                                            (version, selectedPlatform) -> "embed-code/" + version
-                                                    + '/' + selectedPlatform.getExecutableName()
+                                    extension.getVersion().map(
+                                            version -> "embed-code/" + version
+                                                    + '/' + platform.getExecutableName()
                                     )
                             )
                     );

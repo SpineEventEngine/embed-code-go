@@ -115,7 +115,7 @@ release assets:
 ## Compatibility
 
 The published plugin implementation targets Java 8 bytecode. The tested range
-is Gradle 7.6.3 through 9.5.0. The JVM used to run Gradle must also satisfy the
+is Gradle 6.9.4 through 9.5.0. The JVM used to run Gradle must also satisfy the
 selected Gradle version's own Java compatibility requirements.
 
 The plugin build uses Kotlin DSL and Kotlin tests, while its published classes

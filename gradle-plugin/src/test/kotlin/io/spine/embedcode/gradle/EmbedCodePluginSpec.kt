@@ -8,6 +8,7 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
@@ -53,6 +54,24 @@ internal class EmbedCodePluginSpec {
         arguments shouldContain "-separator=---"
         arguments shouldContain "-info=true"
         arguments shouldContain "-stacktrace=true"
+    }
+
+    @Test
+    fun `run check mode with Gradle 6_9_4`() {
+        val javaHome = System.getenv("EMBED_CODE_GRADLE_6_JAVA_HOME")
+        assumeTrue(
+            !javaHome.isNullOrBlank(),
+            "Set EMBED_CODE_GRADLE_6_JAVA_HOME to a JDK supported by Gradle 6.9.4.",
+        )
+
+        val result = runner("checkEmbedCode", useConfigurationCache = false)
+            .withGradleVersion("6.9.4")
+            .withEnvironment(System.getenv() + ("JAVA_HOME" to javaHome))
+            .build()
+
+        result.task(":installEmbedCode")?.outcome shouldBe TaskOutcome.SUCCESS
+        result.task(":checkEmbedCode")?.outcome shouldBe TaskOutcome.SUCCESS
+        Files.readString(projectDirectory.resolve("mode.txt")).trim() shouldBe "check"
     }
 
     @Test
@@ -109,10 +128,20 @@ internal class EmbedCodePluginSpec {
     }
 
     /** Creates a runner using the plugin-under-test classpath. */
-    private fun runner(vararg arguments: String): GradleRunner = GradleRunner.create()
-        .withProjectDir(projectDirectory.toFile())
-        .withArguments(*arguments, "--configuration-cache", "--stacktrace")
-        .withPluginClasspath()
+    private fun runner(
+        vararg arguments: String,
+        useConfigurationCache: Boolean = true,
+    ): GradleRunner {
+        val gradleArguments = arguments.toMutableList()
+        if (useConfigurationCache) {
+            gradleArguments.add("--configuration-cache")
+        }
+        gradleArguments.add("--stacktrace")
+        return GradleRunner.create()
+            .withProjectDir(projectDirectory.toFile())
+            .withArguments(gradleArguments)
+            .withPluginClasspath()
+    }
 
     /** Writes a consuming build configured entirely through the plugin extension. */
     private fun writeBuildFile() {
