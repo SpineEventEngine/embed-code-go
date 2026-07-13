@@ -61,39 +61,49 @@ var _ = Describe("Parser states", func() {
 		Expect(parsing.CodeFenceEnd.Recognize(context)).Should(BeFalse())
 	})
 
-	It("should track ordinary Markdown fence variants", func() {
+	It("should open and close an ordinary Markdown fence with a matching marker", func() {
 		config := configuration.NewConfiguration()
+		context := newStateContext("````", "````")
 
-		context := newStateContext("````", "  ```", "``` language", "````")
 		Expect(parsing.RegularLine.Accept(&context, config)).Should(Succeed())
 		Expect(context.MarkdownFenceStarted).Should(BeTrue())
 		Expect(context.MarkdownFenceMarker).Should(Equal("````"))
 
 		Expect(parsing.RegularLine.Accept(&context, config)).Should(Succeed())
-		Expect(context.MarkdownFenceStarted).Should(BeTrue())
-
-		Expect(parsing.RegularLine.Accept(&context, config)).Should(Succeed())
-		Expect(context.MarkdownFenceStarted).Should(BeTrue())
-
-		Expect(parsing.RegularLine.Accept(&context, config)).Should(Succeed())
 		Expect(context.MarkdownFenceStarted).Should(BeFalse())
+		Expect(context.MarkdownFenceMarker).Should(BeEmpty())
+	})
 
-		context = newStateContext("```")
-		context.MarkdownFenceStarted = true
-		context.MarkdownFenceMarker = "~~~~"
-		Expect(parsing.RegularLine.Accept(&context, config)).Should(Succeed())
-		Expect(context.MarkdownFenceStarted).Should(BeTrue())
+	DescribeTable("should keep an ordinary Markdown fence open",
+		func(line string, marker string, indentation int) {
+			config := configuration.NewConfiguration()
+			context := newStateContext(line)
+			context.MarkdownFenceStarted = true
+			context.MarkdownFenceMarker = marker
+			context.MarkdownFenceIndentation = indentation
 
-		context = newStateContext("``` language")
-		context.MarkdownFenceStarted = true
-		context.MarkdownFenceMarker = "```"
-		Expect(parsing.RegularLine.Accept(&context, config)).Should(Succeed())
-		Expect(context.MarkdownFenceStarted).Should(BeTrue())
+			Expect(parsing.RegularLine.Accept(&context, config)).Should(Succeed())
 
-		context = newStateContext("```")
+			Expect(context.MarkdownFenceStarted).Should(BeTrue())
+			Expect(context.MarkdownFenceMarker).Should(Equal(marker))
+			Expect(context.MarkdownFenceIndentation).Should(Equal(indentation))
+		},
+		Entry("when the closing fence indentation differs", "  ```", "```", 0),
+		Entry("when the closing fence marker is shorter", "```", "````", 0),
+		Entry("when the closing fence marker differs", "```", "~~~~", 0),
+		Entry("when the closing fence has an info string", "``` language", "```", 0),
+	)
+
+	It("should ignore ordinary Markdown fences while processing an embedding", func() {
+		config := configuration.NewConfiguration()
+		context := newStateContext("```")
 		context.StartEmbedding(parsing.Instruction{})
+
 		Expect(parsing.RegularLine.Accept(&context, config)).Should(Succeed())
+
 		Expect(context.MarkdownFenceStarted).Should(BeFalse())
+		Expect(context.MarkdownFenceMarker).Should(BeEmpty())
+		Expect(context.MarkdownFenceIndentation).Should(BeZero())
 	})
 
 	It("should expose parser diagnostic strings", func() {

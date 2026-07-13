@@ -206,9 +206,18 @@ var _ = Describe("Instruction", func() {
 		Expect(pattern.String()).Should(Equal("Pattern class"))
 		Expect(instruction.String()).Should(ContainSubstring("file=`Example.java`"))
 		Expect(instruction.String()).Should(ContainSubstring("start=`Pattern class`"))
+	})
+
+	It("should not search before the first source line", func() {
+		pattern, err := parsing.NewPattern("class")
+		Expect(err).ShouldNot(HaveOccurred())
+
 		_, _, found := pattern.FindIn([]string{"class Example"}, -1)
 		Expect(found).Should(BeFalse())
-		_, _, found = (parsing.Pattern{}).FindIn([]string{"class Example"}, 0)
+	})
+
+	It("should not search with an empty pattern", func() {
+		_, _, found := (parsing.Pattern{}).FindIn([]string{"class Example"}, 0)
 		Expect(found).Should(BeFalse())
 	})
 
