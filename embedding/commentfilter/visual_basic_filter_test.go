@@ -91,4 +91,10 @@ var _ = Describe("Visual Basic", func() {
 
 		assertFiltered("Module.vb", RetainDocumentation, lines, expected)
 	})
+
+	It("should preserve an unterminated quoted string", func() {
+		lines := []string{`Dim value = "unterminated`}
+
+		assertFiltered("Module.vb", RetainNone, lines, lines)
+	})
 })

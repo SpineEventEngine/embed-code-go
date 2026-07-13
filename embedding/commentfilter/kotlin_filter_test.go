@@ -168,4 +168,23 @@ var _ = Describe("Kotlin", func() {
 
 		assertFiltered("Sample.kt", RetainNone, lines, expected)
 	})
+
+	It("should preserve escaped strings, characters, and nested interpolation braces", func() {
+		lines := []string{
+			`val quote = '\'' // comment`,
+			`val text = "escaped \\" // literal" // comment`,
+			`val nested = "${if (ready) { "// literal" } else { value }}" // comment`,
+			`val raw = "${"""raw"""}" // comment`,
+			`val quoted = "${"text"}" // comment`,
+		}
+		expected := []string{
+			`val quote = '\'' `,
+			`val text = "escaped \\" `,
+			`val nested = "${if (ready) { "// literal" } else { value }}" `,
+			`val raw = "${"""raw"""}" `,
+			`val quoted = "${"text"}" `,
+		}
+
+		assertFiltered("Sample.kt", RetainNone, lines, expected)
+	})
 })

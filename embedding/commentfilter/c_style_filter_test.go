@@ -139,4 +139,31 @@ var _ = Describe("C and C++", func() {
 
 		assertFiltered("sample.cpp", RetainNone, lines, expected)
 	})
+
+	It("should preserve escaped and unterminated quoted literals", func() {
+		lines := []string{
+			`const char* escaped = "quote: \\""; // comment`,
+			`const char* open = "unterminated`,
+			`const char* invalid = R"bad delimiter(text)bad delimiter";`,
+			`const char* missing = R"delimiter`,
+		}
+		expected := []string{
+			`const char* escaped = "quote: \\""; // comment`,
+			`const char* open = "unterminated`,
+			`const char* invalid = R"bad delimiter(text)bad delimiter";`,
+			`const char* missing = R"delimiter`,
+		}
+
+		assertFiltered("sample.cpp", RetainNone, lines, expected)
+	})
+
+	It("should keep an open block comment across lines", func() {
+		lines := []string{
+			"/* open block",
+			"continued",
+			"closed */ int value = 1;",
+		}
+
+		assertFiltered("sample.cpp", RetainBlock, lines, lines)
+	})
 })

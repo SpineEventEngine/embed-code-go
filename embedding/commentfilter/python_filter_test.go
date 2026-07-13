@@ -120,4 +120,42 @@ var _ = Describe("Python", func() {
 
 		assertFiltered("module.py", RetainNone, lines, expected)
 	})
+
+	It("should preserve strings nested inside f-string expressions", func() {
+		cases := []struct {
+			lines    []string
+			expected []string
+		}{
+			{
+				lines:    []string{`value = f"{format('escaped \\' quote')}" # comment`},
+				expected: []string{`value = f"{format('escaped \\' quote')}" # comment`},
+			},
+			{
+				lines: []string{`value = f"{format("""raw`, `text`, `""")}" # comment`},
+				expected: []string{
+					`value = f"{format("""raw`, `text`, `""")}" `,
+				},
+			},
+			{
+				lines:    []string{`value = f"{number:04`},
+				expected: []string{`value = f"{number:04`},
+			},
+			{
+				lines:    []string{`value = f"{format('unterminated`},
+				expected: []string{`value = f"{format('unterminated`},
+			},
+			{
+				lines:    []string{`value = f"{ {'nested': value} }" # comment`},
+				expected: []string{`value = f"{ {'nested': value} }" `},
+			},
+			{
+				lines:    []string{`value = "unterminated`},
+				expected: []string{`value = "unterminated`},
+			},
+		}
+
+		for _, tc := range cases {
+			assertFiltered("module.py", RetainNone, tc.lines, tc.expected)
+		}
+	})
 })
