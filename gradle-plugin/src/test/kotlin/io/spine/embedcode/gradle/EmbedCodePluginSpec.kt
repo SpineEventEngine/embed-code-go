@@ -3,6 +3,7 @@ package io.spine.embedcode.gradle
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
@@ -39,10 +40,10 @@ internal class EmbedCodePluginSpec {
 
     @Test
     fun `run check mode with Gradle configuration`() {
-        val result = runner("checkEmbedCode").build()
+        val result = runner(":checkEmbedding").build()
 
         result.task(":installEmbedCode")?.outcome shouldBe TaskOutcome.SUCCESS
-        result.task(":checkEmbedCode")?.outcome shouldBe TaskOutcome.SUCCESS
+        result.task(":checkEmbedding")?.outcome shouldBe TaskOutcome.SUCCESS
         Files.readString(projectDirectory.resolve("mode.txt")).trim() shouldBe "check"
 
         val arguments = Files.readAllLines(projectDirectory.resolve("arguments.txt"))
@@ -64,22 +65,22 @@ internal class EmbedCodePluginSpec {
             "Set EMBED_CODE_GRADLE_6_JAVA_HOME to a JDK supported by Gradle 6.9.4.",
         )
 
-        val result = runner("checkEmbedCode", useConfigurationCache = false)
+        val result = runner(":checkEmbedding", useConfigurationCache = false)
             .withGradleVersion("6.9.4")
             .withEnvironment(System.getenv() + ("JAVA_HOME" to javaHome))
             .build()
 
         result.task(":installEmbedCode")?.outcome shouldBe TaskOutcome.SUCCESS
-        result.task(":checkEmbedCode")?.outcome shouldBe TaskOutcome.SUCCESS
+        result.task(":checkEmbedding")?.outcome shouldBe TaskOutcome.SUCCESS
         Files.readString(projectDirectory.resolve("mode.txt")).trim() shouldBe "check"
     }
 
     @Test
     fun `reuse installation when running embed mode`() {
-        runner("checkEmbedCode").build()
+        runner(":checkEmbedding").build()
         releaseDirectory.toFile().deleteRecursively()
 
-        val result = runner("embedCode").build()
+        val result = runner(":embedCode").build()
 
         result.task(":installEmbedCode")?.outcome shouldBe TaskOutcome.UP_TO_DATE
         result.task(":embedCode")?.outcome shouldBe TaskOutcome.SUCCESS
@@ -92,9 +93,9 @@ internal class EmbedCodePluginSpec {
         Files.createDirectories(projectDirectory.resolve("browser"))
         writeNamedSourcesBuildFile()
 
-        val result = runner("checkEmbedCode").build()
+        val result = runner(":checkEmbedding").build()
 
-        result.task(":checkEmbedCode")?.outcome shouldBe TaskOutcome.SUCCESS
+        result.task(":checkEmbedding")?.outcome shouldBe TaskOutcome.SUCCESS
         val arguments = Files.readAllLines(projectDirectory.resolve("arguments.txt"))
         arguments shouldContain "-mode=check"
         arguments.single { it.startsWith("-config-path=") }
@@ -112,7 +113,7 @@ internal class EmbedCodePluginSpec {
         Files.createDirectories(projectDirectory.resolve("browser"))
         writeNamedSourcesBuildFile(includeDirectSource = true)
 
-        val result = runner("checkEmbedCode").buildAndFail()
+        val result = runner(":checkEmbedding").buildAndFail()
 
         result.output shouldContain
             "Configure exactly one of `codePath` or `namedSource(...)` for Embed Code."
@@ -122,9 +123,61 @@ internal class EmbedCodePluginSpec {
     fun `report missing release asset`() {
         releaseDirectory.toFile().deleteRecursively()
 
-        val result = runner("checkEmbedCode").buildAndFail()
+        val result = runner(":checkEmbedding").buildAndFail()
 
         result.output shouldContain "Could not download Embed Code"
+    }
+
+    @Test
+    fun `list only execution tasks under the Embed Code group`() {
+        val result = runner("tasks").build()
+
+        result.output shouldContain "Embed code tasks"
+        result.output shouldContain "checkEmbedding - Checks embedded code snippets are up to date"
+        result.output shouldContain "embedCode - Updates embedded code snippets from source files"
+        result.output shouldNotContain "installEmbedCode"
+
+        val allTasks = runner("tasks", "--all").build()
+        allTasks.output shouldContain
+            "installEmbedCode - Installs the requested Embed Code executable"
+    }
+
+    @Test
+    fun `reject a project with an existing checkEmbedding task`() {
+        Files.writeString(
+            projectDirectory.resolve("settings.gradle.kts"),
+            """
+            rootProject.name = "test-project"
+
+            gradle.beforeProject {
+                tasks.register("checkEmbedding")
+            }
+            """.trimIndent(),
+        )
+
+        val result = runner("tasks").buildAndFail()
+
+        result.output shouldContain
+            "Cannot apply `io.spine.embed-code`: task `checkEmbedding` already exists."
+    }
+
+    @Test
+    fun `reject a project with an existing embedCode task`() {
+        Files.writeString(
+            projectDirectory.resolve("settings.gradle.kts"),
+            """
+            rootProject.name = "test-project"
+
+            gradle.beforeProject {
+                tasks.register("embedCode")
+            }
+            """.trimIndent(),
+        )
+
+        val result = runner("tasks").buildAndFail()
+
+        result.output shouldContain
+            "Cannot apply `io.spine.embed-code`: task `embedCode` already exists."
     }
 
     /** Creates a runner using the plugin-under-test classpath. */

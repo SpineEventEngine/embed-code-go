@@ -1,5 +1,6 @@
 package io.spine.embedcode.gradle;
 
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskProvider;
@@ -12,11 +13,13 @@ public final class EmbedCodePlugin implements Plugin<Project> {
 
     private static final String DEFAULT_DOWNLOAD_BASE_URL =
             "https://github.com/SpineEventEngine/embed-code-go/releases/download";
-    private static final String SPINE_TASK_GROUP = "spine";
+    private static final String TASK_GROUP = "embed code";
 
     /** Applies the plugin to {@code project}. */
     @Override
     public void apply(Project project) {
+        ensureTaskNameIsAvailable(project, "checkEmbedding");
+        ensureTaskNameIsAvailable(project, "embedCode");
         EmbedCodeExtension extension = project.getExtensions().create(
                 "embedCode",
                 EmbedCodeExtension.class
@@ -37,7 +40,6 @@ public final class EmbedCodePlugin implements Plugin<Project> {
                 "installEmbedCode",
                 InstallEmbedCodeTask.class,
                 task -> {
-                    task.setGroup(SPINE_TASK_GROUP);
                     task.setDescription("Installs the requested Embed Code executable");
                     task.getVersion().set(extension.getVersion());
                     task.getDownloadBaseUrl().set(extension.getDownloadBaseUrl());
@@ -58,7 +60,7 @@ public final class EmbedCodePlugin implements Plugin<Project> {
                 project,
                 extension,
                 installTask,
-                "checkEmbedCode",
+                "checkEmbedding",
                 "Checks embedded code snippets are up to date",
                 "check"
         );
@@ -82,7 +84,7 @@ public final class EmbedCodePlugin implements Plugin<Project> {
             String mode
     ) {
         project.getTasks().register(name, EmbedCodeTask.class, task -> {
-            task.setGroup(SPINE_TASK_GROUP);
+            task.setGroup(TASK_GROUP);
             task.setDescription(description);
             task.getMode().set(mode);
             task.getCodePath().set(extension.getCodePath());
@@ -97,5 +99,15 @@ public final class EmbedCodePlugin implements Plugin<Project> {
             task.getExecutableFile().set(installTask.flatMap(InstallEmbedCodeTask::getExecutableFile));
             task.getWorkingDirectory().set(project.getLayout().getProjectDirectory());
         });
+    }
+
+    /** Rejects a project whose existing task would be replaced by the plugin. */
+    private static void ensureTaskNameIsAvailable(Project project, String name) {
+        if (project.getTasks().findByName(name) != null) {
+            throw new GradleException(
+                    "Cannot apply `io.spine.embed-code`: task `" + name + "` already exists. "
+                            + "Apply the plugin to a project without that task."
+            );
+        }
     }
 }

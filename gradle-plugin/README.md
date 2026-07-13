@@ -3,7 +3,7 @@
 The `io.spine.embed-code` plugin runs Embed Code without requiring developers
 or CI jobs to download an executable manually. It selects the released binary
 for the current platform, installs it under the project's `build/` directory,
-and exposes separate check and embed tasks.
+and exposes separate `checkEmbedding` and `embedCode` tasks.
 
 ## Apply and Configure
 
@@ -92,18 +92,25 @@ documentation targets are not exposed by this Gradle DSL.
 Check that documentation already contains current source snippets:
 
 ```bash
-./gradlew checkEmbedCode
+./gradlew :checkEmbedding
 ```
 
 Update documentation in place:
 
 ```bash
-./gradlew embedCode
+./gradlew :embedCode
 ```
 
-`installEmbedCode` is an internal preparation task. Gradle runs it
-automatically before either execution task and reuses its output until the
-requested version, platform, download URL, or build directory changes.
+Both tasks belong to the `embed code` group. `installEmbedCode` is an ungrouped
+internal preparation task, so it is hidden from the normal `tasks` report but
+remains visible with `tasks --all`. Gradle runs it automatically before either
+execution task and reuses its output until the requested version, platform,
+download URL, or build directory changes.
+
+The plugin owns the `checkEmbedding` and `embedCode` task names. It rejects an
+existing task instead of replacing another plugin's task. The leading `:` in
+the commands above selects the root task explicitly; without it, a
+multi-project build may also run every subproject task with the same name.
 
 The plugin supports the platforms for which Embed Code currently publishes
 release assets:
