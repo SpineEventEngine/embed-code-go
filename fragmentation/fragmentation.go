@@ -54,6 +54,14 @@ import (
 // NamedPathPrefix is the prefix before a named code source.
 const NamedPathPrefix = "$"
 
+// makeAbsolutePath resolves paths to absolute paths.
+//
+// It points to filepath.Abs in production.
+// Tests replace it to exercise error propagation from absolute
+// path resolution, which filepath.Abs does not fail reliably
+// across supported environments.
+var makeAbsolutePath = filepath.Abs
+
 // Fragmentation splits the given file into fragments.
 type Fragmentation struct {
 	// codeFile is the absolute path of the source file being fragmented.
@@ -72,7 +80,7 @@ type Fragmentation struct {
 // Fragmentation - source file fragmentation context.
 // error - when codeFile cannot be made absolute.
 func NewFragmentation(codeFile string) (Fragmentation, error) {
-	absoluteCodeFile, err := filepath.Abs(codeFile)
+	absoluteCodeFile, err := makeAbsolutePath(codeFile)
 	if err != nil {
 		return Fragmentation{}, err
 	}

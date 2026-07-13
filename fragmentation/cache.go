@@ -26,10 +26,7 @@
 
 package fragmentation
 
-import (
-	"container/list"
-	"sync"
-)
+import "sync"
 
 // cache is a limited collection of recently used values by key.
 type cache[K comparable, V any] struct {
@@ -45,21 +42,16 @@ type cache[K comparable, V any] struct {
 	// values contains cached values indexed by key.
 	values map[K]V
 
-	// entries maps keys to their positions in the usage order.
-	entries map[K]*list.Element
-
 	// order tracks keys from least to most recently used.
-	order *list.List
+	order []K
 }
 
 // newCache creates a cache with a loader and least-recently-used eviction.
 func newCache[K comparable, V any](limit int, loader func(K) (V, error)) *cache[K, V] {
 	return &cache[K, V]{
-		limit:   limit,
-		loader:  loader,
-		values:  make(map[K]V),
-		entries: make(map[K]*list.Element),
-		order:   list.New(),
+		limit:  limit,
+		loader: loader,
+		values: make(map[K]V),
 	}
 }
 
@@ -91,14 +83,15 @@ func (c *cache[K, V]) get(key K) (V, error) {
 
 // storeLoaded stores a loaded value and evicts the least recently used value when needed.
 func (c *cache[K, V]) storeLoaded(key K, value V) {
-	c.values[key] = value
-	if entry, found := c.entries[key]; found {
-		c.order.MoveToBack(entry)
+	if _, found := c.values[key]; found {
+		c.values[key] = value
+		c.markUsed(key)
 
 		return
 	}
 
-	c.entries[key] = c.order.PushBack(key)
+	c.values[key] = value
+	c.order = append(c.order, key)
 	if len(c.values) <= c.limit {
 		return
 	}
@@ -108,25 +101,19 @@ func (c *cache[K, V]) storeLoaded(key K, value V) {
 
 // markUsed moves a cache key to the most recently used position.
 func (c *cache[K, V]) markUsed(key K) {
-	if entry, found := c.entries[key]; found {
-		c.order.MoveToBack(entry)
+	for index, existingKey := range c.order {
+		if existingKey == key {
+			c.order = append(c.order[:index], c.order[index+1:]...)
+			c.order = append(c.order, key)
+
+			return
+		}
 	}
 }
 
 // evictOldest removes the least recently used cache entry.
 func (c *cache[K, V]) evictOldest() {
-	oldestEntry := c.order.Front()
-	if oldestEntry == nil {
-		return
-	}
-
-	oldestKey, isKey := oldestEntry.Value.(K)
-	if !isKey {
-		c.order.Remove(oldestEntry)
-
-		return
-	}
-	c.order.Remove(oldestEntry)
-	delete(c.entries, oldestKey)
+	oldestKey := c.order[0]
+	c.order = c.order[1:]
 	delete(c.values, oldestKey)
 }

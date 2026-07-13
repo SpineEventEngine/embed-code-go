@@ -41,6 +41,13 @@ const (
 	WritePermission uint32 = 0600
 )
 
+// statPath inspects filesystem paths.
+//
+// It points to os.Stat in production. Tests replace it to exercise error
+// handling after glob resolution, which otherwise depends on filesystem races
+// between finding a path and inspecting it.
+var statPath = os.Stat
+
 // IsFileExist reports whether the given path exists as a file.
 //
 // Parameters:
@@ -103,7 +110,7 @@ func validatePathExists(path string) (bool, os.FileInfo, error) {
 	}
 
 	firstMatch := matches[0]
-	info, err := os.Stat(firstMatch)
+	info, err := statPath(firstMatch)
 
 	if err != nil {
 		if os.IsNotExist(err) {

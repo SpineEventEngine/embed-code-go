@@ -30,6 +30,7 @@ import (
 	. "embed-code/embed-code-go/embedding/commentfilter"
 
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Java-style languages", func() {
@@ -119,5 +120,16 @@ var _ = Describe("Java-style languages", func() {
 		}
 
 		assertFiltered("Api.java", RetainNone, lines, expected)
+	})
+
+	It("should support configured documentation line markers", func() {
+		filter := MarkerCommentFilter{Syntax: CommentMarker{
+			Documentation: DocumentationMarker{Inline: []string{"///"}},
+		}}
+		lines := []string{"/// docs", "code"}
+
+		result := filter.Filter(lines, RetainDocumentation)
+
+		Expect(result).Should(Equal(lines))
 	})
 })

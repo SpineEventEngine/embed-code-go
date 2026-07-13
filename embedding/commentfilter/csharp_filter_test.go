@@ -165,4 +165,31 @@ var _ = Describe("C#", func() {
 
 		assertFiltered("Api.cs", RetainNone, lines, expected)
 	})
+
+	It("should preserve C# string variants inside interpolation expressions", func() {
+		cases := [][]string{
+			{`var value = "quote: \\"";`},
+			{`var value = $"{Format("a\\\"b", @"a "" b", """raw""")}";`},
+			{`var value = $"{Format("""raw`},
+			{`var value = $"{Format("text`},
+			{`var value = $"{number:000`},
+			{`var value = $"""Keep {{ and }} {number}""";`},
+			{`var value = @"a "" b";`},
+			{`var value = "unterminated`},
+		}
+
+		for _, lines := range cases {
+			assertFiltered("Api.cs", RetainNone, lines, lines)
+		}
+	})
+
+	It("should keep an open block comment across lines", func() {
+		lines := []string{
+			"/* open block",
+			"continued",
+			"closed */ var value = 1;",
+		}
+
+		assertFiltered("Api.cs", RetainBlock, lines, lines)
+	})
 })

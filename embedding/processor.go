@@ -73,10 +73,7 @@ func NewProcessor(docFile string, config configuration.Configuration) (Processor
 	if err != nil {
 		return Processor{}, err
 	}
-	resolver, err := fragmentation.NewResolver(fragmentation.DefaultResolverCacheLimit)
-	if err != nil {
-		return Processor{}, err
-	}
+	resolver := newDefaultResolver()
 
 	return newProcessor(
 		docFile,
@@ -85,6 +82,14 @@ func NewProcessor(docFile string, config configuration.Configuration) (Processor
 		requiredDocPaths,
 		resolver,
 	), nil
+}
+
+// newDefaultResolver creates a resolver with the fixed positive default cache limit.
+// The constructor cannot fail because DefaultResolverCacheLimit satisfies its precondition.
+func newDefaultResolver() *fragmentation.Resolver {
+	resolver, _ := fragmentation.NewResolver(fragmentation.DefaultResolverCacheLimit)
+
+	return resolver
 }
 
 // newProcessor creates a Processor with a precomputed documentation file list.

@@ -68,6 +68,13 @@ var _ = Describe("Files actions", func() {
 			Expect(files.IsDirExist(filePath)).Should(BeFalse())
 		})
 
+		It("should return error as the referenced path has an invalid glob pattern", func() {
+			exists, err := files.IsDirExist("[")
+
+			Expect(exists).Should(BeFalse())
+			Expect(err).Should(HaveOccurred())
+		})
+
 		It("should return error as the referenced path is a file", func() {
 			currentDir, _ := os.Getwd()
 			path := filepath.Dir(currentDir) + "/test/resources/config_files/correct_config.yml"
@@ -101,6 +108,23 @@ var _ = Describe("Files actions", func() {
 
 			Expect(files.IsFileExist(filePath)).Error().ShouldNot(HaveOccurred())
 			Expect(files.IsFileExist(filePath)).Should(BeFalse())
+		})
+
+		It("should return error as the referenced file has an invalid glob pattern", func() {
+			exists, err := files.IsFileExist("[")
+
+			Expect(exists).Should(BeFalse())
+			Expect(err).Should(HaveOccurred())
+		})
+
+		It("should return false as the referenced file is a broken symlink", func() {
+			linkPath := filepath.Join(GinkgoT().TempDir(), "broken-link")
+			Expect(os.Symlink("missing-target", linkPath)).To(Succeed())
+
+			exists, err := files.IsFileExist(linkPath)
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(exists).Should(BeFalse())
 		})
 
 		It("should return false as the referenced path point to directory", func() {
