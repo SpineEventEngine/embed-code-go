@@ -1,6 +1,5 @@
 package io.spine.embedcode.gradle;
 
-import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskProvider;
@@ -18,8 +17,8 @@ public final class EmbedCodePlugin implements Plugin<Project> {
     /** Applies the plugin to {@code project}. */
     @Override
     public void apply(Project project) {
-        ensureTaskNameIsAvailable(project, "checkEmbedding");
-        ensureTaskNameIsAvailable(project, "embedCode");
+        String checkTaskName = availableTaskName(project, "checkEmbedding");
+        String embedTaskName = availableTaskName(project, "embedCode");
         EmbedCodeExtension extension = project.getExtensions().create(
                 "embedCode",
                 EmbedCodeExtension.class
@@ -60,7 +59,7 @@ public final class EmbedCodePlugin implements Plugin<Project> {
                 project,
                 extension,
                 installTask,
-                "checkEmbedding",
+                checkTaskName,
                 "Checks embedded code snippets are up to date",
                 "check"
         );
@@ -68,7 +67,7 @@ public final class EmbedCodePlugin implements Plugin<Project> {
                 project,
                 extension,
                 installTask,
-                "embedCode",
+                embedTaskName,
                 "Updates embedded code snippets from source files",
                 "embed"
         );
@@ -101,13 +100,12 @@ public final class EmbedCodePlugin implements Plugin<Project> {
         });
     }
 
-    /** Rejects a project whose existing task would be replaced by the plugin. */
-    private static void ensureTaskNameIsAvailable(Project project, String name) {
-        if (project.getTasks().findByName(name) != null) {
-            throw new GradleException(
-                    "Cannot apply `io.spine.embed-code`: task `" + name + "` already exists. "
-                            + "Apply the plugin to a project without that task."
-            );
+    /** Returns {@code preferredName}, prepending underscores until the task name is unused. */
+    private static String availableTaskName(Project project, String preferredName) {
+        String candidate = preferredName;
+        while (project.getTasks().getNames().contains(candidate)) {
+            candidate = '_' + candidate;
         }
+        return candidate;
     }
 }

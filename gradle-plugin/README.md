@@ -107,10 +107,12 @@ remains visible with `tasks --all`. Gradle runs it automatically before either
 execution task and reuses its output until the requested version, platform,
 download URL, or build directory changes.
 
-The plugin owns the `checkEmbedding` and `embedCode` task names. It rejects an
-existing task instead of replacing another plugin's task. The leading `:` in
-the commands above selects the root task explicitly; without it, a
-multi-project build may also run every subproject task with the same name.
+The plugin prefers the `checkEmbedding` and `embedCode` task names. If one is
+already occupied, it prepends underscores until it finds an available name, for
+example `_checkEmbedding` or `__checkEmbedding`. Existing tasks are unchanged;
+use the `tasks` report to see the selected names. The leading `:` in the
+commands above selects the root task explicitly; without it, a multi-project
+build may also run every subproject task with the same name.
 
 The plugin supports the platforms for which Embed Code currently publishes
 release assets:

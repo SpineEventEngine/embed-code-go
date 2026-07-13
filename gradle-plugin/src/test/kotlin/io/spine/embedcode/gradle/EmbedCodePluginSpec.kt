@@ -143,7 +143,7 @@ internal class EmbedCodePluginSpec {
     }
 
     @Test
-    fun `reject a project with an existing checkEmbedding task`() {
+    fun `prepend underscores to an occupied checkEmbedding task name`() {
         Files.writeString(
             projectDirectory.resolve("settings.gradle.kts"),
             """
@@ -151,18 +151,19 @@ internal class EmbedCodePluginSpec {
 
             gradle.beforeProject {
                 tasks.register("checkEmbedding")
+                tasks.register("_checkEmbedding")
             }
             """.trimIndent(),
         )
 
-        val result = runner("tasks").buildAndFail()
+        val result = runner(":__checkEmbedding").build()
 
-        result.output shouldContain
-            "Cannot apply `io.spine.embed-code`: task `checkEmbedding` already exists."
+        result.task(":__checkEmbedding")?.outcome shouldBe TaskOutcome.SUCCESS
+        Files.readString(projectDirectory.resolve("mode.txt")).trim() shouldBe "check"
     }
 
     @Test
-    fun `reject a project with an existing embedCode task`() {
+    fun `prepend underscores to an occupied embedCode task name`() {
         Files.writeString(
             projectDirectory.resolve("settings.gradle.kts"),
             """
@@ -170,14 +171,15 @@ internal class EmbedCodePluginSpec {
 
             gradle.beforeProject {
                 tasks.register("embedCode")
+                tasks.register("_embedCode")
             }
             """.trimIndent(),
         )
 
-        val result = runner("tasks").buildAndFail()
+        val result = runner(":__embedCode").build()
 
-        result.output shouldContain
-            "Cannot apply `io.spine.embed-code`: task `embedCode` already exists."
+        result.task(":__embedCode")?.outcome shouldBe TaskOutcome.SUCCESS
+        Files.readString(projectDirectory.resolve("mode.txt")).trim() shouldBe "embed"
     }
 
     /** Creates a runner using the plugin-under-test classpath. */
