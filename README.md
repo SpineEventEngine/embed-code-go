@@ -56,6 +56,10 @@ Use `-mode=embed` when documentation should be rewritten with current source
 content. See the [configuration guide](showcase/configuration/README.md) for
 all command-line flags and YAML options.
 
+Gradle projects can use the [Embed Code Gradle plugin](gradle-plugin/README.md)
+to download the platform binary automatically and configure both modes in
+`build.gradle.kts` without an additional YAML file.
+
 ## Build
 
 Use Go `1.26.4`.
@@ -79,6 +83,13 @@ Run the executable showcase:
 
 ```bash
 go test -tags showcase ./showcase
+```
+
+Run the Gradle plugin checks:
+
+```bash
+cd gradle-plugin
+./gradlew check
 ```
 
 ## Documentation

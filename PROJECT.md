@@ -23,6 +23,8 @@ them inside code fences, and checks whether existing snippets are up-to-date.
 - `embedding/commentfilter/`: language-aware comment-retention filtering.
 - `fragmentation/`: whole-file, named-fragment, and line-pattern extraction;
   source lookup; partition assembly; encoding checks; and caches.
+- `gradle-plugin/`: Gradle plugin build, automatic release-binary installation,
+  check/embed tasks, Kotlin DSL configuration, and TestKit tests.
 - `files/`: filesystem validation and file helpers.
 - `indent/`: shared indentation measurement and removal.
 - `logging/`: `slog` handler, clickable file references, panic reporting, and
@@ -39,6 +41,8 @@ them inside code fences, and checks whether existing snippets are up-to-date.
 
 - `README.md`: project entry point, short run/build instructions, and links to
   the complete guide.
+- `gradle-plugin/README.md`: Gradle plugin application, configuration, task,
+  compatibility, and development guide.
 - `showcase/README.md`: complete user guide entry point and runnable workflow.
 - `showcase/configuration/README.md`: command-line flags, YAML configuration,
   source roots, include/exclude patterns, and multiple embedding targets.
@@ -56,7 +60,8 @@ this file. Keep the root README short.
 This repository is configured with these GitHub workflows:
 
 - `check`: runs linting, the normal Go test suite, and the showcase end-to-end
-  tests across supported platforms.
+  tests across supported platforms. It also verifies the Gradle plugin on each
+  supported runner platform and against the minimum Gradle version.
 - `coverage`: uploads Go coverage to Codecov, where `codecov.yml` requires
   90% patch coverage for pull requests. The workflow also runs on pushes to
   `master` to populate base coverage for later pull-request diffs and the
