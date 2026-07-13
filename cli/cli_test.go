@@ -125,12 +125,12 @@ var _ = Describe("CLI validation", func() {
 		It("should fail validation when config path points to a directory", func() {
 			invalidConfig := cli.Config{
 				Mode:       cli.ModeEmbed,
-				ConfigPath: docsResourcePath(""),
+				ConfigPath: docsResourcePath(),
 			}
 
 			Expect(cli.ValidateConfigFile(invalidConfig)).Error().Should(HaveOccurred())
 			Expect(cli.ValidateConfigFile(invalidConfig).Error()).Should(Equal(
-				docsResourcePath("") + " is a directory, the file was expected"))
+				docsResourcePath() + " is a directory, the file was expected"))
 		})
 
 		It("should fail validation when mode is not set", func() {
@@ -210,7 +210,7 @@ var _ = Describe("CLI validation", func() {
 				"`code-path` and `docs-path` cannot be set when `embeddings` are set"))
 		})
 
-		It("should reject embeddings when root code path points to a file", func() {
+		It("should fail validation when root code path with embeddings points to a file", func() {
 			invalidConfig := cli.Config{
 				Mode: cli.ModeCheck,
 				BaseCodePaths: _type.NamedPathList{
@@ -226,7 +226,7 @@ var _ = Describe("CLI validation", func() {
 				"does not exist"))
 		})
 
-		It("should reject embeddings when root docs path points to a file", func() {
+		It("should fail validation when root docs path with embeddings points to a file", func() {
 			invalidConfig := cli.Config{
 				Mode:         cli.ModeCheck,
 				BaseDocsPath: configFilePath(),
@@ -600,16 +600,10 @@ var _ = Describe("CLI processing wrappers", func() {
 
 // baseCliConfig returns the default valid CLI config used by validation specs.
 func baseCliConfig() cli.Config {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	parentDir := filepath.Dir(currentDir)
-
 	return cli.Config{
 		Mode:          cli.ModeCheck,
-		BaseDocsPath:  parentDir + "/test/resources/docs",
-		BaseCodePaths: _type.NamedPathList{_type.NamedPath{Path: parentDir + "/test/resources/code"}},
+		BaseDocsPath:  docsResourcePath(),
+		BaseCodePaths: _type.NamedPathList{_type.NamedPath{Path: codeResourcePath("")}},
 	}
 }
 
@@ -626,35 +620,29 @@ func baseEmbeddingConfig() cli.EmbeddingConfig {
 
 // configFilePath returns the path to a valid YAML config fixture.
 func configFilePath() string {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	parentDir := filepath.Dir(currentDir)
-
-	return parentDir + "/test/resources/config_files/correct_config.yml"
+	return resourcePath("config_files", "correct_config.yml")
 }
 
 // codeResourcePath builds an absolute path to a test source-code fixture directory.
 func codeResourcePath(name string) string {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	parentDir := filepath.Dir(currentDir)
-
-	return filepath.Join(parentDir, "test/resources/code", name)
+	return resourcePath("code", name)
 }
 
 // docsResourcePath builds an absolute path to a test documentation fixture path.
-func docsResourcePath(name string) string {
+func docsResourcePath() string {
+	return resourcePath("docs")
+}
+
+// resourcePath builds an absolute path under test/resources.
+func resourcePath(pathParts ...string) string {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	parentDir := filepath.Dir(currentDir)
+	baseParts := []string{filepath.Dir(currentDir), "test", "resources"}
+	baseParts = append(baseParts, pathParts...)
 
-	return filepath.Join(parentDir, "test/resources/docs", name)
+	return filepath.Join(baseParts...)
 }
 
 // missingPath builds a path that should not exist in the test environment.
@@ -684,6 +672,8 @@ func writeTempConfigFile(content string) string {
 	if err != nil {
 		panic(err)
 	}
+	configPath := configFile.Name()
+	DeferCleanup(os.Remove, configPath)
 	defer func() {
 		if err = configFile.Close(); err != nil {
 			panic(err)
@@ -693,14 +683,14 @@ func writeTempConfigFile(content string) string {
 		panic(err)
 	}
 
-	return configFile.Name()
+	return configPath
 }
 
 // noEmbeddingInstructionsConfig builds a config selecting a document without embed-code tags.
 func noEmbeddingInstructionsConfig() configuration.Configuration {
 	config := configuration.NewConfiguration()
 	config.CodeRoots = _type.NamedPathList{_type.NamedPath{Path: codeResourcePath("java")}}
-	config.DocumentationRoot = docsResourcePath("")
+	config.DocumentationRoot = docsResourcePath()
 	config.DocIncludes = []string{"no-embedding-doc.md"}
 
 	return config
