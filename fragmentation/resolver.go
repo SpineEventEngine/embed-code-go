@@ -273,7 +273,7 @@ func splitNamedPath(codePath string) (string, string, bool) {
 
 // sourceFromRoot builds an absolute source path from a code root and a relative path.
 func sourceFromRoot(root _type.NamedPath, relativePath string) (absolutePath, error) {
-	rootAbs, err := filepath.Abs(root.Path)
+	rootAbs, err := makeAbsolutePath(root.Path)
 	if err != nil {
 		return "", err
 	}
