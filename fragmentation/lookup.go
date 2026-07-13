@@ -92,7 +92,7 @@ func lookup(line string, prefix string) ([]string, error) {
 		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1
 		if len(line) < fragmentsStart {
 			return unquotedNames, fmt.Errorf(
-				"found `%s` pefix without any name", prefix,
+				"found `%s` prefix without any name", prefix,
 			)
 		}
 		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {

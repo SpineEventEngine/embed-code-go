@@ -650,7 +650,7 @@ line
 
 			Expect(openings).Should(BeEmpty())
 			Expect(err).Should(MatchError(
-				"found `#docfragment` pefix without any name",
+				"found `#docfragment` prefix without any name",
 			))
 		})
 
