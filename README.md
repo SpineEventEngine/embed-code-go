@@ -11,7 +11,6 @@ For example, consider a simple project with a Java source file and Markdown docu
 
 ```text
 .
-|-- embed-code-linux
 |-- src/
 |   `-- com/example/Greeting.java
 `-- docs/
@@ -43,48 +42,31 @@ How to use our Greeting system:
 Additional documentation.
 ````
 
-The `file` path is relative to the source root passed with `-code-path`. 
-The`java` info string enables Java syntax highlighting in Markdown renderers that support it.
+The configured embed-code application run embeds code into the documentation file:
 
-From the project root, run application in `embed` mode 
-with the source and documentation directories:
+````markdown
+# Greeting
 
-```bash
-./embed-code-linux -mode=embed -code-path=src -docs-path=docs
+How to use our Greeting system:
+<embed-code file="com/example/Greeting.java"></embed-code>
+```java
+package com.example;
+
+public final class Greeting {
+    public static String message() {
+        return "Hello from Embed Code";
+    }
+}
 ```
 
-Embed Code fills the managed fence in `docs/greeting.md` with the current
-contents of `src/com/example/Greeting.java`.
-
-The application can embed a complete file, a named fragment, a matching line,
-or a range selected by start and end patterns.
-
-After committing the generated documentation, use `check` mode in local builds or CI:
-
-```bash
-./embed-code-linux -mode=check -code-path=src -docs-path=docs
-```
-
-Check mode does not modify files. It exits with an error when a managed snippet
-does not match its source, so stale documentation can fail the build.
+Additional documentation.
+````
 
 ## Language Support
 
 Embed Code works with any programming language, provided its source files use
 valid UTF-8 text. Basic embedding treats source files as text and does not
 require a language compiler or parser.
-
-## Download
-
-Download the asset for your platform from [GitHub Releases][releases]. 
-You do not need to install Go to use a release binary.
-
-| Platform            | Release asset                | Executable               |
-|---------------------|------------------------------|--------------------------|
-| Linux x64           | `embed-code-linux.zip`       | `embed-code-linux`       |
-| macOS Apple silicon | `embed-code-macos-arm64.zip` | `embed-code-macos-arm64` |
-| macOS Intel         | `embed-code-macos-x64.zip`   | `embed-code-macos-x64`   |
-| Windows x64         | `embed-code-windows.exe`     | `embed-code-windows.exe` |
 
 ## Next Steps
 
@@ -97,6 +79,18 @@ You do not need to install Go to use a release binary.
   multiple documentation targets.
 - Read the [embedding guide](showcase/embedding/README.md) for fragments, line
   and range patterns, comment filtering, and instruction attributes.
+
+## Download
+
+Download the asset for your platform from [GitHub Releases][releases]. 
+You do not need to install Go to use a release binary.
+
+| Platform            | Release asset                | Executable               |
+|---------------------|------------------------------|--------------------------|
+| Linux x64           | `embed-code-linux.zip`       | `embed-code-linux`       |
+| macOS Apple silicon | `embed-code-macos-arm64.zip` | `embed-code-macos-arm64` |
+| macOS Intel         | `embed-code-macos-x64.zip`   | `embed-code-macos-x64`   |
+| Windows x64         | `embed-code-windows.exe`     | `embed-code-windows.exe` |
 
 ## Build From Source
 
