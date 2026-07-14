@@ -17,9 +17,7 @@ import org.gradle.api.provider.Provider;
  */
 public abstract class EmbedCodeExtension {
 
-    /**
-     * Returns the Embed Code release version to download and run, defaulting to the plugin version.
-     */
+    /** Returns the release version to download and run, defaulting to the plugin version. */
     public abstract Property<String> getVersion();
 
     /** Returns the root directory containing source files used by embedding instructions. */
@@ -28,7 +26,7 @@ public abstract class EmbedCodeExtension {
     /** Returns named source roots keyed by the name used in embedding instructions. */
     public abstract MapProperty<String, String> getNamedSources();
 
-    /** Returns named source directories while preserving their task dependencies. */
+    /** Returns named source directories with their task dependencies. */
     public abstract ConfigurableFileCollection getNamedSourceDirectories();
 
     /**
@@ -83,10 +81,10 @@ public abstract class EmbedCodeExtension {
     public abstract Property<Boolean> getStacktrace();
 
     /**
-     * Returns the base URL containing versioned Embed Code release directories.
-     *
      * <p>The plugin appends {@code /v<version>/<platform-asset>} to this URL.
      * This property primarily supports release mirrors and functional testing.</p>
+     *
+     * @return the base URL containing versioned Embed Code release directories
      */
     public abstract Property<String> getDownloadBaseUrl();
 }

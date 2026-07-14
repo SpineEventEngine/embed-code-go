@@ -47,18 +47,18 @@ named sources. By default, the plugin downloads the Embed Code release with the
 same version as the plugin. The other properties use the same defaults as the
 Embed Code command-line application.
 
-| Property                       | Default                        | Purpose                                                |
-|--------------------------------|--------------------------------|--------------------------------------------------------|
-| `version`                      | Applied plugin version         | Overrides the GitHub release tag and executable version. |
-| `codePath`                     | Required without named sources | Sets one unnamed source root.                          |
-| `namedSource(name, directory)` | Required without `codePath`    | Adds a source root selected with `$name/`.             |
-| `docsPath`                     | Required                       | Sets the documentation root to scan.                   |
-| `docIncludes`                  | `**/*.md`, `**/*.html`         | Selects documentation files.                           |
-| `docExcludes`                  | Empty                          | Skips matching documentation files.                    |
-| `separator`                    | `...`                          | Separates joined fragment parts.                       |
-| `info`                         | `false`                        | Enables informational logging.                         |
-| `stacktrace`                   | `false`                        | Prints stack traces after panics.                      |
-| `downloadBaseUrl`              | GitHub Releases                | Selects a release mirror or test repository.           |
+| Property                       | Default                        | Purpose                                      |
+|--------------------------------|--------------------------------|----------------------------------------------|
+| `version`                      | Plugin version                 | Selects the executable release.              |
+| `codePath`                     | Required without named sources | Sets one unnamed source root.                |
+| `namedSource(name, directory)` | Required without `codePath`    | Adds a `$name/` source root.                 |
+| `docsPath`                     | Required                       | Sets the documentation root to scan.         |
+| `docIncludes`                  | `**/*.md`, `**/*.html`         | Selects documentation files.                 |
+| `docExcludes`                  | Empty                          | Skips matching documentation files.          |
+| `separator`                    | `...`                          | Separates joined fragment parts.             |
+| `info`                         | `false`                        | Enables informational logging.               |
+| `stacktrace`                   | `false`                        | Prints stack traces after panics.            |
+| `downloadBaseUrl`              | GitHub Releases                | Selects a release mirror or test repository. |
 
 If a matching CLI release has a problem, override only the executable version
 while keeping the applied plugin version unchanged:
@@ -156,6 +156,29 @@ it from another checkout:
 
 ```bash
 ./gradlew publishToMavenLocal
+```
+
+Then make the local repository available to plugin resolution in the consuming
+project's `settings.gradle.kts`:
+
+```kotlin
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+    }
+}
+```
+
+The `mavenLocal()` declaration must be in `pluginManagement.repositories`.
+Adding it only to the consuming project's regular `repositories` block does not
+make locally published Gradle plugin markers available to the `plugins` block.
+The consuming build can then apply the locally published version normally:
+
+```kotlin
+plugins {
+    id("io.spine.embed-code") version "1.2.4"
+}
 ```
 
 The plugin publication version and its default Embed Code executable version

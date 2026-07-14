@@ -102,7 +102,9 @@ public final class EmbedCodePlugin implements Plugin<Project> {
             task.getSeparator().set(extension.getSeparator());
             task.getInfo().set(extension.getInfo());
             task.getStacktrace().set(extension.getStacktrace());
-            task.getExecutableFile().set(installTask.flatMap(InstallEmbedCodeTask::getExecutableFile));
+            task.getExecutableFile().set(
+                    installTask.flatMap(InstallEmbedCodeTask::getExecutableFile)
+            );
             task.getWorkingDirectory().set(project.getLayout().getProjectDirectory());
         });
     }

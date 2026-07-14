@@ -40,6 +40,7 @@ internal class EmbedCodePlatformSpec {
         }
 
         error.message shouldBe
-            "Embed Code does not publish a binary for operating system `Linux` and architecture `aarch64`."
+            "Embed Code does not publish a binary for operating system `Linux`" +
+            " and architecture `aarch64`."
     }
 }

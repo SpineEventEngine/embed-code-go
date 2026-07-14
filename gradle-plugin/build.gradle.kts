@@ -48,6 +48,10 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    inputs.property(
+        "embedCodeGradle6JavaHome",
+        providers.environmentVariable("EMBED_CODE_GRADLE_6_JAVA_HOME").orElse(""),
+    )
 }
 
 tasks.processResources {

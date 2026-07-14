@@ -28,7 +28,9 @@ import java.util.zip.ZipInputStream;
  * <p>The output file gives Gradle normal up-to-date behavior, so a successfully
  * installed version is reused by later invocations.</p>
  */
-@DisableCachingByDefault(because = "The downloaded release asset is already reused as a task output")
+@DisableCachingByDefault(
+        because = "The downloaded release asset is already reused as a task output"
+)
 public abstract class InstallEmbedCodeTask extends DefaultTask {
 
     private static final int CONNECT_TIMEOUT_MILLIS = 30_000;
@@ -70,7 +72,8 @@ public abstract class InstallEmbedCodeTask extends DefaultTask {
         URI source = URI.create(baseUrl + '/' + releaseTag + '/' + asset);
         Path destination = getExecutableFile().get().getAsFile().toPath();
         Path download = getTemporaryDir().toPath().resolve(asset);
-        Path preparedExecutable = getTemporaryDir().toPath().resolve(getExecutableName().get());
+        Path preparedExecutable = getTemporaryDir().toPath()
+                .resolve(getExecutableName().get());
 
         try {
             Files.createDirectories(destination.getParent());
@@ -90,7 +93,10 @@ public abstract class InstallEmbedCodeTask extends DefaultTask {
             }
             moveAtomically(preparedExecutable, destination);
         } catch (IOException exception) {
-            throw new GradleException("Could not install Embed Code from " + source + '.', exception);
+            throw new GradleException(
+                    "Could not install Embed Code from " + source + '.',
+                    exception
+            );
         }
     }
 
@@ -108,7 +114,8 @@ public abstract class InstallEmbedCodeTask extends DefaultTask {
                 int status = http.getResponseCode();
                 if (status < 200 || status > 299) {
                     throw new GradleException(
-                            "Could not download Embed Code: HTTP " + status + " from " + source + '.'
+                            "Could not download Embed Code: HTTP " + status
+                                    + " from " + source + '.'
                     );
                 }
             }
@@ -118,7 +125,10 @@ public abstract class InstallEmbedCodeTask extends DefaultTask {
                 copy(input, output);
             }
         } catch (IOException exception) {
-            throw new GradleException("Could not download Embed Code from " + source + '.', exception);
+            throw new GradleException(
+                    "Could not download Embed Code from " + source + '.',
+                    exception
+            );
         } finally {
             if (connection instanceof HttpURLConnection) {
                 ((HttpURLConnection) connection).disconnect();

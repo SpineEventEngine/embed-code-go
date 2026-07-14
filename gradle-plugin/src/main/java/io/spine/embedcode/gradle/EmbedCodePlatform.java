@@ -11,6 +11,12 @@ final class EmbedCodePlatform {
     private final String assetName;
     private final String executableName;
 
+    /**
+     * Creates a platform description.
+     *
+     * @param assetName the release asset to download
+     * @param executableName the installed executable name
+     */
     EmbedCodePlatform(String assetName, String executableName) {
         this.assetName = assetName;
         this.executableName = executableName;

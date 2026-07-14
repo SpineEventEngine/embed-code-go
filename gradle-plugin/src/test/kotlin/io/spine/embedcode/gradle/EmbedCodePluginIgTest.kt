@@ -20,8 +20,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 @DisplayName("`EmbedCodePlugin` should")
-@EnabledOnOs(OS.LINUX, OS.MAC)
-internal class EmbedCodePluginSpec {
+internal class EmbedCodePluginIgTest {
 
     @TempDir
     private lateinit var projectDirectory: Path
@@ -32,7 +31,10 @@ internal class EmbedCodePluginSpec {
     fun setUp() {
         Files.createDirectories(projectDirectory.resolve("code"))
         Files.createDirectories(projectDirectory.resolve("docs"))
-        Files.writeString(projectDirectory.resolve("settings.gradle.kts"), "rootProject.name = \"test-project\"\n")
+        Files.writeString(
+            projectDirectory.resolve("settings.gradle.kts"),
+            "rootProject.name = \"test-project\"\n",
+        )
 
         releaseDirectory = projectDirectory.resolve("releases")
         createFakeRelease(releaseDirectory)
@@ -40,6 +42,7 @@ internal class EmbedCodePluginSpec {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX, OS.MAC)
     fun `run check mode with Gradle configuration`() {
         val result = runner(":checkEmbedding").build()
 
@@ -59,6 +62,22 @@ internal class EmbedCodePluginSpec {
     }
 
     @Test
+    fun `install platform release asset`() {
+        val result = runner(":installEmbedCode").build()
+        val executableName = EmbedCodePlatform.detect(
+            System.getProperty("os.name"),
+            System.getProperty("os.arch"),
+        ).executableName
+        val installedExecutable = projectDirectory.resolve(
+            "build/embed-code/${bundledVersion()}/$executableName",
+        )
+
+        result.task(":installEmbedCode")?.outcome shouldBe TaskOutcome.SUCCESS
+        Files.exists(installedExecutable) shouldBe true
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX, OS.MAC)
     fun `allow overriding the bundled Embed Code version`() {
         val overrideVersion = "0.0.0-test"
         createFakeRelease(releaseDirectory, overrideVersion)
@@ -77,6 +96,7 @@ internal class EmbedCodePluginSpec {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX, OS.MAC)
     fun `run check mode with Gradle 6_9_4`() {
         val javaHome = System.getenv("EMBED_CODE_GRADLE_6_JAVA_HOME")
         assumeTrue(
@@ -95,6 +115,7 @@ internal class EmbedCodePluginSpec {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX, OS.MAC)
     fun `reuse installation when running embed mode`() {
         runner(":checkEmbedding").build()
         releaseDirectory.toFile().deleteRecursively()
@@ -107,6 +128,7 @@ internal class EmbedCodePluginSpec {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX, OS.MAC)
     fun `run with named source roots and generated configuration`() {
         Files.createDirectories(projectDirectory.resolve("company-site"))
         Files.createDirectories(projectDirectory.resolve("browser"))
@@ -121,9 +143,11 @@ internal class EmbedCodePluginSpec {
 
         val configuration = Files.readString(projectDirectory.resolve("generated-config.json"))
         configuration shouldContain "\"name\": \"company-site\""
-        configuration shouldContain "\"path\": \"${projectDirectory.resolve("company-site").toRealPath()}\""
+        val companySitePath = projectDirectory.resolve("company-site").toRealPath()
+        val browserPath = projectDirectory.resolve("browser").toRealPath()
+        configuration shouldContain "\"path\": \"$companySitePath\""
         configuration shouldContain "\"name\": \"jxbrowser\""
-        configuration shouldContain "\"path\": \"${projectDirectory.resolve("browser").toRealPath()}\""
+        configuration shouldContain "\"path\": \"$browserPath\""
         configuration shouldContain "\"docs-path\": \"${projectDirectory.toRealPath()}\""
     }
 
@@ -162,6 +186,7 @@ internal class EmbedCodePluginSpec {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX, OS.MAC)
     fun `prepend underscores to an occupied checkEmbedding task name`() {
         Files.writeString(
             projectDirectory.resolve("settings.gradle.kts"),
@@ -182,6 +207,7 @@ internal class EmbedCodePluginSpec {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX, OS.MAC)
     fun `prepend underscores to an occupied embedCode task name`() {
         Files.writeString(
             projectDirectory.resolve("settings.gradle.kts"),

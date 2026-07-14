@@ -161,7 +161,8 @@ public abstract class EmbedCodeTask extends DefaultTask {
             Files.write(configuration, json.getBytes(StandardCharsets.UTF_8));
         } catch (IOException exception) {
             throw new GradleException(
-                    "Could not write the generated Embed Code configuration to " + configuration + '.',
+                    "Could not write the generated Embed Code configuration to "
+                            + configuration + '.',
                     exception
             );
         }
