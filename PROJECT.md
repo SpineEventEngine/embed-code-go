@@ -61,7 +61,8 @@ This repository is configured with these GitHub workflows:
 
 - `check`: runs linting, the normal Go test suite, and the showcase end-to-end
   tests across supported platforms. It also verifies the Gradle plugin on each
-  supported runner platform and against the minimum Gradle version.
+  supported runner platform and against the minimum Gradle version, then
+  assembles its Maven publications on Linux.
 - `coverage`: uploads Go coverage to Codecov, where `codecov.yml` requires
   90% patch coverage for pull requests. The workflow also runs on pushes to
   `master` to populate base coverage for later pull-request diffs and the

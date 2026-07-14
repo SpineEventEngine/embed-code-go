@@ -62,6 +62,17 @@ internal class EmbedCodePluginIgTest {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX, OS.MAC)
+    fun `reuse the configuration cache`() {
+        runner(":checkEmbedding").build()
+
+        val result = runner(":checkEmbedding").build()
+
+        result.output shouldContain "Reusing configuration cache."
+        result.task(":checkEmbedding")?.outcome shouldBe TaskOutcome.SUCCESS
+    }
+
+    @Test
     fun `install platform release asset`() {
         val result = runner(":installEmbedCode").build()
         val executableName = EmbedCodePlatform.detect(

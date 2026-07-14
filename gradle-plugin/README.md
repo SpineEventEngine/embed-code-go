@@ -47,18 +47,18 @@ named sources. By default, the plugin downloads the Embed Code release with the
 same version as the plugin. The other properties use the same defaults as the
 Embed Code command-line application.
 
-| Property                       | Default                        | Purpose                                      |
-|--------------------------------|--------------------------------|----------------------------------------------|
-| `version`                      | Plugin version                 | Selects the executable release.              |
-| `codePath`                     | Required without named sources | Sets one unnamed source root.                |
-| `namedSource(name, directory)` | Required without `codePath`    | Adds a `$name/` source root.                 |
-| `docsPath`                     | Required                       | Sets the documentation root to scan.         |
-| `docIncludes`                  | `**/*.md`, `**/*.html`         | Selects documentation files.                 |
-| `docExcludes`                  | Empty                          | Skips matching documentation files.          |
-| `separator`                    | `...`                          | Separates joined fragment parts.             |
-| `info`                         | `false`                        | Enables informational logging.               |
-| `stacktrace`                   | `false`                        | Prints stack traces after panics.            |
-| `downloadBaseUrl`              | GitHub Releases                | Selects a release mirror or test repository. |
+| Property | Default | Purpose |
+| --- | --- | --- |
+| `version` | Plugin version | Selects the executable release. |
+| `codePath` | Required without named sources | Sets one unnamed source root. |
+| `namedSource(name, directory)` | Required without `codePath` | Adds a `$name/` source root. |
+| `docsPath` | Required | Sets the documentation root to scan. |
+| `docIncludes` | `**/*.md`, `**/*.html` | Selects documentation files. |
+| `docExcludes` | Empty | Skips matching documentation files. |
+| `separator` | `...` | Separates joined fragment parts. |
+| `info` | `false` | Enables informational logging. |
+| `stacktrace` | `false` | Prints stack traces after panics. |
+| `downloadBaseUrl` | GitHub Releases | Selects a release mirror or test repository. |
 
 If a matching CLI release has a problem, override only the executable version
 while keeping the applied plugin version unchanged:
@@ -139,6 +139,9 @@ The plugin build uses Kotlin DSL and Kotlin tests, while its published classes
 are Java. Keeping Kotlin 2.x off the consumer plugin classpath allows older
 Gradle Kotlin DSL compilers to load the plugin.
 
+The plugin declares support for Gradle's configuration cache. Functional tests
+run plugin tasks with `--configuration-cache` and verify cache reuse.
+
 ## Develop
 
 Run compilation, plugin validation, unit tests, and TestKit functional tests:
@@ -183,3 +186,39 @@ plugins {
 
 The plugin publication version and its default Embed Code executable version
 are both read from the repository's root `VERSION` file.
+
+## Publish
+
+The plugin is configured for the [Gradle Plugin Portal][plugin-portal]. Before
+publishing, verify that the matching `v<version>` GitHub release contains all
+platform executables. The plugin uses its own version as the default executable
+version, so publishing it before the binaries would leave new installations
+without a downloadable asset.
+
+Request validation from the Plugin Portal without publishing a version:
+
+```bash
+./gradlew publishPlugins --validate-only
+```
+
+The Portal task requires API credentials even in validation-only mode. Provide
+them through `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET`. The regular CI
+build uses `publishToMavenLocal` instead, which assembles the plugin marker,
+implementation publication, POM metadata, sources, and Javadocs without
+contacting the Portal.
+
+To publish after validation, run:
+
+```bash
+./gradlew publishPlugins
+```
+
+The first publication of `io.spine.embed-code` requires manual Portal approval.
+The publishing account must be able to establish ownership of the `io.spine`
+namespace; this external approval cannot be validated by the local build.
+
+## License
+
+The plugin is available under the [Apache License 2.0](../LICENSE).
+
+[plugin-portal]: https://plugins.gradle.org/docs/publish-plugin
