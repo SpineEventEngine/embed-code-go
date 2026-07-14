@@ -2,8 +2,9 @@
 
 [![Coverage](https://codecov.io/gh/SpineEventEngine/embed-code-go/branch/master/graph/badge.svg)](https://codecov.io/gh/SpineEventEngine/embed-code-go)
 
-Embed Code is a standalone command-line application that keeps code samples in
-Markdown and HTML documentation synchronized with their source files.
+Embed Code helps keep code examples in Markdown and HTML documentation up to
+date without manual copying. It takes snippets directly from source files and
+reports when embedded content no longer matches the source.
 
 ## Typical Usage
 
