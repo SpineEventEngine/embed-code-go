@@ -96,6 +96,16 @@ jobs:
             dist/embed-code-macos-arm64 \
             dist/embed-code-macos-x64
 
+      # Publish Linux as a ZIP so Unix executable permissions survive extraction.
+      - name: Package Linux Binary
+        if: steps.release.outputs.publish == 'true'
+        shell: bash
+        run: |
+          pushd dist >/dev/null
+          zip -q embed-code-linux.zip embed-code-linux
+          rm embed-code-linux
+          popd >/dev/null
+
       # Notarize the macOS ZIPs that will be published as release assets.
       - name: Notarize macOS Binaries
         if: steps.release.outputs.publish == 'true'
@@ -121,7 +131,7 @@ jobs:
             const path = require('path');
 
             const releaseTag = process.env.RELEASE_TAG;
-            const releaseNotes = `Embed Code ${releaseTag}\n\nThis release contains pre-built Embed Code binaries for macOS ARM64, macOS x64, Linux, and Windows.`;
+            const releaseNotes = `Embed Code ${releaseTag}\n\nThis release contains pre-built Embed Code binaries for macOS ARM64, macOS x64, Linux, and Windows. Linux and macOS binaries are published as ZIP archives.`;
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,

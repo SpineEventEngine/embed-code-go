@@ -2,72 +2,117 @@
 
 [![Coverage](https://codecov.io/gh/SpineEventEngine/embed-code-go/branch/master/graph/badge.svg)](https://codecov.io/gh/SpineEventEngine/embed-code-go)
 
-Embed Code is a Go command-line tool that keeps documentation snippets in sync
-with source files. It scans Markdown and HTML documents for `<embed-code>`
-instructions, resolves the requested source content, and manages the following
-code fence.
+Embed Code helps keep code examples in Markdown and HTML documentation up to
+date without manual copying. It takes snippets directly from source files and
+reports when embedded content no longer matches the source.
 
-This project replaces the earlier [`embed-code` utility for Ruby/Jekyll][embed-code-jekyll].
+## Typical Usage
 
-## Start Here
+For example, consider a simple project with a Java source file and Markdown documentation:
 
-The complete usage guide lives in the [showcase](showcase/README.md). It covers
-configuration, embedding instructions, check mode, embed mode, expected
-failures, and runnable examples.
-
-## What It Does
-
-- Embeds whole files, named fragments, source ranges, or matching source lines.
-- Supports multiple named source roots for one documentation tree.
-- Filters comments when examples should omit implementation notes.
-- Processes Markdown and HTML documents.
-- Runs in `check` mode for CI and `embed` mode to update documentation.
-
-## Run
-
-Download the asset for your platform from [GitHub Releases][releases].
-
-On Linux, for example:
-
-```bash
-./embed-code-linux -mode=check -config-path=showcase/embedding/embed-code.yml
+```text
+.
+|-- src/
+|   `-- com/example/Greeting.java
+`-- docs/
+    `-- greeting.md
 ```
 
-> It may be necessary to give the executable permission with `chmod +x` on Unix-like systems:
-> ```bash
-> chmod +x embed-code-linux
-> ```
+The project contains `src/com/example/Greeting.java`:
 
-On macOS, download `embed-code-macos-arm64.zip` for Apple silicon or
-`embed-code-macos-x64.zip` for Intel Macs. Then unzip it and run the binary:
+```java
+package com.example;
 
-```bash
-unzip embed-code-macos-arm64.zip
-./embed-code-macos-arm64 -mode=check -config-path=showcase/embedding/embed-code.yml
+public final class Greeting {
+    public static String message() {
+        return "Hello from Embed Code";
+    }
+}
 ```
 
-Or run it with Go:
+In `docs/greeting.md`, add an instruction `<embed-code>` followed by an empty code fence:
 
-```bash
-go run ./main.go -mode=check -config-path=showcase/embedding/embed-code.yml
+````markdown
+# Greeting
+
+How to use our Greeting system:
+<embed-code file="com/example/Greeting.java"></embed-code>
+```java
 ```
 
-Use `-mode=embed` when documentation should be rewritten with current source
-content. See the [configuration guide](showcase/configuration/README.md) for
-all command-line flags and YAML options.
+Additional documentation.
+````
 
-## Build
+The configured embed-code application run embeds code into the documentation file:
 
-Use Go `1.26.4`.
+````markdown
+# Greeting
+
+How to use our Greeting system:
+<embed-code file="com/example/Greeting.java"></embed-code>
+```java
+package com.example;
+
+public final class Greeting {
+    public static String message() {
+        return "Hello from Embed Code";
+    }
+}
+```
+
+Additional documentation.
+````
+
+## Language Support
+
+Embed Code works with any programming language, provided its source files use
+valid UTF-8 text. Basic embedding treats source files as text and does not
+require a language compiler or parser.
+
+## Next Steps
+
+- Run the [quick start](showcase/quick-start/README.md) for a complete example
+  with source, configuration, and documentation files.
+- Use the [showcase](showcase/README.md) as the entry point for all user guides
+  and runnable examples.
+- Read the [configuration guide](showcase/configuration/README.md) for direct
+  command-line paths, YAML options, named source roots, document selection, and
+  multiple documentation targets.
+- Read the [embedding guide](showcase/embedding/README.md) for fragments, line
+  and range patterns, comment filtering, and instruction attributes.
+
+## Download
+
+Download the asset for your platform from [GitHub Releases][releases]. 
+You do not need to install Go to use a release binary.
+
+| Platform            | Release asset                | Executable               |
+|---------------------|------------------------------|--------------------------|
+| Linux x64           | `embed-code-linux.zip`       | `embed-code-linux`       |
+| macOS Apple silicon | `embed-code-macos-arm64.zip` | `embed-code-macos-arm64` |
+| macOS Intel         | `embed-code-macos-x64.zip`   | `embed-code-macos-x64`   |
+| Windows x64         | `embed-code-windows.exe`     | `embed-code-windows.exe` |
+
+## Build From Source
+
+Using Embed Code does not require Go. 
+To build the application from this repository, install Go `1.26.4` and run:
 
 ```bash
 go build -trimpath -o embed-code main.go
 ```
 
-This creates `embed-code` on Unix-like systems or `embed-code.exe` on Windows.
+This creates an executable named `embed-code`. 
+On Windows, use`-o embed-code.exe` to give it the standard `.exe` suffix. 
 The `-trimpath` flag prevents local absolute paths from appearing in stack traces.
 
-## Development
+You can also run the application directly from the source checkout:
+
+```bash
+go run ./main.go -mode=check -config-path=showcase/embedding/embed-code.yml
+```
+
+## Testing
 
 Run the normal test suite:
 
@@ -102,6 +147,8 @@ Launch the GoDoc server:
 ```
 
 Open the package link printed by the script.
+
+This project replaces the earlier [`embed-code` utility for Ruby/Jekyll][embed-code-jekyll].
 
 [embed-code-jekyll]: https://github.com/SpineEventEngine/embed-code
 [releases]: https://github.com/SpineEventEngine/embed-code-go/releases
