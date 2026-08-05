@@ -84,7 +84,8 @@ require a language compiler or parser.
 ## Gradle Plugin
 
 Gradle users can apply the [Embed Code Gradle plugin][gradle-plugin] to download
-the released executable for their platform and add tasks that check and embed code snippets.
+the released executable for their platform and add tasks that check and embed 
+code snippets.
 
 ## Download
 
