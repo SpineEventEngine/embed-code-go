@@ -81,6 +81,12 @@ require a language compiler or parser.
 - Read the [embedding guide](showcase/embedding/README.md) for fragments, line
   and range patterns, comment filtering, and instruction attributes.
 
+## Gradle Plugin
+
+Gradle users can apply the [Embed Code Gradle plugin][gradle-plugin] to download
+the released executable for their platform and add tasks that check and embed 
+code snippets.
+
 ## Download
 
 Download the asset for your platform from [GitHub Releases][releases]. 
@@ -151,4 +157,5 @@ Open the package link printed by the script.
 This project replaces the earlier [`embed-code` utility for Ruby/Jekyll][embed-code-jekyll].
 
 [embed-code-jekyll]: https://github.com/SpineEventEngine/embed-code
+[gradle-plugin]: https://github.com/SpineEventEngine/embed-code-gradle-plugin
 [releases]: https://github.com/SpineEventEngine/embed-code-go/releases
