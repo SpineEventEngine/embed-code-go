@@ -73,8 +73,8 @@ var Version = strings.TrimSpace(versionFile)
 //
 // If both options are missed, the embedding fails.
 // If both options are set, the embedding fails as well.
-// If the config file does not exist, or contains neither root 'code-path' and 'docs-path' fields nor
-// 'embeddings' entries, the embedding fails.
+// If the config file does not exist, or contains neither root 'code-path' and 'docs-path'
+// fields nor 'embeddings' entries, the embedding fails.
 //
 // All possible args:
 //   - code-path — a path to a root directory with code files;
