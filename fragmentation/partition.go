@@ -44,7 +44,7 @@ type Partition struct {
 
 // NewPartition returns a Partition with both positions unset as -1.
 //
-// Returns empty partition ready to receive start and end positions.
+// Returns an empty partition ready to receive start and end positions.
 func NewPartition() Partition {
 	return Partition{
 		-1,
@@ -52,7 +52,7 @@ func NewPartition() Partition {
 	}
 }
 
-// Select returns the partition-related lines from given lines.
+// Select returns the partition-related lines from the given lines.
 //
 // Parameters:
 // lines - provides source lines indexed by StartPosition and EndPosition.

@@ -43,7 +43,7 @@ import (
 
 // Config contains user-specified embed-code settings.
 type Config struct {
-	// BaseCodePaths contains directories with source code files.
+	// BaseCodePaths contains directories with source-code files.
 	BaseCodePaths _type.NamedPathList `yaml:"code-path"`
 
 	// BaseDocsPath is the root directory containing documentation files.
@@ -82,7 +82,7 @@ type EmbeddingConfig struct {
 	// Name identifies the embedding target.
 	Name string `yaml:"name"`
 
-	// CodePaths contains directories with source code files.
+	// CodePaths contains directories with source-code files.
 	CodePaths _type.NamedPathList `yaml:"code-path"`
 
 	// DocsPath is the root directory containing documentation files.

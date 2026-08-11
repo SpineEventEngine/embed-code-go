@@ -49,6 +49,11 @@ them inside code fences, and checks whether existing snippets are up-to-date.
 - `PROJECT.md`: project map, package ownership, documentation ownership, and CI
   notes for contributors and agents.
 - `AGENTS.md`: repository operating policy for agents.
+- `.agents/skills/`: repository-specific implementation, testing, writing,
+  review, and proofreading workflows.
+- `.agents/guidelines/`: shared English-language and file-ownership rules
+  used by repository skills.
+- `.claude/commands/`: thin command delegates to repository skills.
 
 Keep usage details in the showcase. Keep architecture and ownership details in
 this file. Keep the root README short.

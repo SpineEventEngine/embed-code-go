@@ -47,7 +47,7 @@ var Version = strings.TrimSpace(versionFile)
 
 // The entry point for embed-code.
 //
-// There are two modes, which are chosen by 'mode' arg. If it is set to 'check',
+// There are two modes, which are chosen by the 'mode' arg. If it is set to 'check',
 // then the checking for up-to-date is performed. If it is set to 'embed',
 // the embedding is performed.
 //
@@ -60,7 +60,7 @@ var Version = strings.TrimSpace(versionFile)
 // Checking for up-to-date is the process that consists of the following steps:
 //   - the code fragments are extracted from the code files;
 //   - the docs files are scanned for <embed-code> tags;
-//   - for each tag, the code fragments are compared to the code which is already embedded
+//   - for each tag, the code fragments are compared to the code that is already embedded
 //     into the docs;
 //   - if there is a difference, the error is reported.
 //
@@ -73,14 +73,14 @@ var Version = strings.TrimSpace(versionFile)
 //
 // If both options are missed, the embedding fails.
 // If both options are set, the embedding fails as well.
-// If config file does not exist, or contains neither root 'code-path' and 'docs-path' fields nor
-// 'embeddings' entries, the embedding fails.
+// If the config file does not exist, or contains neither root 'code-path' and 'docs-path'
+// fields nor 'embeddings' entries, the embedding fails.
 //
 // All possible args:
 //   - code-path — a path to a root directory with code files;
 //   - docs-path — a path to a root directory with docs files;
 //   - config-path — a path to a yaml configuration file;
-//   - mode — string which represents the mode of embed-code execution. If it is set to 'check',
+//   - mode — string that represents the mode of embed-code execution. If it is set to 'check',
 //     then the checking for up-to-date is performed. If it is set to 'embed', the embedding
 //     is performed.
 //   - doc-includes — a comma-separated string of glob patterns for docs files to include.
@@ -90,7 +90,7 @@ var Version = strings.TrimSpace(versionFile)
 //     the embedding.
 //     For example:
 //     "old-docs/**/*.md,old-guides/*.html". It is not set by default;
-//   - separator — a string which is used as a separator between code fragments. Default value
+//   - separator — a string that is used as a separator between code fragments. Default value
 //     is "...".
 //   - info — a flag that enables info-level logs;
 //   - stacktrace — a flag that enables stack traces in panic logs.

@@ -84,12 +84,12 @@ require a language compiler or parser.
 ## Gradle Plugin
 
 Gradle users can apply the [Embed Code Gradle plugin][gradle-plugin] to download
-the released executable for their platform and add tasks that check and embed 
+the released executable for their platform and add tasks that check and embed
 code snippets.
 
 ## Download
 
-Download the asset for your platform from [GitHub Releases][releases]. 
+Download the asset for your platform from [GitHub Releases][releases].
 You do not need to install Go to use a release binary.
 
 | Platform            | Release asset                | Executable               |
@@ -101,15 +101,15 @@ You do not need to install Go to use a release binary.
 
 ## Build From Source
 
-Using Embed Code does not require Go. 
+Using Embed Code does not require Go.
 To build the application from this repository, install Go `1.26.4` and run:
 
 ```bash
 go build -trimpath -o embed-code main.go
 ```
 
-This creates an executable named `embed-code`. 
-On Windows, use`-o embed-code.exe` to give it the standard `.exe` suffix. 
+This creates an executable named `embed-code`.
+On Windows, use `-o embed-code.exe` to give it the standard `.exe` suffix.
 The `-trimpath` flag prevents local absolute paths from appearing in stack traces.
 
 You can also run the application directly from the source checkout:

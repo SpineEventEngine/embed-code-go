@@ -9,6 +9,8 @@ agent operating policy and repository-wide rules.
 - Read [PROJECT.md](PROJECT.md) for the project overview and project map.
 - Use matching discovered skills when they are available. Each skill's
   frontmatter is the routing source of truth.
+- Run `golangci-lint run ./...` before handing off any workspace changes. Do
+  not consider a task complete while the linter reports failures.
 - Ask clarifying questions before implementation, review, or documentation work
   when scope, acceptance criteria, or constraints are not explicit.
 - Never create commits, push, tag, merge, rebase, cherry-pick, or rewrite Git

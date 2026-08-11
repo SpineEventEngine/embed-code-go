@@ -31,7 +31,7 @@ import (
 	"strings"
 )
 
-// MaxCommonIndentation finds the maximal common indentation of given lines.
+// MaxCommonIndentation finds the maximal common indentation of the given lines.
 //
 // Parameters:
 // lines - provides source lines to inspect.
@@ -56,7 +56,7 @@ func MaxCommonIndentation(lines []string) int {
 	return indent
 }
 
-// CutIndent reduces indentation to given redundantSpaces amount.
+// CutIndent reduces indentation to the given redundantSpaces amount.
 //
 // It copies lines before trimming, so the input slice is not modified.
 // If a line is shorter than redundantSpaces, the whole line is removed.

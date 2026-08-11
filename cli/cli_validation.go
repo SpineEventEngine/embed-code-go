@@ -40,7 +40,7 @@ import (
 // IllegalFolderNameChars contains characters that are not allowed in folder names.
 const IllegalFolderNameChars = `/\ *?:"<>|`
 
-// IsUsingConfigFile reports whether user configs are set with file.
+// IsUsingConfigFile reports whether user configs are set with a file.
 //
 // Parameters:
 // config - provides user CLI settings.

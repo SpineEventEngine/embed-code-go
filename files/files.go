@@ -96,7 +96,7 @@ func IsDirExist(path string) (bool, error) {
 	return false, nil
 }
 
-// Reports whether the given path is valid and exist in the file system. Also returns a FileInfo if
+// Reports whether the given path is valid and exists in the file system. Also returns a FileInfo if
 // the path (relative or absolute) exists.
 func validatePathExists(path string) (bool, os.FileInfo, error) {
 	// Getting matches for the given path if it is a glob format. Otherwise, does nothing.

@@ -10,7 +10,7 @@ This folder is the smallest runnable Embed Code application setup. It contains:
 
 Download the latest release for your platform from
 [GitHub Releases](https://github.com/SpineEventEngine/embed-code-go/releases).
-Extract binary file from archive, if necessary, and place it to the `quick-start` folder.
+Extract the binary file from the archive, if necessary, and place it to the `quick-start` folder.
 
 Open this folder before running the example:
 
@@ -65,8 +65,8 @@ followed by a managed code fence:
 ````
 
 The `file` value is a relative path resolved from `code-path`, so this instruction reads
-[source/com/example/Greeting.java](source/com/example/Greeting.java). 
-Embed mode writes the current source content into the managed fence. 
+[source/com/example/Greeting.java](source/com/example/Greeting.java).
+Embed mode writes the current source content into the managed fence.
 Check mode verifies that the fence is already up-to-date.
 
 For more source/target configuration see [Configuration guide](../configuration/README.md).
