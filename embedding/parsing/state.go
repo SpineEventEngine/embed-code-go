@@ -30,7 +30,7 @@ import (
 	"embed-code/embed-code-go/configuration"
 )
 
-// State represent a transition of a single line in the parsing process.
+// State represents a transition of a single line in the parsing process.
 type State interface {
 
 	// Accept updates the parsing context based on the transition.

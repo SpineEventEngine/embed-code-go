@@ -15,7 +15,7 @@ one of these ways:
 
 Do not combine direct roots with `-config-path`.
 
-Source roots can contain any text files that your documentation embeds. 
+Source roots can contain any text files that your documentation embeds.
 The examples use Java, Kotlin, and plain text so the configuration stays independent
 of the programming language used by the project.
 

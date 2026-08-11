@@ -109,7 +109,7 @@ func newProcessor(
 	}
 }
 
-// Embed constructs embedding and modifies the doc file if embedding is needed.
+// Embed constructs an embedding and modifies the doc file if embedding is needed.
 //
 // Returns:
 // *parsing.Context - parsing context, empty when the file is excluded by configuration.

@@ -37,7 +37,7 @@ import (
 
 // EmbeddingCommentFilter filters comments for one embed-code instruction.
 type EmbeddingCommentFilter struct {
-	// filePath is the path to the source code file.
+	// filePath is the path to the source-code file.
 	filePath string
 
 	// embeddingDocPath is the path to the documentation containing the instruction.

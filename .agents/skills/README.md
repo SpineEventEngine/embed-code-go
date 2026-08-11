@@ -8,3 +8,5 @@ the routing source of truth.
 - `writer`: documentation authoring, editing, restructuring, and claim checks.
 - `review-docs`: documentation review for prose, examples, comments, and
   agent instructions.
+- `proofread`: English grammar, punctuation, and spelling fixes in
+  project-owned comments and documentation.

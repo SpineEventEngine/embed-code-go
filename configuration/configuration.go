@@ -42,7 +42,7 @@ var DefaultDocIncludes = []string{"**/*.md", "**/*.html"}
 // Configuration contains embed-code processing settings.
 //
 // It is used to get data for scanning docs and resolving source files.
-// The example of creating the Configuration with default values:
+// An example of creating the Configuration with default values:
 //
 //	var config = configuration.NewConfiguration()
 type Configuration struct {
