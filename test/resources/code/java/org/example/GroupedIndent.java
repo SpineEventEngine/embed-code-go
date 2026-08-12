@@ -1,0 +1,24 @@
+package org.example;
+
+// #docfragment "Example" indent-group="imports"
+import java.util.List;
+// #enddocfragment "Example"
+
+public final class GroupedIndent {
+    private GroupedIndent() {}
+
+    static void render(List<String> values) {
+        // #docfragment "Example"
+        var first = values.get(0);
+            var nested = first.trim();
+        // #enddocfragment "Example"
+
+        // #docfragment "Example"
+        var second = values.get(1);
+        // #enddocfragment "Example"
+
+        // #docfragment "Example"
+        System.out.println(nested + second);
+        // #enddocfragment "Example"
+    }
+}

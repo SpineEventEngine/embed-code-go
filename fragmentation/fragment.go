@@ -44,6 +44,15 @@ type Fragment struct {
 	Partitions []Partition
 }
 
+// partitionText contains selected source lines and their indentation group.
+type partitionText struct {
+	// lines contains the source lines selected by one partition.
+	lines []string
+
+	// indentGroup identifies partitions whose common indentation is normalized together.
+	indentGroup string
+}
+
 // CreateDefaultFragment creates a whole-file fragment.
 //
 // Returns whole-file fragment.
@@ -76,15 +85,12 @@ func (f Fragment) text(lines []string, separator string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	var fragmentText []string
-	for _, partition := range partitionsTexts {
-		fragmentText = append(fragmentText, partition...)
-	}
-	indentation := indent.MaxCommonIndentation(fragmentText)
+	indentations := commonIndentations(partitionsTexts)
 
 	text := ""
 	for index, partitionText := range partitionsTexts {
-		cutIndentLines := indent.CutIndent(partitionText, indentation)
+		indentation := indentations[partitionText.indentGroup]
+		cutIndentLines := indent.CutIndent(partitionText.lines, indentation)
 
 		if index > 0 {
 			separatorIndentation := separatorIndent(cutIndentLines)
@@ -105,17 +111,43 @@ func (f Fragment) text(lines []string, separator string) (string, error) {
 // Returns:
 // [][]string - selected lines grouped by partition.
 // error - when a partition cannot select its lines.
-func (f Fragment) obtainPartitionTexts(lines []string) ([][]string, error) {
-	var partitionLines [][]string
+func (f Fragment) obtainPartitionTexts(lines []string) ([]partitionText, error) {
+	var partitions []partitionText
 	for _, part := range f.Partitions {
-		partitionText, err := part.Select(lines)
+		selectedLines, err := part.Select(lines)
 		if err != nil {
 			return nil, err
 		}
-		partitionLines = append(partitionLines, partitionText)
+		partitions = append(partitions, partitionText{
+			lines:       selectedLines,
+			indentGroup: part.IndentGroup,
+		})
 	}
 
-	return partitionLines, nil
+	return partitions, nil
+}
+
+// commonIndentations calculates common indentation for every partition group.
+//
+// Parameters:
+// partitions - provides selected source lines in source order.
+//
+// Returns indentation width by group name.
+func commonIndentations(partitions []partitionText) map[string]int {
+	groupLines := make(map[string][]string)
+	for _, partition := range partitions {
+		groupLines[partition.indentGroup] = append(
+			groupLines[partition.indentGroup],
+			partition.lines...,
+		)
+	}
+
+	indentations := make(map[string]int, len(groupLines))
+	for indentGroup, lines := range groupLines {
+		indentations[indentGroup] = indent.MaxCommonIndentation(lines)
+	}
+
+	return indentations
 }
 
 // separatorIndent returns the indentation to use before a partition separator.

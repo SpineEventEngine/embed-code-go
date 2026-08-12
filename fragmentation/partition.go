@@ -40,6 +40,9 @@ type Partition struct {
 
 	// EndPosition is the last source-line index included in the partition.
 	EndPosition int
+
+	// IndentGroup identifies partitions whose common indentation is normalized together.
+	IndentGroup string
 }
 
 // NewPartition returns a Partition with both positions unset as -1.
@@ -47,8 +50,8 @@ type Partition struct {
 // Returns an empty partition ready to receive start and end positions.
 func NewPartition() Partition {
 	return Partition{
-		-1,
-		-1,
+		StartPosition: -1,
+		EndPosition:   -1,
 	}
 }
 

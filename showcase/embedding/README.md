@@ -39,6 +39,8 @@ go run ./main.go -mode=check -config-path=showcase/embedding/embed-code.yml
   embeds a region wrapped with `#docfragment` and `#enddocfragment` markers.
 - [multi-part-fragment-separator.md](positive/multi-part-fragment-separator.md)
   joins repeated fragment parts with the configured separator.
+- [indent-groups.md](positive/indent-groups.md)
+  normalizes independently indented partitions without losing shared structure.
 - [overlapping-fragments.md](positive/overlapping-fragments.md)
   shows fragment markers that share source lines.
 

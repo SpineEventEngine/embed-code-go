@@ -149,7 +149,7 @@ func (f Fragmentation) DoFragmentation() ([]string, map[string]Fragment, error) 
 func (f Fragmentation) parseLine(line string, contentToRender []string) ([]string, error) {
 	cursor := len(contentToRender)
 
-	docFragments, startErr := FindDocFragments(line)
+	docFragment, startErr := findDocFragmentDeclaration(line)
 	if startErr != nil {
 		return nil, startErr
 	}
@@ -159,8 +159,8 @@ func (f Fragmentation) parseLine(line string, contentToRender []string) ([]strin
 	}
 
 	switch {
-	case len(docFragments) > 0:
-		if err := f.parseStartDocFragments(docFragments, cursor); err != nil {
+	case len(docFragment.names) > 0:
+		if err := f.parseStartDocFragments(docFragment, cursor); err != nil {
 			return nil, err
 		}
 	case len(endDocFragments) > 0:
@@ -177,8 +177,11 @@ func (f Fragmentation) parseLine(line string, contentToRender []string) ([]strin
 // parseStartDocFragments starts a new partition for each named fragment marker.
 //
 // It creates fragment builders when necessary.
-func (f Fragmentation) parseStartDocFragments(docFragments []string, cursor int) error {
-	for _, fragmentName := range docFragments {
+func (f Fragmentation) parseStartDocFragments(
+	declaration fragmentDeclaration,
+	cursor int,
+) error {
+	for _, fragmentName := range declaration.names {
 		fragment, exists := f.fragmentBuilders[fragmentName]
 		if !exists {
 			builder := FragmentBuilder{
@@ -188,7 +191,7 @@ func (f Fragmentation) parseStartDocFragments(docFragments []string, cursor int)
 			f.fragmentBuilders[fragmentName] = &builder
 			fragment = f.fragmentBuilders[fragmentName]
 		}
-		if err := fragment.AddStartPosition(cursor); err != nil {
+		if err := fragment.addStartPosition(cursor, declaration.indentGroup); err != nil {
 			return err
 		}
 	}

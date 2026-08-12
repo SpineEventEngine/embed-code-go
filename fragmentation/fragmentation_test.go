@@ -49,6 +49,7 @@ const (
 	twoFragmentsFileName         = "TwoFragments.java"
 	overlappingFragmentsFileName = "OverlappingFragments.java"
 	emptyLaterPartitionsFileName = "EmptyLaterPartitions.java"
+	groupedIndentFileName        = "GroupedIndent.java"
 	emptyFileName                = "Empty.java"
 	indent                       = "    "
 )
@@ -619,6 +620,19 @@ line
 			Expect(openings[1]).Should(Equal(subMainFragment))
 		})
 
+		It("should find fragment openings with an indentation group", func() {
+			docFragment := fmt.Sprintf(
+				"// #docfragment \"%s\",\"%s\" indent-group=\"imports\"",
+				mainFragment,
+				subMainFragment,
+			)
+
+			openings, err := fragmentation.FindDocFragments(docFragment)
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(openings).Should(Equal([]string{mainFragment, subMainFragment}))
+		})
+
 		It("should correctly find fragment endings", func() {
 			endDocFragment := fmt.Sprintf(
 				"// #enddocfragment \"%s\",\"%s\"", mainFragment, subMainFragment)
@@ -663,6 +677,52 @@ line
 				ContainSubstring("invalid syntax"),
 			)))
 		})
+
+		It("should report an unquoted indentation group", func() {
+			openings, err := fragmentation.FindDocFragments(
+				"// #docfragment \"main\" indent-group=imports",
+			)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(ContainSubstring(
+				"indent-group value `imports` must be quoted",
+			)))
+		})
+
+		It("should report an empty indentation group", func() {
+			openings, err := fragmentation.FindDocFragments(
+				"// #docfragment \"main\" indent-group=\"\"",
+			)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError("indent-group must not be empty"))
+		})
+
+		It("should reject an indentation group on an end marker", func() {
+			endings, err := fragmentation.FindEndDocFragments(
+				"// #enddocfragment \"main\" indent-group=\"imports\"",
+			)
+
+			Expect(endings).Should(BeEmpty())
+			Expect(err).Should(MatchError(ContainSubstring(
+				"indent-group is only supported by #docfragment",
+			)))
+		})
+	})
+
+	It("should normalize common indentation within each indentation group", func() {
+		content := resolveTestFragment(resolver, groupedIndentFileName, "Example", config)
+
+		Expect(content).Should(Equal([]string{
+			"import java.util.List;",
+			config.Separator,
+			"var first = values.get(0);",
+			indent + "var nested = first.trim();",
+			config.Separator,
+			"var second = values.get(1);",
+			config.Separator,
+			"System.out.println(nested + second);",
+		}))
 	})
 
 	It("should render empty later partitions with an unindented separator", func() {

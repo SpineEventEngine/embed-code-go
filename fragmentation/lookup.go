@@ -28,12 +28,9 @@ package fragmentation
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 )
-
-var quotedNamePattern = regexp.MustCompile("\"(.*)\"")
 
 const (
 	// FragmentStart marks the beginning of a named source fragment.
@@ -42,6 +39,15 @@ const (
 	// FragmentEnd marks the end of a named source fragment.
 	FragmentEnd = "#enddocfragment"
 )
+
+// fragmentDeclaration describes one source fragment opening marker.
+type fragmentDeclaration struct {
+	// names contains the fragments opened by the marker.
+	names []string
+
+	// indentGroup identifies partitions that share common indentation.
+	indentGroup string
+}
 
 // FindDocFragments finds fragment names declared with the start marker.
 //
@@ -55,7 +61,12 @@ const (
 // []string - fragment names declared on the line.
 // error - when a declaration is malformed.
 func FindDocFragments(line string) ([]string, error) {
-	return lookup(line, FragmentStart)
+	declaration, err := findDocFragmentDeclaration(line)
+	if err != nil {
+		return nil, err
+	}
+
+	return declaration.names, nil
 }
 
 // FindEndDocFragments finds fragment names declared with the end marker.
@@ -73,6 +84,18 @@ func FindEndDocFragments(line string) ([]string, error) {
 	return lookup(line, FragmentEnd)
 }
 
+// findDocFragmentDeclaration finds fragment names and indentation metadata on an opening marker.
+//
+// Parameters:
+// line - provides one source line.
+//
+// Returns:
+// fragmentDeclaration - parsed opening marker, or an empty declaration when no marker exists.
+// error - when the declaration is malformed.
+func findDocFragmentDeclaration(line string) (fragmentDeclaration, error) {
+	return parseFragmentDeclaration(line, FragmentStart, true)
+}
+
 // lookup finds fragment names in line after the given fragment marker prefix.
 //
 // For example, lookup("// #enddocfragment \"main\",\"sub-main\"\n", "#enddocfragment")
@@ -86,26 +109,159 @@ func FindEndDocFragments(line string) ([]string, error) {
 // []string - fragment names found on the line.
 // error - when prefix is found without valid names.
 func lookup(line string, prefix string) ([]string, error) {
-	var unquotedNames []string
-	if strings.Contains(line, prefix) {
-		// 1 for trailing space after the prefix.
-		fragmentsStart := strings.Index(line, prefix) + len(prefix) + 1
-		if len(line) < fragmentsStart {
-			return unquotedNames, fmt.Errorf(
-				"found `%s` prefix without any name", prefix,
+	declaration, err := parseFragmentDeclaration(line, prefix, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return declaration.names, nil
+}
+
+// parseFragmentDeclaration parses names and optional indentation metadata after a marker.
+//
+// Text after the declaration is ignored so markers can remain inside language comment syntax.
+//
+// Parameters:
+// line - provides one source line to search in.
+// prefix - provides the fragment marker prefix.
+// allowIndentGroup - allows an indent-group attribute on the marker.
+//
+// Returns:
+// fragmentDeclaration - parsed marker, or an empty declaration when no marker exists.
+// error - when the declaration is malformed.
+func parseFragmentDeclaration(
+	line string,
+	prefix string,
+	allowIndentGroup bool,
+) (fragmentDeclaration, error) {
+	var declaration fragmentDeclaration
+	markerPosition := strings.Index(line, prefix)
+	if markerPosition < 0 {
+		return declaration, nil
+	}
+
+	remainder := strings.TrimLeft(line[markerPosition+len(prefix):], "\t ")
+	if remainder == "" {
+		return declaration, fmt.Errorf("found `%s` prefix without any name", prefix)
+	}
+
+	for {
+		name, rest, err := consumeQuotedName(remainder)
+		if err != nil {
+			return fragmentDeclaration{}, err
+		}
+		declaration.names = append(declaration.names, name)
+		remainder = strings.TrimLeft(rest, "\t ")
+		if !strings.HasPrefix(remainder, ",") {
+			break
+		}
+		remainder = strings.TrimLeft(strings.TrimPrefix(remainder, ","), "\t ")
+	}
+
+	remainder = strings.TrimLeft(remainder, "\t ")
+	if strings.HasPrefix(remainder, "indent-group") {
+		if !allowIndentGroup {
+			return fragmentDeclaration{}, fmt.Errorf(
+				"indent-group is only supported by %s", FragmentStart,
 			)
 		}
-		for _, fragmentName := range strings.Split(line[fragmentsStart:], ",") {
-			quotedName := strings.Trim(fragmentName, "\n\t ")
-			unquotedName, err := unquoteName(quotedName)
-			if err != nil {
-				return unquotedNames, err
-			}
-			unquotedNames = append(unquotedNames, unquotedName)
+		indentGroup, err := parseIndentGroup(remainder)
+		if err != nil {
+			return fragmentDeclaration{}, err
+		}
+		declaration.indentGroup = indentGroup
+	}
+
+	return declaration, nil
+}
+
+// consumeQuotedName parses the next quoted fragment name.
+//
+// Parameters:
+// source - provides marker text beginning with a fragment name.
+//
+// Returns:
+// string - unquoted fragment name.
+// string - unconsumed marker text.
+// error - when the name is not a valid quoted string.
+func consumeQuotedName(source string) (string, string, error) {
+	quotedName, remainder := consumeQuotedValue(source)
+	name, err := unquoteName(quotedName)
+	if err != nil {
+		return "", "", err
+	}
+
+	return name, remainder, nil
+}
+
+// parseIndentGroup parses the optional indent-group marker attribute.
+//
+// Parameters:
+// source - provides marker text beginning with indent-group.
+//
+// Returns:
+// string - unquoted indentation group name.
+// error - when the attribute is malformed or empty.
+func parseIndentGroup(source string) (string, error) {
+	remainder := strings.TrimLeft(strings.TrimPrefix(source, "indent-group"), "\t ")
+	if !strings.HasPrefix(remainder, "=") {
+		return "", fmt.Errorf("indent-group must use the form indent-group=\"name\"")
+	}
+	remainder = strings.TrimLeft(strings.TrimPrefix(remainder, "="), "\t ")
+	if !strings.HasPrefix(remainder, "\"") {
+		value := strings.Fields(remainder)
+		unquotedValue := ""
+		if len(value) > 0 {
+			unquotedValue = value[0]
+		}
+
+		return "", fmt.Errorf("indent-group value `%s` must be quoted", unquotedValue)
+	}
+
+	quotedGroup, _ := consumeQuotedValue(remainder)
+	indentGroup, err := strconv.Unquote(quotedGroup)
+	if err != nil {
+		return "", fmt.Errorf("failed to unquote indent-group `%s`: %w", quotedGroup, err)
+	}
+	if indentGroup == "" {
+		return "", fmt.Errorf("indent-group must not be empty")
+	}
+
+	return indentGroup, nil
+}
+
+// consumeQuotedValue separates the first quoted string from the remaining marker text.
+//
+// Parameters:
+// source - provides marker text beginning with a quoted string.
+//
+// Returns:
+// string - quoted value, or the first unquoted token when no quoted value is present.
+// string - unconsumed marker text.
+func consumeQuotedValue(source string) (string, string) {
+	if !strings.HasPrefix(source, "\"") {
+		valueEnd := strings.IndexAny(source, ",\t \n")
+		if valueEnd < 0 {
+			return source, ""
+		}
+
+		return source[:valueEnd], source[valueEnd:]
+	}
+
+	escaped := false
+	for index := 1; index < len(source); index++ {
+		character := source[index]
+		if character == '"' && !escaped {
+			return source[:index+1], source[index+1:]
+		}
+		if character == '\\' {
+			escaped = !escaped
+		} else {
+			escaped = false
 		}
 	}
 
-	return unquotedNames, nil
+	return source, ""
 }
 
 // unquoteName removes quotes from a fragment marker name.
@@ -117,8 +273,7 @@ func lookup(line string, prefix string) ([]string, error) {
 // string - unquoted fragment name.
 // error - when quotedName cannot be unquoted.
 func unquoteName(quotedName string) (string, error) {
-	nameQuoted := quotedNamePattern.FindString(quotedName)
-	nameCleaned, err := strconv.Unquote(nameQuoted)
+	nameCleaned, err := strconv.Unquote(quotedName)
 	if err != nil {
 		return "", fmt.Errorf("failed to unquote name `%s`: %w", quotedName, err)
 	}

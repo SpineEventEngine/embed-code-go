@@ -17,6 +17,10 @@ The default separator is `...`. This showcase uses `// ...` in
 snippets. Separator indentation follows the surrounding rendered code, which
 keeps skipped sections readable inside classes and methods.
 
+When selected parts come from independent indentation contexts, assign them
+different [`indent-group`](indent-groups.md) values instead of allowing one
+part to determine the common baseline for the others.
+
 ## Embedding Instruction
 
 [MultiPartWorkflow.java](../../code/java/org/showcase/MultiPartWorkflow.java)
