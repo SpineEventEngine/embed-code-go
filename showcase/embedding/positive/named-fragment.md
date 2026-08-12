@@ -11,6 +11,8 @@ A named fragment is declared in the source file with `#docfragment "name"`
 before the first line to include and `#enddocfragment "name"` after the last
 line to include. The marker text can sit inside the comment syntax of the source
 language, so Java uses `//`, Kotlin uses `//`, and HTML can use `<!-- -->`.
+An opening marker may also declare an [`indent-group`](indent-groups.md) when a
+multi-part fragment combines independently indented source regions.
 
 The `fragment` value in the embedding instruction must match the source marker
 name exactly. During embed mode or check mode, embed-code resolves the named

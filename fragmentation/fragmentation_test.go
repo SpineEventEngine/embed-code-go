@@ -49,6 +49,7 @@ const (
 	twoFragmentsFileName         = "TwoFragments.java"
 	overlappingFragmentsFileName = "OverlappingFragments.java"
 	emptyLaterPartitionsFileName = "EmptyLaterPartitions.java"
+	groupedIndentFileName        = "GroupedIndent.java"
 	emptyFileName                = "Empty.java"
 	indent                       = "    "
 )
@@ -430,7 +431,11 @@ var _ = Describe("Fragmentation", func() {
 	It("should report malformed fragment markers with source line context", func() {
 		sourceRoot := GinkgoT().TempDir()
 		sourcePath := filepath.Join(sourceRoot, "Malformed.java")
-		Expect(os.WriteFile(sourcePath, []byte("// #docfragment"), 0600)).To(Succeed())
+		Expect(os.WriteFile(
+			sourcePath,
+			[]byte(`// #docfragment "main" indentgroup="imports"`),
+			0600,
+		)).To(Succeed())
 		frag, err := fragmentation.NewFragmentation(sourcePath)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -442,7 +447,7 @@ var _ = Describe("Fragmentation", func() {
 			ContainSubstring("failed to do fragmentation"),
 			ContainSubstring("file://"),
 			ContainSubstring("Malformed.java:1"),
-			ContainSubstring("without any name"),
+			ContainSubstring("unexpected attribute after `#docfragment` declaration"),
 		)))
 	})
 
@@ -619,6 +624,45 @@ line
 			Expect(openings[1]).Should(Equal(subMainFragment))
 		})
 
+		It("should find fragment openings with an indentation group", func() {
+			docFragment := fmt.Sprintf(
+				"// #docfragment \"%s\",\"%s\" indent-group=\"imports\"",
+				mainFragment,
+				subMainFragment,
+			)
+
+			openings, err := fragmentation.FindDocFragments(docFragment)
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(openings).Should(Equal([]string{mainFragment, subMainFragment}))
+		})
+
+		It("should allow non-attribute text after fragment declarations", func() {
+			declarations := []string{
+				`<!-- #docfragment "main" indent-group="imports" -->`,
+				`{% #docfragment "main" #}`,
+				`{{!-- #docfragment "main" --}}`,
+				`<% #docfragment "main" %>`,
+				`(* #docfragment "main" *)`,
+				`<# #docfragment "main" #>`,
+				`<![CDATA[#docfragment "main" ]]>`,
+				`/* #docfragment "main" */ public void run() {`,
+				`// #docfragment "main" (see the loop below)`,
+			}
+			for _, declaration := range declarations {
+				openings, err := fragmentation.FindDocFragments(declaration)
+
+				Expect(err).ShouldNot(HaveOccurred(), declaration)
+				Expect(openings).Should(Equal([]string{mainFragment}), declaration)
+			}
+
+			endings, err := fragmentation.FindEndDocFragments(
+				`/* #enddocfragment "main" */ public void run() {`,
+			)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(endings).Should(Equal([]string{mainFragment}))
+		})
+
 		It("should correctly find fragment endings", func() {
 			endDocFragment := fmt.Sprintf(
 				"// #enddocfragment \"%s\",\"%s\"", mainFragment, subMainFragment)
@@ -663,6 +707,122 @@ line
 				ContainSubstring("invalid syntax"),
 			)))
 		})
+
+		It("should report an empty fragment name", func() {
+			openings, err := fragmentation.FindDocFragments(`// #docfragment ""`)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError("fragment name must not be empty"))
+		})
+
+		It("should report an unquoted fragment name before trailing text", func() {
+			openings, err := fragmentation.FindDocFragments("// #docfragment main trailing")
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(And(
+				ContainSubstring("failed to unquote name `main`"),
+				ContainSubstring("invalid syntax"),
+			)))
+		})
+
+		It("should allow escaped quotes in fragment names", func() {
+			openings, err := fragmentation.FindDocFragments(
+				`// #docfragment "main\"part"`,
+			)
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(openings).Should(Equal([]string{`main"part`}))
+		})
+
+		It("should report an indentation group without an equals sign", func() {
+			openings, err := fragmentation.FindDocFragments(
+				`// #docfragment "main" indent-group "imports"`,
+			)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(
+				`indent-group must use the form indent-group="name"`,
+			))
+		})
+
+		It("should report an unquoted indentation group", func() {
+			openings, err := fragmentation.FindDocFragments(
+				"// #docfragment \"main\" indent-group=imports",
+			)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(ContainSubstring(
+				"indent-group value `imports` must be quoted",
+			)))
+		})
+
+		It("should report an empty indentation group", func() {
+			openings, err := fragmentation.FindDocFragments(
+				"// #docfragment \"main\" indent-group=\"\"",
+			)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError("indent-group must not be empty"))
+		})
+
+		It("should report an unterminated indentation group", func() {
+			openings, err := fragmentation.FindDocFragments(
+				`// #docfragment "main" indent-group="imports`,
+			)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(And(
+				ContainSubstring(`failed to unquote indent-group `),
+				ContainSubstring("invalid syntax"),
+			)))
+		})
+
+		It("should reject an indentation group on an end marker", func() {
+			endings, err := fragmentation.FindEndDocFragments(
+				"// #enddocfragment \"main\" indent-group=\"imports\"",
+			)
+
+			Expect(endings).Should(BeEmpty())
+			Expect(err).Should(MatchError(ContainSubstring(
+				"indent-group is only supported by #docfragment",
+			)))
+		})
+
+		It("should reject unrecognized attributes after a fragment declaration", func() {
+			invalidSuffixes := []string{
+				`indentgroup="imports"`,
+				`indent_group="imports"`,
+				`INDENT-GROUP="imports"`,
+				`indent-group="a" indent-group="b"`,
+			}
+			for _, suffix := range invalidSuffixes {
+				openings, err := fragmentation.FindDocFragments(
+					`// #docfragment "main" ` + suffix,
+				)
+
+				Expect(openings).Should(BeEmpty())
+				Expect(err).Should(MatchError(ContainSubstring(
+					"unexpected attribute after `#docfragment` declaration",
+				)), suffix)
+			}
+		})
+	})
+
+	It("should normalize common indentation within each indentation group", func() {
+		content := resolveTestFragment(resolver, groupedIndentFileName, "Example", config)
+
+		Expect(content).Should(Equal([]string{
+			"import java.util.List;",
+			indent + config.Separator,
+			indent + `static final String LABEL = "value";`,
+			config.Separator,
+			"var first = values.get(0);",
+			indent + "var nested = first.trim();",
+			config.Separator,
+			"var second = values.get(1);",
+			config.Separator,
+			"System.out.println(nested + second);",
+		}))
 	})
 
 	It("should render empty later partitions with an unindented separator", func() {

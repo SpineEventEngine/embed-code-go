@@ -50,6 +50,17 @@ type FragmentBuilder struct {
 //
 // Returns an error when the previous partition is still open.
 func (b *FragmentBuilder) AddStartPosition(startPosition int) error {
+	return b.addStartPosition(startPosition, "")
+}
+
+// addStartPosition adds a partition with its indentation group.
+//
+// Parameters:
+// startPosition - provides the zero-based source line where the partition starts.
+// indentGroup - identifies partitions whose common indentation is normalized together.
+//
+// Returns an error when the previous partition is still open.
+func (b *FragmentBuilder) addStartPosition(startPosition int, indentGroup string) error {
 	if !b.isPartitionsEmpty() {
 		lastPartition := b.lastAddedPartition()
 		if lastPartition.EndPosition < 0 {
@@ -60,6 +71,7 @@ func (b *FragmentBuilder) AddStartPosition(startPosition int) error {
 
 	partition := NewPartition()
 	partition.StartPosition = startPosition
+	partition.IndentGroup = indentGroup
 	b.Partitions = append(b.Partitions, partition)
 
 	return nil
