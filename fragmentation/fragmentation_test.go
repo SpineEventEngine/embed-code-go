@@ -696,6 +696,36 @@ line
 			)))
 		})
 
+		It("should report an unquoted fragment name before trailing text", func() {
+			openings, err := fragmentation.FindDocFragments("// #docfragment main trailing")
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(And(
+				ContainSubstring("failed to unquote name `main`"),
+				ContainSubstring("invalid syntax"),
+			)))
+		})
+
+		It("should allow escaped quotes in fragment names", func() {
+			openings, err := fragmentation.FindDocFragments(
+				`// #docfragment "main\"part"`,
+			)
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(openings).Should(Equal([]string{`main"part`}))
+		})
+
+		It("should report an indentation group without an equals sign", func() {
+			openings, err := fragmentation.FindDocFragments(
+				`// #docfragment "main" indent-group "imports"`,
+			)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(
+				`indent-group must use the form indent-group="name"`,
+			))
+		})
+
 		It("should report an unquoted indentation group", func() {
 			openings, err := fragmentation.FindDocFragments(
 				"// #docfragment \"main\" indent-group=imports",
@@ -714,6 +744,18 @@ line
 
 			Expect(openings).Should(BeEmpty())
 			Expect(err).Should(MatchError("indent-group must not be empty"))
+		})
+
+		It("should report an unterminated indentation group", func() {
+			openings, err := fragmentation.FindDocFragments(
+				`// #docfragment "main" indent-group="imports`,
+			)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError(And(
+				ContainSubstring(`failed to unquote indent-group `),
+				ContainSubstring("invalid syntax"),
+			)))
 		})
 
 		It("should reject an indentation group on an end marker", func() {
