@@ -431,7 +431,11 @@ var _ = Describe("Fragmentation", func() {
 	It("should report malformed fragment markers with source line context", func() {
 		sourceRoot := GinkgoT().TempDir()
 		sourcePath := filepath.Join(sourceRoot, "Malformed.java")
-		Expect(os.WriteFile(sourcePath, []byte("// #docfragment"), 0600)).To(Succeed())
+		Expect(os.WriteFile(
+			sourcePath,
+			[]byte(`// #docfragment "main" indentgroup="imports"`),
+			0600,
+		)).To(Succeed())
 		frag, err := fragmentation.NewFragmentation(sourcePath)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -443,7 +447,7 @@ var _ = Describe("Fragmentation", func() {
 			ContainSubstring("failed to do fragmentation"),
 			ContainSubstring("file://"),
 			ContainSubstring("Malformed.java:1"),
-			ContainSubstring("without any name"),
+			ContainSubstring("unexpected text after `#docfragment` declaration"),
 		)))
 	})
 
@@ -633,6 +637,20 @@ line
 			Expect(openings).Should(Equal([]string{mainFragment, subMainFragment}))
 		})
 
+		It("should allow fragment markers inside block comments", func() {
+			openings, startErr := fragmentation.FindDocFragments(
+				`<!-- #docfragment "main" indent-group="imports" -->`,
+			)
+			endings, endErr := fragmentation.FindEndDocFragments(
+				`/* #enddocfragment "main" */`,
+			)
+
+			Expect(startErr).ShouldNot(HaveOccurred())
+			Expect(openings).Should(Equal([]string{mainFragment}))
+			Expect(endErr).ShouldNot(HaveOccurred())
+			Expect(endings).Should(Equal([]string{mainFragment}))
+		})
+
 		It("should correctly find fragment endings", func() {
 			endDocFragment := fmt.Sprintf(
 				"// #enddocfragment \"%s\",\"%s\"", mainFragment, subMainFragment)
@@ -707,6 +725,25 @@ line
 			Expect(err).Should(MatchError(ContainSubstring(
 				"indent-group is only supported by #docfragment",
 			)))
+		})
+
+		It("should reject unrecognized text after a fragment declaration", func() {
+			invalidSuffixes := []string{
+				`indentgroup="imports"`,
+				`indent_group="imports"`,
+				`INDENT-GROUP="imports"`,
+				`indent-group="a" indent-group="b"`,
+			}
+			for _, suffix := range invalidSuffixes {
+				openings, err := fragmentation.FindDocFragments(
+					`// #docfragment "main" ` + suffix,
+				)
+
+				Expect(openings).Should(BeEmpty())
+				Expect(err).Should(MatchError(ContainSubstring(
+					"unexpected text after `#docfragment` declaration",
+				)), suffix)
+			}
 		})
 	})
 

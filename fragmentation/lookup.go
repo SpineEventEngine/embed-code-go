@@ -119,7 +119,7 @@ func lookup(line string, prefix string) ([]string, error) {
 
 // parseFragmentDeclaration parses names and optional indentation metadata after a marker.
 //
-// Text after the declaration is ignored so markers can remain inside language comment syntax.
+// A declaration may be followed only by a recognized block-comment closer.
 //
 // Parameters:
 // line - provides one source line to search in.
@@ -165,11 +165,15 @@ func parseFragmentDeclaration(
 				"indent-group is only supported by %s", FragmentStart,
 			)
 		}
-		indentGroup, err := parseIndentGroup(remainder)
+		indentGroup, rest, err := parseIndentGroup(remainder)
 		if err != nil {
 			return fragmentDeclaration{}, err
 		}
 		declaration.indentGroup = indentGroup
+		remainder = rest
+	}
+	if err := validateDeclarationRemainder(remainder, prefix); err != nil {
+		return fragmentDeclaration{}, err
 	}
 
 	return declaration, nil
@@ -201,11 +205,12 @@ func consumeQuotedName(source string) (string, string, error) {
 //
 // Returns:
 // string - unquoted indentation group name.
+// string - unconsumed marker text.
 // error - when the attribute is malformed or empty.
-func parseIndentGroup(source string) (string, error) {
+func parseIndentGroup(source string) (string, string, error) {
 	remainder := strings.TrimLeft(strings.TrimPrefix(source, "indent-group"), "\t ")
 	if !strings.HasPrefix(remainder, "=") {
-		return "", fmt.Errorf("indent-group must use the form indent-group=\"name\"")
+		return "", "", fmt.Errorf("indent-group must use the form indent-group=\"name\"")
 	}
 	remainder = strings.TrimLeft(strings.TrimPrefix(remainder, "="), "\t ")
 	if !strings.HasPrefix(remainder, "\"") {
@@ -215,19 +220,35 @@ func parseIndentGroup(source string) (string, error) {
 			unquotedValue = value[0]
 		}
 
-		return "", fmt.Errorf("indent-group value `%s` must be quoted", unquotedValue)
+		return "", "", fmt.Errorf("indent-group value `%s` must be quoted", unquotedValue)
 	}
 
-	quotedGroup, _ := consumeQuotedValue(remainder)
+	quotedGroup, rest := consumeQuotedValue(remainder)
 	indentGroup, err := strconv.Unquote(quotedGroup)
 	if err != nil {
-		return "", fmt.Errorf("failed to unquote indent-group `%s`: %w", quotedGroup, err)
+		return "", "", fmt.Errorf("failed to unquote indent-group `%s`: %w", quotedGroup, err)
 	}
 	if indentGroup == "" {
-		return "", fmt.Errorf("indent-group must not be empty")
+		return "", "", fmt.Errorf("indent-group must not be empty")
 	}
 
-	return indentGroup, nil
+	return indentGroup, rest, nil
+}
+
+// validateDeclarationRemainder rejects unconsumed marker attributes and text.
+//
+// Parameters:
+// source - provides text after the parsed declaration.
+// prefix - identifies the fragment marker for diagnostics.
+//
+// Returns an error unless the remainder is empty or closes a supported block comment.
+func validateDeclarationRemainder(source string, prefix string) error {
+	remainder := strings.TrimSpace(source)
+	if remainder == "" || remainder == "*/" || remainder == "-->" {
+		return nil
+	}
+
+	return fmt.Errorf("unexpected text after `%s` declaration: `%s`", prefix, remainder)
 }
 
 // consumeQuotedValue separates the first quoted string from the remaining marker text.
