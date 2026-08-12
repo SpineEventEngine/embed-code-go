@@ -7,6 +7,10 @@ import java.util.List;
 public final class GroupedIndent {
     private GroupedIndent() {}
 
+    // #docfragment "Example" indent-group="imports"
+    static final String LABEL = "value";
+    // #enddocfragment "Example"
+
     static void render(List<String> values) {
         // #docfragment "Example"
         var first = values.get(0);
@@ -17,7 +21,7 @@ public final class GroupedIndent {
         var second = values.get(1);
         // #enddocfragment "Example"
 
-        // #docfragment "Example"
+        // #docfragment "Example" indent-group="output"
         System.out.println(nested + second);
         // #enddocfragment "Example"
     }

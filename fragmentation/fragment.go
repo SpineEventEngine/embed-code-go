@@ -88,9 +88,9 @@ func (f Fragment) text(lines []string, separator string) (string, error) {
 	indentations := commonIndentations(partitionsTexts)
 
 	text := ""
-	for index, partitionText := range partitionsTexts {
-		indentation := indentations[partitionText.indentGroup]
-		cutIndentLines := indent.CutIndent(partitionText.lines, indentation)
+	for index, partition := range partitionsTexts {
+		indentation := indentations[partition.indentGroup]
+		cutIndentLines := indent.CutIndent(partition.lines, indentation)
 
 		if index > 0 {
 			separatorIndentation := separatorIndent(cutIndentLines)
@@ -109,7 +109,7 @@ func (f Fragment) text(lines []string, separator string) (string, error) {
 // lines - provides every source line in the file.
 //
 // Returns:
-// [][]string - selected lines grouped by partition.
+// []partitionText - selected lines and indentation group for every partition.
 // error - when a partition cannot select its lines.
 func (f Fragment) obtainPartitionTexts(lines []string) ([]partitionText, error) {
 	var partitions []partitionText

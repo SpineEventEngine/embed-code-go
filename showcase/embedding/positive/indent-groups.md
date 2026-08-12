@@ -8,7 +8,8 @@ all partitions in that group preserve their indentation relative to one another.
 
 Add `indent-group="name"` to an opening `#docfragment` marker. The group name
 must be a non-empty quoted string. The matching `#enddocfragment` marker does
-not repeat the attribute.
+not accept the attribute; repeating it there is an error. No other marker
+attributes are supported.
 
 Partitions without `indent-group` belong to one shared default group. Existing
 fragment markers therefore keep the standard behavior of normalizing common

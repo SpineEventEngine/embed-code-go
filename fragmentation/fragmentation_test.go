@@ -447,7 +447,7 @@ var _ = Describe("Fragmentation", func() {
 			ContainSubstring("failed to do fragmentation"),
 			ContainSubstring("file://"),
 			ContainSubstring("Malformed.java:1"),
-			ContainSubstring("unexpected text after `#docfragment` declaration"),
+			ContainSubstring("unexpected attribute after `#docfragment` declaration"),
 		)))
 	})
 
@@ -637,17 +637,29 @@ line
 			Expect(openings).Should(Equal([]string{mainFragment, subMainFragment}))
 		})
 
-		It("should allow fragment markers inside block comments", func() {
-			openings, startErr := fragmentation.FindDocFragments(
+		It("should allow non-attribute text after fragment declarations", func() {
+			declarations := []string{
 				`<!-- #docfragment "main" indent-group="imports" -->`,
-			)
-			endings, endErr := fragmentation.FindEndDocFragments(
-				`/* #enddocfragment "main" */`,
-			)
+				`{% #docfragment "main" #}`,
+				`{{!-- #docfragment "main" --}}`,
+				`<% #docfragment "main" %>`,
+				`(* #docfragment "main" *)`,
+				`<# #docfragment "main" #>`,
+				`<![CDATA[#docfragment "main" ]]>`,
+				`/* #docfragment "main" */ public void run() {`,
+				`// #docfragment "main" (see the loop below)`,
+			}
+			for _, declaration := range declarations {
+				openings, err := fragmentation.FindDocFragments(declaration)
 
-			Expect(startErr).ShouldNot(HaveOccurred())
-			Expect(openings).Should(Equal([]string{mainFragment}))
-			Expect(endErr).ShouldNot(HaveOccurred())
+				Expect(err).ShouldNot(HaveOccurred(), declaration)
+				Expect(openings).Should(Equal([]string{mainFragment}), declaration)
+			}
+
+			endings, err := fragmentation.FindEndDocFragments(
+				`/* #enddocfragment "main" */ public void run() {`,
+			)
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(endings).Should(Equal([]string{mainFragment}))
 		})
 
@@ -694,6 +706,13 @@ line
 				ContainSubstring("failed to unquote name `main`"),
 				ContainSubstring("invalid syntax"),
 			)))
+		})
+
+		It("should report an empty fragment name", func() {
+			openings, err := fragmentation.FindDocFragments(`// #docfragment ""`)
+
+			Expect(openings).Should(BeEmpty())
+			Expect(err).Should(MatchError("fragment name must not be empty"))
 		})
 
 		It("should report an unquoted fragment name before trailing text", func() {
@@ -769,7 +788,7 @@ line
 			)))
 		})
 
-		It("should reject unrecognized text after a fragment declaration", func() {
+		It("should reject unrecognized attributes after a fragment declaration", func() {
 			invalidSuffixes := []string{
 				`indentgroup="imports"`,
 				`indent_group="imports"`,
@@ -783,7 +802,7 @@ line
 
 				Expect(openings).Should(BeEmpty())
 				Expect(err).Should(MatchError(ContainSubstring(
-					"unexpected text after `#docfragment` declaration",
+					"unexpected attribute after `#docfragment` declaration",
 				)), suffix)
 			}
 		})
@@ -794,6 +813,8 @@ line
 
 		Expect(content).Should(Equal([]string{
 			"import java.util.List;",
+			indent + config.Separator,
+			indent + `static final String LABEL = "value";`,
 			config.Separator,
 			"var first = values.get(0);",
 			indent + "var nested = first.trim();",

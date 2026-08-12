@@ -28,6 +28,7 @@ package fragmentation
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -39,6 +40,9 @@ const (
 	// FragmentEnd marks the end of a named source fragment.
 	FragmentEnd = "#enddocfragment"
 )
+
+// attributePrefixPattern matches an attribute-shaped token at the start of marker text.
+var attributePrefixPattern = regexp.MustCompile(`^[A-Za-z][A-Za-z_-]*[ \t]*=`)
 
 // fragmentDeclaration describes one source fragment opening marker.
 type fragmentDeclaration struct {
@@ -81,7 +85,12 @@ func FindDocFragments(line string) ([]string, error) {
 // []string - fragment names closed on the line.
 // error - when a declaration is malformed.
 func FindEndDocFragments(line string) ([]string, error) {
-	return lookup(line, FragmentEnd)
+	declaration, err := parseFragmentDeclaration(line, FragmentEnd, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return declaration.names, nil
 }
 
 // findDocFragmentDeclaration finds fragment names and indentation metadata on an opening marker.
@@ -96,30 +105,10 @@ func findDocFragmentDeclaration(line string) (fragmentDeclaration, error) {
 	return parseFragmentDeclaration(line, FragmentStart, true)
 }
 
-// lookup finds fragment names in line after the given fragment marker prefix.
-//
-// For example, lookup("// #enddocfragment \"main\",\"sub-main\"\n", "#enddocfragment")
-// returns ["main", "sub-main"]
-//
-// Parameters:
-// line - provides one source line to search in.
-// prefix - provides the fragment marker prefix, for example "#docfragment".
-//
-// Returns:
-// []string - fragment names found on the line.
-// error - when prefix is found without valid names.
-func lookup(line string, prefix string) ([]string, error) {
-	declaration, err := parseFragmentDeclaration(line, prefix, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return declaration.names, nil
-}
-
 // parseFragmentDeclaration parses names and optional indentation metadata after a marker.
 //
-// A declaration may be followed only by a recognized block-comment closer.
+// Attribute-shaped text after the declaration is rejected, while other text is ignored
+// for compatibility with source-language comment syntax and inline marker annotations.
 //
 // Parameters:
 // line - provides one source line to search in.
@@ -235,20 +224,33 @@ func parseIndentGroup(source string) (string, string, error) {
 	return indentGroup, rest, nil
 }
 
-// validateDeclarationRemainder rejects unconsumed marker attributes and text.
+// validateDeclarationRemainder rejects unconsumed marker attributes.
 //
 // Parameters:
 // source - provides text after the parsed declaration.
 // prefix - identifies the fragment marker for diagnostics.
 //
-// Returns an error unless the remainder is empty or closes a supported block comment.
+// Returns an error when the remainder begins with an attribute-shaped token.
 func validateDeclarationRemainder(source string, prefix string) error {
 	remainder := strings.TrimSpace(source)
-	if remainder == "" || remainder == "*/" || remainder == "-->" {
+	if !startsWithAttribute(remainder) {
 		return nil
 	}
 
-	return fmt.Errorf("unexpected text after `%s` declaration: `%s`", prefix, remainder)
+	return fmt.Errorf("unexpected attribute after `%s` declaration: `%s`", prefix, remainder)
+}
+
+// startsWithAttribute reports whether source begins with an attribute-shaped token.
+//
+// Attribute names start with an ASCII letter, continue with ASCII letters, hyphens,
+// or underscores, and may have horizontal whitespace before the equals sign.
+//
+// Parameters:
+// source - provides unconsumed marker text.
+//
+// Returns true when source begins with a name followed by an equals sign.
+func startsWithAttribute(source string) bool {
+	return attributePrefixPattern.MatchString(source)
 }
 
 // consumeQuotedValue separates the first quoted string from the remaining marker text.
@@ -297,6 +299,9 @@ func unquoteName(quotedName string) (string, error) {
 	nameCleaned, err := strconv.Unquote(quotedName)
 	if err != nil {
 		return "", fmt.Errorf("failed to unquote name `%s`: %w", quotedName, err)
+	}
+	if nameCleaned == "" {
+		return "", fmt.Errorf("fragment name must not be empty")
 	}
 
 	return nameCleaned, nil
