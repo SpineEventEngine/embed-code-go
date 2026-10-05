@@ -23,3 +23,8 @@ agent operating policy and repository-wide rules.
 - Do not add temporary repo files, local binaries, IDE metadata, coverage
   output, or build artifacts to the intended change set.
 - Keep changes narrowly scoped and make unrelated cleanup a separate task.
+
+## Documentation
+
+- Follow the [writer skill's pull-request rules](.agents/skills/writer/SKILL.md#write-pull-requests)
+  for pull-request titles and descriptions.
