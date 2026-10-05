@@ -87,7 +87,7 @@ type Configuration struct {
 
 // NewConfiguration builds the default config.
 //
-// Returns configuration with default include patterns and separator.
+// Returns configuration with default include patterns and joined fragment separator.
 func NewConfiguration() Configuration {
 	return Configuration{
 		DocIncludes:             DefaultDocIncludes,

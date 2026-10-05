@@ -32,6 +32,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"reflect"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
@@ -330,6 +331,8 @@ func parseListArgument(listArgument string) []string {
 
 // readConfigFields reads and parses a YAML configuration file.
 //
+// Logs a warning when the file contains options that are not supported.
+//
 // Parameters:
 // configFilePath - provides the path to a YAML configuration file.
 //
@@ -342,11 +345,105 @@ func readConfigFields(configFilePath string) (Config, error) {
 		return Config{}, err
 	}
 
-	configFields := Config{}
-	err = yaml.Unmarshal(content, &configFields)
+	var document yaml.Node
+	err = yaml.Unmarshal(content, &document)
 	if err != nil {
 		return Config{}, err
 	}
+	configFields := Config{}
+	err = document.Decode(&configFields)
+	if err != nil {
+		return Config{}, err
+	}
+	warnUnknownConfigOptions(configFilePath, unknownOptions(&document, reflect.TypeFor[Config]()))
 
 	return configFields, nil
+}
+
+// yamlMergeTag marks a YAML merge key, which inserts the content of another mapping.
+const yamlMergeTag = "!!merge"
+
+// unknownOptions finds YAML keys that have no matching field in the decoded Go type.
+//
+// Parameters:
+// node - provides the YAML node to inspect.
+// target - provides the Go type the node is decoded into.
+//
+// Returns the unknown keys in document order.
+func unknownOptions(node *yaml.Node, target reflect.Type) []*yaml.Node {
+	var unknown []*yaml.Node
+	switch {
+	case node.Kind == yaml.DocumentNode:
+		for _, content := range node.Content {
+			unknown = append(unknown, unknownOptions(content, target)...)
+		}
+	case node.Kind == yaml.MappingNode && target.Kind() == reflect.Struct:
+		unknown = unknownMappingOptions(node, target)
+	case node.Kind == yaml.SequenceNode && target.Kind() == reflect.Slice:
+		for _, item := range node.Content {
+			unknown = append(unknown, unknownOptions(item, target.Elem())...)
+		}
+	}
+
+	return unknown
+}
+
+// unknownMappingOptions finds unknown keys in a YAML mapping and in its nested values.
+//
+// Merge keys are skipped because they insert keys defined elsewhere in the file.
+//
+// Parameters:
+// mapping - provides the YAML mapping node to inspect.
+// structType - provides the struct type the mapping is decoded into.
+//
+// Returns the unknown keys in document order.
+func unknownMappingOptions(mapping *yaml.Node, structType reflect.Type) []*yaml.Node {
+	var unknown []*yaml.Node
+	for keyIndex := 0; keyIndex+1 < len(mapping.Content); keyIndex += 2 {
+		key := mapping.Content[keyIndex]
+		if key.ShortTag() == yamlMergeTag {
+			continue
+		}
+		field, found := yamlField(structType, key.Value)
+		if !found {
+			unknown = append(unknown, key)
+
+			continue
+		}
+		unknown = append(unknown, unknownOptions(mapping.Content[keyIndex+1], field.Type)...)
+	}
+
+	return unknown
+}
+
+// yamlField returns the field of structType that is decoded from the YAML key name.
+//
+// Fields without a `yaml` tag are not read from YAML files, so they never match.
+func yamlField(structType reflect.Type, name string) (reflect.StructField, bool) {
+	for i := range structType.NumField() {
+		field := structType.Field(i)
+		tagName, _, _ := strings.Cut(field.Tag.Get("yaml"), ",")
+		if tagName != "" && tagName == name {
+			return field, true
+		}
+	}
+
+	return reflect.StructField{}, false
+}
+
+// warnUnknownConfigOptions logs configuration file options that are ignored.
+//
+// Parameters:
+// configFilePath - provides the path to the YAML configuration file.
+// options - provides the keys of unknown options.
+func warnUnknownConfigOptions(configFilePath string, options []*yaml.Node) {
+	if len(options) == 0 {
+		return
+	}
+	warnLines := make([]string, 0, len(options))
+	for _, option := range options {
+		warnLines = append(warnLines, fmt.Sprintf("- `%s` at `%s`",
+			option.Value, logging.FileReferenceWithLine(configFilePath, option.Line)))
+	}
+	slog.Warn("Unknown configuration options are ignored:\n" + strings.Join(warnLines, "\n"))
 }

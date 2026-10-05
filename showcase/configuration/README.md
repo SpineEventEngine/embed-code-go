@@ -28,7 +28,8 @@ of the programming language used by the project.
 - `-doc-includes`: comma-separated documentation glob patterns to include.
   Defaults to `"**/*.md,**/*.html"`.
 - `-doc-excludes`: comma-separated documentation glob patterns to exclude.
-- `-joined-fragment-separator`: text inserted between joined fragment parts. Defaults to `...`.
+- `-joined-fragment-separator`: text inserted between joined fragment parts.
+  Defaults to `...`.
 - `-info`: enables info-level logging when set to `true`.
 - `-stacktrace`: prints stack traces for panics when set to `true`.
 
@@ -59,6 +60,9 @@ or multiple documentation targets.
   optional settings inside each entry instead of at the root.
 
 Each `embeddings` entry must have a unique `name`.
+
+The application ignores unknown fields and logs a warning with the location of
+each one.
 
 ## Minimal Config
 

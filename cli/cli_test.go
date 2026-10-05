@@ -27,13 +27,17 @@
 package cli_test
 
 import (
+	"bytes"
 	"embed-code/embed-code-go/cli"
 	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/logging"
 	_type "embed-code/embed-code-go/type"
 	"flag"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -521,6 +525,74 @@ var _ = Describe("CLI configuration building", func() {
 		Expect(configs[0].JoinedFragmentSeparator).To(Equal("---"))
 	})
 
+	It("should warn about unknown config file options and ignore them", func() {
+		configPath := writeTempConfigFile(`separator: "---"
+embeddings:
+  - name: java
+    code-path:
+      - name: java
+        path: test/resources/code/java
+        root: true
+    docs-path: test/resources/docs
+    separator: "---"
+`)
+		var config cli.Config
+		var err error
+
+		warnings := captureWarnings(func() {
+			config, err = cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+		})
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(config.JoinedFragmentSeparator).To(BeEmpty())
+		Expect(config.Embeddings).To(HaveLen(1))
+		Expect(config.Embeddings[0].JoinedFragmentSeparator).To(BeEmpty())
+		Expect(warnings).To(ContainSubstring(strconv.Quote(
+			"Unknown configuration options are ignored:\n" +
+				"- `separator` at `" + logging.FileReferenceWithLine(configPath, 1) + "`\n" +
+				"- `root` at `" + logging.FileReferenceWithLine(configPath, 7) + "`\n" +
+				"- `separator` at `" + logging.FileReferenceWithLine(configPath, 9) + "`",
+		)))
+	})
+
+	DescribeTable("should not warn when all config file options are known",
+		func(configPath string) {
+			var err error
+
+			warnings := captureWarnings(func() {
+				_, err = cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+			})
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		},
+		Entry("with root options", "../test/resources/config_files/optional_root_config.yml"),
+		Entry("with embeddings", "../test/resources/config_files/embeddings_config.yml"),
+	)
+
+	It("should not warn about YAML merge keys in a config file", func() {
+		configPath := writeTempConfigFile(`embeddings:
+  - &java
+    name: java
+    code-path: test/resources/code/java
+    docs-path: test/resources/docs
+  - <<: *java
+    name: java-copy
+`)
+		var config cli.Config
+		var err error
+
+		warnings := captureWarnings(func() {
+			config, err = cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+		})
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(warnings).To(BeEmpty())
+		Expect(config.Embeddings).To(HaveLen(2))
+		Expect(config.Embeddings[1].Name).To(Equal("java-copy"))
+		Expect(config.Embeddings[1].DocsPath).To(Equal("test/resources/docs"))
+	})
+
 	It("should return an error when config file YAML is invalid", func() {
 		configPath := writeTempConfigFile("doc-includes: [")
 		config := cli.Config{
@@ -678,6 +750,20 @@ func readArgs(args ...string) cli.Config {
 	flag.CommandLine.SetOutput(io.Discard)
 
 	return cli.ReadArgs()
+}
+
+// captureWarnings runs action and returns slog warning output.
+func captureWarnings(action func()) string {
+	var output bytes.Buffer
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&output, &slog.HandlerOptions{
+		Level: slog.LevelWarn,
+	})))
+	defer slog.SetDefault(previous)
+
+	action()
+
+	return output.String()
 }
 
 // writeTempConfigFile writes a YAML config fixture and returns its path.
