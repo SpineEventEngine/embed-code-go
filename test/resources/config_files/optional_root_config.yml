@@ -5,6 +5,6 @@ docs-path: test/resources/docs
 doc-includes:
   - "**/*.md"
 doc-excludes: "archive/**/*, drafts/**/*.md"
-separator: "---"
+joined-fragment-separator: "---"
 info: true
 stacktrace: true

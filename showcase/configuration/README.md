@@ -28,7 +28,7 @@ of the programming language used by the project.
 - `-doc-includes`: comma-separated documentation glob patterns to include.
   Defaults to `"**/*.md,**/*.html"`.
 - `-doc-excludes`: comma-separated documentation glob patterns to exclude.
-- `-separator`: text inserted between joined fragment parts. Defaults to `...`.
+- `-joined-fragment-separator`: text inserted between joined fragment parts. Defaults to `...`.
 - `-info`: enables info-level logging when set to `true`.
 - `-stacktrace`: prints stack traces for panics when set to `true`.
 
@@ -51,7 +51,7 @@ or multiple documentation targets.
 - `docs-path`: documentation root.
 - `doc-includes`: string or list of glob patterns to include.
 - `doc-excludes`: string or list of glob patterns to exclude.
-- `separator`: text inserted between joined fragment parts.
+- `joined-fragment-separator`: text inserted between joined fragment parts.
 - `info`: enables info-level logging.
 - `stacktrace`: prints stack traces for panics.
 - `embeddings`: list of complete configurations for independent documentation

@@ -9,4 +9,4 @@ docs-path: showcase/embedding/positive
 doc-includes:
   - "**/*.md"
   - "**/*.html"
-separator: "// ..."
+joined-fragment-separator: "// ..."

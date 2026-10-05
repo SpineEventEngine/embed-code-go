@@ -10,7 +10,7 @@ unrelated branches between the selected parts.
 A fragment becomes multi-part when the same `#docfragment "name"` marker is
 opened and closed more than once in the same source file. Embed-code collects
 the selected parts in source order, normalizes common indentation across all of
-them, and inserts the configured `separator` between neighboring parts.
+them, and inserts the configured `joined-fragment-separator` between neighboring parts.
 
 The default separator is `...`. This showcase uses `// ...` in
 [embed-code.yml](../embed-code.yml) so the separator is valid inside Java

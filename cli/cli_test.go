@@ -434,21 +434,21 @@ var _ = Describe("CLI validation", func() {
 			Expect(embedConfigs[2].Name).To(Equal("nested-java"))
 			Expect(embedConfigs[2].DocumentationRoot).To(
 				Equal("test/resources/docs/nested-dir-1/nested-dir-3"))
-			Expect(embedConfigs[2].Separator).To(Equal("---"))
+			Expect(embedConfigs[2].JoinedFragmentSeparator).To(Equal("---"))
 		})
 
 		It("should copy command line doc excludes to the runtime config", func() {
 			config := baseCliConfig()
 			config.DocIncludes = []string{"guides/**/*.md"}
 			config.DocExcludes = []string{"old-docs/**/*.md", "drafts/**/*"}
-			config.Separator = "---"
+			config.JoinedFragmentSeparator = "---"
 
 			embedConfigs := cli.BuildEmbedCodeConfiguration(config)
 
 			Expect(embedConfigs).To(HaveLen(1))
 			Expect(embedConfigs[0].DocIncludes).To(Equal([]string(config.DocIncludes)))
 			Expect(embedConfigs[0].DocExcludes).To(Equal([]string(config.DocExcludes)))
-			Expect(embedConfigs[0].Separator).To(Equal("---"))
+			Expect(embedConfigs[0].JoinedFragmentSeparator).To(Equal("---"))
 		})
 
 	})
@@ -464,7 +464,7 @@ var _ = Describe("CLI arguments", func() {
 			"-docs-path=/docs",
 			"-doc-includes=**/*.md, guides/*.html, ,",
 			"-doc-excludes=archive/**/*, drafts/**/*.md",
-			"-separator=---",
+			"-joined-fragment-separator=---",
 			"-config-path=config.yml",
 			"-info=true",
 			"-stacktrace=true",
@@ -477,7 +477,7 @@ var _ = Describe("CLI arguments", func() {
 		Expect(config.BaseDocsPath).To(Equal("/docs"))
 		Expect(config.DocIncludes).To(Equal(_type.StringList{"**/*.md", "guides/*.html"}))
 		Expect(config.DocExcludes).To(Equal(_type.StringList{"archive/**/*", "drafts/**/*.md"}))
-		Expect(config.Separator).To(Equal("---"))
+		Expect(config.JoinedFragmentSeparator).To(Equal("---"))
 		Expect(config.ConfigPath).To(Equal("config.yml"))
 		Expect(config.Info).To(BeTrue())
 		Expect(config.Stacktrace).To(BeTrue())
@@ -502,9 +502,23 @@ var _ = Describe("CLI configuration building", func() {
 		Expect(fileConfig.BaseDocsPath).To(Equal("test/resources/docs"))
 		Expect(fileConfig.DocIncludes).To(Equal(_type.StringList{"**/*.md"}))
 		Expect(fileConfig.DocExcludes).To(Equal(_type.StringList{"archive/**/*", "drafts/**/*.md"}))
-		Expect(fileConfig.Separator).To(Equal("---"))
+		Expect(fileConfig.JoinedFragmentSeparator).To(Equal("---"))
 		Expect(fileConfig.Info).To(BeTrue())
 		Expect(fileConfig.Stacktrace).To(BeTrue())
+	})
+
+	It("should use the joined fragment separator from generated JSON configuration", func() {
+		configPath := writeTempConfigFile(`{
+			"code-path": [{"name": "java", "path": "test/resources/code/java"}],
+			"docs-path": "test/resources/docs",
+			"joined-fragment-separator": "---"
+		}`)
+		config, err := cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+
+		Expect(err).ToNot(HaveOccurred())
+		configs := cli.BuildEmbedCodeConfiguration(config)
+		Expect(configs).To(HaveLen(1))
+		Expect(configs[0].JoinedFragmentSeparator).To(Equal("---"))
 	})
 
 	It("should return an error when config file YAML is invalid", func() {
@@ -545,7 +559,7 @@ var _ = Describe("CLI configuration building", func() {
 		}
 		embedding.DocIncludes = []string{"guides/**/*.md"}
 		embedding.DocExcludes = []string{"archive/**/*"}
-		embedding.Separator = "---"
+		embedding.JoinedFragmentSeparator = "---"
 		config := cli.Config{
 			Mode:       cli.ModeCheck,
 			Embeddings: []cli.EmbeddingConfig{embedding},
@@ -559,7 +573,7 @@ var _ = Describe("CLI configuration building", func() {
 		Expect(configs[0].DocumentationRoot).To(Equal(embedding.DocsPath))
 		Expect(configs[0].DocIncludes).To(Equal([]string{"guides/**/*.md"}))
 		Expect(configs[0].DocExcludes).To(Equal([]string{"archive/**/*"}))
-		Expect(configs[0].Separator).To(Equal("---"))
+		Expect(configs[0].JoinedFragmentSeparator).To(Equal("---"))
 	})
 
 })

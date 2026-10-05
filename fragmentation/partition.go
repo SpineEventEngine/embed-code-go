@@ -31,7 +31,7 @@ import "fmt"
 // Partition a code fragment partition.
 //
 // A fragment may consist of a few partitions, collected from different points in the code file.
-// In the resulting doc file, the partitions are joined by the Configuration.Separator.
+// In the resulting doc file, Configuration.JoinedFragmentSeparator joins the partitions.
 // StartPosition and EndPosition are both set to -1 by default as the default int value for them
 // is 0, which is wrong, because 0 is in the scope of possible values for them.
 type Partition struct {

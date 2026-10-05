@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	// DefaultSeparator joins multiple partitions of a single fragment.
-	DefaultSeparator = "..."
+	// DefaultJoinedFragmentSeparator joins multiple partitions of a single fragment.
+	DefaultJoinedFragmentSeparator = "..."
 )
 
 // DefaultDocIncludes contains the default documentation glob patterns.
@@ -79,10 +79,10 @@ type Configuration struct {
 	// By default, it is not set.
 	DocExcludes []string
 
-	// Separator is a string that's inserted between multiple partitions of a single fragment.
+	// JoinedFragmentSeparator is inserted between multiple partitions of a single fragment.
 	//
 	// The default value is: "..." (three dots).
-	Separator string
+	JoinedFragmentSeparator string
 }
 
 // NewConfiguration builds the default config.
@@ -90,7 +90,7 @@ type Configuration struct {
 // Returns configuration with default include patterns and separator.
 func NewConfiguration() Configuration {
 	return Configuration{
-		DocIncludes: DefaultDocIncludes,
-		Separator:   DefaultSeparator,
+		DocIncludes:             DefaultDocIncludes,
+		JoinedFragmentSeparator: DefaultJoinedFragmentSeparator,
 	}
 }

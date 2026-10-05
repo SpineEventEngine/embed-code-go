@@ -57,9 +57,9 @@ type Config struct {
 	// DocExcludes contains patterns selecting documentation files to skip.
 	DocExcludes _type.StringList `yaml:"doc-excludes"`
 
-	// Separator is inserted between multiple partitions of one fragment.
+	// JoinedFragmentSeparator is inserted between multiple partitions of one fragment.
 	// The default is "...".
-	Separator string `yaml:"separator"`
+	JoinedFragmentSeparator string `yaml:"joined-fragment-separator"`
 
 	// Embeddings contains independent embedding target configurations.
 	Embeddings []EmbeddingConfig `yaml:"embeddings"`
@@ -94,8 +94,8 @@ type EmbeddingConfig struct {
 	// DocExcludes contains patterns selecting documentation files to skip.
 	DocExcludes _type.StringList `yaml:"doc-excludes"`
 
-	// Separator is inserted between multiple partitions of one fragment.
-	Separator string `yaml:"separator"`
+	// JoinedFragmentSeparator is inserted between multiple partitions of one fragment.
+	JoinedFragmentSeparator string `yaml:"joined-fragment-separator"`
 }
 
 // EmbedCodeSamplesResult contains the result of an EmbedCodeSamples operation.
@@ -153,7 +153,7 @@ func ReadArgs() Config {
 		"a comma-separated string of glob patterns for docs files to include")
 	docExcludes := flag.String("doc-excludes", "",
 		"a comma-separated string of glob patterns for docs files to exclude")
-	separator := flag.String("separator", "",
+	joinedFragmentSeparator := flag.String("joined-fragment-separator", "",
 		"a string that's inserted between multiple partitions of a single fragment")
 	configPath := flag.String("config-path", "", "a path to a yaml configuration file")
 	mode := flag.String("mode", "",
@@ -166,15 +166,15 @@ func ReadArgs() Config {
 	flag.Parse()
 
 	return Config{
-		BaseCodePaths: _type.NamedPathList{_type.NamedPath{Path: *codePath}},
-		BaseDocsPath:  *docsPath,
-		DocIncludes:   parseListArgument(*docIncludes),
-		DocExcludes:   parseListArgument(*docExcludes),
-		Separator:     *separator,
-		ConfigPath:    *configPath,
-		Mode:          *mode,
-		Info:          *info,
-		Stacktrace:    *stacktrace,
+		BaseCodePaths:           _type.NamedPathList{_type.NamedPath{Path: *codePath}},
+		BaseDocsPath:            *docsPath,
+		DocIncludes:             parseListArgument(*docIncludes),
+		DocExcludes:             parseListArgument(*docExcludes),
+		JoinedFragmentSeparator: *joinedFragmentSeparator,
+		ConfigPath:              *configPath,
+		Mode:                    *mode,
+		Info:                    *info,
+		Stacktrace:              *stacktrace,
 	}
 }
 
@@ -207,8 +207,8 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	if len(configFields.DocExcludes) > 0 {
 		args.DocExcludes = configFields.DocExcludes
 	}
-	if isNotEmpty(configFields.Separator) {
-		args.Separator = configFields.Separator
+	if isNotEmpty(configFields.JoinedFragmentSeparator) {
+		args.JoinedFragmentSeparator = configFields.JoinedFragmentSeparator
 	}
 	args.Info = configFields.Info
 	args.Stacktrace = configFields.Stacktrace
@@ -264,8 +264,8 @@ func configFromEmbedding(embedding EmbeddingConfig) configuration.Configuration 
 	if len(embedding.DocExcludes) > 0 {
 		embedCodeConfig.DocExcludes = embedding.DocExcludes
 	}
-	if isNotEmpty(embedding.Separator) {
-		embedCodeConfig.Separator = embedding.Separator
+	if isNotEmpty(embedding.JoinedFragmentSeparator) {
+		embedCodeConfig.JoinedFragmentSeparator = embedding.JoinedFragmentSeparator
 	}
 
 	return embedCodeConfig
@@ -281,8 +281,8 @@ func configWithOptionalParams(userArgs Config) configuration.Configuration {
 	if len(userArgs.DocExcludes) > 0 {
 		embedCodeConfig.DocExcludes = userArgs.DocExcludes
 	}
-	if isNotEmpty(userArgs.Separator) {
-		embedCodeConfig.Separator = userArgs.Separator
+	if isNotEmpty(userArgs.JoinedFragmentSeparator) {
+		embedCodeConfig.JoinedFragmentSeparator = userArgs.JoinedFragmentSeparator
 	}
 
 	return embedCodeConfig
