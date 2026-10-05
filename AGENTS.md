@@ -28,3 +28,12 @@ agent operating policy and repository-wide rules.
 
 - Follow the [writer skill's pull-request rules](.agents/skills/writer/SKILL.md#write-pull-requests)
   for pull-request titles and descriptions.
+
+## Version Increments
+
+- Increment [`VERSION`](VERSION) once per pull request. Inspect the current
+  branch history and working tree first; skip the bump if this change already
+  includes one.
+- Increment the patch component unless the user requests a different increment.
+- Keep the version bump in a separate commit with the exact message
+  ``Bump version -> `<version>`.``, for example ``Bump version -> `1.2.5`.``.
