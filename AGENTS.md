@@ -23,3 +23,17 @@ agent operating policy and repository-wide rules.
 - Do not add temporary repo files, local binaries, IDE metadata, coverage
   output, or build artifacts to the intended change set.
 - Keep changes narrowly scoped and make unrelated cleanup a separate task.
+
+## Documentation
+
+- Follow the [writer skill's pull-request rules](.agents/skills/writer/SKILL.md#write-pull-requests)
+  for pull-request titles and descriptions.
+
+## Version Increments
+
+- Increment [`VERSION`](VERSION) once per pull request. Inspect the current
+  branch history and working tree first; skip the bump if this change already
+  includes one.
+- Increment the patch component unless the user requests a different increment.
+- Ask the user to commit the version bump separately with the exact message
+  ``Bump version -> `<version>`.``, for example ``Bump version -> `1.2.5`.``.

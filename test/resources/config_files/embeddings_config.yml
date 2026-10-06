@@ -8,4 +8,4 @@ embeddings:
   - name: "nested-java"
     code-path: "test/resources/code/java"
     docs-path: "test/resources/docs/nested-dir-1/nested-dir-3"
-    separator: "---"
+    joined-fragment-separator: "---"

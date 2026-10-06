@@ -27,13 +27,18 @@
 package cli_test
 
 import (
+	"bytes"
 	"embed-code/embed-code-go/cli"
 	"embed-code/embed-code-go/configuration"
+	"embed-code/embed-code-go/logging"
 	_type "embed-code/embed-code-go/type"
 	"flag"
+	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -434,21 +439,21 @@ var _ = Describe("CLI validation", func() {
 			Expect(embedConfigs[2].Name).To(Equal("nested-java"))
 			Expect(embedConfigs[2].DocumentationRoot).To(
 				Equal("test/resources/docs/nested-dir-1/nested-dir-3"))
-			Expect(embedConfigs[2].Separator).To(Equal("---"))
+			Expect(embedConfigs[2].JoinedFragmentSeparator).To(Equal("---"))
 		})
 
 		It("should copy command line doc excludes to the runtime config", func() {
 			config := baseCliConfig()
 			config.DocIncludes = []string{"guides/**/*.md"}
 			config.DocExcludes = []string{"old-docs/**/*.md", "drafts/**/*"}
-			config.Separator = "---"
+			config.JoinedFragmentSeparator = "---"
 
 			embedConfigs := cli.BuildEmbedCodeConfiguration(config)
 
 			Expect(embedConfigs).To(HaveLen(1))
 			Expect(embedConfigs[0].DocIncludes).To(Equal([]string(config.DocIncludes)))
 			Expect(embedConfigs[0].DocExcludes).To(Equal([]string(config.DocExcludes)))
-			Expect(embedConfigs[0].Separator).To(Equal("---"))
+			Expect(embedConfigs[0].JoinedFragmentSeparator).To(Equal("---"))
 		})
 
 	})
@@ -464,7 +469,7 @@ var _ = Describe("CLI arguments", func() {
 			"-docs-path=/docs",
 			"-doc-includes=**/*.md, guides/*.html, ,",
 			"-doc-excludes=archive/**/*, drafts/**/*.md",
-			"-separator=---",
+			"-joined-fragment-separator=---",
 			"-config-path=config.yml",
 			"-info=true",
 			"-stacktrace=true",
@@ -477,7 +482,7 @@ var _ = Describe("CLI arguments", func() {
 		Expect(config.BaseDocsPath).To(Equal("/docs"))
 		Expect(config.DocIncludes).To(Equal(_type.StringList{"**/*.md", "guides/*.html"}))
 		Expect(config.DocExcludes).To(Equal(_type.StringList{"archive/**/*", "drafts/**/*.md"}))
-		Expect(config.Separator).To(Equal("---"))
+		Expect(config.JoinedFragmentSeparator).To(Equal("---"))
 		Expect(config.ConfigPath).To(Equal("config.yml"))
 		Expect(config.Info).To(BeTrue())
 		Expect(config.Stacktrace).To(BeTrue())
@@ -502,9 +507,110 @@ var _ = Describe("CLI configuration building", func() {
 		Expect(fileConfig.BaseDocsPath).To(Equal("test/resources/docs"))
 		Expect(fileConfig.DocIncludes).To(Equal(_type.StringList{"**/*.md"}))
 		Expect(fileConfig.DocExcludes).To(Equal(_type.StringList{"archive/**/*", "drafts/**/*.md"}))
-		Expect(fileConfig.Separator).To(Equal("---"))
+		Expect(fileConfig.JoinedFragmentSeparator).To(Equal("---"))
 		Expect(fileConfig.Info).To(BeTrue())
 		Expect(fileConfig.Stacktrace).To(BeTrue())
+	})
+
+	It("should use the joined fragment separator from generated JSON configuration", func() {
+		configPath := writeTempConfigFile(`{
+			"code-path": [{"name": "java", "path": "test/resources/code/java"}],
+			"docs-path": "test/resources/docs",
+			"joined-fragment-separator": "---"
+		}`)
+		config, err := cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+
+		Expect(err).ToNot(HaveOccurred())
+		configs := cli.BuildEmbedCodeConfiguration(config)
+		Expect(configs).To(HaveLen(1))
+		Expect(configs[0].JoinedFragmentSeparator).To(Equal("---"))
+	})
+
+	It("should warn about unknown config file options and ignore them", func() {
+		configPath := writeTempConfigFile(`separator: "---"
+mode: embed
+embeddings:
+  - name: java
+    code-path:
+      - name: java
+        path: test/resources/code/java
+        root: true
+    docs-path: test/resources/docs
+    separator: "---"
+`)
+		var config cli.Config
+		var err error
+
+		warnings := captureWarnings(func() {
+			config, err = cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+		})
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(config.JoinedFragmentSeparator).To(BeEmpty())
+		Expect(config.Embeddings).To(HaveLen(1))
+		Expect(config.Embeddings[0].JoinedFragmentSeparator).To(BeEmpty())
+		Expect(warnings).To(ContainSubstring("Unknown configuration options are ignored:"))
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "separator", 1)))
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "mode", 2)))
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "root", 8)))
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "separator", 10)))
+		Expect(strings.Count(warnings, "` at `")).To(Equal(4))
+	})
+
+	It("should warn about unknown options in an inline YAML merge", func() {
+		configPath := writeTempConfigFile(`embeddings:
+  - <<: {bogus: x}
+    name: java
+    code-path: test/resources/code/java
+    docs-path: test/resources/docs
+`)
+		var err error
+
+		warnings := captureWarnings(func() {
+			_, err = cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+		})
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "bogus", 2)))
+		Expect(strings.Count(warnings, "` at `")).To(Equal(1))
+	})
+
+	DescribeTable("should not warn when all config file options are known",
+		func(configPath string) {
+			var err error
+
+			warnings := captureWarnings(func() {
+				_, err = cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+			})
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		},
+		Entry("with root options", "../test/resources/config_files/optional_root_config.yml"),
+		Entry("with embeddings", "../test/resources/config_files/embeddings_config.yml"),
+	)
+
+	It("should not warn about YAML merge keys in a config file", func() {
+		configPath := writeTempConfigFile(`embeddings:
+  - &java
+    name: java
+    code-path: test/resources/code/java
+    docs-path: test/resources/docs
+  - <<: *java
+    name: java-copy
+`)
+		var config cli.Config
+		var err error
+
+		warnings := captureWarnings(func() {
+			config, err = cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+		})
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(warnings).To(BeEmpty())
+		Expect(config.Embeddings).To(HaveLen(2))
+		Expect(config.Embeddings[1].Name).To(Equal("java-copy"))
+		Expect(config.Embeddings[1].DocsPath).To(Equal("test/resources/docs"))
 	})
 
 	It("should return an error when config file YAML is invalid", func() {
@@ -545,7 +651,7 @@ var _ = Describe("CLI configuration building", func() {
 		}
 		embedding.DocIncludes = []string{"guides/**/*.md"}
 		embedding.DocExcludes = []string{"archive/**/*"}
-		embedding.Separator = "---"
+		embedding.JoinedFragmentSeparator = "---"
 		config := cli.Config{
 			Mode:       cli.ModeCheck,
 			Embeddings: []cli.EmbeddingConfig{embedding},
@@ -559,7 +665,7 @@ var _ = Describe("CLI configuration building", func() {
 		Expect(configs[0].DocumentationRoot).To(Equal(embedding.DocsPath))
 		Expect(configs[0].DocIncludes).To(Equal([]string{"guides/**/*.md"}))
 		Expect(configs[0].DocExcludes).To(Equal([]string{"archive/**/*"}))
-		Expect(configs[0].Separator).To(Equal("---"))
+		Expect(configs[0].JoinedFragmentSeparator).To(Equal("---"))
 	})
 
 })
@@ -664,6 +770,25 @@ func readArgs(args ...string) cli.Config {
 	flag.CommandLine.SetOutput(io.Discard)
 
 	return cli.ReadArgs()
+}
+
+// unknownOptionEntry formats one entry of the unknown configuration options warning.
+func unknownOptionEntry(configPath string, option string, line int) string {
+	return fmt.Sprintf("`%s` at `%s`", option, logging.FileReferenceWithLine(configPath, line))
+}
+
+// captureWarnings runs action and returns slog warning output.
+func captureWarnings(action func()) string {
+	var output bytes.Buffer
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&output, &slog.HandlerOptions{
+		Level: slog.LevelWarn,
+	})))
+	defer slog.SetDefault(previous)
+
+	action()
+
+	return output.String()
 }
 
 // writeTempConfigFile writes a YAML config fixture and returns its path.

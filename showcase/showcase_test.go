@@ -323,7 +323,7 @@ func writeConfig(
 	for _, include := range includes {
 		builder.WriteString(fmt.Sprintf("  - %q\n", include))
 	}
-	builder.WriteString("separator: \"// ...\"\n")
+	builder.WriteString("joined-fragment-separator: \"// ...\"\n")
 
 	tempRoot, err := os.MkdirTemp("", "embed-code-showcase-config-*")
 	Expect(err).ShouldNot(HaveOccurred())

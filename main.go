@@ -90,8 +90,8 @@ var Version = strings.TrimSpace(versionFile)
 //     the embedding.
 //     For example:
 //     "old-docs/**/*.md,old-guides/*.html". It is not set by default;
-//   - separator — a string that is used as a separator between code fragments. Default value
-//     is "...".
+//   - joined-fragment-separator — a string that is inserted between multiple partitions
+//     of a single fragment. Default value is "...".
 //   - info — a flag that enables info-level logs;
 //   - stacktrace — a flag that enables stack traces in panic logs.
 func main() {

@@ -153,7 +153,7 @@ func (r *Resolver) ResolveContent(
 			fragmentName, codeFileReference)
 	}
 
-	return fragmentLines(fragment, content.lines, config.Separator)
+	return fragmentLines(fragment, content.lines, config.JoinedFragmentSeparator)
 }
 
 // missingFragmentLogMessage describes a missing fragment without exposing internal names.

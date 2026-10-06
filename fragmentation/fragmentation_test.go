@@ -813,14 +813,14 @@ line
 
 		Expect(content).Should(Equal([]string{
 			"import java.util.List;",
-			indent + config.Separator,
+			indent + config.JoinedFragmentSeparator,
 			indent + `static final String LABEL = "value";`,
-			config.Separator,
+			config.JoinedFragmentSeparator,
 			"var first = values.get(0);",
 			indent + "var nested = first.trim();",
-			config.Separator,
+			config.JoinedFragmentSeparator,
 			"var second = values.get(1);",
-			config.Separator,
+			config.JoinedFragmentSeparator,
 			"System.out.println(nested + second);",
 		}))
 	})
@@ -830,7 +830,7 @@ line
 
 		Expect(content).Should(Equal([]string{
 			"call();",
-			config.Separator,
+			config.JoinedFragmentSeparator,
 			"",
 		}))
 	})
@@ -840,13 +840,13 @@ line
 
 		expected := []string{
 			"public class Main {",
-			indent + config.Separator,
+			indent + config.JoinedFragmentSeparator,
 			indent + "public static void main(String[] args) {",
-			indent + indent + config.Separator,
+			indent + indent + config.JoinedFragmentSeparator,
 			indent + indent + "System.out.println(helperMethod());",
 			"",
 			indent + "}",
-			config.Separator,
+			config.JoinedFragmentSeparator,
 			"}",
 		}
 		Expect(content).Should(Equal(expected))
@@ -859,18 +859,18 @@ line
 		Expect([][]string{mainContent, helloContent}).Should(ConsistOf([][]string{
 			{
 				"public class TwoFragments {",
-				indent + config.Separator,
+				indent + config.JoinedFragmentSeparator,
 				indent + "public static void main(String[] args) {",
-				indent + indent + config.Separator,
+				indent + indent + config.JoinedFragmentSeparator,
 				indent + indent + "System.out.println(helperMethod());",
 				"",
 				indent + "}",
-				config.Separator,
+				config.JoinedFragmentSeparator,
 				"}",
 			},
 			{
 				"public static void hello(String[] args) {",
-				indent + config.Separator,
+				indent + config.JoinedFragmentSeparator,
 				indent + "var coolText = \"Cool Text\";",
 				indent + "System.out.println(coolText);",
 				"}",
@@ -885,24 +885,24 @@ line
 		Expect([][]string{mainContent, helloContent}).Should(ConsistOf([][]string{
 			{
 				"public class OverlappingFragments {",
-				indent + config.Separator,
+				indent + config.JoinedFragmentSeparator,
 				indent + "public static void main(String[] args) {",
-				indent + indent + config.Separator,
+				indent + indent + config.JoinedFragmentSeparator,
 				indent + indent + "System.out.println(helperMethod());",
 				"",
 				indent + "}",
-				config.Separator,
+				config.JoinedFragmentSeparator,
 				"}",
 			},
 			{
 				"public class OverlappingFragments {",
-				indent + config.Separator,
+				indent + config.JoinedFragmentSeparator,
 				indent + "public static void hello(String[] args) {",
-				indent + indent + config.Separator,
+				indent + indent + config.JoinedFragmentSeparator,
 				indent + indent + "var coolText = \"Cool Text\";",
 				indent + indent + "System.out.println(coolText);",
 				indent + "}",
-				config.Separator,
+				config.JoinedFragmentSeparator,
 				"}",
 			},
 		}))

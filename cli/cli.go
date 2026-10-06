@@ -32,6 +32,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"reflect"
 	"strings"
 
 	"embed-code/embed-code-go/configuration"
@@ -57,9 +58,9 @@ type Config struct {
 	// DocExcludes contains patterns selecting documentation files to skip.
 	DocExcludes _type.StringList `yaml:"doc-excludes"`
 
-	// Separator is inserted between multiple partitions of one fragment.
+	// JoinedFragmentSeparator is inserted between multiple partitions of one fragment.
 	// The default is "...".
-	Separator string `yaml:"separator"`
+	JoinedFragmentSeparator string `yaml:"joined-fragment-separator"`
 
 	// Embeddings contains independent embedding target configurations.
 	Embeddings []EmbeddingConfig `yaml:"embeddings"`
@@ -71,10 +72,10 @@ type Config struct {
 	Stacktrace bool `yaml:"stacktrace"`
 
 	// ConfigPath is the path to the YAML configuration file.
-	ConfigPath string
+	ConfigPath string `yaml:"-"`
 
 	// Mode selects check or embed execution.
-	Mode string
+	Mode string `yaml:"-"`
 }
 
 // EmbeddingConfig contains a complete configuration for one embedding target.
@@ -94,8 +95,8 @@ type EmbeddingConfig struct {
 	// DocExcludes contains patterns selecting documentation files to skip.
 	DocExcludes _type.StringList `yaml:"doc-excludes"`
 
-	// Separator is inserted between multiple partitions of one fragment.
-	Separator string `yaml:"separator"`
+	// JoinedFragmentSeparator is inserted between multiple partitions of one fragment.
+	JoinedFragmentSeparator string `yaml:"joined-fragment-separator"`
 }
 
 // EmbedCodeSamplesResult contains the result of an EmbedCodeSamples operation.
@@ -153,7 +154,7 @@ func ReadArgs() Config {
 		"a comma-separated string of glob patterns for docs files to include")
 	docExcludes := flag.String("doc-excludes", "",
 		"a comma-separated string of glob patterns for docs files to exclude")
-	separator := flag.String("separator", "",
+	joinedFragmentSeparator := flag.String("joined-fragment-separator", "",
 		"a string that's inserted between multiple partitions of a single fragment")
 	configPath := flag.String("config-path", "", "a path to a yaml configuration file")
 	mode := flag.String("mode", "",
@@ -166,15 +167,15 @@ func ReadArgs() Config {
 	flag.Parse()
 
 	return Config{
-		BaseCodePaths: _type.NamedPathList{_type.NamedPath{Path: *codePath}},
-		BaseDocsPath:  *docsPath,
-		DocIncludes:   parseListArgument(*docIncludes),
-		DocExcludes:   parseListArgument(*docExcludes),
-		Separator:     *separator,
-		ConfigPath:    *configPath,
-		Mode:          *mode,
-		Info:          *info,
-		Stacktrace:    *stacktrace,
+		BaseCodePaths:           _type.NamedPathList{_type.NamedPath{Path: *codePath}},
+		BaseDocsPath:            *docsPath,
+		DocIncludes:             parseListArgument(*docIncludes),
+		DocExcludes:             parseListArgument(*docExcludes),
+		JoinedFragmentSeparator: *joinedFragmentSeparator,
+		ConfigPath:              *configPath,
+		Mode:                    *mode,
+		Info:                    *info,
+		Stacktrace:              *stacktrace,
 	}
 }
 
@@ -207,8 +208,8 @@ func FillArgsFromConfigFile(args Config) (Config, error) {
 	if len(configFields.DocExcludes) > 0 {
 		args.DocExcludes = configFields.DocExcludes
 	}
-	if isNotEmpty(configFields.Separator) {
-		args.Separator = configFields.Separator
+	if isNotEmpty(configFields.JoinedFragmentSeparator) {
+		args.JoinedFragmentSeparator = configFields.JoinedFragmentSeparator
 	}
 	args.Info = configFields.Info
 	args.Stacktrace = configFields.Stacktrace
@@ -264,8 +265,8 @@ func configFromEmbedding(embedding EmbeddingConfig) configuration.Configuration 
 	if len(embedding.DocExcludes) > 0 {
 		embedCodeConfig.DocExcludes = embedding.DocExcludes
 	}
-	if isNotEmpty(embedding.Separator) {
-		embedCodeConfig.Separator = embedding.Separator
+	if isNotEmpty(embedding.JoinedFragmentSeparator) {
+		embedCodeConfig.JoinedFragmentSeparator = embedding.JoinedFragmentSeparator
 	}
 
 	return embedCodeConfig
@@ -281,8 +282,8 @@ func configWithOptionalParams(userArgs Config) configuration.Configuration {
 	if len(userArgs.DocExcludes) > 0 {
 		embedCodeConfig.DocExcludes = userArgs.DocExcludes
 	}
-	if isNotEmpty(userArgs.Separator) {
-		embedCodeConfig.Separator = userArgs.Separator
+	if isNotEmpty(userArgs.JoinedFragmentSeparator) {
+		embedCodeConfig.JoinedFragmentSeparator = userArgs.JoinedFragmentSeparator
 	}
 
 	return embedCodeConfig
@@ -330,6 +331,8 @@ func parseListArgument(listArgument string) []string {
 
 // readConfigFields reads and parses a YAML configuration file.
 //
+// Logs a warning when the file contains options that are not supported.
+//
 // Parameters:
 // configFilePath - provides the path to a YAML configuration file.
 //
@@ -342,11 +345,110 @@ func readConfigFields(configFilePath string) (Config, error) {
 		return Config{}, err
 	}
 
-	configFields := Config{}
-	err = yaml.Unmarshal(content, &configFields)
+	var document yaml.Node
+	err = yaml.Unmarshal(content, &document)
 	if err != nil {
 		return Config{}, err
 	}
+	configFields := Config{}
+	err = document.Decode(&configFields)
+	if err != nil {
+		return Config{}, err
+	}
+	warnUnknownConfigOptions(configFilePath, unknownOptions(&document, reflect.TypeFor[Config]()))
 
 	return configFields, nil
+}
+
+// yamlMergeTag marks a YAML merge key, which inserts the content of another mapping.
+const yamlMergeTag = "!!merge"
+
+// unknownOptions finds YAML keys that have no matching field in the decoded Go type.
+//
+// Parameters:
+// node - provides the YAML node to inspect.
+// target - provides the Go type the node is decoded into.
+//
+// Returns the unknown keys in document order.
+func unknownOptions(node *yaml.Node, target reflect.Type) []*yaml.Node {
+	var unknown []*yaml.Node
+	switch {
+	case node.Kind == yaml.DocumentNode:
+		for _, content := range node.Content {
+			unknown = append(unknown, unknownOptions(content, target)...)
+		}
+	case node.Kind == yaml.MappingNode && target.Kind() == reflect.Struct:
+		unknown = unknownMappingOptions(node, target)
+	case node.Kind == yaml.SequenceNode && target.Kind() == reflect.Slice:
+		for _, item := range node.Content {
+			unknown = append(unknown, unknownOptions(item, target.Elem())...)
+		}
+	}
+
+	return unknown
+}
+
+// unknownMappingOptions finds unknown keys in a YAML mapping and in its nested values.
+//
+// A mapping merged inline with `<<` is checked against the same struct type. A merged
+// alias is skipped because its anchored mapping is checked where it is defined.
+//
+// Parameters:
+// mapping - provides the YAML mapping node to inspect.
+// structType - provides the struct type the mapping is decoded into.
+//
+// Returns the unknown keys in document order.
+func unknownMappingOptions(mapping *yaml.Node, structType reflect.Type) []*yaml.Node {
+	var unknown []*yaml.Node
+	for keyIndex := 0; keyIndex+1 < len(mapping.Content); keyIndex += 2 {
+		key, value := mapping.Content[keyIndex], mapping.Content[keyIndex+1]
+		if key.ShortTag() == yamlMergeTag {
+			unknown = append(unknown, unknownOptions(value, structType)...)
+
+			continue
+		}
+		field, found := yamlField(structType, key.Value)
+		if !found {
+			unknown = append(unknown, key)
+
+			continue
+		}
+		unknown = append(unknown, unknownOptions(value, field.Type)...)
+	}
+
+	return unknown
+}
+
+// yamlField returns the field of structType that is decoded from the YAML key name.
+//
+// Only fields with an explicit `yaml` key match. Configuration types tag every YAML
+// option and exclude other fields with `yaml:"-"`.
+func yamlField(structType reflect.Type, name string) (reflect.StructField, bool) {
+	for i := range structType.NumField() {
+		field := structType.Field(i)
+		tag := field.Tag.Get("yaml")
+		tagName, _, _ := strings.Cut(tag, ",")
+		if tag != "-" && tagName != "" && tagName == name {
+			return field, true
+		}
+	}
+
+	return reflect.StructField{}, false
+}
+
+// warnUnknownConfigOptions logs configuration file options that are ignored.
+//
+// Parameters:
+// configFilePath - provides the path to the YAML configuration file.
+// options - provides the keys of unknown options.
+func warnUnknownConfigOptions(configFilePath string, options []*yaml.Node) {
+	if len(options) == 0 {
+		return
+	}
+	warnLines := make([]string, 0, len(options))
+	for _, option := range options {
+		warnLines = append(warnLines, fmt.Sprintf("- `%s` at `%s`",
+			option.Value, logging.FileReferenceWithLine(configFilePath, option.Line)))
+	}
+	slog.Warn("Unknown configuration options are ignored:\n" + strings.Join(warnLines, "\n"))
 }
