@@ -33,11 +33,12 @@ import (
 	"embed-code/embed-code-go/logging"
 	_type "embed-code/embed-code-go/type"
 	"flag"
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strconv"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -527,6 +528,7 @@ var _ = Describe("CLI configuration building", func() {
 
 	It("should warn about unknown config file options and ignore them", func() {
 		configPath := writeTempConfigFile(`separator: "---"
+mode: embed
 embeddings:
   - name: java
     code-path:
@@ -547,12 +549,30 @@ embeddings:
 		Expect(config.JoinedFragmentSeparator).To(BeEmpty())
 		Expect(config.Embeddings).To(HaveLen(1))
 		Expect(config.Embeddings[0].JoinedFragmentSeparator).To(BeEmpty())
-		Expect(warnings).To(ContainSubstring(strconv.Quote(
-			"Unknown configuration options are ignored:\n" +
-				"- `separator` at `" + logging.FileReferenceWithLine(configPath, 1) + "`\n" +
-				"- `root` at `" + logging.FileReferenceWithLine(configPath, 7) + "`\n" +
-				"- `separator` at `" + logging.FileReferenceWithLine(configPath, 9) + "`",
-		)))
+		Expect(warnings).To(ContainSubstring("Unknown configuration options are ignored:"))
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "separator", 1)))
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "mode", 2)))
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "root", 8)))
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "separator", 10)))
+		Expect(strings.Count(warnings, "` at `")).To(Equal(4))
+	})
+
+	It("should warn about unknown options in an inline YAML merge", func() {
+		configPath := writeTempConfigFile(`embeddings:
+  - <<: {bogus: x}
+    name: java
+    code-path: test/resources/code/java
+    docs-path: test/resources/docs
+`)
+		var err error
+
+		warnings := captureWarnings(func() {
+			_, err = cli.FillArgsFromConfigFile(cli.Config{ConfigPath: configPath})
+		})
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(warnings).To(ContainSubstring(unknownOptionEntry(configPath, "bogus", 2)))
+		Expect(strings.Count(warnings, "` at `")).To(Equal(1))
 	})
 
 	DescribeTable("should not warn when all config file options are known",
@@ -750,6 +770,11 @@ func readArgs(args ...string) cli.Config {
 	flag.CommandLine.SetOutput(io.Discard)
 
 	return cli.ReadArgs()
+}
+
+// unknownOptionEntry formats one entry of the unknown configuration options warning.
+func unknownOptionEntry(configPath string, option string, line int) string {
+	return fmt.Sprintf("`%s` at `%s`", option, logging.FileReferenceWithLine(configPath, line))
 }
 
 // captureWarnings runs action and returns slog warning output.

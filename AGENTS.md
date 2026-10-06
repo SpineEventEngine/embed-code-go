@@ -35,5 +35,5 @@ agent operating policy and repository-wide rules.
   branch history and working tree first; skip the bump if this change already
   includes one.
 - Increment the patch component unless the user requests a different increment.
-- Keep the version bump in a separate commit with the exact message
+- Ask the user to commit the version bump separately with the exact message
   ``Bump version -> `<version>`.``, for example ``Bump version -> `1.2.5`.``.

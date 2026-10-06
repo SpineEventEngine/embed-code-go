@@ -72,10 +72,10 @@ type Config struct {
 	Stacktrace bool `yaml:"stacktrace"`
 
 	// ConfigPath is the path to the YAML configuration file.
-	ConfigPath string
+	ConfigPath string `yaml:"-"`
 
 	// Mode selects check or embed execution.
-	Mode string
+	Mode string `yaml:"-"`
 }
 
 // EmbeddingConfig contains a complete configuration for one embedding target.
@@ -390,7 +390,8 @@ func unknownOptions(node *yaml.Node, target reflect.Type) []*yaml.Node {
 
 // unknownMappingOptions finds unknown keys in a YAML mapping and in its nested values.
 //
-// Merge keys are skipped because they insert keys defined elsewhere in the file.
+// A mapping merged inline with `<<` is checked against the same struct type. A merged
+// alias is skipped because its anchored mapping is checked where it is defined.
 //
 // Parameters:
 // mapping - provides the YAML mapping node to inspect.
@@ -400,8 +401,10 @@ func unknownOptions(node *yaml.Node, target reflect.Type) []*yaml.Node {
 func unknownMappingOptions(mapping *yaml.Node, structType reflect.Type) []*yaml.Node {
 	var unknown []*yaml.Node
 	for keyIndex := 0; keyIndex+1 < len(mapping.Content); keyIndex += 2 {
-		key := mapping.Content[keyIndex]
+		key, value := mapping.Content[keyIndex], mapping.Content[keyIndex+1]
 		if key.ShortTag() == yamlMergeTag {
+			unknown = append(unknown, unknownOptions(value, structType)...)
+
 			continue
 		}
 		field, found := yamlField(structType, key.Value)
@@ -410,7 +413,7 @@ func unknownMappingOptions(mapping *yaml.Node, structType reflect.Type) []*yaml.
 
 			continue
 		}
-		unknown = append(unknown, unknownOptions(mapping.Content[keyIndex+1], field.Type)...)
+		unknown = append(unknown, unknownOptions(value, field.Type)...)
 	}
 
 	return unknown
@@ -418,12 +421,14 @@ func unknownMappingOptions(mapping *yaml.Node, structType reflect.Type) []*yaml.
 
 // yamlField returns the field of structType that is decoded from the YAML key name.
 //
-// Fields without a `yaml` tag are not read from YAML files, so they never match.
+// Only fields with an explicit `yaml` key match. Configuration types tag every YAML
+// option and exclude other fields with `yaml:"-"`.
 func yamlField(structType reflect.Type, name string) (reflect.StructField, bool) {
 	for i := range structType.NumField() {
 		field := structType.Field(i)
-		tagName, _, _ := strings.Cut(field.Tag.Get("yaml"), ",")
-		if tagName != "" && tagName == name {
+		tag := field.Tag.Get("yaml")
+		tagName, _, _ := strings.Cut(tag, ",")
+		if tag != "-" && tagName != "" && tagName == name {
 			return field, true
 		}
 	}
