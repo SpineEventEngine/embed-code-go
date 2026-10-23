@@ -102,7 +102,7 @@ You do not need to install Go to use a release binary.
 ## Build From Source
 
 Using Embed Code does not require Go.
-To build the application from this repository, install Go `1.26.4` and run:
+To build the application from this repository, install Go `1.27.3` and run:
 
 ```bash
 go build -trimpath -o embed-code main.go

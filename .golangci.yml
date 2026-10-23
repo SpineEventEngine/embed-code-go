@@ -1,7 +1,7 @@
 # This file holds the configs for the linters, and it should be placed in the current working directory.
 version: "2"
 run:
-  go: 1.22.1
+  go: 1.27.3
   modules-download-mode: readonly
   tests: true
   allow-parallel-runners: true

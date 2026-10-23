@@ -31,7 +31,7 @@ For project-specific context, also consult:
 
 ## Project Shape
 
-- Language: Go module `embed-code/embed-code-go`, with Go `1.26.4` declared in
+- Language: Go module `embed-code/embed-code-go`, with Go `1.27.3` declared in
   the root [`go.mod`](../go.mod) file.
 - Entry point: [`main.go`](../main.go), including mode dispatch, aggregate
   errors, version embedding from [`VERSION`](../VERSION), and final
@@ -205,7 +205,7 @@ go run ./main.go -mode=check -config-path=showcase/embedding/embed-code.yml
 ```
 
 Linting is configured by [`.golangci.yml`](../.golangci.yml) and CI uses
-`golangci-lint-action` version `v8` with `golangci-lint` version `v2.12.2`.
+`golangci-lint-action` version `v8` with `golangci-lint` version `v2.15.0`.
 Run the local equivalent only when available:
 
 ```bash
