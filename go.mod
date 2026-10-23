@@ -24,7 +24,7 @@
 
 module embed-code/embed-code-go
 
-go 1.26.4
+go 1.27.3
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1
