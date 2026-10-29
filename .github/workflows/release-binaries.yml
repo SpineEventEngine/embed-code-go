@@ -22,15 +22,16 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       # Use the same Go version as the project, declared in go.mod.
       - name: Set Up Go Environment
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
+          cache-dependency-path: go.sum
 
       # Reads the app version from the `VERSION` file.
       # It must be a plain MAJOR.MINOR.PATCH value, such as 1.2.3.
@@ -50,7 +51,7 @@ jobs:
       # If current app version already exist in release, emits a warning, but flow counts as passed.
       - name: Check Release Version
         id: release
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
         with:
@@ -122,7 +123,7 @@ jobs:
       # Create the release for the current commit and attach all generated binaries.
       - name: Publish GitHub Release
         if: steps.release.outputs.publish == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
         with:
